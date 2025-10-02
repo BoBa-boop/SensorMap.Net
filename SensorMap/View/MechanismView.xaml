@@ -1,0 +1,110 @@
+﻿<Window x:Class="SensorMap.View.MechanismView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SensorMap.View"
+        xmlns:Converter="clr-namespace:SensorMap.Converters"
+        mc:Ignorable="d"
+        Title="MechanismView" Height="450" Width="800" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
+        <Style x:Key="SensorStyle" TargetType="Ellipse">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Fill" Value="Red"/>
+            <Setter Property="Stroke" Value="DarkRed"/>
+            <Setter Property="StrokeThickness" Value="2"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform X="-10" Y="-10"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="*" MinHeight="300"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MaxWidth="200" MinWidth="50"/>
+            <ColumnDefinition Width="*" MinWidth="400"/>
+        </Grid.ColumnDefinitions>
+        <Menu IsMainMenu="True" 
+        Grid.Row="0" Grid.ColumnSpan="2">
+            <MenuItem Header="Сохранить" Command="{Binding SaveLayout}"/>
+        </Menu>
+
+        <Border Grid.Row="1">
+            <GroupBox Header="Обозреватель элементов" >
+
+            </GroupBox>
+        </Border>
+        <Grid Grid.Column="1" Grid.Row="1">
+            <Viewbox x:Name="MainViewbox" Stretch="Uniform">
+                <!-- Canvas будет масштабироваться через Viewbox -->
+                <Canvas x:Name="MapCanvas" 
+                    Width="{Binding OriginalImageSize.Width}"
+                    Height="{Binding OriginalImageSize.Height}"
+                    Background="LightGray">
+
+                    <!-- Изображение схемы -->
+                    <Image Source="/Resources/Шаблон.jpg" 
+                       Width="{Binding OriginalImageSize.Width}"
+                       Height="{Binding OriginalImageSize.Height}"/>
+
+                    <!-- Контейнер для датчиков -->
+                    <ItemsControl ItemsSource="{Binding Sensors}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <!-- Привязка нормализованных координат к реальным координатам Canvas -->
+                                <Setter Property="Canvas.Left">
+                                    <Setter.Value>
+                                        <MultiBinding Converter="{StaticResource CoordConverter}">
+                                            <Binding Path="X"/>
+                                            <Binding Path="ActualWidth" ElementName="MapCanvas"/>
+                                        </MultiBinding>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="Canvas.Top">
+                                    <Setter.Value>
+                                        <MultiBinding Converter="{StaticResource CoordConverter}">
+                                            <Binding Path="Y"/>
+                                            <Binding Path="ActualHeight" ElementName="MapCanvas"/>
+                                        </MultiBinding>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse>
+                                    <!-- Включаем возможность перетаскивания только в режиме редактирования -->
+                                    <Ellipse.InputBindings>
+                                        <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.SensorClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                                    </Ellipse.InputBindings>
+                                    <Ellipse.Style>
+                                        <Style BasedOn="{StaticResource SensorStyle}" TargetType="{x:Type Ellipse}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DataContext.IsEditMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                    <Setter Property="Cursor" Value="SizeAll"/>
+                                                    <Setter Property="ToolTip" Value="Перетащите для перемещения"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Canvas>
+            </Viewbox>
+        </Grid>
+    </Grid>
+</Window>

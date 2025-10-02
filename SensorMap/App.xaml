@@ -1,0 +1,29 @@
+﻿<Application x:Class="SensorMap.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SensorMap" 
+             xmlns:menuView="clr-namespace:SensorMap.ViewModel"
+             xmlns:view="clr-namespace:SensorMap.View">
+    <Application.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type menuView:SectorsVM}">
+                <view:SectorView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:MenuVM}">
+                <view:MenuView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:MenuButtonsVM}">
+                <view:MenuButtons/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:SensorVM}">
+                <view:SensorView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:MechanismVM}">
+                <view:MechanismView/>
+            </DataTemplate>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/Style/StyleDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

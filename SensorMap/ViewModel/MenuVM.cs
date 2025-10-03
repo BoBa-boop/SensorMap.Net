@@ -18,15 +18,6 @@ namespace SensorMap.ViewModel
             _dataService = dataService;
             SelectMode = new RelayCommand<bool>((s) => IsEditMode = !dataService.IsEditMode);
             ShowMenu = new RelayCommand(() => Navigation.NavigateTo<MenuButtonsVM>());
-            LoadDB();
-        }
-
-        private void LoadDB()
-        {
-            using (AppDBContext db = new AppDBContext())
-            {
-
-            }
         }
 
         public ICommand SelectMode { get; set; }

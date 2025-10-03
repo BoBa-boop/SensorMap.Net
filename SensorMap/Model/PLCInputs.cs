@@ -15,9 +15,6 @@ namespace SensorMap.Model
     {
         [Reactive] public int Id {  get; set; }
         [Reactive] public Sensor? Sensor { get; set; }
-        [Reactive] public PLC? PLC { get; set; }
-        [Reactive] public Mechanism? Mechanism { get; set; }
-
         [Reactive] public string Address { get; set; } = string.Empty;
         [Reactive] public string Description { get; set; } = string.Empty;
         [Reactive] public string Location { get; set; } = string.Empty; 

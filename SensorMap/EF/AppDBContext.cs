@@ -12,29 +12,13 @@ namespace SensorMap.EF
 {
     public class AppDBContext : DbContext
     {
-        public DbSet<Sector> Sectors => Set<Sector>();
-        public DbSet<Mechanism> Mechanisms => Set<Mechanism>();
-        public DbSet<Sensor> Sensors => Set<Sensor>();
-        public DbSet<PLC> PLCs => Set<PLC>();
-        public DbSet<PLCInputs> SensorAssignments => Set<PLCInputs>();
-        public AppDBContext(DbContextOptions<AppDBContext> options) : base(options)
-        {
-            
-        }
-
-        // ✅ Конструктор без параметров (для миграций)
-        public AppDBContext()
-        {
-        }
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.ApplyConfiguration(new SectorConfiguration());
-            modelBuilder.ApplyConfiguration(new MechanismConfiguration());
-            modelBuilder.ApplyConfiguration(new SensorConfiguration());
-            modelBuilder.ApplyConfiguration(new PLCConfiguration());
-            modelBuilder.ApplyConfiguration(new SensorAssignmentConfiguration());
-            base.OnModelCreating(modelBuilder);
-        }
+        public DbSet<Sector> Sectors = null!;
+        public DbSet<Mechanism> Mechanisms = null!;
+        public DbSet<Sensor> Sensors = null!;
+        public DbSet<PLC> PLCs = null!;
+        public DbSet<PLCInputs> SensorAssignments = null!;
+        public AppDBContext() => Database.EnsureCreated();
+        
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             string path = Path.Combine(AppContext.BaseDirectory, "AppDataBase.db");
@@ -47,10 +31,7 @@ namespace SensorMap.EF
             try
             {
                 // 1. Создаем участки
-                var sectors = new[]
-                {
-                new Sector { Name = "2 нарезная линия"},
-            };
+                var sectors = new[]{ new Sector { Name = "2 нарезная линия"} };
                 Sectors.AddRange(sectors);
                 SaveChanges();
 
@@ -67,9 +48,9 @@ namespace SensorMap.EF
                 // 3. Создаем механизмы
                 var mechanisms = new[]
                 {
-                new Mechanism { Name = "Гидравлический пресс MDM", Path = "press_mechanism", Sector = sectors[0], Image = "/Resources/Схема МДМ.jpg", PLC = plcs[0] },
-                new Mechanism { Name = "Шаблон", Path = "conveyor", Sector = sectors[0], Image = "/Resources/Шаблон.jpg", PLC = plcs[1] },
-                new Mechanism { Name = "Механизация станков", Path = "robot", Sector = sectors[0], Image = "/Resources/2 нар линия механизация.jpg", PLC = plcs[0] }
+                new Mechanism { Name = "Гидравлический пресс MDM", Path = "press_mechanism", Image = "/Resources/Схема МДМ.jpg", PLC = plcs[0] },
+                new Mechanism { Name = "Шаблон", Path = "conveyor",  Image = "/Resources/Шаблон.jpg", PLC = plcs[1] },
+                new Mechanism { Name = "Механизация станков", Path = "robot", Image = "/Resources/2 нар линия механизация.jpg", PLC = plcs[0] }
             };
                 Mechanisms.AddRange(mechanisms);
                 SaveChanges();
@@ -95,7 +76,7 @@ namespace SensorMap.EF
                 // Для каждого PLC создаем несколько входов
                 foreach (var plc in plcs)
                 {
-                    for (int i = 0; i < 8; i++)
+                    for (int i = 0; i < 7; i++)
                     {
                         plcInputs.Add(new PLCInputs
                         {
@@ -189,49 +170,6 @@ namespace SensorMap.EF
                 transaction.Rollback();
                 throw;
             }
-        }
-    }
-
-
-
-
-    public class SectorConfiguration : IEntityTypeConfiguration<Sector>
-    {
-        public void Configure(EntityTypeBuilder<Sector> builder)
-        {
-           builder.HasKey(x=>x.Id);
-            builder.HasMany(x=>x.Mechanisms).WithOne(_=>_.Sector).HasForeignKey(x=>x.Id);
-        }
-    }
-    public class MechanismConfiguration : IEntityTypeConfiguration<Mechanism>
-    {
-        public void Configure(EntityTypeBuilder<Mechanism> builder)
-        {
-            builder.HasKey(x => x.Id);
-            builder.HasOne(x => x.PLC).WithOne(_ => _.Mechanism);
-            builder.HasMany(x => x.Sensors).WithOne(_ => _.Mechanism).HasForeignKey(x=>x.Id);
-        }
-    }
-    public class SensorConfiguration : IEntityTypeConfiguration<Sensor>
-    {
-        public void Configure(EntityTypeBuilder<Sensor> builder)
-        {
-            builder.HasKey(x => x.Id);
-        }
-    }
-    public class SensorAssignmentConfiguration : IEntityTypeConfiguration<PLCInputs>
-    {
-        public void Configure(EntityTypeBuilder<PLCInputs> builder)
-        {
-            builder.HasKey(x => x.Id);
-            builder.HasOne(_ => _.PLC).WithMany(_ => _.Inputs).HasForeignKey(_=>_.Id);
-        }
-    }
-    public class PLCConfiguration : IEntityTypeConfiguration<PLC>
-    {
-        public void Configure(EntityTypeBuilder<PLC> builder)
-        {
-            builder.HasKey(x => x.Id);
         }
     }
 }

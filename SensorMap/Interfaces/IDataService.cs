@@ -13,6 +13,5 @@ namespace SensorMap.Interfaces
         bool IsEditMode { get; set; }
         bool IsReadMode { get; set; }
         void Add();
-        Task<ObservableCollection<Sector>> GetSectorsAsync();
     }
 }

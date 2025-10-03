@@ -57,11 +57,6 @@ namespace SensorMap
 
             //Регистрация сервисы
             services.AddSingleton<IDataService, DataService>();
-            services.AddDbContext<AppDBContext>(options => 
-            {
-                string path = Path.Combine(AppContext.BaseDirectory, "AppDataBase.db");
-                options.UseSqlite($"Data Source={path}");
-            });
             services.AddSingleton<INavigation, NavigationService>();
 
 

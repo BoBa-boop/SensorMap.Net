@@ -14,7 +14,7 @@ namespace SensorMap.Model
     /// </summary>
     public class Sector:ReactiveObject
     {
-        [Reactive] public int Id {  get; set; }
+        [Reactive] public int ID {  get; set; }
         [Reactive] public string Name {  get; set; } = string.Empty;
         
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new ObservableCollection<Mechanism>();

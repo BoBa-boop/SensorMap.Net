@@ -17,9 +17,7 @@ namespace SensorMap.Model
         [Reactive] public int Id {  get; set; }
         [Reactive] public string TypePLC { get; set; } = string.Empty;
         [Reactive] public string Image { get; set; } = string.Empty;
-        [Reactive] public Mechanism? Mechanism { get; set; }
         [Reactive] public string IP { get; set; } = string.Empty;
-        [ReactiveCollection]
-        public ObservableCollection<PLCInputs>? Inputs { get; set; }
+        [Reactive] public ObservableCollection<PLCInputs>? Inputs { get; set; }
     }
 }

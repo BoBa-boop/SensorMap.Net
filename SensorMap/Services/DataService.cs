@@ -6,11 +6,9 @@ namespace SensorMap.Services
     {
 
         public bool IsEditMode { get; set; }
-        public bool IsReadMode { get; set; }
         public DataService()
         {
             IsEditMode = false;
-            IsReadMode = !IsEditMode;
         }
         public void Add()
         {

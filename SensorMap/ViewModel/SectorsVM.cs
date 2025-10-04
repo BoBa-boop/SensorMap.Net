@@ -13,20 +13,22 @@ namespace SensorMap.ViewModel
 {
     public class SectorsVM:ReactiveObject
     {
+        private readonly IDataBaseProvider _provider;
         private INavigation navigation;
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public Sector? SelectedSector { get; set; }
-        public SectorsVM(INavigation _nav)
+        public SectorsVM(INavigation _nav,AppDBContext appDB)
         {
-            navigation = _nav;
-            using (var db = new AppDBContext())
-            {
-                db.InitializeTestData();//тест данные
-                Sectors = new ObservableCollection<Sector>(db.Sectors.ToList());
-            }
+            db = appDB;
+            navigation = _nav; 
+            Sectors = new ObservableCollection<Sector>(db.Sectors.ToList());
             GoToSector = new RelayCommand<object>((s) => navigation.ShowDialog<MechanismView>());
             BackMenu = new RelayCommand(() => navigation.NavigateTo<MenuButtonsVM>());
+            _provider = provider;
+
+            Sectors = new ObservableCollection<Sector>(await _provider.GetAllSectorsAsync());
         }
+
         public ICommand GoToSector { get; set; }
         public ICommand BackMenu { get; set; }
     }

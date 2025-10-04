@@ -1,5 +1,6 @@
 ﻿using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using System.ComponentModel.DataAnnotations;
 
 namespace SensorMap.Model
 {
@@ -8,10 +9,14 @@ namespace SensorMap.Model
     /// </summary>
     public class Sensor:ReactiveObject
     {
-        [Reactive] public int Id { get; set; }
-        [Reactive] public string Name { get; set; } = string.Empty;
-        [Reactive] public SensorType Type { get; set; } 
-        [Reactive] public string Image { get; set; }=string.Empty;
+        [Key]
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public SensorType Type { get; set; } 
+        public string Image { get; set; }=string.Empty;
+
+        public Guid InputsID { get; set; }
+        public PLCInputs? Inputs { get; set; }
 
         public enum SensorType
         {

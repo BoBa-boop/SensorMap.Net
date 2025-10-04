@@ -16,11 +16,10 @@ namespace SensorMap.ViewModel
         {
             Navigation = _nav;
             _dataService = dataService;
-            SelectMode = new RelayCommand<bool>((s) => IsEditMode = !dataService.IsEditMode);
             ShowMenu = new RelayCommand(() => Navigation.NavigateTo<MenuButtonsVM>());
         }
 
-        public ICommand SelectMode { get; set; }
+
         public ICommand ShowMenu { get; set; }
     }
 }

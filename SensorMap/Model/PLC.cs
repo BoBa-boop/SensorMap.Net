@@ -14,10 +14,14 @@ namespace SensorMap.Model
     /// </summary>
     public class PLC:ReactiveObject
     {
-        [Reactive] public int Id {  get; set; }
-        [Reactive] public string TypePLC { get; set; } = string.Empty;
-        [Reactive] public string Image { get; set; } = string.Empty;
-        [Reactive] public string IP { get; set; } = string.Empty;
-        [Reactive] public ObservableCollection<PLCInputs>? Inputs { get; set; }
+        public Guid Id {  get; set; }
+        public string TypePLC { get; set; } = string.Empty;
+        public string Image { get; set; } = string.Empty;
+        public string IP { get; set; } = string.Empty;
+
+        public Guid InputsId { get; set; }
+        public ObservableCollection<PLCInputs>? Inputs { get; set; }
+        public Guid MechId { get; set; }
+        public Mechanism? Mechanism { get; set; }
     }
 }

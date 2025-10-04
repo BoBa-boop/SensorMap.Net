@@ -10,9 +10,9 @@ namespace SensorMap.Services
     {
         private Func<Type, ReactiveObject> _vmFact;
         private readonly Func<Type, object, ReactiveObject> _vmFactWithParam;
-        private Window _mainWindow;
+        private Window? _mainWindow;
         private IServiceProvider _serviceProvider;
-        private ReactiveObject _currentView;
+        private ReactiveObject? _currentView;
 
         [Reactive]
         public ReactiveObject CurrentView

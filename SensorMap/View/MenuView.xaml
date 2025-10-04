@@ -6,8 +6,9 @@
         xmlns:local="clr-namespace:SensorMap.View"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:VM="clr-namespace:SensorMap.ViewModel"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
-        Title="Карта датчиков" Height="450" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Меню" Height="450" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
             <i:InvokeCommandAction Command="{Binding ShowMenu}"/>
@@ -25,33 +26,25 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
-        <ToggleButton Grid.Row="1" Width="100" Height="30" Command="{Binding }">
-            <ToggleButton.Template>
-                <ControlTemplate TargetType="{x:Type ToggleButton}">
-                    <Border BorderBrush="White" BorderThickness="1" CornerRadius="10">
-                        <Border.Background>
-                            <SolidColorBrush Color="#5779c9" Opacity="1"/>
-                        </Border.Background>
-                        <TextBlock Text="Редактор" FontFamily="Tahoma"
-                VerticalAlignment="Center"
-                Foreground="PapayaWhip"
-                FontSize="16" TextAlignment="Center">
-                            <TextBlock.Style>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsEditMode}" Value="True">
-                                            <Setter Property="Text" Value="Просмотр"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Border>
-                </ControlTemplate>
-            </ToggleButton.Template>
+        <ToggleButton Grid.Row="1" Width="120" Height="30" IsChecked="{Binding IsEditMode}"
+                      Content="Редактор" FontSize="15" FontWeight="DemiBold">
+            <ToggleButton.Style>
+                <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonSwitch}">
+                    <Setter Property="Foreground" Value="LightGray"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter Property="Foreground">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="GreenYellow" Opacity="0.7"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ToggleButton.Style>
         </ToggleButton>
-        <ContentControl Grid.Row="0" Content="{Binding Navigation.CurrentView}"/>
-        <TextBlock Text="Version:" Grid.Row="2"
+        <ContentControl Content="{Binding Navigation.CurrentView}"/>
+        <TextBlock Text="Version" Grid.Row="2"
                 HorizontalAlignment="Right"/>
     </Grid>
 </Window>

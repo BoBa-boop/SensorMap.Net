@@ -7,7 +7,7 @@ namespace SensorMap.ViewModel
 {
     public class MechanismVM:ReactiveObject
     {
-        [Reactive]public Sector CurrentSector { get; set; } 
+        [Reactive]public Sector? CurrentSector { get; set; } 
         public MechanismVM()
         {
            

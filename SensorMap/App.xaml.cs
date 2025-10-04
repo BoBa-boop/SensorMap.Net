@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
@@ -18,13 +19,13 @@ namespace SensorMap
     /// </summary>
     public partial class App : Application
     {
-        protected Mutex Mutex;
-        private ServiceProvider _serviceProvider;
+        protected Mutex? Mutex;
+        private ServiceProvider? _serviceProvider;
         protected override void OnStartup(StartupEventArgs e)
         {
             IServiceCollection services = new ServiceCollection();
             ConfigurationServiceces(services);
-
+            AnalyzeDataBase();
             _serviceProvider = services.BuildServiceProvider();
             if (IsStartOneApp(e))
             {
@@ -33,6 +34,29 @@ namespace SensorMap
                 navigation.SetMainWindow(menuApp);
                 menuApp.Show();
             }
+        }
+
+        private void AnalyzeDataBase()
+        {
+            var config = new ConfigurationBuilder()
+                       .AddJsonFile("appsettings.json")
+                       .SetBasePath(Directory.GetCurrentDirectory())
+                       .Build();
+            string? connection_string = config.GetConnectionString("DefaultConnection");
+            if (!string.IsNullOrEmpty(connection_string))
+            {
+                DbContextOptions options = new DbContextOptionsBuilder().UseSqlite().UseSqlite(connection_string).Options;
+                using (AppDBContext dBContext = new AppDBContext(options))
+                {
+                    dBContext.Database.Migrate();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Отсутсвует путь к БД. Установите его в настройках","Ошибка",MessageBoxButton.OK,MessageBoxImage.Error);
+            }
+
+
         }
 
         private static void ConfigurationServiceces(IServiceCollection services)
@@ -53,15 +77,10 @@ namespace SensorMap
             services.AddTransient<MechanismVM>();
             services.AddTransient<SensorVM>();
             services.AddTransient<SectorsVM>();
-
+            services.AddTransient<SettingsVM>();
 
             //Регистрация сервисы
             services.AddSingleton<IDataService, DataService>();
-            services.AddDbContext<AppDBContext>(options => 
-            {
-                string path = Path.Combine(AppContext.BaseDirectory, "AppDataBase.db");
-                options.UseSqlite($"Data Source={path}");
-            });
             services.AddSingleton<INavigation, NavigationService>();
 
 

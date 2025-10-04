@@ -21,8 +21,13 @@
             <DataTemplate DataType="{x:Type menuView:MechanismVM}">
                 <view:MechanismView/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:SettingsVM}">
+                <view:SettingsPage/>
+            </DataTemplate>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Resources/Style/StyleDictionary.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

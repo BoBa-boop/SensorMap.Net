@@ -8,7 +8,7 @@ namespace SensorMap.Interfaces
         ReactiveObject CurrentView { get; set; }
         void NavigateTo<T>();
         void NavigateTo<T>(object parameter);
-        void ShowDialog<TWindow>() where TWindow : Window;
+        void ShowDialog<TWindow,TViewModel>() where TWindow : Window where TViewModel : class;
         void SetMainWindow(Window mainWindow);
     }
 }

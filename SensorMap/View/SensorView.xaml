@@ -12,14 +12,11 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <TreeView>
-            <TreeViewItem Header="Датчики">
-                <TreeViewItem Header="Оптические"/>
-                <TreeViewItem Header="Индуктивные"/>
-                <TreeViewItem Header="Барометрические"/>
-                <TreeViewItem Header="Лазерные"/>
-                <TreeViewItem Header="Инкрементальные"/>
-                <TreeViewItem Header="Герконовые"/>
-            </TreeViewItem>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Sensors}">
+                    <TextBlock Text="{Binding Name}"/>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
         </TreeView>
         <GridSplitter/>
         <Grid Grid.Column="1">

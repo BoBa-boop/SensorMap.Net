@@ -41,11 +41,14 @@ namespace SensorMap.Services
         {
             _mainWindow = window;
         }
-        public void ShowDialog<TWindow>() where TWindow : Window
+        public void ShowDialog<TWindow, TViewModel>() where TWindow : Window where TViewModel : class
         {
             if (_mainWindow == null) return;
 
             var dialogWindow = _serviceProvider.GetRequiredService<TWindow>();
+            var viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+
+            dialogWindow.DataContext = viewModel;
             dialogWindow.Owner = _mainWindow;
 
             _mainWindow.Hide(); // Скрываем главное окно

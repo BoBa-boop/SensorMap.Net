@@ -15,7 +15,7 @@ namespace SensorMap.ViewModel
             Navigation = _nav; 
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
             NavigateToSettings = new RelayCommand(() => Navigation.NavigateTo<SettingsVM>());
-            NavigateToSensors = new RelayCommand(() => Navigation.ShowDialog<SensorView>());
+            NavigateToSensors = new RelayCommand(() => Navigation.ShowDialog<SensorView,SensorVM>());
         }
         public ICommand NavigateToSectors { get; set; }
         public ICommand NavigateToSensors { get; set; }

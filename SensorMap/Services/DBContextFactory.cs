@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using SensorMap.EF;
+using SensorMap.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace SensorMap.Services
 {
-    public class DBContextFactory
+    public class DBContextFactory:IAppDbContextFactory
     {
         private readonly string _connectionString;
         public DBContextFactory(string connectionString)

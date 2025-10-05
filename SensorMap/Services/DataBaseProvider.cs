@@ -4,6 +4,7 @@ using SensorMap.Interfaces;
 using SensorMap.Model;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,8 +13,8 @@ namespace SensorMap.Services
 {
     public class DataBaseProvider : IDataBaseProvider
     {
-        private readonly DBContextFactory _dbContextFactory;
-        public DataBaseProvider(DBContextFactory dBContextFactory) 
+        private readonly IAppDbContextFactory _dbContextFactory;
+        public DataBaseProvider(IAppDbContextFactory dBContextFactory) 
         {
             _dbContextFactory = dBContextFactory;
         }
@@ -27,11 +28,19 @@ namespace SensorMap.Services
             }
         }
 
-        public async Task<IEnumerable<Sector>> GetAllSectorsAsync()
+        public async Task<ObservableCollection<Sector>> GetAllSectorsAsync()
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Sectors.ToListAsync();
+                return new ObservableCollection<Sector>(await dBContext.Sectors.ToListAsync());
+            }
+        }
+
+        public IEnumerable<Sensor> GetAllSensors()
+        {
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
+            {
+                return new ObservableCollection<Sensor>(dBContext.Sensors.ToList());
             }
         }
     }

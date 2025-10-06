@@ -13,8 +13,6 @@ namespace SensorMap.Services
         private Window? _mainWindow;
         private IServiceProvider _serviceProvider;
         private ReactiveObject? _currentView;
-
-        [Reactive]
         public ReactiveObject CurrentView
         {
             get => _currentView;

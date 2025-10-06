@@ -29,14 +29,19 @@ namespace SensorMap.ViewModel
         public SectorsVM(INavigation _nav, IDataBaseProvider provider)
         {
             navigation = _nav;
-            GoToSector = new RelayCommand<object>((s) => navigation.ShowDialog<MechanismView,MechanismVM>());
+            GoToSector = new RelayCommand<object>((s) => navigation.ShowDialog<MechanismView, MechanismVM>());
             BackMenu = new RelayCommand(() => navigation.NavigateTo<MenuButtonsVM>());
             _provider = provider;
 
             Sectors = new ObservableCollection<Sector>();
+            GetSectors();
         }
 
-        
+        private async void GetSectors()
+        {
+            await Task.Run(async ()=>Sectors = await _provider.GetAllSectorsAsync());
+        }
+
 
         public ICommand GoToSector { get; set; }
         public ICommand BackMenu { get; set; }

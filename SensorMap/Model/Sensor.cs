@@ -10,10 +10,10 @@ namespace SensorMap.Model
     public class Sensor:ReactiveObject
     {
         [Key]
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public SensorType Type { get; set; }
-        public string Image { get; set; } = string.Empty;
+        [Reactive] public int Id { get; set; }
+        [Reactive] public string Name { get; set; } = string.Empty;
+        [Reactive] public SensorType Type { get; set; }
+        [Reactive] public string Image { get; set; } = string.Empty;
 
         public enum SensorType
         {

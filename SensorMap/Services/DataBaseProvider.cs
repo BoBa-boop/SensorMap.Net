@@ -40,7 +40,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return new ObservableCollection<Sensor>(dBContext.Sensors.ToList());
+                return dBContext.Sensors.ToList();
             }
         }
     }

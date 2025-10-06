@@ -12,12 +12,56 @@
             <RowDefinition Height="40"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+        <i:Interaction.Triggers>
+            <i:EventTrigger EventName="Loaded">
+                <i:InvokeCommandAction Command="{Binding GetSectors}"/>
+            </i:EventTrigger>
+        </i:Interaction.Triggers>
         <Button Name="BackToMenu" Grid.Row="0"
              Content="Назад в меню" Command="{Binding BackMenu}"
              Width="100" Height="30" HorizontalAlignment="Left" Margin="10,0"/>
-        <ListView Background="AliceBlue" BorderThickness="0" Margin="10"
-                  Grid.Row="1" ItemsSource="{Binding Sectors,UpdateSourceTrigger=PropertyChanged}">
-            
-        </ListView>
+        <ListBox Background="Transparent" BorderThickness="0" Margin="10"
+               ItemsSource="{Binding Sectors}" Grid.Row="1">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" TextWrapping="Wrap"
+                                    TextAlignment="Center" FontSize="18"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                <Border x:Name="brd" Margin="5" CornerRadius="15" Width="100" Height="100">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="Black" Opacity="0.2"/>
+                                    </Border.Background>
+                                    <ContentPresenter/>
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="MouseLeftButtonDown">
+                                            <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.GoToSector}"/>
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Border.BorderBrush" TargetName="brd"  Value="Black"/>
+                                        <Setter Property="Border.BorderThickness" TargetName="brd" Value="2"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel VirtualizingPanel.IsVirtualizing="True" Width="330"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+        </ListBox>
     </Grid>
 </UserControl>

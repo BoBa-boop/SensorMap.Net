@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SensorMap.View"
         xmlns:Converter="clr-namespace:SensorMap.Converters"
         mc:Ignorable="d"
-        Title="MechanismView" Height="450" Width="800" WindowStartupLocation="CenterScreen">
+        Title="MechanismView" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
         <Style x:Key="SensorStyle" TargetType="Ellipse">
@@ -41,19 +41,16 @@
 
             </GroupBox>
         </Border>
-        <Grid Grid.Column="1" Grid.Row="1">
+        <Grid Grid.Column="1" Grid.Row="1" Background="AliceBlue">
+            <Image Source="/Resources/Шаблон.jpg" Width="200" Height="200"/>
+
             <Viewbox x:Name="MainViewbox" Stretch="Uniform">
                 <!-- Canvas будет масштабироваться через Viewbox -->
-                <Canvas x:Name="MapCanvas" 
-                    Width="{Binding OriginalImageSize.Width}"
-                    Height="{Binding OriginalImageSize.Height}"
+                <Canvas x:Name="MapCanvas" Width="200" Height="200"
                     Background="LightGray">
 
                     <!-- Изображение схемы -->
-                    <Image Source="/Resources/Шаблон.jpg" 
-                       Width="{Binding OriginalImageSize.Width}"
-                       Height="{Binding OriginalImageSize.Height}"/>
-
+                    
                     <!-- Контейнер для датчиков -->
                     <ItemsControl ItemsSource="{Binding Sensors}">
                         <ItemsControl.ItemsPanel>

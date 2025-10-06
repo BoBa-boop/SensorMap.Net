@@ -3,17 +3,27 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:cnv="clr-namespace:SensorMap.Converters"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:local="clr-namespace:SensorMap.View"
         mc:Ignorable="d"
-        Title="Данные о датчике" Height="450" Width="800" WindowStartupLocation="CenterScreen">
+        Title="Данные о датчике" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
+    <Window.Resources>
+        <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <TreeView>
+        <TreeView ItemsSource="{Binding Sensors}" SelectedValuePath="Children">
+            <i:Interaction.Behaviors>
+                <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
+            </i:Interaction.Behaviors>
             <TreeView.ItemTemplate>
-                <HierarchicalDataTemplate ItemsSource="{Binding Sensors}">
+                <HierarchicalDataTemplate  ItemsSource="{Binding Children}">
                     <TextBlock Text="{Binding Name}"/>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
@@ -26,17 +36,14 @@
             </Grid.RowDefinitions>
             <Border MinWidth="100" MinHeight="100" 
              HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Image/>
+                <Border CornerRadius="20" BorderBrush="Black" BorderThickness="1.5">
+                    <Image Source="{Binding SelectedNode.Image,Converter={StaticResource keyToSVG}}"/>
+                </Border>
             </Border>
             <GridSplitter/>
             <StackPanel Grid.Row="1">
-                <GroupBox  Header="Описание" Height="70" Margin="5">
-                    <TextBox Text="asdasdasdasdasdasdsa" IsReadOnly="True">
-                        <TextBox.Background>
-                            <SolidColorBrush Color="LightGray" Opacity="0.4"/>
-                        </TextBox.Background>
-                    </TextBox>
-                </GroupBox>
+                <hc:SimpleText Text="{Binding SelectedNode.Name}" Margin="10"
+                               VerticalAlignment="Top" HorizontalAlignment="Center"/>
                 <WrapPanel Orientation="Horizontal" Width="auto" Height="auto">
                     <ItemsControl ItemsSource="{Binding Users}">
                         <ItemsControl.ItemTemplate>

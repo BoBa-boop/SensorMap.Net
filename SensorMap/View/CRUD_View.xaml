@@ -1,0 +1,94 @@
+﻿<Window x:Class="SensorMap.View.CRUD_View"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SensorMap.View"
+        mc:Ignorable="d"
+        Title="CRUD_View" Height="450" Width="800">
+    <Grid Margin="10">
+
+         <!--TabControl to separate different sections--> 
+        <TabControl VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+
+             <!--SECTION FOR SECTORS--> 
+            <TabItem Header="Sectors">
+                <StackPanel Orientation="Vertical">
+                    <DataGrid ItemsSource="{Binding Sectors}" AutoGenerateColumns="False" CanUserAddRows="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding Id}" Header="Id"/>
+                            <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
+                            <DataGridTemplateColumn Header="Actions">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Edit" Command="{Binding EditSectorCommand}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                     <!--Buttons for CRUD operations on sectors--> 
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Create New Sector" Command="{Binding CreateNewSectorCommand}" Width="150"/>
+                        <Button Content="Delete Selected Sector" Command="{Binding DeleteSelectedSectorCommand}" Width="150"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
+             <!--SECTION FOR MECHANISMS--> 
+            <TabItem Header="Mechanisms">
+                <StackPanel Orientation="Vertical">
+                    <DataGrid ItemsSource="{Binding Mechanisms}" AutoGenerateColumns="False" CanUserAddRows="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding Id}" Header="Id"/>
+                            <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
+                            <DataGridTextColumn Binding="{Binding Path}" Header="Path"/>
+                            <DataGridComboBoxColumn ItemsSource="{Binding Type}" SelectedValueBinding="{Binding Type}" Header="Sensor Type"/>
+                            <DataGridTemplateColumn Header="Actions">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Edit" Command="{Binding EditMechanismCommand}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                     <!--Buttons for CRUD operations on mechanisms--> 
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Create New Mechanism" Command="{Binding CreateNewMechanismCommand}" Width="150"/>
+                        <Button Content="Delete Selected Mechanism" Command="{Binding DeleteSelectedMechanismCommand}" Width="150"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
+             <!--SECTION FOR SENSORS--> 
+            <TabItem Header="Sensors">
+                <StackPanel Orientation="Vertical">
+                    <DataGrid ItemsSource="{Binding Sensors}" AutoGenerateColumns="False" CanUserAddRows="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding Id}" Header="Id"/>
+                            <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
+                            <DataGridComboBoxColumn ItemsSource="{Binding Type}" SelectedValueBinding="{Binding Type}" Header="Sensor Type"/>
+                            <DataGridTextColumn Binding="{Binding Image}" Header="Image"/>
+                            <DataGridTemplateColumn Header="Actions">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Edit" Command="{Binding EditSensorCommand}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                     <!--Buttons for CRUD operations on sensors--> 
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Create New Sensor" Command="{Binding CreateNewSensorCommand}" Width="150"/>
+                        <Button Content="Delete Selected Sensor" Command="{Binding DeleteSelectedSensorCommand}" Width="150"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

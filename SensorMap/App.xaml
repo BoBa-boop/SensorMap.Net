@@ -24,6 +24,9 @@
             <DataTemplate DataType="{x:Type menuView:SettingsVM}">
                 <view:SettingsPage/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:CRUD_VM}">
+                <view:CRUD_View/>
+            </DataTemplate>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Resources/Style/StyleDictionary.xaml"/>
                 <ResourceDictionary Source="/Resources/style/ImageSVG.xaml"/>

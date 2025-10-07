@@ -12,5 +12,8 @@ namespace SensorMap.Interfaces
     {
         bool IsEditMode { get; set; }
         void Add();
+        ObservableCollection<Sensor> Sensors { get; }
+        ObservableCollection<Sector> Sectors { get; }
+        ObservableCollection<Mechanism> Mechanisms { get; }
     }
 }

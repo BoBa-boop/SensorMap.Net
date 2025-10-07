@@ -63,6 +63,7 @@ namespace SensorMap
             //Регистрация окон
             services.AddTransient<SensorView>();
             services.AddTransient<MechanismView>();
+            services.AddTransient<CRUD_View>();
 
             //Регистрация VM
             services.AddSingleton<MenuVM>();
@@ -70,25 +71,16 @@ namespace SensorMap
             services.AddTransient<MechanismVM>();
             services.AddTransient<SensorVM>();
             services.AddTransient<SectorsVM>();
+            services.AddTransient<CRUD_VM>();
             services.AddTransient<SettingsVM>();
 
             //Регистрация сервисы
-            var config = new ConfigurationBuilder()
-                       .AddJsonFile("appsettings.json")
-                       .SetBasePath(Directory.GetCurrentDirectory())
-                       .Build();
-            string? connection_string = config.GetConnectionString("DefaultConnection");
-            if (!string.IsNullOrEmpty(connection_string))
-                services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
-            else
-            {
-                MessageBox.Show("Отсутсвует путь к БД. Установите его в настройках", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            ConfigurationDataBase(services);
             services.AddSingleton<IDataService, DataService>();
-            services.AddSingleton<IDataBaseProvider,DataBaseProvider>();
+            services.AddSingleton<IDataBaseProvider, DataBaseProvider>();
             services.AddSingleton<INavigation, NavigationService>();
 
-            
+
 
             // Регистрация для создания VM без параметров
             services.AddSingleton<Func<Type, ReactiveObject>>(serviceProvider => viewModelType =>
@@ -120,6 +112,22 @@ namespace SensorMap
             });
 
         }
+
+        private static void ConfigurationDataBase(IServiceCollection services)
+        {
+            var config = new ConfigurationBuilder()
+                                   .AddJsonFile("appsettings.json")
+                                   .SetBasePath(Directory.GetCurrentDirectory())
+                                   .Build();
+            string? connection_string = config.GetConnectionString("DefaultConnection");
+            if (!string.IsNullOrEmpty(connection_string))
+                services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
+            else
+            {
+                MessageBox.Show("Отсутсвует путь к БД. Установите его в настройках", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private bool IsStartOneApp(StartupEventArgs e)
         {
             Mutex = new Mutex(true, ResourceAssembly.GetName().Name);

@@ -10,8 +10,9 @@ namespace SensorMap.Interfaces
 {
     public interface IDataBaseProvider
     {
-        Task<ObservableCollection<Sector>> GetAllSectorsAsync();
-        IEnumerable<Sensor> GetAllSensors();
+        Task<IEnumerable<Sector>> GetAllSectorsAsync();
+        Task<IEnumerable<Sensor>> GetAllSensors();
+        Task<IEnumerable<Mechanism>> GetAllMechanisms();
         Task CreateSector(Sector sector);
     }
 }

@@ -28,19 +28,27 @@ namespace SensorMap.Services
             }
         }
 
-        public async Task<ObservableCollection<Sector>> GetAllSectorsAsync()
+        public async Task<IEnumerable<Mechanism>> GetAllMechanisms()
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return new ObservableCollection<Sector>(await dBContext.Sectors.ToListAsync());
+                return await dBContext.Mechanisms.ToListAsync();
             }
         }
 
-        public IEnumerable<Sensor> GetAllSensors()
+        public async Task<IEnumerable<Sector>> GetAllSectorsAsync()
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return dBContext.Sensors.ToList();
+                return await dBContext.Sectors.ToListAsync();
+            }
+        }
+
+        public async Task<IEnumerable<Sensor>> GetAllSensors()
+        {
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
+            {
+                return await dBContext.Sensors.ToListAsync();
             }
         }
     }

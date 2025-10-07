@@ -12,6 +12,7 @@
             <Button Content="Участки" Width="150" Margin="5" Command="{Binding NavigateToSectors}"/>
             <Button Content="Датчики" Margin="5" Command="{Binding NavigateToSensors}" Width="150"/>
             <Button Content="Настройки" Margin="5" Command="{Binding NavigateToSettings}" Width="150"/>
+            <Button Content="Редактор данных БД" Margin="5" Command="{Binding NavigateToCRUD}" Width="150"/>
         </hc:SimpleStackPanel>
     </Grid>
 </UserControl>

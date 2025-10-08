@@ -1,13 +1,16 @@
-﻿using ReactiveUI;
+﻿using CommunityToolkit.Mvvm.Input;
+using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using SensorMap.View;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace SensorMap.ViewModel
 {
@@ -15,16 +18,29 @@ namespace SensorMap.ViewModel
     {
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
+        [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; } = new();
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
-        public CRUD_VM(IDataBaseProvider provider,IDataService service) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav) 
         {
+            Navigation = nav;
             _provider = provider;
             _service = service;
             Sectors = _service.Sectors;
             Sensors = _service.Sensors;
             Mechanisms = _service.Mechanisms;
+            ShowCommand =new RelayCommand<object>((Sensor)=> 
+            {
+                if(Sensor is Sensor) 
+                    Navigation.ShowDialog<SensorView, SensorVM>(Sensor); 
+            });
         }
+        //Получить событие DG editable и от него появляется кнопка Save
+        public ICommand DeleteCommand { get; set; }
+        public ICommand SaveCommand { get; set; }
+        public ICommand ShowCommand { get; set; }
+
+
     }
 }

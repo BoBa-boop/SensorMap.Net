@@ -1,0 +1,85 @@
+﻿using System.Windows;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using Microsoft.Xaml.Behaviors;
+
+namespace SensorMap.Behaviors
+{
+    public class UnSelectItemDataGrid : Behavior<DataGrid>
+    {
+        protected override void OnAttached()
+        {
+            base.OnAttached();
+            var window = Window.GetWindow(AssociatedObject);
+            if (window != null)
+            {
+                window.PreviewMouseDown += OnWindowPreviewMouseDown;
+            }
+        }
+
+        protected override void OnDetaching()
+        {
+            base.OnDetaching();
+            var window = Window.GetWindow(AssociatedObject);
+            if (window != null)
+            {
+                window.PreviewMouseDown -= OnWindowPreviewMouseDown;
+            }
+        }
+
+        
+
+        private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (AssociatedObject == null || !AssociatedObject.IsVisible) return;
+            Point clickPosition = e.GetPosition(AssociatedObject);
+            var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, e.GetPosition(AssociatedObject));
+            if (hitTestResult == null)
+            {
+                AssociatedObject.UnselectAll();
+                AssociatedObject.SelectedItem = null;
+            }
+            else
+            {
+                // Клик был внутри DataGrid - проверяем, был ли выбран какой-либо элемент
+                CheckSelectionOnClick(hitTestResult, clickPosition);
+            }
+        }
+        private void CheckSelectionOnClick(HitTestResult hitTestResult, Point clickPosition)
+        {
+            // Ищем DataGridRow или DataGridCell в визуальном дереве
+            DependencyObject current = hitTestResult.VisualHit;
+            bool foundDataGridElement = false;
+
+            while (current != null && current != AssociatedObject)
+            {
+                if (current is DataGridRow || current is DataGridCell)
+                {
+                    foundDataGridElement = true;
+                    break;
+                }
+                current = VisualTreeHelper.GetParent(current);
+            }
+
+            // Если клик был в области DataGrid, но не на строке или ячейке
+            if (!foundDataGridElement)
+            {
+                AssociatedObject.UnselectAll();
+                AssociatedObject.SelectedItem = null; 
+                if (AssociatedObject.IsKeyboardFocusWithin)
+                {
+                    Keyboard.ClearFocus();
+                }
+            }
+        }
+
+    }
+}
+    

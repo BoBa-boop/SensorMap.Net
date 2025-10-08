@@ -180,14 +180,14 @@ namespace SensorMap
                 // 4. Создаем датчики (каталог)
                 var sensors = new[]
                 {
-                    new Sensor { Name = "Датчик давления ПД-100", Type = Sensor.SensorType.Давления,Image = "pressure_sensor.png" },
-                    new Sensor { Name = "Индуктивный датчик ИД-5", Type = Sensor.SensorType.Индуктивный, Image = "inductive_sensor.png" },
-                    new Sensor { Name = "Оптический барьер ОБ-2", Type = Sensor.SensorType.Оптический, Image = "optical_sensor.png" },
-                    new Sensor { Name = "Концевой выключатель КВ-1", Type = Sensor.SensorType.Концевик, Image = "limit_switch.png" },
-                    new Sensor { Name = "Энкодер ЭН-500", Type = Sensor.SensorType.Энкодер, Image = "encoder.png" },
-                    new Sensor { Name = "Лазерный дальномер ЛД-10", Type = Sensor.SensorType.Лазерный, Image = "laser_sensor.png" },
-                    new Sensor { Name = "Линейный датчик ЛП-25", Type = Sensor.SensorType.Линейка, Image = "linear_sensor.png" },
-                    new Sensor { Name = "Герконовый датчик ГД-3", Type = Sensor.SensorType.Геркон, Image = "reed_switch.png" }
+                    new Sensor { Name = "Датчик давления ПД-100", Type = SensorType.Давления,Image = "pressure_sensor.png" },
+                    new Sensor { Name = "Индуктивный датчик ИД-5", Type = SensorType.Индуктивный, Image = "inductive_sensor.png" },
+                    new Sensor { Name = "Оптический барьер ОБ-2", Type = SensorType.Оптический, Image = "optical_sensor.png" },
+                    new Sensor { Name = "Концевой выключатель КВ-1", Type = SensorType.Концевик, Image = "limit_switch.png" },
+                    new Sensor { Name = "Энкодер ЭН-500", Type = SensorType.Энкодер, Image = "encoder.png" },
+                    new Sensor { Name = "Лазерный дальномер ЛД-10", Type = SensorType.Лазерный, Image = "laser_sensor.png" },
+                    new Sensor { Name = "Линейный датчик ЛП-25", Type = SensorType.Линейка, Image = "linear_sensor.png" },
+                    new Sensor { Name = "Герконовый датчик ГД-3", Type = SensorType.Геркон, Image = "reed_switch.png" }
                 };
                 dBContext.Sensors.AddRange(sensors);
                 dBContext.SaveChanges();

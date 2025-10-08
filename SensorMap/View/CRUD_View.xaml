@@ -4,90 +4,154 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SensorMap.View"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:cnv="clr-namespace:SensorMap.Converters"
+        xmlns:model="clr-namespace:SensorMap.Model"
+        xmlns:beh="clr-namespace:SensorMap.Behaviors"
         mc:Ignorable="d"
-        Title="CRUD_View" Height="450" Width="800">
+        Title="CRUD_View" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
+    <Window.Resources>
+        <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
+    </Window.Resources>
     <Grid Margin="10">
 
          <!--TabControl to separate different sections--> 
         <TabControl VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 
              <!--SECTION FOR SECTORS--> 
-            <TabItem Header="Sectors">
-                <StackPanel Orientation="Vertical">
-                    <DataGrid ItemsSource="{Binding Sectors}" AutoGenerateColumns="False" CanUserAddRows="True">
+            <TabItem Header="Участки">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding Sectors}" Grid.Row="0"
+                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False">
+                        <i:Interaction.Behaviors>
+                            <beh:UnSelectItemDataGrid/>
+                        </i:Interaction.Behaviors>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Id}" Header="Id"/>
-                            <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
-                            <DataGridTemplateColumn Header="Actions">
+                            <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
+                            <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Edit" Command="{Binding EditSectorCommand}" />
+                                        <hc:ElementGroup Orientation="Horizontal">
+                                            <Button Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}" hc:IconElement.Geometry="{StaticResource SaveGeometry}"/>
+                                            <Button Command="{Binding ElementName=root,Path=DataContext.SaveCommand}" 
+                                                    hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
+                                                    Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                        </hc:ElementGroup>
+                                        <DataTemplate.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Id}" Value="{x:Null}"/>
+                                                    <Condition Binding="{Binding Name}" Value="{x:Null}"/>
+                                                    <Condition Binding="{Binding Type}" Value="{x:Null}"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </MultiDataTrigger>
+                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                     <!--Buttons for CRUD operations on sectors--> 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Create New Sector" Command="{Binding CreateNewSectorCommand}" Width="150"/>
-                        <Button Content="Delete Selected Sector" Command="{Binding DeleteSelectedSectorCommand}" Width="150"/>
-                    </StackPanel>
-                </StackPanel>
+                </Grid>
             </TabItem>
 
              <!--SECTION FOR MECHANISMS--> 
-            <TabItem Header="Mechanisms">
-                <StackPanel Orientation="Vertical">
-                    <DataGrid ItemsSource="{Binding Mechanisms}" AutoGenerateColumns="False" CanUserAddRows="True">
+            <TabItem Header="Механизмы">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding Mechanisms}" Grid.Row="0"
+                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
+                              FrozenColumnCount="2">
+                        <i:Interaction.Behaviors>
+                            <beh:UnSelectItemDataGrid/>
+                        </i:Interaction.Behaviors>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Id}" Header="Id"/>
-                            <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
-                            <DataGridTextColumn Binding="{Binding Path}" Header="Path"/>
-                            <DataGridComboBoxColumn ItemsSource="{Binding Type}" SelectedValueBinding="{Binding Type}" Header="Sensor Type"/>
-                            <DataGridTemplateColumn Header="Actions">
+                            <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
+                            <DataGridTextColumn Binding="{Binding Path}" Header="Путь к папке"/>
+                            <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Edit" Command="{Binding EditMechanismCommand}" />
+                                        <hc:ElementGroup Orientation="Horizontal">
+                                            <Button Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}" hc:IconElement.Geometry="{StaticResource SaveGeometry}"/>
+                                            <Button Command="{Binding ElementName=root,Path=DataContext.SaveCommand}" hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
+                                                    Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                        </hc:ElementGroup>
+                                        <DataTemplate.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Id}" Value="{x:Null}"/>
+                                                    <Condition Binding="{Binding Name}" Value="{x:Null}"/>
+                                                    <Condition Binding="{Binding Type}" Value="{x:Null}"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </MultiDataTrigger>
+                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                     <!--Buttons for CRUD operations on mechanisms--> 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Create New Mechanism" Command="{Binding CreateNewMechanismCommand}" Width="150"/>
-                        <Button Content="Delete Selected Mechanism" Command="{Binding DeleteSelectedMechanismCommand}" Width="150"/>
-                    </StackPanel>
-                </StackPanel>
+                </Grid>
             </TabItem>
 
              <!--SECTION FOR SENSORS--> 
-            <TabItem Header="Sensors">
-                <StackPanel Orientation="Vertical">
-                    <DataGrid ItemsSource="{Binding Sensors}" AutoGenerateColumns="False" CanUserAddRows="True">
+            <TabItem Header="Датчики">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding Sensors}" Grid.Row="0" CanUserSortColumns="False"
+                              AutoGenerateColumns="False" CanUserAddRows="True"
+                              FrozenColumnCount="2" MinColumnWidth="90" MaxColumnWidth="250">
+                        <i:Interaction.Behaviors>
+                            <beh:UnSelectItemDataGrid/>
+                        </i:Interaction.Behaviors>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Id}" Header="Id"/>
-                            <DataGridTextColumn Binding="{Binding Name}" Header="Name"/>
-                            <DataGridComboBoxColumn ItemsSource="{Binding Type}" SelectedValueBinding="{Binding Type}" Header="Sensor Type"/>
-                            <DataGridTextColumn Binding="{Binding Image}" Header="Image"/>
-                            <DataGridTemplateColumn Header="Actions">
+                            <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
+                            <DataGridComboBoxColumn Header="Тип" ItemsSource="{Binding Source={cnv:EnumBinding {x:Type model:SensorType}}}"
+                                                  SelectedItemBinding="{Binding Type}"/>
+                            <DataGridTemplateColumn Header="Картинка">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Edit" Command="{Binding EditSensorCommand}" />
+                                        <Image Source="{Binding Image,Converter={StaticResource keyToSVG}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Действие" CanUserResize="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <hc:SimpleStackPanel Orientation="Horizontal" >
+                                            <Button Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
+                                                    hc:IconElement.Geometry="{StaticResource DeleteGeometry}"/>
+                                            <Button Command="{Binding ElementName=root,Path=DataContext.SaveCommand}"
+                                                    hc:IconElement.Geometry="{StaticResource SaveGeometry}"
+                                                    Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                            <Button Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
+                                                    CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
+                                                    hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"/>
+                                        </hc:SimpleStackPanel>
+                                        <DataTemplate.Triggers>
+                                            <MultiDataTrigger>
+                                                <MultiDataTrigger.Conditions>
+                                                    <Condition Binding="{Binding Id}" Value="{x:Null}"/>
+                                                    <Condition Binding="{Binding Name}" Value="{x:Null}"/>
+                                                    <Condition Binding="{Binding Type}" Value="{x:Null}"/>
+                                                </MultiDataTrigger.Conditions>
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </MultiDataTrigger>
+                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-
-                     <!--Buttons for CRUD operations on sensors--> 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Create New Sensor" Command="{Binding CreateNewSensorCommand}" Width="150"/>
-                        <Button Content="Delete Selected Sensor" Command="{Binding DeleteSelectedSensorCommand}" Width="150"/>
-                    </StackPanel>
-                </StackPanel>
+                </Grid>
             </TabItem>
         </TabControl>
     </Grid>

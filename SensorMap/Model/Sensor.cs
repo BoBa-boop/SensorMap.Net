@@ -1,6 +1,7 @@
 ﻿using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SensorMap.Model
 {
@@ -15,17 +16,30 @@ namespace SensorMap.Model
         [Reactive] public SensorType Type { get; set; }
         [Reactive] public string Image { get; set; } = string.Empty;
 
-        public enum SensorType
+        private bool _isModified;
+        [NotMapped]
+        public bool IsModified
         {
-            Оптический = 1,
-            Индуктивный,
-            Геркон,
-            Концевик,
-            Давления,
-            Линейка,
-            Лазерный,
-            Энкодер
+            get => _isModified;
+            set => this.RaiseAndSetIfChanged(ref _isModified, value);
+        }
+        public Sensor CreateSnapshot()
+        {
+            return new Sensor
+            {
+                Id = Id,
+                Name = Name,
+                Type = Type,
+                Image = Image,
+                IsModified = IsModified
+            };
+        }
+        public void RestoreFromSnapshot(Sensor snapshot)
+        {
+            Name = snapshot.Name;
+            Type = snapshot.Type;
+            Image = snapshot.Image;
+            IsModified = snapshot.IsModified;
         }
     }
-    
 }

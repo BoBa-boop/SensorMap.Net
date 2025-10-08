@@ -23,11 +23,12 @@ namespace SensorMap.ViewModel
         [Reactive]public Sensor SelectedNode
         {
             get => _sensorsTreeNode;
-            set => this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value);
+            set { if(value!=null) this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value); }
         }
         [Reactive]public ObservableCollection<SensorsTreeNode> Sensors {  get; set; }
-        public SensorVM(IDataBaseProvider provider, IDataService service)
+        public SensorVM(IDataBaseProvider provider, IDataService service,Sensor sensor=null)
         {
+            SelectedNode = sensor;
             _service = service;
             _provider = provider;
             Sensors = new ObservableCollection<SensorsTreeNode>(TreeNodeSensors());

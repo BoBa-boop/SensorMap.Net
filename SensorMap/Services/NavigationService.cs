@@ -44,7 +44,7 @@ namespace SensorMap.Services
             if (_mainWindow == null) return;
 
             var dialogWindow = _serviceProvider.GetRequiredService<TWindow>();
-            var viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+            var viewModel = _vmFact.Invoke(typeof(TViewModel));
 
             dialogWindow.DataContext = viewModel;
             dialogWindow.Owner = _mainWindow;
@@ -54,6 +54,28 @@ namespace SensorMap.Services
             dialogWindow.Closed += (s, args) =>
             {
                 _mainWindow.Show(); // Показываем когда диалог закрыт
+                _mainWindow.Activate();
+            };
+
+            dialogWindow.ShowDialog();
+        }
+
+        public void ShowDialog<TWindow, TViewModel>(object parameter)
+            where TWindow : Window
+            where TViewModel : class
+        {
+            if (_mainWindow == null) return;
+
+            var dialogWindow = _serviceProvider.GetRequiredService<TWindow>();
+            var viewModel = _vmFactWithParam.Invoke(typeof(TViewModel), parameter);
+
+            dialogWindow.DataContext = viewModel;
+            dialogWindow.Owner = _mainWindow;
+            _mainWindow.IsEnabled = false;
+
+            dialogWindow.Closed += (s, args) =>
+            {
+                _mainWindow.IsEnabled = true;
                 _mainWindow.Activate();
             };
 

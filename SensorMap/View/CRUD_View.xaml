@@ -9,10 +9,12 @@
         xmlns:cnv="clr-namespace:SensorMap.Converters"
         xmlns:model="clr-namespace:SensorMap.Model"
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
+        xmlns:valid="clr-namespace:SensorMap.Model.Validation"
         mc:Ignorable="d"
         Title="CRUD_View" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
     <Window.Resources>
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
+        <cnv:StringIsNullOrEmpty x:Key="strIsEmpty"/>
     </Window.Resources>
     <Grid Margin="10">
 
@@ -28,7 +30,7 @@
                     <DataGrid ItemsSource="{Binding Sectors}" Grid.Row="0"
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False">
                         <i:Interaction.Behaviors>
-                            <beh:UnSelectItemDataGrid/>
+                            <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
@@ -69,7 +71,7 @@
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               FrozenColumnCount="2">
                         <i:Interaction.Behaviors>
-                            <beh:UnSelectItemDataGrid/>
+                            <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
@@ -106,18 +108,29 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Sensors}" Grid.Row="0" CanUserSortColumns="False"
-                              AutoGenerateColumns="False" CanUserAddRows="True"
+                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" CanUserSortColumns="False"
+                              AutoGenerateColumns="False" CanUserAddRows="True" 
                               FrozenColumnCount="2" MinColumnWidth="90" MaxColumnWidth="250"
                               hc:DataGridAttach.ShowRowNumber="True">
-                        
-                        <!--<i:Interaction.Behaviors>
-                            <beh:UnSelectItemDataGrid/>
-                        </i:Interaction.Behaviors>-->
+                        <i:Interaction.Behaviors>
+                            <beh:DataGridBahavior/>
+                        </i:Interaction.Behaviors>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
-                            <DataGridComboBoxColumn Header="Тип" ItemsSource="{Binding Source={cnv:EnumBinding {x:Type model:SensorType}}}"
-                                                  SelectedItemBinding="{Binding Type}"/>
+                            <DataGridTextColumn Binding="{Binding Name, ValidatesOnExceptions=True,
+                                UpdateSourceTrigger=PropertyChanged}" Header="Название"/>
+                            <DataGridTemplateColumn Header="Тип">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Type}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={cnv:EnumBinding {x:Type model:SensorType}},UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Картинка">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -137,30 +150,39 @@
                                     <DataTemplate>
                                         
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
+                                            <Button Name="Delete" ToolTip="Удалить"  Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
                                                     CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
                                                     hc:IconElement.Geometry="{StaticResource DeleteGeometry}"/>
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.SaveCommand}"
+                                            
+                                            <Button Name="Save" ToolTip="Сохранить в БД"
+                                                    Command="{Binding ElementName=root,Path=DataContext.SaveCommand}"
                                                     CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
                                                     hc:IconElement.Geometry="{StaticResource SaveGeometry}"
                                                     Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
+                                            
+                                            <Button x:Name="Show" ToolTip="Показать карточку"
+                                                    Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
                                                     CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
                                                     hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"/>
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.CancelCommand}"
+                                            
+                                            <Button Name="Cancel" ToolTip="Отменить" Command="{Binding ElementName=root,Path=DataContext.CancelCommand}"
                                                     CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
                                                     hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}"
                                                     Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding Id}" Value="{x:Null}"/>
-                                                    <Condition Binding="{Binding Name}" Value="{x:Null}"/>
-                                                    <Condition Binding="{Binding Type}" Value="{x:Null}"/>
-                                                </MultiDataTrigger.Conditions>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
+                                                                        Path=(Validation.HasError)}"  Value="True">
+                                                <Setter Property="Visibility" TargetName="Show" Value="Collapsed"/>
+                                                <Setter Property="Visibility" TargetName="Cancel" Value="Collapsed"/>
+                                                <Setter Property="Visibility" TargetName="Save" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Type}" Value="{x:Null}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
-                                            </MultiDataTrigger>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Name,Converter={StaticResource strIsEmpty}}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" TargetName="Show"/>
+                                            </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -168,9 +190,11 @@
                         </DataGrid.Columns>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
+                                <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
                                 <Style.Triggers>
                                     <!--#region Несохраненно-->
                                     <DataTrigger Binding="{Binding IsModified}" Value="True">
+                                        <Setter Property="ToolTip" Value="Ожидает сохранения"/>
                                         <Setter Property="Background" Value="#fdff80"/>
                                         <Setter Property="Foreground" Value="Black"/>
                                     </DataTrigger>
@@ -191,6 +215,13 @@
                                         <Setter Property="Background" Value="#fdff80"/>
                                     </MultiDataTrigger>
                                     <!--#endregion-->
+                                    <Trigger Property="Validation.HasError" Value="True">
+                                        <Setter Property="Background" Value="LightPink"/>
+                                        <Setter Property="ToolTip"
+                                                Value="{Binding RelativeSource={RelativeSource Self},
+                                                        Path=(Validation.Errors)[0].ErrorContent}"/>
+                                        
+                                    </Trigger>
                                 </Style.Triggers>
                             </Style>
                         </DataGrid.RowStyle>
@@ -201,13 +232,21 @@
                                         <MultiDataTrigger.Conditions>
                                             <Condition Binding="{Binding IsModified}" Value="True"/>
                                             <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
+                                            <Condition Binding="{Binding Validation.HasError,RelativeSource={RelativeSource Self}}" Value="False"/>
                                         </MultiDataTrigger.Conditions>
                                         <Setter Property="Background" Value="#c7c926"/>
                                         <Setter Property="Foreground" Value="Black"/>
+                                        <Setter Property="ToolTip" Value="Ожидает сохранения"/>
                                     </MultiDataTrigger>
+                                    <Trigger Property="Validation.HasError" Value="True">
+                                        <Setter Property="Background" Value="HotPink"/>
+                                    </Trigger>
                                 </Style.Triggers>
                             </Style>
                         </DataGrid.CellStyle>
+                        <DataGrid.RowValidationRules>
+                            <valid:ValidationRuleDataGrid ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>
                     </DataGrid>
                 </Grid>
             </TabItem>

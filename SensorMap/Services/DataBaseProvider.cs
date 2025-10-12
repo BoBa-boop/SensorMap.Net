@@ -19,33 +19,31 @@ namespace SensorMap.Services
             _dbContextFactory = dBContextFactory;
         }
 
-        public async Task CreateMechainsm(Mechanism mechanism)
+        public async Task Create<T>(T entity) where T : class
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                dBContext.Mechanisms.Add(mechanism);
+                dBContext.Entry<T>(entity).State = EntityState.Added;
+                await dBContext.SaveChangesAsync();
+            }
+        }
+        public async Task Delete<T>(T entity) where T : class
+        {
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
+            {
+                dBContext.Entry<T>(entity).State = EntityState.Deleted;
                 await dBContext.SaveChangesAsync();
             }
         }
 
-        public async Task CreateSector(Sector sector)
+        public async Task Update<T>(T entity) where T : class
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                dBContext.Sectors.Add(sector);
+                dBContext.Entry<T>(entity).State = EntityState.Modified;
                 await dBContext.SaveChangesAsync();
             }
         }
-
-        public async Task CreateSensor(Sensor sensor)
-        {
-            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
-            {
-                dBContext.Sensors.Add(sensor);
-                await dBContext.SaveChangesAsync();
-            }
-        }
-
         public async Task<IEnumerable<Mechanism>> GetAllMechanisms()
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
@@ -89,5 +87,6 @@ namespace SensorMap.Services
                 return null;
             }
         }
+
     }
 }

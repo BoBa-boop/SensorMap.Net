@@ -1,15 +1,17 @@
 ﻿using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Reactive.Linq;
+using System.Windows.Input;
 
 namespace SensorMap.Model
 {
     /// <summary>
     /// Описывает датчик (тип, картинка, название)
     /// </summary>
-    public class Sensor:ReactiveObject
+    public class Sensor : ReactiveObject, IEditableObject
     {
         private bool _isInitialized = false;
         private string _name = string.Empty;
@@ -20,18 +22,18 @@ namespace SensorMap.Model
         [Reactive] public string Name 
         {
             get => _name;
-            set => this.RaiseAndSetIfChanged(ref _name, value);
+            set  { this.RaiseAndSetIfChanged(ref _name, value); }
         }
         [Reactive] public SensorType Type
         {
             get => _type;
-            set => this.RaiseAndSetIfChanged(ref _type, value);
+            set { this.RaiseAndSetIfChanged(ref _type, value); }
         }
         [Reactive]
         public string Image
         {
             get => _image;
-            set => this.RaiseAndSetIfChanged(ref _image, value);
+            set { this.RaiseAndSetIfChanged(ref _image, value); }
         }
 
         private bool _isModified;
@@ -43,7 +45,7 @@ namespace SensorMap.Model
         }
         public Sensor()
         {
-            SetupPropertyChangeTracking();
+            //SetupPropertyChangeTracking();
         }
         private void SetupPropertyChangeTracking()
         {
@@ -53,6 +55,29 @@ namespace SensorMap.Model
                 x => x.Image)
                 .Skip(1)
                 .Subscribe(_ => IsModified = true);
+        }
+
+
+        private Sensor backupCopy;
+        public void BeginEdit()
+        {
+            if (IsModified) return;
+            backupCopy = this.MemberwiseClone() as Sensor;
+        }
+
+        public void CancelEdit()
+        {
+            if (!IsModified) return;
+            IsModified = false;
+            this.Name = backupCopy.Name;
+            this.Id = backupCopy.Id;
+            this.Image = backupCopy.Image;
+            this.Type = backupCopy.Type;
+        }
+
+        public void EndEdit()
+        {
+            
         }
     }
 }

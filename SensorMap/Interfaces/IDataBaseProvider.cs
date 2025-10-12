@@ -14,8 +14,8 @@ namespace SensorMap.Interfaces
         Task<IEnumerable<Sensor>> GetAllSensors();
         Task<T> GetElementByID<T>(int id) where T:class;
         Task<IEnumerable<Mechanism>> GetAllMechanisms();
-        Task CreateSector(Sector sector);
-        Task CreateSensor(Sensor sensor);
-        Task CreateMechainsm(Mechanism mechanism);
+        Task Create<T>(T entity) where T : class;
+        Task Delete<T>(T entity) where T : class;
+        Task Update<T>(T entity) where T : class;
     }
 }

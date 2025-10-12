@@ -39,25 +39,59 @@ namespace SensorMap.ViewModel
             });
             SaveCommand = new RelayCommand<object>((arg) => 
             {
-                if (arg is Sensor sensor)
+                switch (arg)
                 {
-                    sensor.IsModified = false;
-                    _provider.CreateSensor(sensor);
+                    case Sector sector:
+                        {
+                            if (sector.Id == 0) _provider.Create<Sector>(sector);
+                            else _provider.Update<Sector>(sector);
+                        } break;
+                    case Sensor sensor:
+                        {
+                            if (sensor.Id == 0) _provider.Create<Sensor>(sensor);
+                            else _provider.Update<Sensor>(sensor);
+                        }
+                        break;
+                    case Mechanism mechanism:
+                        {
+                            if (mechanism.Id == 0) _provider.Create<Mechanism>(mechanism);
+                            else _provider.Update<Mechanism>(mechanism);
+                        }
+                        break;
                 }
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
             {
                 switch (arg)
                 {
-                    case Sector sector: Sectors.Remove(sector); break;
-                    case Sensor sensor: Sensors.Remove(sensor); break;
-                    case Mechanism mechanism: Mechanisms.Remove(mechanism); break;
+                    case Sector sector:
+                        {
+                            _provider.Delete<Sector>(sector);
+                            Sectors.Add(new Sector());
+                        }
+                        break;
+                    case Sensor sensor:
+                        {
+                            _provider.Delete<Sensor>(sensor);
+                            Sensors.Add(new Sensor());
+                        }
+                        break;
+                    case Mechanism mechanism:
+                        {
+                            _provider.Delete<Mechanism>(mechanism);
+                            Mechanisms.Add(new Mechanism());
+                        }
+                        break;
                 }
-
             });
             CancelCommand = new RelayCommand<object>((arg)=>
             {
-               // GetObjectFromDBAsync(arg);
+                switch (arg)
+                {
+                    //case Sector sector: Sectors.Remove(sector); break;
+                    case Sensor sensor: sensor.CancelEdit(); break;
+                    //case Mechanism mechanism: Mechanisms.Remove(mechanism); break;
+                }
             });
             AddImage = new RelayCommand(() =>
             {
@@ -65,41 +99,6 @@ namespace SensorMap.ViewModel
                 openFileDialog.Filter = "Файлы рисунков (*.bmp, *.jpg)|*.bmp;*.jpg;*.png;*.jpeg|Все файлы (*.*)|*.*";
                 openFileDialog.ShowDialog();
             });
-        }
-
-        private async void GetObjectFromDBAsync(object? arg)
-        {
-            if (arg != null)
-            {
-                var entityType = arg.GetType();
-                var idProperty = entityType.GetProperty("Id");
-
-                if (idProperty != null)
-                {
-                    //var freshEntity = await _provider.GetElementByID<>((int)idProperty.GetValue(arg));
-                    //if (freshEntity != null)
-                    {
-                        // Копируем значения свойств
-                        //CopyProperties(freshEntity, arg);
-
-                        // Сбрасываем флаг модификации
-                        var isModifiedProperty = entityType.GetProperty("IsModified");
-                        isModifiedProperty?.SetValue(arg, false);
-                    }
-                }
-            }
-        }
-
-        private void CopyProperties(object source, object destination)
-        {
-            var properties = source.GetType().GetProperties()
-        .Where(p => p.CanRead && p.CanWrite && p.Name != "IsModified");
-
-            foreach (var property in properties)
-            {
-                var value = property.GetValue(source);
-                property.SetValue(destination, value);
-            }
         }
 
         //Получить событие DG editable и от него появляется кнопка Save

@@ -9,33 +9,39 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Xaml.Behaviors;
+using System.Windows.Controls.Primitives;
+using System.Diagnostics;
 
 namespace SensorMap.Behaviors
 {
-    public class UnSelectItemDataGrid : Behavior<DataGrid>
+    public class DataGridBahavior : Behavior<DataGrid>
     {
+
         protected override void OnAttached()
         {
             base.OnAttached();
+            #region -UnSel
             var window = Window.GetWindow(AssociatedObject);
             if (window != null)
             {
                 window.PreviewMouseDown += OnWindowPreviewMouseDown;
             }
+            #endregion
         }
-
         protected override void OnDetaching()
         {
             base.OnDetaching();
+            #region -UnSel
             var window = Window.GetWindow(AssociatedObject);
             if (window != null)
             {
                 window.PreviewMouseDown -= OnWindowPreviewMouseDown;
             }
+            #endregion
         }
 
-        
 
+        #region -UnSel
         private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (AssociatedObject == null || !AssociatedObject.IsVisible) return;
@@ -79,7 +85,8 @@ namespace SensorMap.Behaviors
                 }
             }
         }
-
+        #endregion
+        
     }
 }
     

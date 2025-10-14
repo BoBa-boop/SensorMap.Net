@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -39,59 +40,42 @@ namespace SensorMap.ViewModel
             });
             SaveCommand = new RelayCommand<object>((arg) => 
             {
-                switch (arg)
+                if (arg is null) return;
+                var entityType = arg.GetType();
+
+                PropertyInfo? idProperty = entityType.GetProperty("Id", BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                if (idProperty != null && Convert.ToInt32(idProperty.GetValue(arg)) == 0)
                 {
-                    case Sector sector:
-                        {
-                            if (sector.Id == 0) _provider.Create<Sector>(sector);
-                            else _provider.Update<Sector>(sector);
-                        } break;
-                    case Sensor sensor:
-                        {
-                            if (sensor.Id == 0) _provider.Create<Sensor>(sensor);
-                            else _provider.Update<Sensor>(sensor);
-                        }
-                        break;
-                    case Mechanism mechanism:
-                        {
-                            if (mechanism.Id == 0) _provider.Create<Mechanism>(mechanism);
-                            else _provider.Update<Mechanism>(mechanism);
-                        }
-                        break;
+                    MethodInfo createMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Create))!.MakeGenericMethod(entityType);
+                    if(createMethod.Invoke(_provider, new object[] { arg })!=null)
+                    {
+                        entityType?.GetProperty("IsModified")?.SetValue(entityType, false);
+                        entityType?.GetProperty("IsExist")?.SetValue(entityType, true);
+                    }
+                }
+                else
+                {
+                    MethodInfo updateMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Update))!.MakeGenericMethod(entityType);
+                    if(updateMethod.Invoke(_provider, new object[] { arg })!=null)
+                        entityType?.GetProperty("IsModified")?.SetValue(entityType, false);
                 }
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
             {
-                switch (arg)
+                if (arg is null) return;
+                var entityType = arg.GetType();
+                MethodInfo deleteMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Delete))!.MakeGenericMethod(entityType);
+                if (deleteMethod.Invoke(_provider, new object[] { arg }) != null)
                 {
-                    case Sector sector:
-                        {
-                            _provider.Delete<Sector>(sector);
-                            Sectors.Add(new Sector());
-                        }
-                        break;
-                    case Sensor sensor:
-                        {
-                            _provider.Delete<Sensor>(sensor);
-                            Sensors.Add(new Sensor());
-                        }
-                        break;
-                    case Mechanism mechanism:
-                        {
-                            _provider.Delete<Mechanism>(mechanism);
-                            Mechanisms.Add(new Mechanism());
-                        }
-                        break;
+                    PropertyInfo? prop = typeof(IDataService).GetProperty(entityType.Name + "s");
                 }
             });
             CancelCommand = new RelayCommand<object>((arg)=>
             {
-                switch (arg)
-                {
-                    //case Sector sector: Sectors.Remove(sector); break;
-                    case Sensor sensor: sensor.CancelEdit(); break;
-                    //case Mechanism mechanism: Mechanisms.Remove(mechanism); break;
-                }
+                if (arg is null) return;
+                var entityType = arg.GetType();
+                MethodInfo cancelMethod = entityType.GetMethod("CancelEdit")!.MakeGenericMethod(entityType);
+              
             });
             AddImage = new RelayCommand(() =>
             {
@@ -101,7 +85,6 @@ namespace SensorMap.ViewModel
             });
         }
 
-        //Получить событие DG editable и от него появляется кнопка Save
         public ICommand DeleteCommand { get; set; }
         public ICommand SaveCommand { get; set; }
         public ICommand ShowCommand { get; set; }

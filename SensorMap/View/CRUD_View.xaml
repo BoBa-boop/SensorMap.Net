@@ -17,7 +17,90 @@
         <cnv:StringIsNullOrEmpty x:Key="strIsEmpty"/>
     </Window.Resources>
     <Grid Margin="10">
+        <Grid.Resources>
+            <DataTemplate x:Key="CRUD_Buttons">
+                <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
+                        <Button Name="Delete" ToolTip="Удалить"  Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
+                         CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
+                         hc:IconElement.Geometry="{StaticResource DeleteGeometry}"/>
 
+                    <Button Name="Save" ToolTip="Сохранить в БД"
+                         Command="{Binding ElementName=root,Path=DataContext.SaveCommand}"
+                         CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
+                         hc:IconElement.Geometry="{StaticResource SaveGeometry}"
+                         Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                    <Button Name="Cancel" ToolTip="Отменить" Command="{Binding ElementName=root,Path=DataContext.CancelCommand}"
+                         CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
+                         hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}"
+                         Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                    </hc:ElementGroup>
+                    <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
+                                             Path=(Validation.HasError)}"  Value="True">
+                        <Setter Property="Visibility" TargetName="Cancel" Value="Collapsed"/>
+                            <Setter Property="Visibility" TargetName="Save" Value="Collapsed"/>
+                        </DataTrigger>
+                        <!--<DataTrigger Binding="{Binding Type}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>-->
+                        <!--<DataTrigger Binding="{Binding Name,Converter={StaticResource strIsEmpty}}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" TargetName="Show"/>
+                        </DataTrigger>-->
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            <Style TargetType="DataGridRow" x:Key="rowStyle"  BasedOn="{StaticResource DataGridRowStyle}">
+                <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
+                <Style.Triggers>
+                    <!--#region Несохраненно-->
+                    <DataTrigger Binding="{Binding IsModified}" Value="True">
+                        <Setter Property="ToolTip" Value="Ожидает сохранения"/>
+                        <Setter Property="Background" Value="#fdff80"/>
+                        <Setter Property="Foreground" Value="Black"/>
+                    </DataTrigger>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsModified}" Value="True"/>
+                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="#c7c926"/>
+                    </MultiDataTrigger>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Self}}"  Value="False"/>
+                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
+                            <Condition Binding="{Binding IsModified,RelativeSource={RelativeSource Self}}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="Background" Value="#fdff80"/>
+                    </MultiDataTrigger>
+                    <!--#endregion-->
+                    <Trigger Property="Validation.HasError" Value="True">
+                        <Setter Property="Background" Value="LightPink"/>
+                        <Setter Property="ToolTip"
+                    Value="{Binding RelativeSource={RelativeSource Self},
+                            Path=(Validation.Errors)[0].ErrorContent}"/>
+
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="DataGridCell" x:Key="cellStyle" BasedOn="{StaticResource DataGridCellStyle}">
+                <Style.Triggers>
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsModified}" Value="True"/>
+                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
+                            <Condition Binding="{Binding Validation.HasError,RelativeSource={RelativeSource Self}}" Value="False"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="#c7c926"/>
+                        <Setter Property="Foreground" Value="Black"/>
+                        <Setter Property="ToolTip" Value="Ожидает сохранения"/>
+                    </MultiDataTrigger>
+                    <Trigger Property="Validation.HasError" Value="True">
+                        <Setter Property="Background" Value="HotPink"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
          <!--TabControl to separate different sections--> 
         <TabControl VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 
@@ -27,32 +110,24 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Sectors}" Grid.Row="0"
-                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False">
+                    <DataGrid ItemsSource="{Binding Sectors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
+                              MinColumnWidth="90" MaxColumnWidth="250"
+                              hc:DataGridAttach.ShowRowNumber="True" RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
+                        <DataGrid.RowValidationRules>
+                            <valid:ValidationRuleDataGrid ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <hc:ElementGroup Orientation="Horizontal">
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}" hc:IconElement.Geometry="{StaticResource SaveGeometry}"/>
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.SaveCommand}" 
-                                                    hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
-                                                    Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                        <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
+                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>                                            
                                         </hc:ElementGroup>
-                                        <DataTemplate.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding Id}" Value="{x:Null}"/>
-                                                    <Condition Binding="{Binding Name}" Value="{x:Null}"/>
-                                                    <Condition Binding="{Binding Type}" Value="{x:Null}"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                            </MultiDataTrigger>
-                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -69,7 +144,7 @@
                     </Grid.RowDefinitions>
                     <DataGrid ItemsSource="{Binding Mechanisms}" Grid.Row="0"
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
-                              FrozenColumnCount="2">
+                              FrozenColumnCount="2" RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
@@ -79,21 +154,9 @@
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <hc:ElementGroup Orientation="Horizontal">
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}" hc:IconElement.Geometry="{StaticResource SaveGeometry}"/>
-                                            <Button Command="{Binding ElementName=root,Path=DataContext.SaveCommand}" hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
-                                                    Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                        <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
+                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                         </hc:ElementGroup>
-                                        <DataTemplate.Triggers>
-                                            <MultiDataTrigger>
-                                                <MultiDataTrigger.Conditions>
-                                                    <Condition Binding="{Binding Id}" Value="{x:Null}"/>
-                                                    <Condition Binding="{Binding Name}" Value="{x:Null}"/>
-                                                    <Condition Binding="{Binding Type}" Value="{x:Null}"/>
-                                                </MultiDataTrigger.Conditions>
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                            </MultiDataTrigger>
-                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -111,7 +174,7 @@
                     <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" CanUserSortColumns="False"
                               AutoGenerateColumns="False" CanUserAddRows="True" 
                               FrozenColumnCount="2" MinColumnWidth="90" MaxColumnWidth="250"
-                              hc:DataGridAttach.ShowRowNumber="True">
+                              hc:DataGridAttach.ShowRowNumber="True" RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
@@ -141,109 +204,29 @@
                                                 </i:EventTrigger>
                                             </i:Interaction.Triggers>
                                         </Image>
-                                        
+
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Действие" CanUserResize="False">
+                            <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        
-                                        <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
-                                            <Button Name="Delete" ToolTip="Удалить"  Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
-                                                    CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
-                                                    hc:IconElement.Geometry="{StaticResource DeleteGeometry}"/>
-                                            
-                                            <Button Name="Save" ToolTip="Сохранить в БД"
-                                                    Command="{Binding ElementName=root,Path=DataContext.SaveCommand}"
-                                                    CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
-                                                    hc:IconElement.Geometry="{StaticResource SaveGeometry}"
-                                                    Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                                            
+                                        <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
+                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                             <Button x:Name="Show" ToolTip="Показать карточку"
                                                     Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
-                                                    CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
+                                                    CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
                                                     hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"/>
-                                            
-                                            <Button Name="Cancel" ToolTip="Отменить" Command="{Binding ElementName=root,Path=DataContext.CancelCommand}"
-                                                    CommandParameter="{Binding DataContext, RelativeSource={RelativeSource Self}}"
-                                                    hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}"
-                                                    Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
-                                                                        Path=(Validation.HasError)}"  Value="True">
-                                                <Setter Property="Visibility" TargetName="Show" Value="Collapsed"/>
-                                                <Setter Property="Visibility" TargetName="Cancel" Value="Collapsed"/>
-                                                <Setter Property="Visibility" TargetName="Save" Value="Collapsed"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Type}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Name,Converter={StaticResource strIsEmpty}}" Value="True">
-                                                <Setter Property="Visibility" Value="Collapsed" TargetName="Show"/>
+                                            <!--<DataTrigger Binding="{Binding DataContext}" Value="Sensor">-->
+                                                <Setter TargetName="btnGroup" Property="Visibility" Value="Collapsed" />
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
-                        <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGridRowStyle}">
-                                <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
-                                <Style.Triggers>
-                                    <!--#region Несохраненно-->
-                                    <DataTrigger Binding="{Binding IsModified}" Value="True">
-                                        <Setter Property="ToolTip" Value="Ожидает сохранения"/>
-                                        <Setter Property="Background" Value="#fdff80"/>
-                                        <Setter Property="Foreground" Value="Black"/>
-                                    </DataTrigger>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding IsModified}" Value="True"/>
-                                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Background" Value="#c7c926"/>
-                                    </MultiDataTrigger>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Self}}"  Value="False"/>
-                                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
-                                            <Condition Binding="{Binding IsModified,RelativeSource={RelativeSource Self}}" Value="True"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Foreground" Value="Black"/>
-                                        <Setter Property="Background" Value="#fdff80"/>
-                                    </MultiDataTrigger>
-                                    <!--#endregion-->
-                                    <Trigger Property="Validation.HasError" Value="True">
-                                        <Setter Property="Background" Value="LightPink"/>
-                                        <Setter Property="ToolTip"
-                                                Value="{Binding RelativeSource={RelativeSource Self},
-                                                        Path=(Validation.Errors)[0].ErrorContent}"/>
-                                        
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGrid.RowStyle>
-                        <DataGrid.CellStyle>
-                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DataGridCellStyle}">
-                                <Style.Triggers>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding IsModified}" Value="True"/>
-                                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
-                                            <Condition Binding="{Binding Validation.HasError,RelativeSource={RelativeSource Self}}" Value="False"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Background" Value="#c7c926"/>
-                                        <Setter Property="Foreground" Value="Black"/>
-                                        <Setter Property="ToolTip" Value="Ожидает сохранения"/>
-                                    </MultiDataTrigger>
-                                    <Trigger Property="Validation.HasError" Value="True">
-                                        <Setter Property="Background" Value="HotPink"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGrid.CellStyle>
                         <DataGrid.RowValidationRules>
                             <valid:ValidationRuleDataGrid ValidationStep="UpdatedValue"/>
                         </DataGrid.RowValidationRules>

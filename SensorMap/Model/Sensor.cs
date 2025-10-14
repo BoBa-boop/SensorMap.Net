@@ -13,7 +13,6 @@ namespace SensorMap.Model
     /// </summary>
     public class Sensor : ReactiveObject, IEditableObject
     {
-        private bool _isInitialized = false;
         private string _name = string.Empty;
         private SensorType _type;
         private string _image = string.Empty;
@@ -43,18 +42,16 @@ namespace SensorMap.Model
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
+        private bool _isExist;
+        [NotMapped]
+        public bool IsExist
+        {
+            get => _isExist;
+            set => this.RaiseAndSetIfChanged(ref _isExist, value);
+        }
         public Sensor()
         {
-            //SetupPropertyChangeTracking();
-        }
-        private void SetupPropertyChangeTracking()
-        {
-            this.WhenAnyValue(
-                x => x.Name,
-                x => x.Type,
-                x => x.Image)
-                .Skip(1)
-                .Subscribe(_ => IsModified = true);
+           
         }
 
 
@@ -68,6 +65,7 @@ namespace SensorMap.Model
         public void CancelEdit()
         {
             if (!IsModified) return;
+            if (backupCopy == null) return;
             IsModified = false;
             this.Name = backupCopy.Name;
             this.Id = backupCopy.Id;

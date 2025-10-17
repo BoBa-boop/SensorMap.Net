@@ -49,15 +49,14 @@ namespace SensorMap.ViewModel
                     MethodInfo createMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Create))!.MakeGenericMethod(entityType);
                     if(createMethod.Invoke(_provider, new object[] { arg })!=null)
                     {
-                        entityType?.GetProperty("IsModified")?.SetValue(entityType, false);
-                        entityType?.GetProperty("IsExist")?.SetValue(entityType, true);
+                        entityType?.GetProperty("IsModified")?.SetValue(arg, false);
                     }
                 }
                 else
                 {
                     MethodInfo updateMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Update))!.MakeGenericMethod(entityType);
                     if(updateMethod.Invoke(_provider, new object[] { arg })!=null)
-                        entityType?.GetProperty("IsModified")?.SetValue(entityType, false);
+                        entityType?.GetProperty("IsModified")?.SetValue(arg, false);
                 }
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
@@ -68,14 +67,18 @@ namespace SensorMap.ViewModel
                 if (deleteMethod.Invoke(_provider, new object[] { arg }) != null)
                 {
                     PropertyInfo? prop = typeof(IDataService).GetProperty(entityType.Name + "s");
+                    var collection = prop.GetValue(this) as System.Collections.IList;
+                    collection?.Remove(arg);
                 }
             });
             CancelCommand = new RelayCommand<object>((arg)=>
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
-                MethodInfo cancelMethod = entityType.GetMethod("CancelEdit")!.MakeGenericMethod(entityType);
-              
+                entityType.GetMethod("CancelEdit")!.Invoke(arg, null);
+                entityType?.GetProperty("IsModified")?.SetValue(arg, false);
+
+
             });
             AddImage = new RelayCommand(() =>
             {

@@ -42,7 +42,7 @@
                                     <ContentPresenter/>
                                     <i:Interaction.Triggers>
                                         <i:EventTrigger EventName="MouseLeftButtonDown">
-                                            <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.GoToSector}"/>
+                                            <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.GoToSector}" CommandParameter="{Binding }"/>
                                         </i:EventTrigger>
                                     </i:Interaction.Triggers>
                                 </Border>

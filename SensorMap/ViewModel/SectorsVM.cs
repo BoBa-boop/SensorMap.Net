@@ -31,7 +31,7 @@ namespace SensorMap.ViewModel
         {
             navigation = _nav;
             _data = data;
-            GoToSector = new RelayCommand<object>((s) => navigation.ShowDialog<MechanismView, MechanismVM>());
+            GoToSector = new RelayCommand<Sector>((s) => navigation.ShowDialog<MechanismView, MechanismVM>(s));
             BackMenu = new RelayCommand(() => navigation.NavigateTo<MenuButtonsVM>());
             _provider = provider;
 

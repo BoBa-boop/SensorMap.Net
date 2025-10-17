@@ -42,13 +42,7 @@ namespace SensorMap.Model
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
-        private bool _isExist;
-        [NotMapped]
-        public bool IsExist
-        {
-            get => _isExist;
-            set => this.RaiseAndSetIfChanged(ref _isExist, value);
-        }
+        
         public Sensor()
         {
            

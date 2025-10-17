@@ -4,9 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SensorMap.View"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:Converter="clr-namespace:SensorMap.Converters"
         mc:Ignorable="d"
-        Title="MechanismView" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
+        Title="Оборудование" Height="700" Width="1200" WindowStartupLocation="CenterScreen" x:Name="root">
     <Window.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
         <Style x:Key="SensorStyle" TargetType="Ellipse">
@@ -34,25 +37,46 @@
         <Menu IsMainMenu="True" 
         Grid.Row="0" Grid.ColumnSpan="2">
             <MenuItem Header="Сохранить" Command="{Binding SaveLayout}"/>
+            <MenuItem Header="Открыть другой участок"/>
         </Menu>
 
         <Border Grid.Row="1">
-            <GroupBox Header="Обозреватель элементов" >
-
+            <GroupBox Style="{StaticResource GroupBoxOriginalBaseStyle}">
+                <hc:ElementGroup Orientation="Vertical">
+                    <Expander Header="{Binding CurrentSector,StringFormat=Оборудование {0}}" IsExpanded="True">
+                        <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Expander>
+                    <Expander Header="Датчики" IsExpanded="True">
+                        <TreeView ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}" SelectedValuePath="Children">
+                            <i:Interaction.Behaviors>
+                                <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
+                            </i:Interaction.Behaviors>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <TextBlock Text="{Binding Name}"/>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </Expander>
+                </hc:ElementGroup>
             </GroupBox>
         </Border>
-        <Grid Grid.Column="1" Grid.Row="1" Background="AliceBlue">
-            <Image Source="/Resources/Шаблон.jpg" Width="200" Height="200"/>
+        <Grid Grid.Column="1" Grid.Row="1">
 
             <Viewbox x:Name="MainViewbox" Stretch="Uniform">
                 <!-- Canvas будет масштабироваться через Viewbox -->
-                <Canvas x:Name="MapCanvas" Width="200" Height="200"
-                    Background="LightGray">
+                <Canvas x:Name="MapCanvas" Width="300" Height="190" VerticalAlignment="Center" HorizontalAlignment="Center">
 
                     <!-- Изображение схемы -->
-                    
+                    <hc:ImageViewer ImageSource="/Resources/Шаблон.jpg" ShowToolBar="False" MaxWidth="300" MaxHeight="195"/>
                     <!-- Контейнер для датчиков -->
-                    <ItemsControl ItemsSource="{Binding Sensors}">
+                    <!--<ItemsControl ItemsSource="{Binding Sensors}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <Canvas/>
@@ -60,7 +84,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="ContentPresenter">
-                                <!-- Привязка нормализованных координат к реальным координатам Canvas -->
+                                --><!-- Привязка нормализованных координат к реальным координатам Canvas --><!--
                                 <Setter Property="Canvas.Left">
                                     <Setter.Value>
                                         <MultiBinding Converter="{StaticResource CoordConverter}">
@@ -82,7 +106,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Ellipse>
-                                    <!-- Включаем возможность перетаскивания только в режиме редактирования -->
+                                    --><!-- Включаем возможность перетаскивания только в режиме редактирования --><!--
                                     <Ellipse.InputBindings>
                                         <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.SensorClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     </Ellipse.InputBindings>
@@ -99,7 +123,7 @@
                                 </Ellipse>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    </ItemsControl>-->
                 </Canvas>
             </Viewbox>
         </Grid>

@@ -10,7 +10,7 @@ using System.Windows.Input;
 
 namespace SensorMap.Model.Validation
 {
-    public class ValidationRuleDataGrid : ValidationRule
+    public class ValidationRuleSensor : ValidationRule
     {
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {

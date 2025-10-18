@@ -18,37 +18,39 @@
     </Window.Resources>
     <Grid Margin="10">
         <Grid.Resources>
+            <ControlTemplate x:Key="ErrorTemplate">
+                <StackPanel Orientation="Vertical">
+                    <Border BorderBrush="Red" BorderThickness="1">
+                    <AdornedElementPlaceholder/>
+                    </Border>
+                    <TextBlock Text="{Binding ErrorContent}" FontWeight="Medium" Foreground="Red" Margin="0,18,0,0"/>
+                </StackPanel>
+            </ControlTemplate>
             <DataTemplate x:Key="CRUD_Buttons">
                 <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
                     <Button Name="Delete" ToolTip="Удалить"  Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
                             hc:IconElement.Geometry="{StaticResource DeleteGeometry}"/>
-                    
+
                     <Button Name="Save" ToolTip="Сохранить в БД"
                             Command="{Binding ElementName=root,Path=DataContext.SaveCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
                             hc:IconElement.Geometry="{StaticResource SaveGeometry}"
                             Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                    
+
                     <Button Name="Cancel" ToolTip="Отменить" Command="{Binding ElementName=root,Path=DataContext.CancelCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
                             hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}"
                             Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
                     <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                 </hc:ElementGroup>
-                    <DataTemplate.Triggers>
+                <DataTemplate.Triggers>
                     <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
                                              Path=(Validation.HasError)}"  Value="True">
                         <Setter Property="Visibility" TargetName="Cancel" Value="Collapsed"/>
                         <Setter Property="Visibility" TargetName="Save" Value="Collapsed"/>
                     </DataTrigger>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
-                         Path=(Validation.HasError)}"  Value="True">
-                        <Setter Property="Visibility" TargetName="Cancel" Value="Collapsed"/>
-                        <Setter Property="Visibility" TargetName="Save" Value="Collapsed"/>
-                    </DataTrigger>
-                        
-                        <!--Триггер для скрытия кнопок из последней добавленной строки-->
+                    <!--Триггер для скрытия кнопок из последней добавленной строки-->
                     <DataTrigger Binding="{Binding Text, ElementName=mark}" Value="{}{DataGrid.NewItemPlaceholder}">
                         <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
@@ -56,7 +58,7 @@
                         <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
                 </DataTemplate.Triggers>
-                </DataTemplate>
+            </DataTemplate>
             <Style TargetType="DataGridRow" x:Key="rowStyle"  BasedOn="{StaticResource DataGridRowStyle}">
                 <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
                 <Style.Triggers>
@@ -86,8 +88,7 @@
                     <Trigger Property="Validation.HasError" Value="True">
                         <Setter Property="Background" Value="LightPink"/>
                         <Setter Property="ToolTip"
-                    Value="{Binding RelativeSource={RelativeSource Self},
-                            Path=(Validation.Errors)[0].ErrorContent}"/>
+                                Value="Проверьте корректность вводимых данных."/>
 
                     </Trigger>
                 </Style.Triggers>
@@ -110,7 +111,6 @@
                 </Style.Triggers>
             </Style>
         </Grid.Resources>
-         <!--TabControl to separate different sections--> 
         <TabControl VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 
              <!--SECTION FOR SECTORS--> 
@@ -126,9 +126,9 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
-                        <DataGrid.RowValidationRules>
-                            <valid:ValidationRuleDataGrid ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>
+                        <!--<DataGrid.RowValidationRules>
+                            <valid:ValidationRuleSector ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
                             <DataGridTemplateColumn Header="Действие">
@@ -157,9 +157,33 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
+                        <!--<DataGrid.RowValidationRules>
+                            <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
                             <DataGridTextColumn Binding="{Binding Path}" Header="Путь к папке"/>
+                            <DataGridTemplateColumn Header="Участок">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Sector.Name}" Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" DisplayMemberPath="Name"
+                                                  Cursor="Hand">
+                                            <ComboBox.SelectedItem>
+                                                <Binding Path="Sector" UpdateSourceTrigger="PropertyChanged">
+                                                    <Binding.ValidationRules>
+                                                        <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
+                                                    </Binding.ValidationRules>
+                                                </Binding>
+                                            </ComboBox.SelectedItem>
+                                        </ComboBox>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -181,14 +205,14 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" CanUserSortColumns="False"
-                              AutoGenerateColumns="False" CanUserAddRows="True"
-                              FrozenColumnCount="2" MinColumnWidth="90" MaxColumnWidth="250"
+                              AutoGenerateColumns="False" CanUserAddRows="True" 
+                              FrozenColumnCount="2" MinColumnWidth="50" MaxColumnWidth="250"
                               hc:DataGridAttach.ShowRowNumber="True" RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name, ValidatesOnExceptions=True,
+                            <DataGridTextColumn Binding="{Binding Name, ValidatesOnDataErrors=True,
                                 UpdateSourceTrigger=PropertyChanged}" Header="Название">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
@@ -199,7 +223,7 @@
                             <DataGridTemplateColumn Header="Тип">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand"/>
+                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand" Validation.ErrorTemplate="{StaticResource ErrorTemplate}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
@@ -235,6 +259,10 @@
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/> 
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
+                                                Path=(Validation.HasError)}"  Value="True">
+                                                <Setter Property="Visibility" TargetName="Show" Value="Collapsed"/>
+                                            </DataTrigger>
                                             <!--Триггер для скрытия кнопок из последней добавленной строки-->
                                             <DataTrigger Binding="{Binding Text, ElementName=mark}" Value="{}{DataGrid.NewItemPlaceholder}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -247,9 +275,9 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
-                        <DataGrid.RowValidationRules>
-                            <valid:ValidationRuleDataGrid ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>
+                        <!--<DataGrid.RowValidationRules>
+                            <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>-->
                     </DataGrid>
                 </Grid>
             </TabItem>

@@ -11,7 +11,7 @@ namespace SensorMap.Model
     /// <summary>
     /// Описывает датчик (тип, картинка, название)
     /// </summary>
-    public class Sensor : ReactiveObject, IEditableObject
+    public class Sensor : ReactiveObject,IDataErrorInfo
     {
         private string _name = string.Empty;
         private SensorType _type;
@@ -21,12 +21,20 @@ namespace SensorMap.Model
         [Reactive] public string Name 
         {
             get => _name;
-            set  { this.RaiseAndSetIfChanged(ref _name, value); }
+            set  
+            {
+                this.RaiseAndSetIfChanged(ref _name, value);
+                IsModified = true;
+            }
         }
         [Reactive] public SensorType Type
         {
             get => _type;
-            set { this.RaiseAndSetIfChanged(ref _type, value); }
+            set 
+            {
+                this.RaiseAndSetIfChanged(ref _type, value);
+                IsModified = true;
+            }
         }
         [Reactive]
         public string Image
@@ -42,34 +50,66 @@ namespace SensorMap.Model
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
-        
-        public Sensor()
+
+        public string Error => throw new NotImplementedException();
+
+        [NotMapped]
+        public string this[string propertyName]
         {
+            get
+            {
+                //if (propertyName == "Name")
+                //{
+                //    if (string.IsNullOrWhiteSpace(_name))
+                //    {
+                //        //IsModified = false;
+                //        return "Обязательное поле к заполнению!";
+                //    }
+                //}
+                //if (propertyName == "Type")
+                //{
+                //    if (_type==0)
+                //    {
+                //        IsModified = false;
+                //        return "Необходимо выбрать тип датчика!";
+                //    }
+                //}
+                return string.Empty;
+            }
+        }
+//public Sensor()
+//        {
            
-        }
+//        }
 
 
-        private Sensor backupCopy;
-        public void BeginEdit()
-        {
-            if (IsModified) return;
-            backupCopy = this.MemberwiseClone() as Sensor;
-        }
+//        private Sensor backupCopy;
+//        public void BeginEdit()
+//        {
+//            if (IsModified) return;
+//            backupCopy = this.MemberwiseClone() as Sensor;
+//        }
 
-        public void CancelEdit()
-        {
-            if (!IsModified) return;
-            if (backupCopy == null) return;
-            IsModified = false;
-            this.Name = backupCopy.Name;
-            this.Id = backupCopy.Id;
-            this.Image = backupCopy.Image;
-            this.Type = backupCopy.Type;
-        }
+//        public void CancelEdit()
+//        {
+//            if (!IsModified) return;
+//            if (backupCopy == null) return;
+//            IsModified = false;
+//            this.Name = backupCopy.Name;
+//            this.Id = backupCopy.Id;
+//            this.Image = backupCopy.Image;
+//            this.Type = backupCopy.Type;
+//        }
 
-        public void EndEdit()
-        {
+//        public void EndEdit()
+//        {
+//            //if(!IsModified)return;
+//            //if(backupCopy == this.MemberwiseClone())
+//            //{
+//            //    IsModified = false;
+//            //    backupCopy = null;
+//            //}
             
-        }
+//        }
     }
 }

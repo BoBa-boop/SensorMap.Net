@@ -14,9 +14,11 @@ namespace SensorMap.Model
     {
         [Key]
         public int Id { get; set; }
+        [MaxLength(250)]
         public string Name { get; set; } = string.Empty;
         public string Path { get; set; } = string.Empty;//путь до папки с данными
-        public string Image { get; set; } = string.Empty;
+        [Column(TypeName ="image")]
+        public byte[] Image { get; set; }
         public int SectorID { get; set; }
         public Sector? Sector { get; set; }//ссылка для EF
         public PLC? PLC { get; set; }//ссылка для EF

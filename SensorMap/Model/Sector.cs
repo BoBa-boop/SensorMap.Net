@@ -19,9 +19,11 @@ namespace SensorMap.Model
     {
         [Key]
         public int Id {  get; set; }
+        [MaxLength(100)]
         public string Name {  get; set; } = string.Empty;
         public ObservableCollection<Mechanism>? Mechanisms { get; set; }
-
+        [Column(TypeName = "image")]
+        public byte[] Image { get; set; }
 
         private bool _isModified;
         private Sector? backupCopy;

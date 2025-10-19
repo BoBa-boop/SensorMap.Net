@@ -26,4 +26,12 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
+
+    <DrawingImage x:Key="LoadImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M2,12L4,12 4,17 20,17 20,12 22,12 22,17C22,18.11,21.11,19,20,19L4,19C2.9,19,2,18.11,2,17L2,12 M12,15L17.55,9.54 16.13,8.13 13,11.25 13,2 11,2 11,11.25 7.88,8.13 6.46,9.55 12,15z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 </ResourceDictionary>

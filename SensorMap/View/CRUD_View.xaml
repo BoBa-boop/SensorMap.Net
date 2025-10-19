@@ -15,17 +15,10 @@
     <Window.Resources>
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
         <cnv:StringIsNullOrEmpty x:Key="strIsEmpty"/>
+        <cnv:ConvertByteToImage x:Key="byteToImg"/>
     </Window.Resources>
     <Grid Margin="10">
         <Grid.Resources>
-            <ControlTemplate x:Key="ErrorTemplate">
-                <StackPanel Orientation="Vertical">
-                    <Border BorderBrush="Red" BorderThickness="1">
-                    <AdornedElementPlaceholder/>
-                    </Border>
-                    <TextBlock Text="{Binding ErrorContent}" FontWeight="Medium" Foreground="Red" Margin="0,18,0,0"/>
-                </StackPanel>
-            </ControlTemplate>
             <DataTemplate x:Key="CRUD_Buttons">
                 <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
                     <Button Name="Delete" ToolTip="Удалить"  Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
@@ -126,11 +119,37 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
-                        <!--<DataGrid.RowValidationRules>
+                        <DataGrid.RowValidationRules>
                             <valid:ValidationRuleSector ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>-->
+                        </DataGrid.RowValidationRules>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
+                            <DataGridTemplateColumn Header="Картинка">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Image,Converter={StaticResource byteToImg},FallbackValue={StaticResource LoadImage}}" Cursor="Hand">
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                    <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.AddImage}"
+                                                                           CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                        </Image>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Image,Converter={StaticResource byteToImg},FallbackValue={StaticResource LoadImage}}" Cursor="Hand">
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                    <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.AddImage}"
+                                       CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                        </Image>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -157,9 +176,9 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
-                        <!--<DataGrid.RowValidationRules>
+                        <DataGrid.RowValidationRules>
                             <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>-->
+                        </DataGrid.RowValidationRules>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
                             <DataGridTextColumn Binding="{Binding Path}" Header="Путь к папке"/>
@@ -172,17 +191,23 @@
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" DisplayMemberPath="Name"
-                                                  Cursor="Hand">
-                                            <ComboBox.SelectedItem>
-                                                <Binding Path="Sector" UpdateSourceTrigger="PropertyChanged">
-                                                    <Binding.ValidationRules>
-                                                        <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
-                                                    </Binding.ValidationRules>
-                                                </Binding>
-                                            </ComboBox.SelectedItem>
-                                        </ComboBox>
+                                                  Cursor="Hand" SelectedItem="{Binding Sector}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Картинка">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Image,Converter={StaticResource byteToImg}}" Cursor="Hand">
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                    <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.AddImage}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                        </Image>
+
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -223,7 +248,7 @@
                             <DataGridTemplateColumn Header="Тип">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand" Validation.ErrorTemplate="{StaticResource ErrorTemplate}"/>
+                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
@@ -236,7 +261,7 @@
                             <DataGridTemplateColumn Header="Картинка">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Image Source="{Binding Image,Converter={StaticResource keyToSVG}}" Cursor="Hand">
+                                        <Image Source="{Binding Image,Converter={StaticResource byteToImg}}" Cursor="Hand">
                                             <i:Interaction.Triggers>
                                                 <i:EventTrigger EventName="MouseLeftButtonDown">
                                                     <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.AddImage}"/>
@@ -275,9 +300,9 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
-                        <!--<DataGrid.RowValidationRules>
+                        <DataGrid.RowValidationRules>
                             <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>-->
+                        </DataGrid.RowValidationRules>
                     </DataGrid>
                 </Grid>
             </TabItem>

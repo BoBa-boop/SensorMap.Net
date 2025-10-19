@@ -3,6 +3,8 @@ using ReactiveUI.SourceGenerators;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +18,9 @@ namespace SensorMap.Model
     {
         public int Id { get; set; }
         public string TypePLC { get; set; } = string.Empty;
-        public string Image { get; set; } = string.Empty;
+        [Column(TypeName ="image")]
+        public byte[] Image { get; set; }
+        [MaxLength(15)]
         public string IP { get; set; } = string.Empty;
 
         //public Guid InputsId { get; set; }

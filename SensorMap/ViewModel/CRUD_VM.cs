@@ -8,6 +8,7 @@ using SensorMap.View;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -19,12 +20,29 @@ namespace SensorMap.ViewModel
 {
     public class CRUD_VM:ReactiveObject
     {
+        private ObservableCollection<Sector> _sectors = new();
+        public ObservableCollection<Sensor> _sensors = new();
+        public ObservableCollection<Mechanism> _mechanisms = new();
+        private object _tempItemDG
+
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         [Reactive] public INavigation Navigation { get; set; }
-        [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
-        [Reactive] public ObservableCollection<Sensor> Sensors { get; set; } = new();
-        [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
+        [Reactive] public ObservableCollection<Sector> Sectors 
+        {
+            get => _sectors;
+            set => this.RaiseAndSetIfChanged(ref _sectors, value);
+        }
+        [Reactive] public ObservableCollection<Sensor> Sensors
+        {
+            get => _sensors;
+            set => this.RaiseAndSetIfChanged(ref _sensors, value);
+        }
+        [Reactive] public ObservableCollection<Mechanism> Mechanisms
+        {
+            get => _mechanisms;
+            set => this.RaiseAndSetIfChanged(ref _mechanisms, value);
+        }
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav) 
         {
             Navigation = nav;
@@ -66,7 +84,7 @@ namespace SensorMap.ViewModel
                 MethodInfo deleteMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Delete))!.MakeGenericMethod(entityType);
                 if (deleteMethod.Invoke(_provider, new object[] { arg }) != null)
                 {
-                    PropertyInfo? prop = typeof(IDataService).GetProperty(entityType.Name + "s");
+                    PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
                     var collection = prop.GetValue(this) as System.Collections.IList;
                     collection?.Remove(arg);
                 }
@@ -80,11 +98,23 @@ namespace SensorMap.ViewModel
 
 
             });
-            AddImage = new RelayCommand(() =>
+            AddImage = new RelayCommand<object>((arg) =>
             {
+                if (arg is null) return;
+                var entityType = arg.GetType();
                 OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Filter = "Файлы рисунков (*.bmp, *.jpg)|*.bmp;*.jpg;*.png;*.jpeg|Все файлы (*.*)|*.*";
-                openFileDialog.ShowDialog();
+                openFileDialog.Filter = "Файлы рисунков (*.bmp, *.jpg, *.png, *.jpeg)|*.bmp;*.jpg;*.png;*.jpeg|Все файлы (*.*)|*.*";
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    // Прочитаем выбранный файл в массив байтов
+                    using (FileStream fs = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read))
+                    {
+                        byte[] photoBytes = new byte[fs.Length];
+                        fs.Read(photoBytes, 0, photoBytes.Length);
+                        entityType.GetProperty("Image")?.SetValue(arg, photoBytes);
+                    }
+                }
             });
         }
 

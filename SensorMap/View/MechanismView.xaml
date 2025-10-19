@@ -9,7 +9,7 @@
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:Converter="clr-namespace:SensorMap.Converters"
         mc:Ignorable="d"
-        Title="Оборудование" Height="700" Width="1200" WindowStartupLocation="CenterScreen" x:Name="root">
+        Title="Оборудование" Height="750" Width="1200" WindowStartupLocation="CenterScreen" x:Name="root">
     <Window.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
         <Style x:Key="SensorStyle" TargetType="Ellipse">
@@ -42,8 +42,8 @@
 
         <Border Grid.Row="1">
             <GroupBox Style="{StaticResource GroupBoxOriginalBaseStyle}">
-                <hc:ElementGroup Orientation="Vertical">
-                    <Expander Header="{Binding CurrentSector,StringFormat=Оборудование {0}}" IsExpanded="True">
+                <StackPanel Orientation="Vertical">
+                    <Expander Header="{Binding CurrentSector.Name}" IsExpanded="True">
                         <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -64,19 +64,18 @@
                             </TreeView.ItemTemplate>
                         </TreeView>
                     </Expander>
-                </hc:ElementGroup>
+                </StackPanel>
             </GroupBox>
         </Border>
         <Grid Grid.Column="1" Grid.Row="1">
+            <hc:ImageViewer ImageSource="/Resources/Шаблон.jpg" ShowToolBar="False" Background="LightGray" IsFullScreen="True"/>
+            <!-- Canvas будет масштабироваться через Viewbox -->
+            <Canvas x:Name="MapCanvas" VerticalAlignment="Center" HorizontalAlignment="Center">
 
-            <Viewbox x:Name="MainViewbox" Stretch="Uniform">
-                <!-- Canvas будет масштабироваться через Viewbox -->
-                <Canvas x:Name="MapCanvas" Width="300" Height="190" VerticalAlignment="Center" HorizontalAlignment="Center">
-
-                    <!-- Изображение схемы -->
-                    <hc:ImageViewer ImageSource="/Resources/Шаблон.jpg" ShowToolBar="False" MaxWidth="300" MaxHeight="195"/>
-                    <!-- Контейнер для датчиков -->
-                    <!--<ItemsControl ItemsSource="{Binding Sensors}">
+                <!-- Изображение схемы -->
+                
+                <!-- Контейнер для датчиков -->
+                <!--<ItemsControl ItemsSource="{Binding Sensors}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <Canvas/>
@@ -84,7 +83,9 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="ContentPresenter">
-                                --><!-- Привязка нормализованных координат к реальным координатам Canvas --><!--
+                                -->
+                <!-- Привязка нормализованных координат к реальным координатам Canvas -->
+                <!--
                                 <Setter Property="Canvas.Left">
                                     <Setter.Value>
                                         <MultiBinding Converter="{StaticResource CoordConverter}">
@@ -106,7 +107,9 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Ellipse>
-                                    --><!-- Включаем возможность перетаскивания только в режиме редактирования --><!--
+                                    -->
+                <!-- Включаем возможность перетаскивания только в режиме редактирования -->
+                <!--
                                     <Ellipse.InputBindings>
                                         <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.SensorClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
                                     </Ellipse.InputBindings>
@@ -124,8 +127,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>-->
-                </Canvas>
-            </Viewbox>
+            </Canvas>
         </Grid>
     </Grid>
 </Window>

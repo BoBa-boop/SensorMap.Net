@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace SensorMap.Services
 
             var config = new ConfigurationBuilder()
                                    .AddJsonFile("appsettings.json")
-                                   .SetBasePath(Directory.GetCurrentDirectory())
+                                   .SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
                                    .Build();
             string? connection_string = config.GetConnectionString("DefaultConnection");
             optionsBuilder.UseSqlite(connection_string);

@@ -23,7 +23,6 @@ namespace SensorMap.ViewModel
         private ObservableCollection<Sector> _sectors = new();
         public ObservableCollection<Sensor> _sensors = new();
         public ObservableCollection<Mechanism> _mechanisms = new();
-        private object _tempItemDG
 
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
@@ -45,6 +44,7 @@ namespace SensorMap.ViewModel
         }
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav) 
         {
+
             Navigation = nav;
             _provider = provider;
             _service = service;

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,5 +26,10 @@ namespace SensorMap.View
             InitializeComponent();
         }
 
+        private void DataGrid_Unloaded(object sender, RoutedEventArgs e)
+        {
+            var grid = (DataGrid)sender;
+            grid.CancelEdit(DataGridEditingUnit.Row);
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace SensorMap.Model
     /// <summary>
     /// Описывает датчик (тип, картинка, название)
     /// </summary>
-    public class Sensor : ReactiveObject,IDataErrorInfo
+    public class Sensor : ReactiveObject, IEditableObject, IDataErrorInfo
     {
         private string _name = string.Empty;
         private SensorType _type;
@@ -55,63 +55,57 @@ namespace SensorMap.Model
 
         public string Error => throw new NotImplementedException();
 
-        [NotMapped]
-        public string this[string propertyName]
+        public string this[string columnName]
         {
             get
             {
-                //if (propertyName == "Name")
-                //{
-                //    if (string.IsNullOrWhiteSpace(_name))
-                //    {
-                //        //IsModified = false;
-                //        return "Обязательное поле к заполнению!";
-                //    }
-                //}
-                //if (propertyName == "Type")
-                //{
-                //    if (_type==0)
-                //    {
-                //        IsModified = false;
-                //        return "Необходимо выбрать тип датчика!";
-                //    }
-                //}
+                switch (columnName)
+                {
+                    case "Name":
+                        if (string.IsNullOrWhiteSpace(_name))
+                        {
+                            IsModified = false;
+                            return "Обязательное поле к заполнению!";
+                        }
+                        break;
+                }
                 return string.Empty;
             }
         }
-//public Sensor()
-//        {
-           
-//        }
+
+        public Sensor()
+        {
+
+        }
 
 
-//        private Sensor backupCopy;
-//        public void BeginEdit()
-//        {
-//            if (IsModified) return;
-//            backupCopy = this.MemberwiseClone() as Sensor;
-//        }
+        private Sensor backupCopy;
+        public void BeginEdit()
+        {
+            if (IsModified) return;
+            backupCopy = this.MemberwiseClone() as Sensor;
+        }
 
-//        public void CancelEdit()
-//        {
-//            if (!IsModified) return;
-//            if (backupCopy == null) return;
-//            IsModified = false;
-//            this.Name = backupCopy.Name;
-//            this.Id = backupCopy.Id;
-//            this.Image = backupCopy.Image;
-//            this.Type = backupCopy.Type;
-//        }
+        public void CancelEdit()
+        {
+            if (!IsModified) return;
+            if (backupCopy == null) return;
+            IsModified = false;
+            this.Name = backupCopy.Name;
+            this.Id = backupCopy.Id;
+            this.Image = backupCopy.Image;
+            this.Type = backupCopy.Type;
+        }
 
-//        public void EndEdit()
-//        {
-//            //if(!IsModified)return;
-//            //if(backupCopy == this.MemberwiseClone())
-//            //{
-//            //    IsModified = false;
-//            //    backupCopy = null;
-//            //}
-            
-//        }
+        public void EndEdit()
+        {
+            //if (!IsModified) return;
+            //if (backupCopy == this.MemberwiseClone())
+            //{
+            //    IsModified = false;
+            //    backupCopy = null;
+            //}
+
+        }
     }
 }

@@ -42,7 +42,7 @@ namespace SensorMap.Model.Validation
                 else sensor.IsModified = true;
             }
 
-            return ValidationResult.ValidResult;
+            return null;
         }
     }
 }

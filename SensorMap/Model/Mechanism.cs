@@ -15,16 +15,35 @@ namespace SensorMap.Model
         [Key]
         public int Id { get; set; }
         [MaxLength(250)]
-        public string Name { get; set; } = string.Empty;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _name, value);
+                IsModified = true;
+            }
+        }
         public string Path { get; set; } = string.Empty;//путь до папки с данными
         [Column(TypeName ="image")]
-        public byte[] Image { get; set; }
+        [Reactive]
+        public byte[] Image
+        {
+            get => _image;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _image, value);
+                IsModified = true;
+            }
+        }
         public int SectorID { get; set; }
         public Sector? Sector { get; set; }//ссылка для EF
         public PLC? PLC { get; set; }//ссылка для EF
 
         private bool _isModified;
         private Mechanism? backupCopy;
+        private string _name;
+        private byte[] _image;
 
         [NotMapped]
         public bool IsModified

@@ -25,6 +25,17 @@ namespace SensorMap
         private ServiceProvider _serviceProvider = null!;
         protected override void OnStartup(StartupEventArgs e)
         {
+            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+            {
+                MessageBox.Show($"Fatal error: {args.ExceptionObject}");
+                Environment.Exit(1);
+            };
+
+            DispatcherUnhandledException += (s, args) =>
+            {
+                MessageBox.Show($"UI error: {args.Exception.Message}");
+                args.Handled = true;
+            };
             IServiceCollection services = new ServiceCollection();
             ConfigurationServiceces(services);
             _serviceProvider = services.BuildServiceProvider();

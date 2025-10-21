@@ -25,17 +25,17 @@ namespace SensorMap
         private ServiceProvider _serviceProvider = null!;
         protected override void OnStartup(StartupEventArgs e)
         {
-            AppDomain.CurrentDomain.UnhandledException += (s, args) =>
-            {
-                MessageBox.Show($"Fatal error: {args.ExceptionObject}");
-                Environment.Exit(1);
-            };
+            //AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+            //{
+            //    MessageBox.Show($"Fatal error: {args.ExceptionObject}");
+            //    Environment.Exit(1);
+            //};
 
-            DispatcherUnhandledException += (s, args) =>
-            {
-                MessageBox.Show($"UI error: {args.Exception.Message}");
-                args.Handled = true;
-            };
+            //DispatcherUnhandledException += (s, args) =>
+            //{
+            //    MessageBox.Show($"UI error: {args.Exception.Message}");
+            //    args.Handled = true;
+            //};
             IServiceCollection services = new ServiceCollection();
             ConfigurationServiceces(services);
             _serviceProvider = services.BuildServiceProvider();
@@ -133,7 +133,7 @@ namespace SensorMap
                 services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
             else
             {
-                MessageBox.Show("Отсутсвует путь к БД. Установите его в настройках", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Отсутствует путь к БД. Установите его в настройках", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

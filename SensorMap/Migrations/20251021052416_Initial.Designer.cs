@@ -10,8 +10,8 @@ using SensorMap.EF;
 namespace SensorMap.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251018173242_WorkWithImage")]
-    partial class WorkWithImage
+    [Migration("20251021052416_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,7 +27,7 @@ namespace SensorMap.Migrations
 
                     b.Property<byte[]>("Image")
                         .IsRequired()
-                        .HasColumnType("image");
+                        .HasColumnType("VARBINARY(MAX)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -61,7 +61,7 @@ namespace SensorMap.Migrations
 
                     b.Property<byte[]>("Image")
                         .IsRequired()
-                        .HasColumnType("image");
+                        .HasColumnType("VARBINARY(MAX)");
 
                     b.Property<int>("MechId")
                         .HasColumnType("INTEGER");
@@ -125,7 +125,7 @@ namespace SensorMap.Migrations
 
                     b.Property<byte[]>("Image")
                         .IsRequired()
-                        .HasColumnType("image");
+                        .HasColumnType("VARBINARY(MAX)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -145,7 +145,7 @@ namespace SensorMap.Migrations
 
                     b.Property<byte[]>("Image")
                         .IsRequired()
-                        .HasColumnType("image");
+                        .HasColumnType("VARBINARY(MAX)");
 
                     b.Property<string>("Name")
                         .IsRequired()

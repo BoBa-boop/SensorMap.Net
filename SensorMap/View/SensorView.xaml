@@ -12,6 +12,7 @@
         Title="Данные о датчике" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
     <Window.Resources>
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
+        <cnv:ConvertByteToImage x:Key="byteToImg"/>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -36,8 +37,8 @@
             </Grid.RowDefinitions>
             <Border MinWidth="100" MinHeight="100" 
              HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border CornerRadius="20" BorderBrush="Black" BorderThickness="1.5">
-                    <Image Source="{Binding SelectedNode.Image,Converter={StaticResource keyToSVG}}"/>
+                <Border CornerRadius="20" BorderBrush="Black" BorderThickness="1.5" Padding="5">
+                    <Image Source="{Binding SelectedNode.Image,Converter={StaticResource byteToImg}}"/>
                 </Border>
             </Border>
             <GridSplitter/>

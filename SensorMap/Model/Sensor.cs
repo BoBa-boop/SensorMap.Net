@@ -15,7 +15,7 @@ namespace SensorMap.Model
     {
         private string _name = string.Empty;
         private SensorType _type;
-        private byte[] _image;
+        private byte[]? _image;
         [Key]
         [Reactive] public int Id { get; set; }
         [MaxLength(250)]
@@ -37,9 +37,9 @@ namespace SensorMap.Model
                 IsModified = true;
             }
         }
-        [Column(TypeName="image")]
+       
         [Reactive]
-        public byte[] Image
+        public byte[]? Image
         {
             get => _image;
             set { this.RaiseAndSetIfChanged(ref _image, value); }

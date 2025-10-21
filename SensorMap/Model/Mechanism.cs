@@ -25,9 +25,9 @@ namespace SensorMap.Model
             }
         }
         public string Path { get; set; } = string.Empty;//путь до папки с данными
-        [Column(TypeName ="image")]
+        
         [Reactive]
-        public byte[] Image
+        public byte[]? Image
         {
             get => _image;
             set
@@ -37,13 +37,33 @@ namespace SensorMap.Model
             }
         }
         public int SectorID { get; set; }
-        public Sector? Sector { get; set; }//ссылка для EF
-        public PLC? PLC { get; set; }//ссылка для EF
+        [Reactive]
+        public Sector? Sector 
+        {
+            get => sector;
+            set 
+            {
+                this.RaiseAndSetIfChanged(ref sector, value);
+                IsModified = true;
+            } 
+        }
+        [Reactive]
+        public PLC? PLC 
+        {
+            get => pLC;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref pLC, value);
+                IsModified = true;
+            }
+        }
 
         private bool _isModified;
         private Mechanism? backupCopy;
         private string _name;
-        private byte[] _image;
+        private byte[]? _image;
+        private Sector? sector;
+        private PLC? pLC;
 
         [NotMapped]
         public bool IsModified

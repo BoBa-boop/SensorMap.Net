@@ -11,6 +11,7 @@
         xmlns:cmnd="clr-namespace:SensorMap.Commands"
         xmlns:valid="clr-namespace:SensorMap.Model.Validation"
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
+        xmlns:MV="clr-namespace:SensorMap.ViewModel"
         mc:Ignorable="d"
         Title="Редактор" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
     <Window.Resources>
@@ -151,7 +152,7 @@
                         </DataGrid.RowValidationRules>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
-                            <DataGridTemplateColumn Header="Картинка" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="Схема" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>
@@ -193,17 +194,17 @@
                             <DataGridTemplateColumn Header="Участок">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Sector.Name}" Cursor="Hand"/>
+                                        <TextBlock Text="{Binding ElementName=root, Path=DataContext.Sectors[SectorID].Name}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" DisplayMemberPath="Name"
-                                                  Cursor="Hand" SelectedItem="{Binding Sector}"/>
+                                                  Cursor="Hand" SelectedItem="{Binding SectorID}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Картинка" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="Схема" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>
@@ -268,7 +269,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Картинка" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="Изображение" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>

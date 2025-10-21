@@ -18,12 +18,15 @@ namespace SensorMap.Services
         {
             var optionsBuilder = new DbContextOptionsBuilder<AppDBContext>();
 
-            var config = new ConfigurationBuilder()
-                                   .AddJsonFile("appsettings.json")
-                                   .SetBasePath(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location))
-                                   .Build();
-            string? connection_string = config.GetConnectionString("DefaultConnection");
-            optionsBuilder.UseSqlite(connection_string);
+            // получаем конфигурацию из файла appsettings.json
+            ConfigurationBuilder builder = new ConfigurationBuilder();
+            builder.SetBasePath(Directory.GetCurrentDirectory());
+            builder.AddJsonFile("appsettings.json");
+            IConfigurationRoot config = builder.Build();
+
+            // получаем строку подключения из файла appsettings.json
+            string connectionString = config.GetConnectionString("DefaultConnection");
+            optionsBuilder.UseSqlite(connectionString);
             return new AppDBContext(optionsBuilder.Options);
         }
     }

@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,7 +26,7 @@ namespace SensorMap.Services
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
                 dBContext.Entry<T>(entity).State = EntityState.Added;
-                await dBContext.SaveChangesAsync();
+                await dBContext.SaveChangesAsync();                
             }
         }
         public async Task Delete<T>(T entity) where T : class

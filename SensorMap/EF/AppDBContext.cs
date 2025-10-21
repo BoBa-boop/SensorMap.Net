@@ -10,10 +10,6 @@ namespace SensorMap.EF
 {
     public class AppDBContext : DbContext
     {
-        /// <summary>
-        /// "add-migration Initial" в Консоль диспетчера пакетов для миграции
-        /// </summary>
-        /// <param name="options"></param>
         public AppDBContext(DbContextOptions options) : base(options) { }
         public DbSet<Sector> Sectors { get; set; }
         public DbSet<Mechanism> Mechanisms { get; set; }

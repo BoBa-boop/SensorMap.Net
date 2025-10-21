@@ -34,9 +34,8 @@ namespace SensorMap.Model
             }
         }
         public ObservableCollection<Mechanism>? Mechanisms { get; set; }
-        [Column(TypeName = "image")]
         [Reactive]
-        public byte[] Image
+        public byte[]? Image
         {
             get => _image;
             set 
@@ -48,7 +47,7 @@ namespace SensorMap.Model
         private bool _isModified;
         private Sector? backupCopy;
         private string _name;
-        private byte[] _image;
+        private byte[]? _image;
 
         [NotMapped]
         public bool IsModified

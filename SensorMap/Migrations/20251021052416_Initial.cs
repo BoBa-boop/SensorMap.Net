@@ -5,7 +5,7 @@
 namespace SensorMap.Migrations
 {
     /// <inheritdoc />
-    public partial class WorkWithImage : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,7 +17,7 @@ namespace SensorMap.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Image = table.Column<byte[]>(type: "image", nullable: false)
+                    Image = table.Column<byte[]>(type: "VARBINARY(MAX)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -32,7 +32,7 @@ namespace SensorMap.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 250, nullable: false),
                     Type = table.Column<int>(type: "INTEGER", nullable: false),
-                    Image = table.Column<byte[]>(type: "image", nullable: false)
+                    Image = table.Column<byte[]>(type: "VARBINARY(MAX)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -47,7 +47,7 @@ namespace SensorMap.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 250, nullable: false),
                     Path = table.Column<string>(type: "TEXT", nullable: false),
-                    Image = table.Column<byte[]>(type: "image", nullable: false),
+                    Image = table.Column<byte[]>(type: "VARBINARY(MAX)", nullable: false),
                     SectorID = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -68,7 +68,7 @@ namespace SensorMap.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     TypePLC = table.Column<string>(type: "TEXT", nullable: false),
-                    Image = table.Column<byte[]>(type: "image", nullable: false),
+                    Image = table.Column<byte[]>(type: "VARBINARY(MAX)", nullable: false),
                     IP = table.Column<string>(type: "TEXT", maxLength: 15, nullable: false),
                     MechId = table.Column<int>(type: "INTEGER", nullable: false)
                 },

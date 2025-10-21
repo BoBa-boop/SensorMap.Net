@@ -18,8 +18,8 @@ namespace SensorMap.Model
     {
         public int Id { get; set; }
         public string TypePLC { get; set; } = string.Empty;
-        [Column(TypeName ="image")]
-        public byte[] Image { get; set; }
+        
+        public byte[]? Image { get; set; }
         [MaxLength(15)]
         public string IP { get; set; } = string.Empty;
 

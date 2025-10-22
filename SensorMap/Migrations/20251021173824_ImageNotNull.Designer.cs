@@ -10,8 +10,8 @@ using SensorMap.EF;
 namespace SensorMap.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20251021052416_Initial")]
-    partial class Initial
+    [Migration("20251021173824_ImageNotNull")]
+    partial class ImageNotNull
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,8 +26,7 @@ namespace SensorMap.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("Image")
-                        .IsRequired()
-                        .HasColumnType("VARBINARY(MAX)");
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -60,8 +59,7 @@ namespace SensorMap.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<byte[]>("Image")
-                        .IsRequired()
-                        .HasColumnType("VARBINARY(MAX)");
+                        .HasColumnType("BLOB");
 
                     b.Property<int>("MechId")
                         .HasColumnType("INTEGER");
@@ -124,8 +122,7 @@ namespace SensorMap.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("Image")
-                        .IsRequired()
-                        .HasColumnType("VARBINARY(MAX)");
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -144,8 +141,7 @@ namespace SensorMap.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("Image")
-                        .IsRequired()
-                        .HasColumnType("VARBINARY(MAX)");
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("Name")
                         .IsRequired()

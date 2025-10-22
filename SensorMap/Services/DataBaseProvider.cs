@@ -50,7 +50,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Mechanisms.ToListAsync();
+                return await dBContext.Mechanisms.Include(x=>x.Sector).ToListAsync();
             }
         }
 
@@ -58,7 +58,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Sectors.ToListAsync();
+                return await dBContext.Sectors.Include(x=>x.Mechanisms).ToListAsync();
             }
         }
 

@@ -159,6 +159,16 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Механизмы" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Mechanisms}"
+                                                  DisplayMemberPath="Name"
+                                                  IsReadOnly="True"
+                                                  SelectedIndex="-1"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -179,7 +189,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Mechanisms}" Grid.Row="0" Unloaded="DataGrid_Unloaded"
+                    <DataGrid Name="Mech" ItemsSource="{Binding Mechanisms}" Grid.Row="0" Unloaded="DataGrid_Unloaded"
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               FrozenColumnCount="2" RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
                         <i:Interaction.Behaviors>
@@ -194,20 +204,54 @@
                             <DataGridTemplateColumn Header="Участок">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding ElementName=root, Path=DataContext.Sectors[SectorID].Name}" Cursor="Hand"/>
+                                        <TextBlock Text="{Binding Sector.Name}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" DisplayMemberPath="Name"
-                                                  Cursor="Hand" SelectedItem="{Binding SectorID}"/>
+                                                  Cursor="Hand" SelectedItem="{Binding Sector}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Схема" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>
+                                        <Grid Cursor="Hand">
+                                            <Button Name="view" Panel.ZIndex="1" Width="45" Height="33" Opacity="0"
+                                                    hc:IconElement.Geometry="{StaticResource FullScreenGeometry}" ToolTip="Просмотр"/>
+                                            <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>
+                                            <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
+                                            <Grid.Triggers>
+                                                <EventTrigger RoutedEvent="MouseEnter">
+                                                    <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="view"
+                                                                             To="1" Duration="0:0:0.3"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                </EventTrigger>
+                                                <EventTrigger RoutedEvent="MouseLeave">
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="view" 
+                                                                             To="0" Duration="0:0:0.3"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </EventTrigger>
+                                            </Grid.Triggers>
+                                        </Grid>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Image}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Text, ElementName=mark}" Value="{}{DataGrid.NewItemPlaceholder}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -222,6 +266,21 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+                    <Border MaxHeight="900" MaxWidth="1100" Opacity="0">
+                        <Image Source="{Binding ElementName=Mech,Path=SelectedItem.Image,
+                            Converter={StaticResource byteToImg},UpdateSourceTrigger=PropertyChanged}">
+                        </Image>
+                        <Border.Triggers>Попробовать добавить кнопку в CRUD_buttons
+                            <EventTrigger SourceName="view" RoutedEvent="Button.Click">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                     To="1" Duration="0:0:0.3"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Border.Triggers>
+                    </Border>
                 </Grid>
             </TabItem>
 

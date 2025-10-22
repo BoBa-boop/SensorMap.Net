@@ -44,6 +44,7 @@ namespace SensorMap.Model
                 IsModified = true;
             }
         }
+
         private bool _isModified;
         private Sector? backupCopy;
         private string _name;

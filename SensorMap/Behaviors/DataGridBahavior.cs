@@ -49,7 +49,7 @@ namespace SensorMap.Behaviors
             var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, e.GetPosition(AssociatedObject));
             if (hitTestResult == null)
             {
-                AssociatedObject.UnselectAll();
+                AssociatedObject.UnselectAllCells();
                 AssociatedObject.SelectedItem = null;
             }
             else
@@ -77,12 +77,9 @@ namespace SensorMap.Behaviors
             // Если клик был в области DataGrid, но не на строке или ячейке
             if (!foundDataGridElement)
             {
-                AssociatedObject.UnselectAll();
-                AssociatedObject.SelectedItem = null; 
-                if (AssociatedObject.IsKeyboardFocusWithin)
-                {
-                    Keyboard.ClearFocus();
-                }
+                AssociatedObject.UnselectAllCells();
+                AssociatedObject.SelectedItem = null;
+                
             }
         }
         #endregion

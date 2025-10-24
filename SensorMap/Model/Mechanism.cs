@@ -20,8 +20,11 @@ namespace SensorMap.Model
             get => _name;
             set
             {
-                this.RaiseAndSetIfChanged(ref _name, value);
-                IsModified = true;
+                if (_name != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _name, value);
+                    IsModified = true;
+                }
             }
         }
         public string Path { get; set; } = string.Empty;//путь до папки с данными
@@ -32,8 +35,11 @@ namespace SensorMap.Model
             get => _image;
             set
             {
-                this.RaiseAndSetIfChanged(ref _image, value);
-                IsModified = true;
+                if (_image != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _image, value);
+                    IsModified = true;
+                }
             }
         }
         public int SectorID { get; set; }
@@ -43,8 +49,11 @@ namespace SensorMap.Model
             get => sector;
             set 
             {
-                this.RaiseAndSetIfChanged(ref sector, value);
-                IsModified = true;
+                if (sector != value)
+                {
+                    this.RaiseAndSetIfChanged(ref sector, value);
+                    IsModified = true;
+                }
             } 
         }
         [Reactive]

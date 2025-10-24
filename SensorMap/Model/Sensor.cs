@@ -24,8 +24,11 @@ namespace SensorMap.Model
             get => _name;
             set  
             {
-                this.RaiseAndSetIfChanged(ref _name, value);
-                IsModified = true;
+                if (_name != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _name, value);
+                    IsModified = true;
+                }
             }
         }
         [Reactive] public SensorType Type
@@ -33,8 +36,11 @@ namespace SensorMap.Model
             get => _type;
             set 
             {
-                this.RaiseAndSetIfChanged(ref _type, value);
-                IsModified = true;
+                if (value != _type)
+                {
+                    this.RaiseAndSetIfChanged(ref _type, value);
+                    IsModified = true;
+                }
             }
         }
        
@@ -42,7 +48,13 @@ namespace SensorMap.Model
         public byte[]? Image
         {
             get => _image;
-            set { this.RaiseAndSetIfChanged(ref _image, value); }
+            set 
+            {
+                if (value != _image)
+                {
+                    this.RaiseAndSetIfChanged(ref _image, value);
+                }
+            }
         }
 
         private bool _isModified;

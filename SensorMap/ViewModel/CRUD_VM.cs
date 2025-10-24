@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using Microsoft.Win32;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -9,32 +10,28 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace SensorMap.ViewModel
 {
     public class CRUD_VM:ReactiveObject
     {
-        private ObservableCollection<Sector> _sectors = new();
-        public ObservableCollection<Sensor> _sensors = new();
-        public ObservableCollection<Mechanism> _mechanisms = new();
-
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
+        private bool isPreviewPress;
+
         [Reactive] public INavigation Navigation { get; set; }
-        [Reactive] public ObservableCollection<Sector> Sectors 
+        [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
+        [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
+        [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
+        [Reactive] public bool IsPreviewPress 
         {
-            get => _sectors;
-            set => this.RaiseAndSetIfChanged(ref _sectors, value);
-        }
-        [Reactive] public ObservableCollection<Sensor> Sensors
-        {
-            get => _sensors;
-            set => this.RaiseAndSetIfChanged(ref _sensors, value);
-        }
-        [Reactive] public ObservableCollection<Mechanism> Mechanisms
-        {
-            get => _mechanisms;
-            set => this.RaiseAndSetIfChanged(ref _mechanisms, value);
+            get => isPreviewPress;
+            set 
+            { 
+                isPreviewPress = value;
+                this.RaiseAndSetIfChanged(ref this.isPreviewPress,value);
+            } 
         }
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav) 
         {
@@ -110,6 +107,11 @@ namespace SensorMap.ViewModel
                     }
                 }
             });
+            ShowPreviewImage = new RelayCommand<object>((image) => 
+            {
+                BitmapCache
+                new ImageBrowser().Show(); 
+            });
         }
 
         public ICommand DeleteCommand { get; set; }
@@ -117,6 +119,7 @@ namespace SensorMap.ViewModel
         public ICommand ShowCommand { get; set; }
         public ICommand CancelCommand { get; set; }
         public ICommand AddImage {  get; set; }
+        public ICommand ShowPreviewImage { get; set; }
 
     }
 }

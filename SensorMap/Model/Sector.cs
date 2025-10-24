@@ -29,8 +29,11 @@ namespace SensorMap.Model
             get => _name;
             set
             {
-                this.RaiseAndSetIfChanged(ref _name, value);
-                IsModified = true;
+                if(value!=_name)
+                {
+                    this.RaiseAndSetIfChanged(ref _name, value);
+                    IsModified = true;
+                }
             }
         }
         public ObservableCollection<Mechanism>? Mechanisms { get; set; }
@@ -40,8 +43,11 @@ namespace SensorMap.Model
             get => _image;
             set 
             {
-                this.RaiseAndSetIfChanged(ref _image, value);
-                IsModified = true;
+                if (value != _image)
+                {
+                    this.RaiseAndSetIfChanged(ref _image, value);
+                    IsModified = true;
+                }
             }
         }
 

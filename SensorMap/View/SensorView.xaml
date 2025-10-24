@@ -12,7 +12,7 @@
         Title="Данные о датчике" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
     <Window.Resources>
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
-        <cnv:ConvertByteToImage x:Key="byteToImg"/>
+        <cnv:ConvertByteToBitmapImage x:Key="byteToImg"/>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>

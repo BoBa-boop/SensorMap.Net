@@ -3,8 +3,10 @@ using HandyControl.Controls;
 using Microsoft.Win32;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.Behaviors;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using SensorMap.Services;
 using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -18,25 +20,17 @@ namespace SensorMap.ViewModel
     {
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
-        private bool isPreviewPress;
+        private readonly ITempImage _tempImage;
 
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
-        [Reactive] public bool IsPreviewPress 
+        
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
         {
-            get => isPreviewPress;
-            set 
-            { 
-                isPreviewPress = value;
-                this.RaiseAndSetIfChanged(ref this.isPreviewPress,value);
-            } 
-        }
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav) 
-        {
-
             Navigation = nav;
+            _tempImage = tempImage;
             _provider = provider;
             _service = service;
             Sectors = _service.Sectors;
@@ -109,8 +103,10 @@ namespace SensorMap.ViewModel
             });
             ShowPreviewImage = new RelayCommand<object>((image) => 
             {
-                BitmapCache
-                new ImageBrowser().Show(); 
+                if(image as byte[] == null) return;
+                var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(image as byte[])) {Title="Просмотр схемы" };
+                //browser.Closed += (o, e) => { _tempImage.Cleanup(); };
+                browser.ShowDialog();
             });
         }
 

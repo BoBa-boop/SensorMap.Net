@@ -62,29 +62,32 @@
             </DataTemplate>
             <Style TargetType="DataGridRow" x:Key="rowStyle"  BasedOn="{StaticResource DataGridRowStyle}">
                 <Style.Triggers>
-                    <!--#region Несохраненно-->
+                    <!-- Измененные строки -->
                     <DataTrigger Binding="{Binding IsModified}" Value="True">
                         <Setter Property="ToolTip" Value="Ожидает сохранения"/>
                         <Setter Property="Background" Value="#fdff80"/>
                         <Setter Property="Foreground" Value="Black"/>
                     </DataTrigger>
+
+                    <!-- Выбранная и измененная строка -->
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
                             <Condition Binding="{Binding IsModified}" Value="True"/>
-                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
+                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Background" Value="#c7c926"/>
                     </MultiDataTrigger>
+
+                    <!-- Выбранная, измененная строка без фокуса -->
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Self}}"  Value="False"/>
-                            <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
-                            <Condition Binding="{Binding IsModified,RelativeSource={RelativeSource Self}}" Value="True"/>
+                            <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Self}}" Value="False"/>
+                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                            <Condition Binding="{Binding IsModified}" Value="True"/>
                         </MultiDataTrigger.Conditions>
-                        <Setter Property="Foreground" Value="Black"/>
                         <Setter Property="Background" Value="#fdff80"/>
+                        <Setter Property="Foreground" Value="Black"/>
                     </MultiDataTrigger>
-                    <!--#endregion-->
                     <MultiTrigger>
                         <MultiTrigger.Conditions>
                             <Condition Property="DataGridRow.IsSelected" Value="true" />
@@ -230,8 +233,7 @@
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" DisplayMemberPath="Name"
-                                                  Cursor="Hand" SelectedValue="{Binding Sector.Name}"
-                                                  SelectedValuePath="Name" />
+                                                  Cursor="Hand" SelectedValue="{Binding Sector}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
@@ -242,17 +244,17 @@
                                             <Button Name="view" Panel.ZIndex="1" Width="45" Height="33" Opacity="0"
                                                     hc:IconElement.Geometry="{StaticResource FullScreenGeometry}" ToolTip="Просмотр"
                                                     Command="{Binding ElementName=root,Path=DataContext.ShowPreviewImage}"
-                                                    CommandParameter="{Binding Image,Converter={StaticResource byteToImg}}"/>
-                                            <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>
+                                                    CommandParameter="{Binding Image}"/>
+                                            <Image x:Name="imgPreview"  Source="{Binding Image}" Stretch="Uniform"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                             <Grid.Triggers>
                                                 <EventTrigger RoutedEvent="MouseEnter">
                                                     <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="view"
+                                                        <Storyboard>
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="view"
                                                                              To="1" Duration="0:0:0.3"/>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
                                                 </EventTrigger>
                                                 <EventTrigger RoutedEvent="MouseLeave">
                                                     <BeginStoryboard>
@@ -267,6 +269,7 @@
                                         <DataTemplate.Triggers>
                                             <DataTrigger Binding="{Binding Text, ElementName=mark}" Value="{}{DataGrid.NewItemPlaceholder}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Setter Property="Visibility" TargetName="view" Value="Collapsed"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -282,7 +285,7 @@
                                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                             <Button Name="AddImage" ToolTip="Загрузить изображение"
                                                     Command="{Binding ElementName=root,Path=DataContext.AddImage}"
-                                                    CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
+                                                    CommandParameter="{Binding}"
                                                     hc:IconElement.Geometry="{StaticResource AddGeometry}" Foreground="Black"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
@@ -300,18 +303,6 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
-                    <!--<Border x:Name="brd" IsHitTestVisible="False">
-                        --><!--Visibility="{Binding IsPreviewPress,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}">--><!--
-                        <Border.Background>
-                            <SolidColorBrush Color="Black" Opacity="0.5"/>
-                        </Border.Background>
-                        --><!--Binding ElementName=Mech,Path=SelectedItem.Image,UpdateSourceTrigger=PropertyChanged-->
-                        <!--<i:Interaction.Triggers>-->
-                            <!--<i:DataTrigger Binding="{Binding ElementName=img,Path=Source}" Value="{x:Null}">
-                                
-                            </i:DataTrigger>--><!--
-                        </i:Interaction.Triggers>--><!--
-                    </Border>-->
                 </Grid>
             </TabItem>
 

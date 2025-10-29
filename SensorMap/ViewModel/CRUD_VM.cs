@@ -9,6 +9,7 @@ using SensorMap.Model;
 using SensorMap.Services;
 using SensorMap.View;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Windows.Input;
@@ -105,7 +106,6 @@ namespace SensorMap.ViewModel
             {
                 if(image as byte[] == null) return;
                 var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(image as byte[])) {Title="Просмотр схемы" };
-                //browser.Closed += (o, e) => { _tempImage.Cleanup(); };
                 browser.ShowDialog();
             });
         }

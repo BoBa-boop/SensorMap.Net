@@ -7,6 +7,7 @@ namespace SensorMap.Model.Validation
 {
     class ValidationRuleMechanism : ValidationRule
     {
+        //public int MyProperty { get; set; }
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
             if (value == null) return new ValidationResult(false, "Отсутствует значение");

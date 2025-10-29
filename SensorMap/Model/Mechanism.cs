@@ -1,5 +1,6 @@
 ﻿using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -50,7 +51,7 @@ namespace SensorMap.Model
             set 
             {
                 if (sector != value)
-                {
+                {                    
                     this.RaiseAndSetIfChanged(ref sector, value);
                     IsModified = true;
                 }
@@ -73,6 +74,8 @@ namespace SensorMap.Model
         private byte[]? _image;
         private Sector? sector;
         private PLC? pLC;
+
+        
 
         [NotMapped]
         public bool IsModified
@@ -102,5 +105,7 @@ namespace SensorMap.Model
         {
 
         }
+
+       
     }
 }

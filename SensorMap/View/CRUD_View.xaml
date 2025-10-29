@@ -99,7 +99,8 @@
                     <Trigger Property="Validation.HasError" Value="True">
                         <Setter Property="Background" Value="LightPink"/>
                         <Setter Property="ToolTip"
-                                Value="Проверьте корректность вводимых данных."/>
+                                Value="{Binding RelativeSource={RelativeSource Self},
+                    Path=(Validation.Errors)[0].ErrorContent}"/>
 
                     </Trigger>
                 </Style.Triggers>
@@ -209,14 +210,14 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <DataGrid Name="Mech" ItemsSource="{Binding Mechanisms,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Unloaded="DataGrid_Unloaded"
-                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
+                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False" 
                               FrozenColumnCount="2" RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
-                        <!--<DataGrid.RowValidationRules>
+                        <DataGrid.RowValidationRules>
                             <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>-->
+                        </DataGrid.RowValidationRules>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
                             <DataGridTemplateColumn Header="Участок">
@@ -240,7 +241,7 @@
                             <DataGridTemplateColumn Header="Схема" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Grid Cursor="Hand" HorizontalAlignment="Left">
+                                        <Grid x:Name="imgGrid"  Cursor="Hand" HorizontalAlignment="Left">
                                             <Button Name="view" Panel.ZIndex="1" Width="45" Height="33" Opacity="0"
                                                     hc:IconElement.Geometry="{StaticResource FullScreenGeometry}" ToolTip="Просмотр"
                                                     Command="{Binding ElementName=root,Path=DataContext.ShowPreviewImage}"
@@ -273,6 +274,9 @@
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Image}" Value="{x:Null}">
+                                                <Setter TargetName="imgGrid" Property="Visibility" Value="Collapsed"/>
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>

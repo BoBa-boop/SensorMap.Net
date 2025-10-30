@@ -1,5 +1,6 @@
 ﻿<Window x:Class="SensorMap.View.MechanismView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:myCC="clr-namespace:SensorMap.CustomControls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -27,59 +28,57 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="25"/>
+            <RowDefinition Height="30"/>
             <RowDefinition Height="*" MinHeight="300"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" MaxWidth="200" MinWidth="50"/>
             <ColumnDefinition Width="*" MinWidth="400"/>
         </Grid.ColumnDefinitions>
-        <Menu IsMainMenu="True" 
+        <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
         Grid.Row="0" Grid.ColumnSpan="2">
             <MenuItem Header="Сохранить" Command="{Binding SaveLayout}"/>
             <MenuItem Header="Открыть другой участок"/>
         </Menu>
 
-        <Border Grid.Row="1">
-            <GroupBox Style="{StaticResource GroupBoxOriginalBaseStyle}">
-                <StackPanel Orientation="Vertical">
-                    <Expander Header="{Binding CurrentSector.Name}" IsExpanded="True">
-                        <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}"
+        <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
+            <StackPanel Orientation="Vertical">
+                <Expander Header="{Binding CurrentSector.Name}" IsExpanded="True">
+                    <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}"
                                  SelectedItem="{Binding CurrentMech,UpdateSourceTrigger=PropertyChanged}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </Expander>
-                    <Expander Header="Датчики" IsExpanded="True">
-                        <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}" SelectedValuePath="Children">
-                            <i:Interaction.Behaviors>
-                                <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
-                            </i:Interaction.Behaviors>
-                            <TreeView.ItemTemplate>
-                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                    <TextBlock Text="{Binding Name}"/>
-                                </HierarchicalDataTemplate>
-                            </TreeView.ItemTemplate>
-                        </TreeView>
-                    </Expander>
-                </StackPanel>
-            </GroupBox>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Expander>
+                <Expander Header="Датчики" IsExpanded="True">
+                    <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}" SelectedValuePath="Children">
+                        <i:Interaction.Behaviors>
+                            <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
+                        </i:Interaction.Behaviors>
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                <TextBlock Text="{Binding Name}"/>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </Expander>
+            </StackPanel>
         </Border>
         <Grid Grid.Column="1" Grid.Row="1">
             
             <!-- Canvas будет масштабироваться через Viewbox -->
-            <DockPanel LastChildFill="True">
-                <Image Source="{Binding CurrentMech.Image}" DockPanel.Dock="Top">
-                    <i:Interaction.Behaviors>
-                        <beh:ImageZoomBehavior MaxScale="5.0" MinScale="1.0"/>
-                    </i:Interaction.Behaviors>
-                </Image>
-                <Canvas x:Name="MapCanvas" Background="LightGray" DockPanel.Dock="Bottom" MaxHeight="50">
-                
-                <Ellipse Fill="Red" beh:DragNDropBehavior.Drag="True" Width="50" Height="50">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="40"/>
+                </Grid.RowDefinitions>
+                <myCC:ImageViewerCC ImageSource="{Binding CurrentMech.Image}" Grid.Row="0" Background="{StaticResource BackgroundBrush}"
+                                    Margin="30" MinScale="0.4" MaxScale="20"/>
+                <Canvas x:Name="MapCanvas" Background="LightGray" Grid.Row="1" MaxHeight="50">
+                    <Ellipse Fill="Red" beh:DragNDropBehavior.Drag="True" Width="30" Height="30">
                     <Ellipse.Style>
                         <Style BasedOn="{StaticResource SensorStyle}" TargetType="{x:Type Ellipse}">
                             <Style.Triggers>
@@ -139,7 +138,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>-->
             </Canvas>
-            </DockPanel>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

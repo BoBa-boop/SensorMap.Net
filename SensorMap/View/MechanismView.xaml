@@ -67,78 +67,13 @@
                 </Expander>
             </StackPanel>
         </Border>
-        <Grid Grid.Column="1" Grid.Row="1">
-            
-            <!-- Canvas будет масштабироваться через Viewbox -->
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="40"/>
-                </Grid.RowDefinitions>
-                <myCC:ImageViewerCC ImageSource="{Binding CurrentMech.Image}" Grid.Row="0" Background="{StaticResource BackgroundBrush}"
-                                    Margin="30" MinScale="0.4" MaxScale="20"/>
-                <Canvas x:Name="MapCanvas" Background="LightGray" Grid.Row="1" MaxHeight="50">
-                    <Ellipse Fill="Red" beh:DragNDropBehavior.Drag="True" Width="30" Height="30">
-                    <Ellipse.Style>
-                        <Style BasedOn="{StaticResource SensorStyle}" TargetType="{x:Type Ellipse}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsMouseOver,RelativeSource={RelativeSource Self}}" Value="True">
-                                    <Setter Property="Cursor" Value="SizeAll"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Ellipse.Style>
-                </Ellipse>
-                <!-- Изображение схемы -->
-                
-                <!-- Контейнер для датчиков -->
-                <!--<ItemsControl ItemsSource="{Binding ElementName=twSensors,Path=SelectedItem}" Panel.ZIndex="0">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <Canvas/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        --><!--<ItemsControl.ItemContainerStyle>
-                            <Style TargetType="ContentPresenter">
-                                
-                 --><!--Привязка нормализованных координат к реальным координатам Canvas--> 
-                
-                                <!--<Setter Property="Canvas.Left">
-                                    <Setter.Value>
-                                        <MultiBinding Converter="{StaticResource CoordConverter}">
-                                            <Binding Path="X"/>
-                                            <Binding Path="ActualWidth" ElementName="MapCanvas"/>
-                                        </MultiBinding>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter Property="Canvas.Top">
-                                    <Setter.Value>
-                                        <MultiBinding Converter="{StaticResource CoordConverter}">
-                                            <Binding Path="Y"/>
-                                            <Binding Path="ActualHeight" ElementName="MapCanvas"/>
-                                        </MultiBinding>
-                                    </Setter.Value>
-                                </Setter>--><!--
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>--><!--
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                            <Ellipse Fill="Red" beh:DragNDropBehavior.Drag="True" Width="50" Height="50">
-                                <Ellipse.Style>
-                                        <Style BasedOn="{StaticResource SensorStyle}" TargetType="{x:Type Ellipse}">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsMouseOver,RelativeSource={RelativeSource Self}}" Value="True">
-                                                <Setter Property="Cursor" Value="SizeAll"/>
-                                            </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>-->
-            </Canvas>
+        <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" AllowDrop="True" ClipToBounds="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <myCC:ImageViewerCC ImageSource="{Binding CurrentMech.Image}"  Background="Transparent"
+                    Margin="20" MinScale="0.6" MaxScale="3.6" IsHitTestVisible="True"/>
+            <myCC:SensorDrag_Drop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}" Background="Transparent"/>
             </Grid>
-        </Grid>
     </Grid>
 </Window>

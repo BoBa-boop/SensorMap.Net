@@ -13,9 +13,9 @@ namespace SensorMap.Behaviors
 {
     public class ImageZoomBehavior:Behavior<Image>
     {
-        private TransformGroup _transformGroup;
-        private TranslateTransform _translateTransform;
-        private ScaleTransform _scaleTransform;
+        private TransformGroup? _transformGroup;
+        private TranslateTransform? _translateTransform;
+        private ScaleTransform? _scaleTransform;
         private Point _startPoint;
         private bool _isDragging;
         private Rect _boundsRect;

@@ -48,11 +48,11 @@ namespace SensorMap.CustomControls
         {
             Filter = $"{Lang.PngImg}|*.png"
         };
-        private Panel _panelMain;
+        private Panel? _panelMain;
         //private Border _borderMove;
-        private Border _borderBottom;
+        private Border? _borderBottom;
 
-        private Image _imageMain;
+        private Image? _imageMain;
         private bool _canMoveX;
         private bool _canMoveY;
         private Thickness _imgActualMargin;
@@ -78,11 +78,11 @@ namespace SensorMap.CustomControls
 
         private bool _showBorderBottom;
 
-        private DispatcherTimer _dispatcher;
+        private DispatcherTimer? _dispatcher;
 
         private bool _isLoaded;
 
-        private MouseBinding _mouseMoveBinding;
+        private MouseBinding? _mouseMoveBinding;
         #endregion
         #region dpProp
 
@@ -329,9 +329,13 @@ namespace SensorMap.CustomControls
         }
         #endregion
 
-        public ImageViewerCC()
+        static ImageViewerCC()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(ImageViewerCC), new FrameworkPropertyMetadata(typeof(ImageViewerCC)));
+        }
+        public ImageViewerCC()
+        {
+            
             base.CommandBindings.Add(new CommandBinding(ControlCommands.Save, ButtonSave_OnClick));
             //base.CommandBindings.Add(new CommandBinding(ControlCommands.Open, ButtonWindowsOpen_OnClick));
             base.CommandBindings.Add(new CommandBinding(ControlCommands.Restore, ButtonActual_OnClick));
@@ -400,44 +404,44 @@ namespace SensorMap.CustomControls
                 return;
             }
 
-            double num;
-            double num2;
+            double width;
+            double height;
             if (!_isOblique)
             {
-                num = ImageSource.PixelWidth;
-                num2 = ImageSource.PixelHeight;
+                width = ImageSource.PixelWidth;
+                height = ImageSource.PixelHeight;
             }
             else
             {
-                num = ImageSource.PixelHeight;
-                num2 = ImageSource.PixelWidth;
+                width = ImageSource.PixelHeight;
+                height = ImageSource.PixelWidth;
             }
 
-            ImageWidth = num;
-            ImageHeight = num2;
-            ImageOriWidth = num;
-            ImageOriHeight = num2;
+            ImageWidth = width;
+            ImageHeight = height;
+            ImageOriWidth = width;
+            ImageOriHeight = height;
             _scaleInternalWidth = ImageOriWidth * 0.1;
             _scaleInternalHeight = ImageOriHeight * 0.1;
-            if (Math.Abs(num2 - 0.0) < 0.001 || Math.Abs(num - 0.0) < 0.001)
+            if (Math.Abs(height - 0.0) < 0.001 || Math.Abs(width - 0.0) < 0.001)
             {
                 HandyControl.Controls.MessageBox.Show(Lang.ErrorImgSize);
                 return;
             }
 
-            _imgWidHeiScale = num / num2;
+            _imgWidHeiScale = width / height;
             double num3 = base.ActualWidth / base.ActualHeight;
             ImageScale = 1.0;
             if (_imgWidHeiScale > num3)
             {
-                if (num > base.ActualWidth)
+                if (width > base.ActualWidth)
                 {
-                    ImageScale = base.ActualWidth / num;
+                    ImageScale = base.ActualWidth / width;
                 }
             }
-            else if (num2 > base.ActualHeight)
+            else if (height > base.ActualHeight)
             {
-                ImageScale = base.ActualHeight / num2;
+                ImageScale = base.ActualHeight / height;
             }
 
             ImageMargin = new Thickness((base.ActualWidth - ImageWidth) / 2.0, (base.ActualHeight - ImageHeight) / 2.0, 0.0, 0.0);

@@ -58,8 +58,11 @@ namespace SensorMap.ViewModel
             Sectors = _service.Sectors;
             Sensors = _service.Sensors;
             Mechanisms = new (_service.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector?.Id ?? 0)).ToList());
+
+            SaveSensorPlace = new RelayCommand(()=>MessageBox.Show("Сохранил)"));
         }
        
         public ICommand SaveLayout {  get; set; }
+        public ICommand SaveSensorPlace { get;}
     }
 }

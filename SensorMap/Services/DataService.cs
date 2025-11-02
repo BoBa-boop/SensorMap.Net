@@ -1,10 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Text;
@@ -17,6 +21,7 @@ namespace SensorMap.Services
     {
         private ObservableCollection<Sensor> _sensors = new();
         private ObservableCollection<Sector> _sectors = new();
+        private ObservableCollection<SensorType> _sensorTypes = new();
         private ObservableCollection<Mechanism> _mechanisms= new();
         private IDataBaseProvider _provider;
 
@@ -34,6 +39,8 @@ namespace SensorMap.Services
 
         public ObservableCollection<Mechanism> Mechanisms => _mechanisms;
 
+        public ObservableCollection<SensorType> SensorTypes => _sensorTypes;
+
         public DataService(IDataBaseProvider provider)
         {
             _provider = provider;
@@ -47,12 +54,8 @@ namespace SensorMap.Services
                 _sectors = new ObservableCollection<Sector>(await _provider.GetAllSectorsAsync());
                 _sensors = new ObservableCollection<Sensor>(await _provider.GetAllSensors());
                 _mechanisms = new ObservableCollection<Mechanism>(await _provider.GetAllMechanisms());
+                _sensorTypes = new ObservableCollection<SensorType>(await _provider.GetSensortypeAsync());
             });
-        }
-
-        public void Add()
-        {
-            throw new NotImplementedException();
         }
     }
 }

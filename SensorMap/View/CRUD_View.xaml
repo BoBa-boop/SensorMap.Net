@@ -1,4 +1,4 @@
-﻿<Window x:Class="SensorMap.View.CRUD_View"
+﻿<UserControl x:Class="SensorMap.View.CRUD_View"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -13,14 +13,14 @@
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:MV="clr-namespace:SensorMap.ViewModel"
         mc:Ignorable="d"
-        Title="Редактор" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
-    <Window.Resources>
+        x:Name="root">
+    <UserControl.Resources>
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
         <cnv:StringIsNullOrEmpty x:Key="strIsEmpty"/>
         <cnv:EntityStateToVisibility x:Key="EntityToVis"/>
         <cnv:ConvertByteToBitmapImage x:Key="byteToImg"/>
         <cnv:ConvertByteToImageSource x:Key="byteToSource"/>
-    </Window.Resources>
+    </UserControl.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
@@ -130,12 +130,12 @@
                 </Style.Triggers>
             </Style>
         </Grid.Resources>
-        <TextBlock Text="База Данных" Style="{StaticResource TextBlockTitle}" 
-                   HorizontalAlignment="Left"/>
-        <TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        
+        <hc:TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                       Background="Transparent" BorderThickness="0" IsAnimationEnabled="False">
 
              <!--SECTION FOR SECTORS--> 
-            <TabItem Header="Участки">
+            <hc:TabItem Header="Участки">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -201,10 +201,10 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
-            </TabItem>
+            </hc:TabItem>
 
              <!--SECTION FOR MECHANISMS--> 
-            <TabItem Header="Механизмы">
+            <hc:TabItem Header="Механизмы">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -308,10 +308,10 @@
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
-            </TabItem>
+            </hc:TabItem>
 
              <!--SECTION FOR SENSORS--> 
-            <TabItem Header="Датчики">
+            <hc:TabItem Header="Датчики">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -338,12 +338,12 @@
                             <DataGridTemplateColumn Header="Тип">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand"/>
+                                        <TextBlock Text="{Binding Path=Type.Name}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding Source={cnv:EnumBinding {x:Type model:SensorType}}}"
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Name"
                                                   SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
@@ -390,7 +390,7 @@
                         
                     </DataGrid>
                 </Grid>
-            </TabItem>
-        </TabControl>
+            </hc:TabItem>
+        </hc:TabControl>
     </Grid>
-</Window>
+</UserControl>

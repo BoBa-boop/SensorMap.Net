@@ -26,23 +26,25 @@ namespace SensorMap.ViewModel
             set { if(value!=null) this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value); }
         }
         [Reactive]public ObservableCollection<SensorsTreeNode> Sensors {  get; set; }
+        private ObservableCollection<SensorType> sensorTypes {  get; set; }
         public SensorVM(IDataBaseProvider provider, IDataService service,Sensor sensor=null)
         {
             SelectedNode = sensor;
             _service = service;
             _provider = provider;
+            sensorTypes = _service.SensorTypes;
             Sensors = new ObservableCollection<SensorsTreeNode>(TreeNodeSensors());
             
         }
         private IEnumerable<SensorsTreeNode> TreeNodeSensors()
         {
             var mainNodes = new ObservableCollection<SensorsTreeNode>();
-            var types = Enum.GetValues<SensorType>();
+            var types = sensorTypes;
             foreach (var type in types)
             {
                 mainNodes.Add(new SensorsTreeNode()
                 {
-                    Name = type.ToString()
+                    Name = type.Name
                 });
             }
             foreach (var sensor in _service.Sensors)

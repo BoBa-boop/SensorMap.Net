@@ -1,4 +1,4 @@
-﻿<Window x:Class="SensorMap.View.MechanismView"
+﻿<UserControl x:Class="SensorMap.View.MechanismView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:myCC="clr-namespace:SensorMap.CustomControls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -10,8 +10,8 @@
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:Converter="clr-namespace:SensorMap.Converters"
         mc:Ignorable="d"
-        Title="Оборудование" Height="750" Width="1200" WindowStartupLocation="CenterScreen" x:Name="root">
-    <Window.Resources>
+        Height="auto" Width="auto" x:Name="root">
+    <UserControl.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
         <Style x:Key="SensorStyle" TargetType="Ellipse">
             <Setter Property="Width" Value="20"/>
@@ -25,7 +25,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-    </Window.Resources>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
@@ -76,4 +76,4 @@
             <myCC:SensorDrag_Drop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}" Background="Transparent"/>
             </Grid>
     </Grid>
-</Window>
+</UserControl>

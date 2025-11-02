@@ -14,6 +14,7 @@ namespace SensorMap.EF
         public DbSet<Sector> Sectors { get; set; }
         public DbSet<Mechanism> Mechanisms { get; set; }
         public DbSet<Sensor> Sensors { get; set; }
+        public DbSet<SensorType> SensorTypes { get; set; }
         public DbSet<PLC> PLCs { get; set; }
         public DbSet<PLCInputs> SensorAssignments { get; set; }
 

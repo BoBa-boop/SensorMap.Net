@@ -10,6 +10,8 @@ using SensorMap.EF;
 using Microsoft.EntityFrameworkCore;
 using System.Windows.Documents;
 using DynamicData;
+using System.Reactive.Linq;
+using System.Windows;
 
 namespace SensorMap.ViewModel
 {
@@ -19,6 +21,16 @@ namespace SensorMap.ViewModel
         private readonly IDataService _data;
         private INavigation navigation; 
         private ObservableCollection<Sector>? _coll;
+        private string _searchText = string.Empty;
+
+
+        [Reactive]
+        public string SearchText
+        {
+            get =>_searchText; 
+            set => this.RaiseAndSetIfChanged(ref _searchText, value);
+        }
+
 
         [Reactive]
         public ObservableCollection<Sector>? Sectors
@@ -31,13 +43,28 @@ namespace SensorMap.ViewModel
         {
             navigation = _nav;
             _data = data;
-            GoToSector = new RelayCommand<Sector>((s) => navigation.ShowDialog<MechanismView, MechanismVM>(s));
-            BackMenu = new RelayCommand(() => navigation.NavigateTo<MenuButtonsVM>());
+            GoToSector = new RelayCommand<Sector>((s) => navigation.NavigateTo<MechanismVM>(s));
             _provider = provider;
 
             Sectors = new ObservableCollection<Sector>(_data.Sectors);
+
+            this.WhenAnyValue(x => x.SearchText)
+            .Throttle(TimeSpan.FromMilliseconds(300))
+            .DistinctUntilChanged()
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(_ =>
+            {
+                if(!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var result = from sector in Sectors
+                                 where sector.Name.ToLower().Contains(SearchText) || sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
+                                 select sector;
+                    Sectors = new (result);
+                }
+                else Sectors = new ObservableCollection<Sector>(_data.Sectors);
+            });
+
         }
         public ICommand GoToSector { get; set; }
-        public ICommand BackMenu { get; set; }
     }
 }

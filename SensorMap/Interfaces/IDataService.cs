@@ -11,7 +11,7 @@ namespace SensorMap.Interfaces
     public interface IDataService
     {
         bool IsEditMode { get; set; }
-        void Add();
+        ObservableCollection<SensorType> SensorTypes {  get; }
         ObservableCollection<Sensor> Sensors { get; }
         ObservableCollection<Sector> Sectors { get; }
         ObservableCollection<Mechanism> Mechanisms { get; }

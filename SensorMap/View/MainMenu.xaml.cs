@@ -16,11 +16,11 @@ using System.Windows.Shapes;
 namespace SensorMap.View
 {
     /// <summary>
-    /// Логика взаимодействия для MenuButtons.xaml
+    /// Логика взаимодействия для MainMenu.xaml
     /// </summary>
-    public partial class MenuButtons : UserControl
+    public partial class MainMenu : UserControl
     {
-        public MenuButtons()
+        public MainMenu()
         {
             InitializeComponent();
         }

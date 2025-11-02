@@ -43,7 +43,7 @@ namespace SensorMap
             AnalyzeDataBase();
             if (IsStartOneApp(e))
             {
-                var menuApp = _serviceProvider.GetRequiredService<MenuView>();
+                var menuApp = _serviceProvider.GetRequiredService<MainWindow>();
                 var navigation = _serviceProvider.GetRequiredService<INavigation>();
                 navigation.SetMainWindow(menuApp);
                 menuApp.Show();
@@ -63,20 +63,18 @@ namespace SensorMap
 
         private static void ConfigurationServiceces(IServiceCollection services)
         {
-            services.AddSingleton<MenuView>(provider =>
+            services.AddSingleton<MainWindow>(provider =>
             {
-                var window = new MenuView();
-                window.DataContext = provider.GetRequiredService<MenuVM>();
+                var window = new MainWindow();
+                window.DataContext = provider.GetRequiredService<MainWindowVM>();
                 return window;
             });
             //Регистрация окон
-            services.AddTransient<SensorView>();
-            services.AddTransient<MechanismView>();
-            services.AddTransient<CRUD_View>();
+            
 
             //Регистрация VM
-            services.AddSingleton<MenuVM>();
-            services.AddTransient<MenuButtonsVM>();
+            services.AddSingleton<MainWindowVM>();
+            services.AddSingleton<MainMenuVM>();
             services.AddTransient<MechanismVM>();
             services.AddTransient<SensorVM>();
             services.AddTransient<SectorsVM>();

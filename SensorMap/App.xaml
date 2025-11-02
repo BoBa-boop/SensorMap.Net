@@ -9,11 +9,8 @@
             <DataTemplate DataType="{x:Type menuView:SectorsVM}">
                 <view:SectorView/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type menuView:MenuVM}">
-                <view:MenuView/>
-            </DataTemplate>
-            <DataTemplate DataType="{x:Type menuView:MenuButtonsVM}">
-                <view:MenuButtons/>
+            <DataTemplate DataType="{x:Type menuView:MainMenuVM}">
+                <view:MainMenu/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type menuView:SensorVM}">
                 <view:SensorView/>

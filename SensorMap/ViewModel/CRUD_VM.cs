@@ -26,6 +26,7 @@ namespace SensorMap.ViewModel
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
+        [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
         
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
@@ -36,11 +37,12 @@ namespace SensorMap.ViewModel
             _service = service;
             Sectors = _service.Sectors;
             Sensors = _service.Sensors;
+            SensorTypes = _service.SensorTypes;
             Mechanisms = _service.Mechanisms;
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
                 if(Sensor is Sensor) 
-                    Navigation.ShowDialog<SensorView, SensorVM>(Sensor); 
+                    Navigation.NavigateTo<SensorVM>(Sensor); 
             });
             SaveCommand = new RelayCommand<object>((arg) => 
             {

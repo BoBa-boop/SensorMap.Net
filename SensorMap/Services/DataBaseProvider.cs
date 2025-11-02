@@ -90,5 +90,12 @@ namespace SensorMap.Services
             }
         }
 
+        public async Task<IEnumerable<SensorType>> GetSensortypeAsync()
+        {
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
+            {
+                return await dBContext.SensorTypes.ToListAsync();
+            }
+        }
     }
 }

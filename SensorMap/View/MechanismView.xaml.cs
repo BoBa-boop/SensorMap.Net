@@ -17,7 +17,7 @@ namespace SensorMap.View
     /// <summary>
     /// Логика взаимодействия для MechanismView.xaml
     /// </summary>
-    public partial class MechanismView : Window
+    public partial class MechanismView : UserControl
     {
         public MechanismView()
         {

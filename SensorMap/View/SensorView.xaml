@@ -1,4 +1,4 @@
-﻿<Window x:Class="SensorMap.View.SensorView"
+﻿<UserControl x:Class="SensorMap.View.SensorView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,17 +9,17 @@
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:local="clr-namespace:SensorMap.View"
         mc:Ignorable="d"
-        Title="Данные о датчике" Height="450" Width="800" WindowStartupLocation="CenterScreen" x:Name="root">
-    <Window.Resources>
+        Height="auto" Width="auto" x:Name="root">
+    <UserControl.Resources>
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
         <cnv:ConvertByteToBitmapImage x:Key="byteToImg"/>
-    </Window.Resources>
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
+            <ColumnDefinition MaxWidth="400"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <TreeView ItemsSource="{Binding Sensors}" SelectedValuePath="Children">
+        <TreeView ItemsSource="{Binding Sensors}" SelectedValuePath="Children" Margin="40">
             <i:Interaction.Behaviors>
                 <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
             </i:Interaction.Behaviors>
@@ -30,36 +30,67 @@
             </TreeView.ItemTemplate>
         </TreeView>
         <GridSplitter/>
-        <Grid Grid.Column="1">
+        <hc:ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition/>
-            </Grid.RowDefinitions>
-            <Border MinWidth="100" MinHeight="100" 
-             HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border CornerRadius="20" BorderBrush="Black" BorderThickness="1.5" Padding="5">
-                    <Image Source="{Binding SelectedNode.Image,Converter={StaticResource byteToImg}}"/>
-                </Border>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions> 
+            <StackPanel Grid.Row="0" Margin="10">
+                <Border CornerRadius="20" Width="270" Height="270"
+                        BorderBrush="Black" BorderThickness="1.5">
+                <Border.Background>
+                    <ImageBrush ImageSource="{Binding SelectedNode.Image,Converter={StaticResource byteToImg}}"/>
+                </Border.Background>
             </Border>
-            <GridSplitter/>
+                <TextBlock Text="{Binding SelectedNode.Name}"
+                           Style="{StaticResource TextBlockTitle}"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
             <StackPanel Grid.Row="1">
-                <hc:SimpleText Text="{Binding SelectedNode.Name}" Margin="10"
-                               VerticalAlignment="Top" HorizontalAlignment="Center"/>
-                <WrapPanel Orientation="Horizontal" Width="auto" Height="auto">
-                    <ItemsControl ItemsSource="{Binding Users}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="5" Orientation="Horizontal">
-                                    <TextBlock FontWeight="Medium" Text="{Binding Title}" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBox Text="{Binding Value}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </WrapPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Тип:" Margin="5,0" FontSize="14"/>
+                    <TextBlock Text="{Binding SelectedNode.Type}"
+                               FontSize="14"
+                               Style="{StaticResource TextBlockBoldBaseStyle}"/>
+                    <Button Width="20" Height="20" Padding="0" Margin="5,-3" Background="Transparent"
+                            hc:IconElement.Geometry="{StaticResource InfoGeometry}" ToolTip="Получить информацию"/>
+                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Используется на:"
+                               FontSize="14" Grid.Column="0" VerticalAlignment="Center" Margin="5,0"/>
+                    <ListBox Background="Transparent" Grid.Column="1" BorderThickness="0"
+                             ItemsSource="{Binding Sensors}" DisplayMemberPath="Name">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel VirtualizingPanel.IsVirtualizing="True"
+                                           Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                                <Setter Property="Margin" Value="2"/>
+                                <Setter Property="FontSize" Value="14"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </Grid>
+                <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}">
+                        <WrapPanel Orientation="Horizontal" ItemWidth="200">
+                            <hc:TextBox hc:TitleElement.Title="Вид корпуса" MaxLength="80" Margin="10,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Способ подключения" MaxLength="180" Margin="10,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Зона чувствительности,мм" Margin="10,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Диапазон рабочих напряжений,В" Margin="10,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Схема подключения" Margin="10,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Функция коммутации" Margin="10,0"/>
+                        </WrapPanel>
+                    </GroupBox>
             </StackPanel>
         </Grid>
+        </hc:ScrollViewer>
     </Grid>
-</Window>
+</UserControl>

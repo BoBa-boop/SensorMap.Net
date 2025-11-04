@@ -344,7 +344,9 @@
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Name"
-                                                  SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" Cursor="Hand"/>
+                                                  SelectedValue="{Binding Type, UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedValuePath="Name"
+                                                  Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>

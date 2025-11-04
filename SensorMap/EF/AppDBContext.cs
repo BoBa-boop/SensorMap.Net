@@ -23,6 +23,7 @@ namespace SensorMap.EF
             modelBuilder.ApplyConfiguration(new SectorConfiguration());
             modelBuilder.ApplyConfiguration(new MechanismConfiguration());
             modelBuilder.ApplyConfiguration(new SensorConfiguration());
+            modelBuilder.ApplyConfiguration(new SensorTypeConfiguration());
             modelBuilder.ApplyConfiguration(new PLCConfiguration());
             modelBuilder.ApplyConfiguration(new SensorAssignmentConfiguration());
             base.OnModelCreating(modelBuilder);
@@ -59,6 +60,14 @@ namespace SensorMap.EF
     public class SensorConfiguration : IEntityTypeConfiguration<Sensor>
     {
         public void Configure(EntityTypeBuilder<Sensor> builder)
+        {
+            builder.HasKey(x => x.Id);
+            builder.Property(e => e.Type).HasConversion<string>();
+        }
+    }
+    public class SensorTypeConfiguration : IEntityTypeConfiguration<SensorType>
+    {
+        public void Configure(EntityTypeBuilder<SensorType> builder)
         {
             builder.HasKey(x => x.Id);
         }

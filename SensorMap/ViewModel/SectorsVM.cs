@@ -47,7 +47,7 @@ namespace SensorMap.ViewModel
             _provider = provider;
 
             Sectors = new ObservableCollection<Sector>(_data.Sectors);
-
+            var tempCollection = Sectors;
             this.WhenAnyValue(x => x.SearchText)
             .Throttle(TimeSpan.FromMilliseconds(300))
             .DistinctUntilChanged()
@@ -56,7 +56,8 @@ namespace SensorMap.ViewModel
             {
                 if(!string.IsNullOrWhiteSpace(SearchText))
                 {
-                    var result = from sector in Sectors
+                    
+                    var result = from sector in tempCollection
                                  where sector.Name.ToLower().Contains(SearchText) || sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
                                  select sector;
                     Sectors = new (result);

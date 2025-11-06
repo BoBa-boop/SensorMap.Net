@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using HandyControl.Controls;
+using HandyControl.Tools;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -33,7 +35,22 @@ namespace SensorMap.CustomControls
             get { return (Brush)GetValue(ColorProperty); }
             set { SetValue(ColorProperty, value); }
         }
+        public static readonly DependencyProperty XProp =
+            DependencyProperty.Register("X", typeof(double), typeof(SensorDrag_Drop));
 
+        public int X
+        {
+            get { return (int)GetValue(XProp); }
+            set { SetValue(XProp, value); }
+        }
+        public static readonly DependencyProperty YProp =
+            DependencyProperty.Register("Y", typeof(int), typeof(SensorDrag_Drop));
+
+        public int Y
+        {
+            get { return (int)GetValue(YProp); }
+            set { SetValue(YProp, value); }
+        }
         public static readonly DependencyProperty SensorDropCommandProperty =
             DependencyProperty.Register("SensorDropCommand", typeof(ICommand), typeof(SensorDrag_Drop),
                 new PropertyMetadata(null));
@@ -101,13 +118,24 @@ namespace SensorMap.CustomControls
                 Point dropPosition = e.GetPosition(canvas);
                 Canvas.SetLeft(element, dropPosition.X);
                 Canvas.SetTop(element, dropPosition.Y);
-
                 if (!canvas.Children.Contains(element))
                 {
                     canvas.Children.Add(element);
                 }
             }
         }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = SingleOpenHelper.CreateControl<ColorPicker>();
+            var window = new PopupWindow
+            {
+                PopupElement = picker
+            };
+            picker.SelectedColorChanged += delegate { window.Close(); };
+            picker.Canceled += delegate { window.Close(); };
+            window.Show(ButtonMouseFollow, false);
+    }
 
         //public static readonly DependencyProperty DragProperty =
         //   DependencyProperty.RegisterAttached("Drag", typeof(bool), typeof(SensorDrag_Drop),

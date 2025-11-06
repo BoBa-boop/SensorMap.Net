@@ -13,18 +13,6 @@
         Height="auto" Width="auto" x:Name="root">
     <UserControl.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
-        <Style x:Key="SensorStyle" TargetType="Ellipse">
-            <Setter Property="Width" Value="20"/>
-            <Setter Property="Height" Value="20"/>
-            <Setter Property="Fill" Value="Red"/>
-            <Setter Property="Stroke" Value="DarkRed"/>
-            <Setter Property="StrokeThickness" Value="2"/>
-            <Setter Property="RenderTransform">
-                <Setter.Value>
-                    <TranslateTransform X="-10" Y="-10"/>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -73,7 +61,8 @@
             </Grid.RowDefinitions>
             <myCC:ImageViewerCC ImageSource="{Binding CurrentMech.Image}"  Background="Transparent"
                     Margin="20" MinScale="0.6" MaxScale="3.6" IsHitTestVisible="True"/>
-            <myCC:SensorDrag_Drop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}" Background="Transparent"/>
-            </Grid>
+            <myCC:SensorDrag_Drop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"                                
+                                  Background="Transparent"/>
+        </Grid>
     </Grid>
 </UserControl>

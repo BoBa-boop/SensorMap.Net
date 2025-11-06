@@ -62,6 +62,7 @@ namespace SensorMap.EF
         public void Configure(EntityTypeBuilder<Sensor> builder)
         {
             builder.HasKey(x => x.Id);
+            builder.HasOne(t => t.SensorType).WithOne(s => s.Sensor).HasForeignKey<Sensor>(s=>s.SensorTypeID);
             builder.Property(e => e.Type).HasConversion<string>();
         }
     }
@@ -70,6 +71,7 @@ namespace SensorMap.EF
         public void Configure(EntityTypeBuilder<SensorType> builder)
         {
             builder.HasKey(x => x.Id);
+            builder.HasOne(s => s.Sensor).WithOne(t => t.SensorType);
         }
     }
     public class SensorAssignmentConfiguration : IEntityTypeConfiguration<PLCInputs>

@@ -31,7 +31,13 @@
                     <MenuItem Header="Контроллеры"/>
                 </MenuItem>
             </Menu>
-            <Button Content="Настройки" Command="{Binding NavigateToSettings}" Margin="10,0,10,0" Style="{StaticResource ButtonCustom}"/>
+            <Menu Background="Transparent">
+                <MenuItem Header="Настройки">
+                    <MenuItem Header="Вид 'Главное меню'" Command="{Binding NavigateToMenu}"/>
+                    <MenuItem Header="Резервная копия БД" Command="{Binding NavigateToSectors}"/>
+                    <MenuItem Header="Режим 'Редактор'" Command="{Binding NavigateToMechanisms}"/>                   
+                </MenuItem>
+            </Menu>
             <Button Content="Help" Style="{StaticResource ButtonCustom}" Margin="10,0,20,0"/>
         </hc:SimpleStackPanel>
     </hc:Window.NonClientAreaContent>

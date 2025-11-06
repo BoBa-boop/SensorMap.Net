@@ -338,13 +338,13 @@
                             <DataGridTemplateColumn Header="Тип">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Type.Name}" Cursor="Hand"/>
+                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Name"
-                                                  SelectedValue="{Binding Type, UpdateSourceTrigger=PropertyChanged}"
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedValue="{Binding Type, UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Name"
                                                   SelectedValuePath="Name"
                                                   Cursor="Hand"/>
                                     </DataTemplate>
@@ -390,6 +390,90 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                         
+                    </DataGrid>
+                </Grid>
+            </hc:TabItem>
+            
+            <!--SECTION FOR PLC-->
+            <hc:TabItem Header="Контроллеры">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                  AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
+                  MinColumnWidth="90" MaxColumnWidth="250" Unloaded="DataGrid_Unloaded"
+                  RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
+                        <i:Interaction.Behaviors>
+                            <beh:DataGridBahavior/>
+                        </i:Interaction.Behaviors>
+                        <!--<DataGrid.RowValidationRules>
+                <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
+            </DataGrid.RowValidationRules>-->
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding Name, ValidatesOnDataErrors=True,
+                    UpdateSourceTrigger=PropertyChanged}" Header="Название">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Производитель">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Name"
+                                      SelectedValue="{Binding Type, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedValuePath="Name"
+                                      Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Механизмы" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Действие">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
+                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
+                                            <Button x:Name="Show" ToolTip="Показать карточку"
+                                        Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
+                                        CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
+                                        hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"/>
+                                            <Button Name="AddImage" ToolTip="Загрузить изображение"
+                                        Command="{Binding ElementName=root,Path=DataContext.AddImage}"
+                                        CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
+                                        hc:IconElement.Geometry="{StaticResource AddGeometry}" Foreground="Black"/>
+                                            <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
+                                        </hc:ElementGroup>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
+                                    Path=(Validation.HasError)}"  Value="True">
+                                                <Setter Property="Visibility" TargetName="Show" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <!--Триггер для скрытия кнопок из последней добавленной строки-->
+                                            <DataTrigger Binding="{Binding Text, ElementName=mark}" Value="{}{DataGrid.NewItemPlaceholder}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+
                     </DataGrid>
                 </Grid>
             </hc:TabItem>

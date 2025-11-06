@@ -11,12 +11,21 @@
             DragLeave="Canvas_DragLeave"
             DragOver="Canvas_DragOver"
             Drop="Canvas_Drop">
+        
+        
         <Ellipse x:Name="sensor" 
                  Fill="Red"
                  Width="30" Height="30"
-                 Canvas.Left="50"
-                 Canvas.Top="50"
-                MouseMove="Sensor_MouseMove" 
-                 Cursor="ScrollAll"  IsHitTestVisible="True"/>
+                 Canvas.Left="30"
+                 Canvas.Top="30"
+                 MouseMove="Sensor_MouseMove" 
+                 Cursor="ScrollAll"  IsHitTestVisible="True">
+            <Ellipse.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Name="ButtonMouseFollow" Header="Подробнее" Click="MenuItem_Click"/>
+                </ContextMenu>
+            </Ellipse.ContextMenu>
+        </Ellipse>
+        
     </Canvas>
 </UserControl>

@@ -14,7 +14,7 @@ namespace SensorMap.Model
     public class Sensor : ReactiveObject, IEditableObject, IDataErrorInfo
     {
         private string _name = string.Empty;
-        private SensorType _type;
+        private string _type;
         private byte[]? _image;
         [Key]
         [Reactive] public int Id { get; set; }
@@ -31,7 +31,7 @@ namespace SensorMap.Model
                 }
             }
         }
-        [Reactive] public SensorType Type
+        [Reactive] public string Type
         {
             get => _type;
             set 
@@ -43,7 +43,19 @@ namespace SensorMap.Model
                 }
             }
         }
-       
+        public int SensorTypeID { get; set; }
+        public SensorType? SensorType
+        {
+            get => _sensorType;
+            set
+            {
+                if (value != null)
+                {
+                    this.RaiseAndSetIfChanged(ref _sensorType, value);
+                }
+            }
+        }
+
         [Reactive]
         public byte[]? Image
         {
@@ -92,6 +104,8 @@ namespace SensorMap.Model
 
 
         private Sensor backupCopy;
+        private SensorType? _sensorType;
+
         public void BeginEdit()
         {
             if (IsModified) return;

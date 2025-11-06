@@ -26,5 +26,7 @@ namespace SensorMap.Model
                 }
             } 
         }
+        [Reactive]public Sensor? Sensor { get; set; }
+        
     }
 }

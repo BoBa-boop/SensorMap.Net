@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
+using HandyControl.Tools.Extension;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
@@ -19,8 +20,6 @@ namespace SensorMap.ViewModel
         private readonly IDataService _service;
         private Sector? currentSector;
         private ObservableCollection<SensorType> sensorTypes { get; set; }
-        private double _x;
-        private double _y;
         [Reactive] public Sector? CurrentSector 
         {
             get => currentSector;
@@ -30,31 +29,6 @@ namespace SensorMap.ViewModel
                 {
                 this.RaiseAndSetIfChanged(ref currentSector, value);
                     currentSector = value;
-                }
-            }
-        }
-        [Reactive] public double X
-        {
-            get => _x;
-            set
-            {
-                if (value != _x)
-                {
-                    this.RaiseAndSetIfChanged(ref _x, value);
-                    _x = value;
-                }
-            }
-        }
-        [Reactive]
-        public double Y
-        {
-            get => _y;
-            set
-            {
-                if (value != _y)
-                {
-                    this.RaiseAndSetIfChanged(ref _y, value);
-                    _y = value;
                 }
             }
         }
@@ -73,6 +47,28 @@ namespace SensorMap.ViewModel
                 }
             }
         }
+        private double _x;
+        [Reactive]
+        public double X
+        {
+            get => _x;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _x, value);
+                _x = value;
+            }
+        }
+        private double _y;
+        [Reactive]
+        public double Y
+        {
+            get => _y;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _y, value);
+                _y = value;
+            }
+        }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<SensorsTreeNode> Sensors { get; set; } = new();
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
@@ -87,7 +83,7 @@ namespace SensorMap.ViewModel
             
             Mechanisms = new (_service.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector?.Id ?? 0)).ToList());
 
-            SaveSensorPlace = new RelayCommand(()=>MessageBox.Show("Сохранил)"));
+            SaveSensorPlace = new RelayCommand(()=>MessageBox.Show($"X:{X};Y:{Y}"));
         }
         private IEnumerable<SensorsTreeNode> TreeNodeSensors()
         {

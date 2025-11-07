@@ -16,9 +16,10 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <hc:SearchBar hc:InfoElement.Placeholder="Участок или механизация"
+        <hc:TextBox hc:InfoElement.Placeholder="Участок или механизация"
                     Margin="0,10,0,10" Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
-                    HorizontalAlignment="Center" Width="300"/>
+                    HorizontalAlignment="Center" Width="300">
+        </hc:TextBox>
         <ListBox Background="Transparent" BorderThickness="0" Margin="10"
                ItemsSource="{Binding Sectors}" Grid.Row="1">
             <ListBox.ItemTemplate>

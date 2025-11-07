@@ -25,7 +25,7 @@ namespace SensorMap.Services
         private ObservableCollection<Mechanism> _mechanisms= new();
         private IDataBaseProvider _provider;
 
-
+        
         private bool _isEdit;
         [Reactive]
         public bool IsEditMode

@@ -6,7 +6,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SensorMap.View"
         xmlns:hc="https://handyorg.github.io/handycontrol"
-             xmlns:sensDr="clr-namespace:SensorMap.CustomControls.SensorDrag"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:Converter="clr-namespace:SensorMap.Converters"
@@ -60,15 +59,11 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Grid Width="{Binding ElementName=mapScheme,Path=ActualWidth}" Height="{Binding ElementName=mapScheme,Path=ActualHeight}"
-                      VerticalAlignment="Center">
-                    <myCC:ImageViewerCC ImageSource="{Binding CurrentMech.Image}"  Background="Transparent"
-                                        Margin="20" MinScale="0.6" MaxScale="3.6" IsHitTestVisible="True"/>
-                </Grid>
-            <!--<myCC:SensorDragDrop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}" 
-                                     X="{Binding X,Mode=TwoWay}" Y="{Binding Y,Mode=TwoWay}" Margin="20"
-                                 Background="Transparent"/>-->
-            <sensDr:SensorDragDrop Color="Red" />
+            <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
+                <myCC:SensorDragDrop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
+                                 X="{Binding X,Mode=TwoWay}" Y="{Binding Y,Mode=TwoWay}" 
+                                 ImageSource="{Binding CurrentMech.Image}"/>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

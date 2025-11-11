@@ -66,7 +66,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Sensors.ToListAsync();
+                return await dBContext.Sensors.Include(x=>x.SensorType).ToListAsync();
             }
         }
 

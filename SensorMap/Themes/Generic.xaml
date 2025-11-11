@@ -77,14 +77,15 @@
                                  Fill="Red"
                                  Width="30" 
                                  Height="30"
-                                 Canvas.Left="30"
-                                 Canvas.Top="30"
                                  Cursor="ScrollAll"
+                                 IsHitTestVisible="True"
                                  Focusable="False">
                         </Ellipse>
-                    </Canvas>
+                    <!--</Canvas>-->
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+
+    
 </ResourceDictionary>

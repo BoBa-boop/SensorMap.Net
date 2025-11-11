@@ -13,11 +13,11 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml.Linq;
 
 namespace SensorMap.CustomControls
 {
 
-    [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Sensor", Type = typeof(Ellipse))]
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control
@@ -27,8 +27,6 @@ namespace SensorMap.CustomControls
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SensorDragDrop),
                 new FrameworkPropertyMetadata(typeof(SensorDragDrop)));
         }
-
-        private Canvas _canvas;
         private Ellipse _sensor;
         private Image _image;
         private bool _isDragging = false;

@@ -19,9 +19,9 @@
             <ColumnDefinition MaxWidth="400"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <TreeView ItemsSource="{Binding Sensors}" SelectedValuePath="Children" Margin="40">
+        <TreeView ItemsSource="{Binding Sensors}" SelectedValuePath="Children" Margin="30,20">
             <i:Interaction.Behaviors>
-                <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
+                <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
             </i:Interaction.Behaviors>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate  ItemsSource="{Binding Children}">
@@ -31,14 +31,14 @@
         </TreeView>
         <GridSplitter/>
         <hc:ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
-        <Grid>
+        <Grid Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityConverter},UpdateSourceTrigger=PropertyChanged}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions> 
             <StackPanel Grid.Row="0" Margin="10">
-                <Border CornerRadius="20" Width="270" Height="270"
-                        BorderBrush="Black" BorderThickness="1.5">
+                <Border CornerRadius="140" Width="270" Height="270"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1.5">
                 <Border.Background>
                     <ImageBrush ImageSource="{Binding SelectedNode.Image,Converter={StaticResource byteToImg}}"/>
                 </Border.Background>
@@ -53,11 +53,13 @@
                     <TextBlock Text="{Binding SelectedNode.Type}"
                                FontSize="14"
                                Style="{StaticResource TextBlockBoldBaseStyle}"/>
-                    <Button Width="20" Height="20" Padding="0" Margin="5,-3" Background="Transparent"
-                            hc:IconElement.Geometry="{StaticResource InfoGeometry}" ToolTip="Получить информацию"/>
+                    <Button Name="GetInfoButton" Width="20" Height="20" Padding="0" Margin="5,-3" Background="Transparent"
+                            hc:IconElement.Geometry="{StaticResource InfoGeometry}"
+                            Command="{Binding GetInfoAboutType}" CommandParameter="{Binding}"
+                            ToolTip="Получить информацию"/>
                 </StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
+                    <Grid>                        
+                        <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
@@ -79,13 +81,13 @@
                         </ListBox.ItemContainerStyle>
                     </ListBox>
                 </Grid>
-                <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}">
-                        <WrapPanel Orientation="Horizontal" ItemWidth="200">
+                <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">
+                        <WrapPanel Orientation="Horizontal" ItemWidth="200" Margin="10">
                             <hc:TextBox hc:TitleElement.Title="Вид корпуса" MaxLength="80" Margin="10,0"/>
                             <hc:TextBox hc:TitleElement.Title="Способ подключения" MaxLength="180" Margin="10,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Зона чувствительности,мм" Margin="10,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Диапазон рабочих напряжений,В" Margin="10,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Схема подключения" Margin="10,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Зона чувствительности,мм" Margin="10,0,5,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Диапазон рабочих напряжений,В" hc:TitleElement.TitleWidth="30" Margin="5,0,0,0"/>
+                            <hc:TextBox hc:TitleElement.Title="Схема подключения" Margin="10,0,10,0"/>
                             <hc:TextBox hc:TitleElement.Title="Функция коммутации" Margin="10,0"/>
                         </WrapPanel>
                     </GroupBox>

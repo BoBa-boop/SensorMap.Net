@@ -19,6 +19,7 @@ namespace SensorMap.CustomControls
 
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Sensor", Type = typeof(Ellipse))]
+    [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control
     {
         static SensorDragDrop()
@@ -29,6 +30,7 @@ namespace SensorMap.CustomControls
 
         private Canvas _canvas;
         private Ellipse _sensor;
+        private Image _image;
         private bool _isDragging = false;
 
         #region Dependency Properties
@@ -101,19 +103,22 @@ namespace SensorMap.CustomControls
         private Point _initialMousePosition;
         private UIElement _selectedElement;
         private Vector _draggingDelta;
-        private double _scaleDelta;
+        private double _scaleDeltaSensor;
+        private Rect movingObject;  // Границы нашего объекта
+        private Size parentSize; // Размер родительского элемента
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            _scaleDelta = ZoomFactor;
+            _scaleDeltaSensor = ZoomFactor;
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
             _sensor = GetTemplateChild("PART_Sensor") as Ellipse;
+            _image = GetTemplateChild("PART_Image") as Image;
+            
             if (_canvas != null)
             {
                 if (_sensor != null)
                 {
                     _sensor.MouseLeftButtonUp += Canvas_Drop;
-                    _sensor.MouseLeftButtonDown += _canvas_MouseMove;
                 }
                 _canvas.DragLeave += Canvas_DragLeave;
                 _canvas.MouseMove += _canvas_MouseMove;
@@ -125,46 +130,52 @@ namespace SensorMap.CustomControls
 
         private void _canvas_MouseMove(object sender, MouseEventArgs e)
         {
-            Rect bounds = VisualTreeHelper.GetDescendantBounds(_canvas); // Границы нашего объекта
-            Size parentSize = RenderSize; // Размер родительского элемента
+            parentSize = RenderSize;
             if (e.RightButton == MouseButtonState.Pressed)
             {
+                //запрет на перемещение
+                if(movingObject.Width <= parentSize.Width || movingObject.Height <= parentSize.Height)
+                {
+                    return;
+                }
                 Point mousePosition = _transform.Inverse.Transform(e.GetPosition(_canvas));
                 Vector delta = Point.Subtract(mousePosition, _initialMousePosition);
-
-
-
-                //// Получаем координаты нового положения объекта
-                double newX = _transform.Matrix.OffsetX;
-                double newY = _transform.Matrix.OffsetY;
-
-                if (bounds.Width > parentSize.Width)
+                //задание границ
+                if (movingObject.Width > parentSize.Width)
                 {
-                    newX = _transform.Matrix.OffsetX + delta.X;
-                    if (newX >= 0.0)
+                    //левая граница
+                    if (delta.X + _transform.Matrix.OffsetX >= 0.0)
                     {
-                        newX = 0.0;
+                        delta.X = 0.0;
+                        _initialMousePosition = mousePosition;
                     }
-                    else if (0.0 - newX + parentSize.Width >= bounds.Width)
+                    //правая граница
+                    else if (delta.X +  _transform.Matrix.OffsetX <= parentSize.Width - movingObject.Width)
                     {
-                        newX = parentSize.Width - bounds.Width;
+                        delta.X = parentSize.Width - movingObject.Width - _transform.Matrix.OffsetX;
+                        _initialMousePosition = mousePosition;
                     }
                 }
-                if (bounds.Height > parentSize.Height)
-                {
-                    newY = _transform.Matrix.OffsetY + delta.Y;
-                    if (newY >= 0.0)
+                if (movingObject.Height > parentSize.Height)
+                { 
+                    //верхняя граница
+                    if (delta.Y + _transform.Matrix.OffsetY >= 0.0)
                     {
-                        newY = 0.0;
+                        delta.Y = 0.0;
+                        _initialMousePosition = mousePosition;
                     }
-                    else if (0.0 - newY + parentSize.Height >= bounds.Height)
+                    //нижняя граница
+                    else if (delta.Y + _transform.Matrix.OffsetY <= parentSize.Height - movingObject.Height)
                     {
-                        newY = parentSize.Height - bounds.Width;
+                        delta.Y = parentSize.Height - movingObject.Height - _transform.Matrix.OffsetY;
+                        _initialMousePosition = mousePosition;
                     }
 
                 }
-                var translate = new TranslateTransform(newX, newY);
-                _transform.Matrix = translate.Value; /** _transform.Matrix;*/
+
+                var translate = new TranslateTransform(delta.X, delta.Y);
+                _transform.Matrix = translate.Value * _transform.Matrix;
+
 
                 foreach (UIElement child in _canvas.Children)
                 {
@@ -194,17 +205,72 @@ namespace SensorMap.CustomControls
 
         private void _canvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
+            parentSize = RenderSize;
+            Point mousePostion = e.GetPosition(this);
             double scaleFactor = ZoomFactor;
             if (e.Delta < 0)
             {
                 scaleFactor = 1.0 / scaleFactor;
             }
-
-            Point mousePostion = e.GetPosition(this);
-
             Matrix scaleMatrix = _transform.Matrix;
+
+            if(scaleMatrix.M11 * scaleFactor < 0.5 || scaleMatrix.M11 * scaleFactor > 10.0)
+            {
+                return;
+            }
             scaleMatrix.ScaleAt(scaleFactor, scaleFactor, mousePostion.X, mousePostion.Y);
-            _scaleDelta = _scaleDelta * scaleFactor;
+            if (_image.ActualWidth * scaleMatrix.M11 < parentSize.Width * 1.1 || _image.ActualHeight * scaleMatrix.M11 < parentSize.Height * 1.1)
+            {
+                scaleMatrix.OffsetX = (_canvas.ActualWidth - _image.ActualWidth * scaleMatrix.M11) / 2;
+                scaleMatrix.OffsetY = (_canvas.ActualHeight - _image.ActualHeight * scaleMatrix.M11) / 2;
+            }
+            //Point point = new Point(mousePostion.X - _transform.Matrix.OffsetX, mousePostion.Y - _transform.Matrix.OffsetY);
+            //double pointImgX = 0;
+            //double pointImgY = 0;
+            //if (movingObject.Width > base.ActualWidth)
+            //{
+            //    if (movingObject.Height > base.ActualHeight)
+            //    {
+            //        pointImgX = point.X / _image.ActualWidth;
+            //        pointImgY = point.Y / _image.ActualHeight;
+            //    }
+            //}
+            //if (e.Delta > 0)//++scale
+            //{
+            //    scaleMatrix.OffsetX = _transform.Matrix.OffsetX - pointImgX;
+            //    scaleMatrix.OffsetY = _transform.Matrix.OffsetY - pointImgY;
+            //}
+            //else
+            //{
+            //    double left = _imgActualMargin.Left + num2;
+            //    double top = _imgActualMargin.Top + num3;
+            //    double num4 = ImageWidth - base.ActualWidth;
+            //    double num5 = ImageHeight - base.ActualHeight;
+            //    double num6 = Math.Abs(_borderMove.Width - _canvasSmallImg.ActualWidth + _borderMove.Margin.Left);
+            //    double num7 = Math.Abs(_borderMove.Height - _canvasSmallImg.ActualHeight + _borderMove.Margin.Top);
+            //    if (Math.Abs(ImageMargin.Left) < 0.001 || num6 < 0.001)
+            //    {
+            //        left = _imgActualMargin.Left + _borderMove.Margin.Left / (_canvasSmallImg.ActualWidth - _borderMove.Width) * _scaleInternalWidth;
+            //    }
+
+            //    if (Math.Abs(ImageMargin.Top) < 0.001 || num7 < 0.001)
+            //    {
+            //        top = _imgActualMargin.Top + _borderMove.Margin.Top / (_canvasSmallImg.ActualHeight - _borderMove.Height) * _scaleInternalHeight;
+            //    }
+
+            //    if (num4 < 0.001)
+            //    {
+            //        left = (base.ActualWidth - ImageWidth) / 2.0;
+            //    }
+
+            //    if (num5 < 0.001)
+            //    {
+            //        top = (base.ActualHeight - ImageHeight) / 2.0;
+            //    }
+
+            //    thickness = new Thickness(left, top, 0.0, 0.0);
+            //}
+            _scaleDeltaSensor = _scaleDeltaSensor * scaleFactor;
             _transform.Matrix = scaleMatrix;
 
             foreach (UIElement child in _canvas.Children)
@@ -212,8 +278,8 @@ namespace SensorMap.CustomControls
                 double x = Canvas.GetLeft(child);
                 double y = Canvas.GetTop(child);
 
-                double sx = Math.Round(x * scaleFactor,2);
-                double sy = Math.Round(y * scaleFactor,2);
+                double sx = Math.Round(x * scaleFactor, 2);
+                double sy = Math.Round(y * scaleFactor, 2);
 
                 Canvas.SetLeft(child, sx);
                 Canvas.SetTop(child, sy);
@@ -227,6 +293,8 @@ namespace SensorMap.CustomControls
             if (e.ChangedButton == MouseButton.Right)
             {
                 _initialMousePosition = _transform.Inverse.Transform(e.GetPosition(this));
+                movingObject = VisualTreeHelper.GetDescendantBounds(this);
+                
             }
 
             if (e.ChangedButton == MouseButton.Left)
@@ -247,9 +315,9 @@ namespace SensorMap.CustomControls
 
         private void Canvas_Drop(object sender, MouseButtonEventArgs e)
         {
-            X = Math.Round(Canvas.GetLeft(_selectedElement) / _scaleDelta,1);
-            Y = Math.Round(Canvas.GetTop(_selectedElement) / _scaleDelta, 1);
-            SensorDropCommand?.Execute(null);
+            //X = Math.Round(Canvas.GetLeft(_selectedElement) / _scaleDeltaSensor,1);
+            //Y = Math.Round(Canvas.GetTop(_selectedElement) / _scaleDeltaSensor, 1);
+            //SensorDropCommand?.Execute(null);
             e.Handled = true;
         }
 
@@ -259,6 +327,7 @@ namespace SensorMap.CustomControls
         }
 
         
+
 
         // Метод для обновления позиции сенсора извне
         public void SetPosition(double x, double y)

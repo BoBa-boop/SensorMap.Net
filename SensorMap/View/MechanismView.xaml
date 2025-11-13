@@ -60,6 +60,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
+                <!--<hc:ImageViewer ImageSource="{Binding CurrentMech.Image}"/>-->
                 <myCC:SensorDragDrop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
                                  X="{Binding X,Mode=TwoWay}" Y="{Binding Y,Mode=TwoWay}" 
                                  ImageSource="{Binding CurrentMech.Image}"/>

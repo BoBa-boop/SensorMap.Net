@@ -71,8 +71,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:SensorDragDrop}">
-                    <Canvas x:Name="PART_Canvas" AllowDrop="True" Focusable="False">
-                        <Image Source="{TemplateBinding ImageSource}" Stretch="UniformToFill"/>
+                    <Canvas x:Name="PART_Canvas" AllowDrop="True" Focusable="False" Background="Transparent">
+                        <Image x:Name="PART_Image"  Source="{TemplateBinding ImageSource}" Stretch="UniformToFill"/>
                         <Ellipse x:Name="PART_Sensor" 
                                  Fill="Red"
                                  Width="30" 

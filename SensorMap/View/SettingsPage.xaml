@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              xmlns:hc="https://handyorg.github.io/handycontrol"
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Margin="10">
+    <hc:TransitioningContentControl TransitionMode="Bottom2Top" Margin="10">
         <hc:ElementGroup Width="300">
             <hc:ElementGroup.Background>
                 <SolidColorBrush Color="Gray" Opacity="0.2"/>
@@ -18,5 +18,5 @@
                         Background="Transparent">
             </hc:TextBox>
         </hc:ElementGroup>
-    </Grid>
+    </hc:TransitioningContentControl>
 </UserControl>

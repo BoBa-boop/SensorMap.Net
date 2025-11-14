@@ -10,6 +10,7 @@
              xmlns:viewmodel="clr-namespace:SensorMap.ViewModel"
              d:DataContext="{d:DesignInstance Type=viewmodel:SectorsVM}"
              d:DesignHeight="450" d:DesignWidth="800" x:Name="root">
+    <hc:TransitioningContentControl TransitionMode="Bottom2Top">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="60"/>
@@ -80,4 +81,5 @@
             </ListBox.ItemsPanel>
         </ListBox>
     </Grid>
+    </hc:TransitioningContentControl>
 </UserControl>

@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:SensorMap.View"
              xmlns:hc="https://handyorg.github.io/handycontrol"
              mc:Ignorable="d" >
-    <Grid>
+    <hc:TransitioningContentControl TransitionMode="Fade">
         <hc:Carousel AutoRun="True" IsCenter="True" Width="800" Height="600">
             <Border Width="800" Height="500"  Background="MediumPurple">
                 <TextBlock Text="Simple Text" FontSize="30" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -14,5 +14,5 @@
             <Border Width="800" Height="500" Background="RosyBrown"/>
             <Border Width="800" Height="500" Background="IndianRed"/>
         </hc:Carousel>
-    </Grid>
+    </hc:TransitioningContentControl>
 </UserControl>

@@ -14,6 +14,7 @@
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
         <cnv:ConvertByteToBitmapImage x:Key="byteToImg"/>
     </UserControl.Resources>
+    <hc:TransitioningContentControl TransitionMode="Bottom2Top">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition MaxWidth="400"/>
@@ -31,7 +32,8 @@
         </TreeView>
         <GridSplitter/>
         <hc:ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
-        <Grid Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityConverter},UpdateSourceTrigger=PropertyChanged}">
+                <hc:TransitioningContentControl TransitionMode="Right2Left"  Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityConverter},UpdateSourceTrigger=PropertyChanged}">
+                    <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
@@ -93,6 +95,8 @@
                     </GroupBox>
             </StackPanel>
         </Grid>
-        </hc:ScrollViewer>
+                </hc:TransitioningContentControl>
+            </hc:ScrollViewer>
     </Grid>
+    </hc:TransitioningContentControl>
 </UserControl>

@@ -14,6 +14,7 @@
     <UserControl.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
     </UserControl.Resources>
+    <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
@@ -67,4 +68,5 @@
             </Border>
         </Grid>
     </Grid>
+    </hc:TransitioningContentControl>
 </UserControl>

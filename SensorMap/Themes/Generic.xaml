@@ -71,17 +71,18 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:SensorDragDrop}">
-                    <Canvas x:Name="PART_Canvas" AllowDrop="True" Focusable="False" Background="Transparent">
+                    <Canvas x:Name="PART_Canvas" AllowDrop="True" Background="Transparent">
                         <Image x:Name="PART_Image"  Source="{TemplateBinding ImageSource}" Stretch="UniformToFill"/>
                         <Ellipse x:Name="PART_Sensor" 
                                  Fill="Red"
                                  Width="30" 
+                                 Canvas.Left="{Binding X}"
+                                 Canvas.Top="{Binding Y}"
                                  Height="30"
                                  Cursor="ScrollAll"
-                                 IsHitTestVisible="True"
-                                 Focusable="False">
+                                 IsHitTestVisible="True">
                         </Ellipse>
-                    <!--</Canvas>-->
+                    </Canvas>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

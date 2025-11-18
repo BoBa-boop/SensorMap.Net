@@ -17,7 +17,7 @@ using System.Xml.Linq;
 
 namespace SensorMap.CustomControls
 {
-
+    [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Sensor", Type = typeof(Ellipse))]
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control
@@ -27,6 +27,7 @@ namespace SensorMap.CustomControls
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SensorDragDrop),
                 new FrameworkPropertyMetadata(typeof(SensorDragDrop)));
         }
+        private Canvas _canvas;
         private Ellipse _sensor;
         private Image _image;
         private bool _isDragging = false;
@@ -301,7 +302,7 @@ namespace SensorMap.CustomControls
                 if (_canvas.Children.Contains((UIElement)e.Source))
                 {
                     _selectedElement = (UIElement)e.Source;
-                    Point mousePosition = Mouse.GetPosition(this);
+                    Point mousePosition = Mouse.GetPosition(_canvas);
                     double x = Canvas.GetLeft(_selectedElement);
                     double y = Canvas.GetTop(_selectedElement);
                     Point elementPosition = new Point(x, y);

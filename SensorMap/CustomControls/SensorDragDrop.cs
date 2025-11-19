@@ -46,7 +46,7 @@ namespace SensorMap.CustomControls
            DependencyProperty.Register("CanPanning", typeof(bool), typeof(SensorDragDrop),new PropertyMetadata(false));
 
         public static readonly DependencyProperty ZoomFactorProp =
-           DependencyProperty.Register("ZoomFactor", typeof(double), typeof(SensorDragDrop), new PropertyMetadata(1.1));
+           DependencyProperty.Register("ZoomFactor", typeof(double), typeof(SensorDragDrop), new PropertyMetadata(1.08));
 
         public double ZoomFactor
         {
@@ -101,6 +101,7 @@ namespace SensorMap.CustomControls
         private readonly MatrixTransform _transform = new MatrixTransform();
         private Point _initialMousePosition;
         private UIElement _selectedElement;
+        private double scaleFactor;
         private Vector _draggingDelta;
         private double _scaleDeltaSensor;
         private Rect movingObject;  // Границы нашего объекта
@@ -108,6 +109,7 @@ namespace SensorMap.CustomControls
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+            scaleFactor = ZoomFactor;
             _scaleDeltaSensor = ZoomFactor;
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
             _sensor = GetTemplateChild("PART_Sensor") as Ellipse;
@@ -149,7 +151,7 @@ namespace SensorMap.CustomControls
                         _initialMousePosition = mousePosition;
                     }
                     //правая граница
-                    else if (delta.X +  _transform.Matrix.OffsetX <= parentSize.Width - movingObject.Width)
+                    else if (delta.X +  _transform.Matrix.OffsetX < parentSize.Width - movingObject.Width)
                     {
                         delta.X = parentSize.Width - movingObject.Width - _transform.Matrix.OffsetX;
                         _initialMousePosition = mousePosition;
@@ -164,7 +166,7 @@ namespace SensorMap.CustomControls
                         _initialMousePosition = mousePosition;
                     }
                     //нижняя граница
-                    else if (delta.Y + _transform.Matrix.OffsetY <= parentSize.Height - movingObject.Height)
+                    else if (delta.Y + _transform.Matrix.OffsetY < parentSize.Height - movingObject.Height)
                     {
                         delta.Y = parentSize.Height - movingObject.Height - _transform.Matrix.OffsetY;
                         _initialMousePosition = mousePosition;
@@ -205,70 +207,37 @@ namespace SensorMap.CustomControls
         private void _canvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             parentSize = RenderSize;
-            Point mousePostion = e.GetPosition(this);
-            double scaleFactor = ZoomFactor;
+            Point mousePosition = e.GetPosition(this);
+            scaleFactor = ZoomFactor;
             if (e.Delta < 0)
             {
                 scaleFactor = 1.0 / scaleFactor;
             }
+
             Matrix scaleMatrix = _transform.Matrix;
+            double newScale = scaleMatrix.M11 * scaleFactor;
 
-            if(scaleMatrix.M11 * scaleFactor < 0.5 || scaleMatrix.M11 * scaleFactor > 10.0)
+            // Проверка предела масштаба
+            if (newScale < 0.5 || newScale > 10.0) return;
+
+            // Сохраняем текущее состояние перед масштабированием
+            double currentScale = scaleMatrix.M11;
+            double currentOffsetX = scaleMatrix.OffsetX;
+            double currentOffsetY = scaleMatrix.OffsetY;
+
+            // Применяем масштабирование
+            scaleMatrix.ScaleAt(scaleFactor, scaleFactor, mousePosition.X, mousePosition.Y);
+
+            // Вычисляем новые размеры изображения
+            double scaledWidth = _image.ActualWidth * newScale;
+            double scaledHeight = _image.ActualHeight * newScale;
+
+            // Применяем границы только при уменьшении
+            if (e.Delta < 0) // Уменьшение
             {
-                return;
+                ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize, currentOffsetX, currentOffsetY, scaleFactor);
             }
-            scaleMatrix.ScaleAt(scaleFactor, scaleFactor, mousePostion.X, mousePostion.Y);
-            if (_image.ActualWidth * scaleMatrix.M11 < parentSize.Width * 1.1 || _image.ActualHeight * scaleMatrix.M11 < parentSize.Height * 1.1)
-            {
-                scaleMatrix.OffsetX = (_canvas.ActualWidth - _image.ActualWidth * scaleMatrix.M11) / 2;
-                scaleMatrix.OffsetY = (_canvas.ActualHeight - _image.ActualHeight * scaleMatrix.M11) / 2;
-            }
-            //Point point = new Point(mousePostion.X - _transform.Matrix.OffsetX, mousePostion.Y - _transform.Matrix.OffsetY);
-            //double pointImgX = 0;
-            //double pointImgY = 0;
-            //if (movingObject.Width > base.ActualWidth)
-            //{
-            //    if (movingObject.Height > base.ActualHeight)
-            //    {
-            //        pointImgX = point.X / _image.ActualWidth;
-            //        pointImgY = point.Y / _image.ActualHeight;
-            //    }
-            //}
-            //if (e.Delta > 0)//++scale
-            //{
-            //    scaleMatrix.OffsetX = _transform.Matrix.OffsetX - pointImgX;
-            //    scaleMatrix.OffsetY = _transform.Matrix.OffsetY - pointImgY;
-            //}
-            //else
-            //{
-            //    double left = _imgActualMargin.Left + num2;
-            //    double top = _imgActualMargin.Top + num3;
-            //    double num4 = ImageWidth - base.ActualWidth;
-            //    double num5 = ImageHeight - base.ActualHeight;
-            //    double num6 = Math.Abs(_borderMove.Width - _canvasSmallImg.ActualWidth + _borderMove.Margin.Left);
-            //    double num7 = Math.Abs(_borderMove.Height - _canvasSmallImg.ActualHeight + _borderMove.Margin.Top);
-            //    if (Math.Abs(ImageMargin.Left) < 0.001 || num6 < 0.001)
-            //    {
-            //        left = _imgActualMargin.Left + _borderMove.Margin.Left / (_canvasSmallImg.ActualWidth - _borderMove.Width) * _scaleInternalWidth;
-            //    }
 
-            //    if (Math.Abs(ImageMargin.Top) < 0.001 || num7 < 0.001)
-            //    {
-            //        top = _imgActualMargin.Top + _borderMove.Margin.Top / (_canvasSmallImg.ActualHeight - _borderMove.Height) * _scaleInternalHeight;
-            //    }
-
-            //    if (num4 < 0.001)
-            //    {
-            //        left = (base.ActualWidth - ImageWidth) / 2.0;
-            //    }
-
-            //    if (num5 < 0.001)
-            //    {
-            //        top = (base.ActualHeight - ImageHeight) / 2.0;
-            //    }
-
-            //    thickness = new Thickness(left, top, 0.0, 0.0);
-            //}
             _scaleDeltaSensor = _scaleDeltaSensor * scaleFactor;
             _transform.Matrix = scaleMatrix;
 
@@ -285,6 +254,52 @@ namespace SensorMap.CustomControls
 
                 child.RenderTransform = _transform;
             }
+            
+        }
+
+        private void ApplyBounds(ref Matrix matrix, double scaledWidth, double scaledHeight, Size parentSize,
+                                double prevOffsetX, double prevOffsetY, double scaleFactor)
+        {
+            double offsetX = matrix.OffsetX;
+            double offsetY = matrix.OffsetY;
+
+            // Если изображение меньше контейнера по ширине - центрируем по горизонтали
+            if (scaledWidth <= parentSize.Width)
+            {
+                offsetX = (parentSize.Width - scaledWidth) / 2;
+            }
+            else
+            {
+                // Проверяем левую границу
+                if (offsetX > 0)
+                    offsetX = 0;
+
+                // Проверяем правую границу
+                double minOffsetX = parentSize.Width - scaledWidth;
+                if (offsetX < minOffsetX)
+                    offsetX = minOffsetX;
+            }
+
+            // Если изображение меньше контейнера по высоте - центрируем по вертикали
+            if (scaledHeight <= parentSize.Height)
+            {
+                offsetY = (parentSize.Height - scaledHeight) / 2;
+            }
+            else
+            {
+                // Проверяем верхнюю границу
+                if (offsetY > 0)
+                    offsetY = 0;
+
+                // Проверяем нижнюю границу
+                double minOffsetY = parentSize.Height - scaledHeight;
+                if (offsetY < minOffsetY)
+                    offsetY = minOffsetY;
+            }
+
+            // Устанавливаем скорректированные смещения
+            matrix.OffsetX = offsetX;
+            matrix.OffsetY = offsetY;
         }
 
         private void _canvas_MouseDown(object sender, MouseButtonEventArgs e)

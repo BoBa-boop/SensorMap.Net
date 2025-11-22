@@ -67,7 +67,7 @@ namespace SensorMap.ViewModel
             }
             foreach (var sensor in _service.Sensors)
             {
-                var node = mainNodes.FirstOrDefault(nodes => nodes.Name == sensor.Type.ToString());
+                var node = mainNodes.FirstOrDefault(nodes => nodes.Name == sensor.SensorType.Name.ToString());
                 node?.Children.Add(sensor);
             }
             return mainNodes;

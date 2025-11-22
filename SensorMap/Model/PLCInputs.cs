@@ -20,13 +20,8 @@ namespace SensorMap.Model
         public Sensor? Sensor { get; set; }
         public int PLCId { get; set; }
         public PLC? PLC { get; set; }
-        //public Guid MechID { get; set; }
-        //public Mechanism? Mechanism { get; set; }
 
         public string Address { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string Location { get; set; } = string.Empty;
-        public double XPoint { get; set; }
-        public double YPoint { get; set; }
     }
 }

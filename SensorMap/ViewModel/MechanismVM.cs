@@ -7,6 +7,7 @@ using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Model.TreeNode;
 using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using System.Windows.Input;
 
 namespace SensorMap.ViewModel
@@ -14,20 +15,20 @@ namespace SensorMap.ViewModel
     /// <summary>
     /// ПУСТОЙ Mechanisms у секторов
     /// </summary>
-    public class MechanismVM:ReactiveObject
+    public class MechanismVM : ReactiveObject
     {
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private Sector? currentSector;
         private ObservableCollection<SensorType> sensorTypes { get; set; }
-        [Reactive] public Sector? CurrentSector 
+        [Reactive] public Sector? CurrentSector
         {
             get => currentSector;
             set
             {
-                if(value != null)
+                if (value != null)
                 {
-                this.RaiseAndSetIfChanged(ref currentSector, value);
+                    this.RaiseAndSetIfChanged(ref currentSector, value);
                     currentSector = value;
                 }
             }
@@ -44,6 +45,21 @@ namespace SensorMap.ViewModel
                 {
                     this.RaiseAndSetIfChanged(ref currentMech, value);
                     currentMech = value;
+                }
+            }
+        }
+        private Sensor? _curSensor;
+
+        [Reactive]
+        public Sensor? CurrentSensor
+        {
+            get => _curSensor;
+            set
+            {
+                if (value != null)
+                {
+                    this.RaiseAndSetIfChanged(ref _curSensor, value);
+                    _curSensor = value;
                 }
             }
         }
@@ -72,18 +88,20 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<SensorsTreeNode> Sensors { get; set; } = new();
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
-        public MechanismVM(IDataBaseProvider provider, IDataService service,Sector sector=null)
-        {            
+        public MechanismVM(IDataBaseProvider provider, IDataService service, Sector sector = null)
+        {
             _provider = provider;
             _service = service;
             sensorTypes = _service.SensorTypes;
             CurrentSector = sector;
             Sectors = _service.Sectors;
             Sensors = new ObservableCollection<SensorsTreeNode>(TreeNodeSensors());
-            
-            Mechanisms = new (_service.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector?.Id ?? 0)).ToList());
 
-            SaveSensorPlace = new RelayCommand(()=>MessageBox.Show($"X:{X};Y:{Y}"));
+            Mechanisms = new(_service.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector?.Id ?? 0)).ToList());
+
+            SaveSensorPlace = new RelayCommand(() => MessageBox.Show($"X:{X};Y:{Y}"));
+            this.WhenAnyValue(x=>x.CurrentSensor).ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe((obj) => { if (obj != null) MessageBox.Show($"{obj}"); });
         }
         private IEnumerable<SensorsTreeNode> TreeNodeSensors()
         {
@@ -98,12 +116,12 @@ namespace SensorMap.ViewModel
             }
             foreach (var sensor in _service.Sensors)
             {
-                var node = mainNodes.FirstOrDefault(nodes => nodes.Name == sensor.Type.ToString());
+                var node = mainNodes.FirstOrDefault(nodes => nodes.Name == sensor.SensorType.Name.ToString());
                 node?.Children.Add(sensor);
             }
             return mainNodes;
         }
-        public ICommand SaveLayout {  get; set; }
-        public ICommand SaveSensorPlace { get;}
+        public ICommand SaveLayout { get; set; }
+        public ICommand SaveSensorPlace { get; }
     }
 }

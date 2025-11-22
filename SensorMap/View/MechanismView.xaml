@@ -9,7 +9,9 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:Converter="clr-namespace:SensorMap.Converters"
+             xmlns:viewmodel="clr-namespace:SensorMap.ViewModel"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=viewmodel:MechanismVM}"
         Height="auto" Width="auto" x:Name="root">
     <UserControl.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
@@ -33,9 +35,9 @@
         <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
             <StackPanel Orientation="Vertical">
                 <Expander Header="{Binding CurrentSector.Name}" IsExpanded="True">
-                    <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}"
+                        <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}"
                                  SelectedItem="{Binding CurrentMech,UpdateSourceTrigger=PropertyChanged}">
-                        <ListBox.ItemTemplate>
+                            <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}"/>
                             </DataTemplate>
@@ -43,9 +45,14 @@
                     </ListBox>
                 </Expander>
                 <Expander Header="Датчики" IsExpanded="True">
-                    <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}" SelectedValuePath="Children">
-                        <i:Interaction.Behaviors>
-                            <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
+                        <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="SelectedItemChanged">
+                                    <i:InvokeCommandAction Command="{Binding AddSensorToCanvas}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                            <i:Interaction.Behaviors>
+                                <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
                         </i:Interaction.Behaviors>
                         <TreeView.ItemTemplate>
                             <HierarchicalDataTemplate ItemsSource="{Binding Children}">

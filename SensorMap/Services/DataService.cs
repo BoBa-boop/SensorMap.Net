@@ -21,6 +21,7 @@ namespace SensorMap.Services
     {
         private ObservableCollection<Sensor> _sensors = new();
         private ObservableCollection<Sector> _sectors = new();
+        private ObservableCollection<PLC> _plc = new();
         private ObservableCollection<SensorType> _sensorTypes = new();
         private ObservableCollection<Mechanism> _mechanisms= new();
         private IDataBaseProvider _provider;
@@ -40,7 +41,7 @@ namespace SensorMap.Services
         public ObservableCollection<Mechanism> Mechanisms => _mechanisms;
 
         public ObservableCollection<SensorType> SensorTypes => _sensorTypes;
-
+        public ObservableCollection<PLC> PLCs => _plc;
         public DataService(IDataBaseProvider provider)
         {
             _provider = provider;
@@ -52,6 +53,7 @@ namespace SensorMap.Services
             await Task.Run(async () => 
             {
                 _sectors = new ObservableCollection<Sector>(await _provider.GetAllSectorsAsync());
+                _plc = new ObservableCollection<PLC>(await _provider.GetAllPLCsAsync());
                 _sensors = new ObservableCollection<Sensor>(await _provider.GetAllSensors());
                 _mechanisms = new ObservableCollection<Mechanism>(await _provider.GetAllMechanisms());
                 _sensorTypes = new ObservableCollection<SensorType>(await _provider.GetSensortypeAsync());

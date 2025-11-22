@@ -14,7 +14,9 @@ namespace SensorMap.Model
     public class Sensor : ReactiveObject, IEditableObject, IDataErrorInfo
     {
         private string _name = string.Empty;
-        private string _type;
+        private double? _x;
+        private double? _y;
+        private byte[]? _locImage;
         private byte[]? _image;
         [Key]
         [Reactive] public int Id { get; set; }
@@ -31,18 +33,6 @@ namespace SensorMap.Model
                 }
             }
         }
-        [Reactive] public string Type
-        {
-            get => _type;
-            set 
-            {
-                if (value != _type)
-                {
-                    this.RaiseAndSetIfChanged(ref _type, value);
-                    IsModified = true;
-                }
-            }
-        }
         public int SensorTypeID { get; set; }
         public SensorType? SensorType
         {
@@ -52,6 +42,7 @@ namespace SensorMap.Model
                 if (value != null)
                 {
                     this.RaiseAndSetIfChanged(ref _sensorType, value);
+                    IsModified = true;
                 }
             }
         }
@@ -65,7 +56,37 @@ namespace SensorMap.Model
                 if (value != _image)
                 {
                     this.RaiseAndSetIfChanged(ref _image, value);
+                    IsModified = true;
                 }
+            }
+        }
+
+       [Reactive] public byte[]? LocationImage
+        {
+            get => _locImage;
+            set
+            {
+                if (value != _locImage)
+                {
+                    this.RaiseAndSetIfChanged(ref _locImage, value);
+                    IsModified = true;
+                }
+            }
+        }
+        public double? XPoint
+        {
+            get => _x;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _x, value);                 
+            }
+        }
+        public double? YPoint
+        {
+            get => _y;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _y, value);               
             }
         }
 
@@ -120,7 +141,7 @@ namespace SensorMap.Model
             this.Name = backupCopy.Name;
             this.Id = backupCopy.Id;
             this.Image = backupCopy.Image;
-            this.Type = backupCopy.Type;
+            this.SensorType = backupCopy.SensorType;
         }
 
         public void EndEdit()

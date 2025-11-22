@@ -24,7 +24,7 @@ namespace SensorMap.Model.Validation
                 }
                 else sensor.IsModified = true;
 
-                object type = sensor!.Type;
+                object type = sensor!.SensorType;
                 if (type == null)
                 {
                     return new ValidationResult(false, "Тип обязателен для выбора");

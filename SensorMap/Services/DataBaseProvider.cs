@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace SensorMap.Services
 {
@@ -25,8 +26,16 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                dBContext.Entry<T>(entity).State = EntityState.Added;
-                await dBContext.SaveChangesAsync();                
+                try
+                {
+                    dBContext.Entry<T>(entity).State = EntityState.Added;
+                    await dBContext.SaveChangesAsync();
+                }
+                catch(DbUpdateException ex)
+                {
+                    var iner = ex.InnerException;
+                    MessageBox.Show(iner.Message);
+                }
             }
         }
         public async Task Delete<T>(T entity) where T : class
@@ -95,6 +104,14 @@ namespace SensorMap.Services
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
                 return await dBContext.SensorTypes.ToListAsync();
+            }
+        }
+
+        public async Task<IEnumerable<PLC>> GetAllPLCsAsync()
+        {
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
+            {
+                return await dBContext.PLCs.Include(x => x.Mechanisms).ToListAsync();
             }
         }
     }

@@ -128,6 +128,9 @@ namespace SensorMap
                                    .SetBasePath(Directory.GetCurrentDirectory())
                                    .Build();
             string? connection_string = config.GetConnectionString("DefaultConnection");
+            //var baseDir = AppContext.BaseDirectory;
+            //string relativeDbPath = Path.Combine(baseDir, "..", "..", "AppDataBase.db");
+            //relativeDbPath = Path.GetFullPath(relativeDbPath);
             if (!string.IsNullOrEmpty(connection_string))
                 services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
             else

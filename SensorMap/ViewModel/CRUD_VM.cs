@@ -26,6 +26,7 @@ namespace SensorMap.ViewModel
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
+        [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
         
@@ -36,6 +37,7 @@ namespace SensorMap.ViewModel
             _provider = provider;
             _service = service;
             Sectors = _service.Sectors;
+            PLCs = _service.PLCs;
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
             Mechanisms = _service.Mechanisms;

@@ -2,6 +2,7 @@
 using ReactiveUI.SourceGenerators;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -26,7 +27,7 @@ namespace SensorMap.Model
                 }
             } 
         }
-        [Reactive]public Sensor? Sensor { get; set; }
+        [Reactive]public ObservableCollection<Sensor>? Sensors { get; set; }
         
     }
 }

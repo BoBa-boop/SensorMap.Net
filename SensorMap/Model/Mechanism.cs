@@ -13,9 +13,17 @@ namespace SensorMap.Model
     /// </summary>
     public class Mechanism : ReactiveObject, IEditableObject
     {
+        private bool _isModified;
+        private Mechanism? backupCopy;
+        private string _name = string.Empty;
+        private byte[]? _image;
+        private Sector? sector;
+        private PLC? _plc;
+        
         [Key]
         public int Id { get; set; }
         [MaxLength(250)]
+        [Reactive]
         public string Name
         {
             get => _name;
@@ -60,20 +68,16 @@ namespace SensorMap.Model
         [Reactive]
         public PLC? PLC 
         {
-            get => pLC;
+            get => _plc;
             set
             {
-                this.RaiseAndSetIfChanged(ref pLC, value);
+                this.RaiseAndSetIfChanged(ref _plc, value);
                 IsModified = true;
             }
         }
+        public int? PLCID { get; set; }
 
-        private bool _isModified;
-        private Mechanism? backupCopy;
-        private string _name;
-        private byte[]? _image;
-        private Sector? sector;
-        private PLC? pLC;
+        
 
         
 

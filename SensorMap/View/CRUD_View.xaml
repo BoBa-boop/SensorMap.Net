@@ -209,32 +209,33 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid Name="Mech" ItemsSource="{Binding Mechanisms,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Unloaded="DataGrid_Unloaded"
-                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False" 
-                              FrozenColumnCount="2" RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
+                    <DataGrid Name="Mech" ItemsSource="{Binding Mechanisms,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                              AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
+                              MinColumnWidth="90" MaxColumnWidth="250" Unloaded="DataGrid_Unloaded"
+                              RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
-                        <DataGrid.RowValidationRules>
+                        <!--<DataGrid.RowValidationRules>
                             <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>
+                        </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name}" Header="Название"/>
+                            <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Header="Название"/>
                             <DataGridTemplateColumn Header="Участок">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Sector.Name}" Cursor="Hand" />
-                                        <DataTemplate.Triggers>
+                                        <TextBlock Text="{Binding Path=Sector.Name}" Cursor="Hand" />
+                                        <!--<DataTemplate.Triggers>
                                             <DataTrigger Binding="{Binding Sector.Name}" Value="{x:Null}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                             </DataTrigger>
-                                        </DataTemplate.Triggers>
+                                        </DataTemplate.Triggers>-->
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" DisplayMemberPath="Name"
-                                                  Cursor="Hand" SelectedValue="{Binding Sector}"/>
+                                                  Cursor="Hand" SelectedItem="{Binding Sector,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
@@ -290,7 +291,7 @@
                                             <Button Name="AddImage" ToolTip="Загрузить изображение"
                                                     Command="{Binding ElementName=root,Path=DataContext.AddImage}"
                                                     CommandParameter="{Binding}"
-                                                    hc:IconElement.Geometry="{StaticResource AddGeometry}" Foreground="Black"/>
+                                                    hc:IconElement.Geometry="{StaticResource LoadNewImage}" Foreground="Black"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
@@ -338,14 +339,15 @@
                             <DataGridTemplateColumn Header="Тип">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand"/>
+                                        <TextBlock Text="{Binding Path=SensorType.Name}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,UpdateSourceTrigger=PropertyChanged}"
-                                                  SelectedValue="{Binding Type, UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Name"
-                                                  SelectedValuePath="Name"
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,
+                                                                UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedItem="{Binding SensorType,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                  DisplayMemberPath="Name"                                                  
                                                   Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
@@ -368,8 +370,11 @@
                                                     hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"/>
                                             <Button Name="AddImage" ToolTip="Загрузить изображение"
                                                     Command="{Binding ElementName=root,Path=DataContext.AddImage}"
-                                                    CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
-                                                    hc:IconElement.Geometry="{StaticResource AddGeometry}" Foreground="Black"/>
+                                                    CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor,
+                                                AncestorType={x:Type DataGridRow}}, Path=Item}"
+                                                    hc:IconElement.Geometry="{DynamicResource LoadNewImage}"
+                                                    hc:IconElement.Width="18" hc:IconElement.Height="20"/>
+
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
@@ -400,7 +405,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                    <DataGrid ItemsSource="{Binding PLCs,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
                   AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                   MinColumnWidth="90" MaxColumnWidth="250" Unloaded="DataGrid_Unloaded"
                   RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
@@ -419,47 +424,76 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTemplateColumn Header="Производитель">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Type}" Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                                <DataGridTemplateColumn.CellEditingTemplate>
-                                    <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,UpdateSourceTrigger=PropertyChanged}" DisplayMemberPath="Name"
-                                      SelectedValue="{Binding Type, UpdateSourceTrigger=PropertyChanged}"
-                                      SelectedValuePath="Name"
-                                      Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellEditingTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Механизмы" IsReadOnly="True">
+                            <DataGridTextColumn Binding="{Binding Manufacturer, ValidatesOnDataErrors=True,
+                    UpdateSourceTrigger=PropertyChanged}" Header="Производитель">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Изображение" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Image Source="{Binding Image,Converter={StaticResource byteToImg}}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <hc:ComboBox ItemsSource="{Binding Mechanisms}" MinWidth="100" MaxWidth="250"
+                      hc:InfoElement.Placeholder="Механизмы" IsReadOnly="True">
+                                        <hc:ComboBox.ItemContainerStyle>
+                                            <Style TargetType="ComboBoxItem">
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                            </Style>
+                                        </hc:ComboBox.ItemContainerStyle>
+                                        <hc:ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsEnabled" Value="False">
+                                                                    <Setter Property="Foreground" Value="Black"/>
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </hc:ComboBox.ItemTemplate>
+                                    </hc:ComboBox>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Mechanisms.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Mechanisms}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
                                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
-                                            <Button x:Name="Show" ToolTip="Показать карточку"
-                                        Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
-                                        CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
-                                        hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"/>
+                                            
                                             <Button Name="AddImage" ToolTip="Загрузить изображение"
                                         Command="{Binding ElementName=root,Path=DataContext.AddImage}"
-                                        CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
-                                        hc:IconElement.Geometry="{StaticResource AddGeometry}" Foreground="Black"/>
+                                        CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, 
+                                                AncestorType={x:Type DataGridRow}}, Path=Item}"
+                                                    hc:IconElement.Geometry="{DynamicResource LoadNewImage}"
+                                                    hc:IconElement.Width="18" hc:IconElement.Height="20"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
                                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
                                     Path=(Validation.HasError)}"  Value="True">
-                                                <Setter Property="Visibility" TargetName="Show" Value="Collapsed"/>
+                                                
                                             </DataTrigger>
                                             <!--Триггер для скрытия кнопок из последней добавленной строки-->
                                             <DataTrigger Binding="{Binding Text, ElementName=mark}" Value="{}{DataGrid.NewItemPlaceholder}">

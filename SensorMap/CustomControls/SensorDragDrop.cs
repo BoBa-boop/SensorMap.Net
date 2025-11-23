@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
+using HandyControl.Tools;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.Xml;
@@ -114,6 +117,8 @@ namespace SensorMap.CustomControls
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
             _sensor = GetTemplateChild("PART_Sensor") as Ellipse;
             _image = GetTemplateChild("PART_Image") as Image;
+
+            
             
             if (_canvas != null)
             {
@@ -329,9 +334,9 @@ namespace SensorMap.CustomControls
 
         private void Canvas_Drop(object sender, MouseButtonEventArgs e)
         {
-            //X = Math.Round(Canvas.GetLeft(_selectedElement) / _scaleDeltaSensor,1);
-            //Y = Math.Round(Canvas.GetTop(_selectedElement) / _scaleDeltaSensor, 1);
-            //SensorDropCommand?.Execute(null);
+            X = Math.Round(Canvas.GetLeft(_selectedElement) / _scaleDeltaSensor, 1);
+            Y = Math.Round(Canvas.GetTop(_selectedElement) / _scaleDeltaSensor, 1);
+            SensorDropCommand?.Execute(null);
             e.Handled = true;
         }
 

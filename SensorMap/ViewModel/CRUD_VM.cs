@@ -11,6 +11,7 @@ using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Reactive.Linq;
 using System.Reflection;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -29,6 +30,7 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
+        [Reactive] public object SelectedTab { get; set; }
         
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
         {
@@ -112,6 +114,13 @@ namespace SensorMap.ViewModel
                 var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(image as byte[])) {Title="Просмотр схемы" };
                 browser.ShowDialog();
             });
+            AddNodeTitleType = new RelayCommand<string>((name) => { SensorTypes.Add(new SensorType() { Name = name }); }, (name) => { return !string.IsNullOrWhiteSpace(name); });
+            DeleteNodeTitleType = new RelayCommand<object>((type) => { SensorTypes.Remove(type as SensorType); }, (type) => { return type != null; });
+            this.WhenAnyValue(x => x.SelectedTab).ObserveOn(RxApp.MainThreadScheduler).Subscribe((s) =>
+            {
+                var wqe = s as TabControl;
+                MessageBox.Show(wqe.Tag);
+            });
         }
 
         public ICommand DeleteCommand { get; set; }
@@ -120,6 +129,7 @@ namespace SensorMap.ViewModel
         public ICommand CancelCommand { get; set; }
         public ICommand AddImage {  get; set; }
         public ICommand ShowPreviewImage { get; set; }
-
+        public ICommand AddNodeTitleType { get; }
+        public ICommand DeleteNodeTitleType { get; }
     }
 }

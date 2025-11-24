@@ -12,6 +12,7 @@
         xmlns:valid="clr-namespace:SensorMap.Model.Validation"
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:MV="clr-namespace:SensorMap.ViewModel"
+        d:DataContext="{d:DesignInstance MV:CRUD_VM}"
         mc:Ignorable="d"
         x:Name="root">
     <UserControl.Resources>
@@ -131,11 +132,11 @@
             </Style>
         </Grid.Resources>
         
-        <hc:TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+        <hc:TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" SelectedItem="{Binding SelectedTab}"
                        Background="Transparent" BorderThickness="0" IsAnimationEnabled="False">
 
              <!--SECTION FOR SECTORS--> 
-            <hc:TabItem Header="Участки">
+            <hc:TabItem Header="Участки" Tag="Участки">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -203,8 +204,8 @@
                 </Grid>
             </hc:TabItem>
 
-             <!--SECTION FOR MECHANISMS--> 
-            <hc:TabItem Header="Механизмы">
+             <!--SECTION FOR MECHANISMS-->
+            <hc:TabItem Header="Механизмы" Tag="Механизмы">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -312,8 +313,13 @@
             </hc:TabItem>
 
              <!--SECTION FOR SENSORS--> 
-            <hc:TabItem Header="Датчики">
+            <hc:TabItem Header="Датчики" Tag="Датчики">
                 <Grid>
+                    <Grid.Resources>
+                        <Style x:Key="NewOrChangedItemStyle" TargetType="ListBoxItem">
+                            <Setter Property="Background" Value="LightYellow"/>
+                        </Style>
+                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -321,6 +327,7 @@
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               MinColumnWidth="90" MaxColumnWidth="250" Unloaded="DataGrid_Unloaded"
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}">
+                        
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
@@ -346,7 +353,7 @@
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,
                                                                 UpdateSourceTrigger=PropertyChanged}"
-                                                  SelectedItem="{Binding SensorType,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                  SelectedItem="{Binding SensorType,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                  
                                                   DisplayMemberPath="Name"                                                  
                                                   Cursor="Hand"/>
                                     </DataTemplate>
@@ -400,7 +407,7 @@
             </hc:TabItem>
             
             <!--SECTION FOR PLC-->
-            <hc:TabItem Header="Контроллеры">
+            <hc:TabItem Header="Контроллеры" Tag="Контроллеры">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -509,6 +516,92 @@
                         </DataGrid.Columns>
 
                     </DataGrid>
+                </Grid>
+            </hc:TabItem>
+
+            <hc:TabItem Header="Дополнительно" Tag="Дополнительно">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <GroupBox Header="Датчики" Style="{StaticResource BaseStyle}" Width="250"
+                              HorizontalAlignment="Left">
+                        <StackPanel Margin="5,20">
+                            <TreeView Name="twSensors" ItemsSource="{Binding SensorTypes}" 
+                                      Height="200">
+                                <TreeView.ItemTemplate>
+                                    <HierarchicalDataTemplate ItemsSource="{Binding Sensor}">
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </HierarchicalDataTemplate>
+                                </TreeView.ItemTemplate>
+                                <TreeView.Style>
+                                    <Style TargetType="TreeView">
+                                        <Setter Property="Background" Value="{StaticResource DefaultBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SensorTypes.Count}" Value="0">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="TreeView">
+                                                            <Grid Background="{StaticResource DarkDefaultBrush}">
+                                                                <TextBlock Text="Нет данных" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                           FontSize="20"/>
+                                                            </Grid>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TreeView.Style>
+                            </TreeView>
+                            <hc:TextBox Name="tbSensorType" hc:TitleElement.Title="Тип" />                            
+                            <StackPanel Margin="10" Orientation="Vertical" >
+                                <Button Content="Добавить данные"  Style="{StaticResource ButtonSuccess}" Width="150" Margin="5"
+                                        Command="{Binding AddNodeTitleType}" CommandParameter="{Binding ElementName=tbSensorType,Path=Text}"/>
+                                <Button Content="Удалить" Style="{StaticResource ButtonDanger}" Width="150"
+                                        Command="{Binding DeleteNodeTitleType}" CommandParameter="{Binding ElementName=twSensors,Path=SelectedItem}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
+                    <GroupBox Header="Контроллеры" Grid.Column="1" Style="{StaticResource BaseStyle}" Width="250"
+          HorizontalAlignment="Left">
+                        <StackPanel Margin="5,20">
+                            <ListBox Name="lbPLC" ItemsSource="{Binding SensorTypes}" Height="200">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <ListBox.Style>
+                                    <Style TargetType="ListBox">
+                                        <Setter Property="Background" Value="{StaticResource DefaultBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SensorTypes.Count}" Value="0">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBox">
+                                                            <Grid Background="{StaticResource DarkDefaultBrush}">
+                                                                <TextBlock Text="Нет данных" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                       FontSize="20"/>
+                                                            </Grid>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.Style>
+                            </ListBox>
+                            <hc:TextBox hc:TitleElement.Title="Производитель"/>
+                            <StackPanel Margin="10" Orientation="Vertical" >
+                                <Button Content="Добавить данные"  Style="{StaticResource ButtonSuccess}" Width="150" Margin="5"
+                    Command="{Binding AddNodeTitleType}" CommandParameter="{Binding ElementName=tbSensorType,Path=Text}"/>
+                                <Button Content="Удалить" Style="{StaticResource ButtonDanger}" Width="150"
+                    Command="{Binding DeleteNodeTitleType}" CommandParameter="{Binding ElementName=twSensors,Path=SelectedItem}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </GroupBox>
                 </Grid>
             </hc:TabItem>
         </hc:TabControl>

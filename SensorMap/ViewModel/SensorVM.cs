@@ -33,10 +33,7 @@ namespace SensorMap.ViewModel
             _provider = provider;
             sensorTypes = _service.SensorTypes;
             Sensors = new ObservableCollection<SensorsTreeNode>(TreeNodeSensors());
-            GetInfoAboutType = new RelayCommand<object>((s) =>
-            {
-                ShowPopup(s);
-            });
+            GetInfoAboutType = new RelayCommand<object>((s) =>{ShowPopup(s);});
         }
 
         private static void ShowPopup(object sender)
@@ -54,6 +51,7 @@ namespace SensorMap.ViewModel
         }
 
         public ICommand GetInfoAboutType { get; }
+        
         private IEnumerable<SensorsTreeNode> TreeNodeSensors()
         {
             var mainNodes = new ObservableCollection<SensorsTreeNode>();

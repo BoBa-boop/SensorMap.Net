@@ -29,9 +29,10 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
+        [Reactive] public ObservableCollection<SensorType> TempSensorTypes {  get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
-        [Reactive] public object SelectedTab { get; set; }
         
+
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
         {
             Navigation = nav;
@@ -42,13 +43,14 @@ namespace SensorMap.ViewModel
             PLCs = _service.PLCs;
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
+            TempSensorTypes = new(SensorTypes);
             Mechanisms = _service.Mechanisms;
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
                 if(Sensor is Sensor) 
                     Navigation.NavigateTo<SensorVM>(Sensor); 
             });
-            SaveCommand = new RelayCommand<object>((arg) => 
+            SaveCommand = ReactiveCommand.Create<object>((arg) =>
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
@@ -57,7 +59,7 @@ namespace SensorMap.ViewModel
                 if (idProperty != null && Convert.ToInt32(idProperty.GetValue(arg)) == 0)
                 {
                     MethodInfo createMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Create))!.MakeGenericMethod(entityType);
-                    if(createMethod.Invoke(_provider, new object[] { arg })!=null)
+                    if (createMethod.Invoke(_provider, new object[] { arg }) != null)
                     {
                         entityType?.GetProperty("IsModified")?.SetValue(arg, false);
                     }
@@ -65,7 +67,7 @@ namespace SensorMap.ViewModel
                 else
                 {
                     MethodInfo updateMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Update))!.MakeGenericMethod(entityType);
-                    if(updateMethod.Invoke(_provider, new object[] { arg })!=null)
+                    if (updateMethod.Invoke(_provider, new object[] { arg }) != null)
                         entityType?.GetProperty("IsModified")?.SetValue(arg, false);
                 }
             });
@@ -114,13 +116,10 @@ namespace SensorMap.ViewModel
                 var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(image as byte[])) {Title="Просмотр схемы" };
                 browser.ShowDialog();
             });
-            AddNodeTitleType = new RelayCommand<string>((name) => { SensorTypes.Add(new SensorType() { Name = name }); }, (name) => { return !string.IsNullOrWhiteSpace(name); });
-            DeleteNodeTitleType = new RelayCommand<object>((type) => { SensorTypes.Remove(type as SensorType); }, (type) => { return type != null; });
-            this.WhenAnyValue(x => x.SelectedTab).ObserveOn(RxApp.MainThreadScheduler).Subscribe((s) =>
-            {
-                var wqe = s as TabControl;
-                MessageBox.Show(wqe.Tag);
-            });
+            AddNodeTitleType = new RelayCommand<string>((name) => { TempSensorTypes.Add(new SensorType() { Name = name }); }, (name) => { return !string.IsNullOrWhiteSpace(name); });
+            DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType); }, (type) => { return type != null; });
+            
+
         }
 
         public ICommand DeleteCommand { get; set; }
@@ -130,6 +129,7 @@ namespace SensorMap.ViewModel
         public ICommand AddImage {  get; set; }
         public ICommand ShowPreviewImage { get; set; }
         public ICommand AddNodeTitleType { get; }
+        public ICommand SaveNodeTitleType { get; }
         public ICommand DeleteNodeTitleType { get; }
     }
 }

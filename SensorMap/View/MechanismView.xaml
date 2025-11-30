@@ -46,18 +46,26 @@
                 </Expander>
                 <Expander Header="Датчики" IsExpanded="True">
                         <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="SelectedItemChanged">
-                                    <i:InvokeCommandAction Command="{Binding AddSensorToCanvas}"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
                             <i:Interaction.Behaviors>
                                 <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
                         </i:Interaction.Behaviors>
-                        <TreeView.ItemTemplate>
-                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                <TextBlock Text="{Binding Name}"/>
-                            </HierarchicalDataTemplate>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Source="{Binding Image}" Width="25" Height="25">
+                                            <Image.Clip>
+                                                <EllipseGeometry RadiusX="13" RadiusY="13" Center="13,13"/>
+                                            </Image.Clip>
+                                        </Image>
+                                        <TextBlock Text="{Binding Name}" FontSize="16" Margin="5,0"/>
+                                    </StackPanel>
+                                    <HierarchicalDataTemplate.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Path=Name}"/>
+                                        </DataTemplate>
+                                    </HierarchicalDataTemplate.ItemTemplate>
+                                </HierarchicalDataTemplate>
+                                
                         </TreeView.ItemTemplate>
                     </TreeView>
                 </Expander>

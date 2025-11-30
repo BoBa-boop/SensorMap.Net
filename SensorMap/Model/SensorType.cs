@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,9 @@ namespace SensorMap.Model
     public class SensorType:ReactiveObject
     {
         private string _name;
+        private byte[]? _image;
+        private bool _isNew;
+
         [Key]
         [Reactive] public int Id { get; set; }
         [MaxLength(30)]
@@ -26,6 +30,28 @@ namespace SensorMap.Model
                     this.RaiseAndSetIfChanged(ref _name, value);
                 }
             } 
+        }
+        [Reactive]
+        public byte[]? Image
+        {
+            get => _image;
+            set
+            {
+                if (value != _image)
+                {
+                    this.RaiseAndSetIfChanged(ref _image, value);
+                }
+            }
+        }
+        [NotMapped]
+        [Reactive]
+        public bool IsNew
+        {
+            get => _isNew;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isNew, value);
+            }
         }
         [Reactive]public ObservableCollection<Sensor>? Sensors { get; set; }
         

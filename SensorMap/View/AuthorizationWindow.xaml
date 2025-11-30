@@ -1,0 +1,68 @@
+﻿<hc:Window x:Class="SensorMap.View.AuthorizationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SensorMap.View"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        mc:Ignorable="d"
+        Background="WhiteSmoke" ShowTitle="False"      
+        hc:WindowAttach.ExtendContentToNonClientArea="False"
+    NonClientAreaBackground="{StaticResource BorderBrush}" 
+        ShowNonClientArea="True" WindowStartupLocation="CenterScreen"
+        Height="300" Width="300">
+    
+    <Grid>
+        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+            <!--<Image Source="{StaticResource LockImage}" Width="80" Margin="0,0,0,50">
+                <Image.Style>
+                    <Style TargetType="Image">
+                        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <RotateTransform x:Name="rotateTransform"/>
+                            </Setter.Value>
+                        </Setter>
+
+                        <Style.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="2x" AutoReverse="True">
+                                        <DoubleAnimationUsingKeyFrames
+                        Storyboard.TargetProperty="(Image.RenderTransform).(RotateTransform.Angle)">
+                                            <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="0"/>
+                                            <EasingDoubleKeyFrame KeyTime="0:0:0.1" Value="-10" 
+                            EasingFunction="{StaticResource SineEaseOut}"/>
+                                            <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="8" 
+                            EasingFunction="{StaticResource SineEaseOut}"/>
+                                            <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="-6" 
+                            EasingFunction="{StaticResource SineEaseOut}"/>
+                                            <EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="4" 
+                            EasingFunction="{StaticResource SineEaseOut}"/>
+                                            <EasingDoubleKeyFrame KeyTime="0:0:0.5" Value="0" 
+                            EasingFunction="{StaticResource SineEaseOut}"/>
+                                        </DoubleAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <DataTrigger Binding="{Binding IsAuth}" Value="True">
+                                <Setter Property="Source" Value="{StaticResource UnlockImage}"/>
+                                
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Image.Style>
+            </Image>-->
+            
+            <hc:PasswordBox hc:TitleElement.Title="Пароль" Width="200"/>
+            <Button Content="Подтвердить" Margin="0,20,0,10"/>
+            <TextBlock Text="Забыли пароль?" HorizontalAlignment="Center"
+                       FontSize="10" FontWeight="DemiBold" Cursor="Hand"
+                       Foreground="{StaticResource DarkPrimaryBrush}" Style="{StaticResource TextBlockDefaultInfo}"/>
+            
+        </StackPanel>
+       
+        
+    </Grid>
+    
+</hc:Window>

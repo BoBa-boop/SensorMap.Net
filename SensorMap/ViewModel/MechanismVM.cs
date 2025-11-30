@@ -111,7 +111,8 @@ namespace SensorMap.ViewModel
             {
                 mainNodes.Add(new SensorsTreeNode()
                 {
-                    Name = type.Name
+                    Name = type.Name,
+                    Image = type.Image
                 });
             }
             foreach (var sensor in _service.Sensors)

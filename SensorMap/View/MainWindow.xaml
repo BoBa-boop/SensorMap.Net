@@ -6,7 +6,7 @@
            xmlns:hc="https://handyorg.github.io/handycontrol"
            xmlns:local="clr-namespace:SensorMap.View"
            xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-           mc:Ignorable="d"
+           mc:Ignorable="d" x:Name="root"
            Title="Geron" ShowTitle="False"
            DataContext="{Binding MainWindowVM}"
            MinHeight="650" MinWidth="900" 
@@ -32,7 +32,12 @@
             <Menu Background="Transparent">
                 <MenuItem Header="Данные">
                     <MenuItem Header="Просмотр" Command="{Binding NavigateToDB}"/>
-                    <MenuItem Header="Редактор" Command="{Binding NavigateToDB}"/>
+                    <MenuItem Header="Редактор" Command="{Binding TurnOnEditMode}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource LockImage}" 
+                                   Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
             </Menu>
             <Menu Background="Transparent">

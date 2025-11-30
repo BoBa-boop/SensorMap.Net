@@ -27,6 +27,31 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="NoImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M22,20.7L3.3,2 2,3.3 3,4.3 3,19C3,20.1,3.9,21,5,21L19.7,21 20.7,22 22,20.7 M5,19L5,6.3 12.6,13.9 11.1,15.8 9,13.1 6,17 15.7,17 17.7,19 5,19 M8.8,5L6.8,3 19,3C20.1,3,21,3.9,21,5L21,17.2 19,15.2 19,5 8.8,5" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    
+    <DrawingImage x:Key="LockImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M12,17C10.89,17 10,16.1 10,15 10,13.89 10.89,13 12,13A2,2,0,0,1,14,15A2,2,0,0,1,12,17 M18,20L18,10 6,10 6,20 18,20 M18,8A2,2,0,0,1,20,10L20,20A2,2,0,0,1,18,22L6,22C4.89,22,4,21.1,4,20L4,10C4,8.89,4.89,8,6,8L7,8 7,6A5,5,0,0,1,12,1A5,5,0,0,1,17,6L17,8 18,8 M12,3A3,3,0,0,0,9,6L9,8 15,8 15,6A3,3,0,0,0,12,3z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    
+    <DrawingImage x:Key="UnlockImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M18,20L18,10 6,10 6,20 18,20 M18,8A2,2,0,0,1,20,10L20,20A2,2,0,0,1,18,22L6,22C4.89,22,4,21.1,4,20L4,10A2,2,0,0,1,6,8L15,8 15,6A3,3,0,0,0,12,3A3,3,0,0,0,9,6L7,6A5,5,0,0,1,12,1A5,5,0,0,1,17,6L17,8 18,8 M12,17A2,2,0,0,1,10,15A2,2,0,0,1,12,13A2,2,0,0,1,14,15A2,2,0,0,1,12,17z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    
+
     <DrawingImage x:Key="LoadImage">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">

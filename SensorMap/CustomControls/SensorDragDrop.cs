@@ -131,6 +131,21 @@ namespace SensorMap.CustomControls
                 _canvas.MouseDown += _canvas_MouseDown;
                 _canvas.MouseWheel += _canvas_MouseWheel;//zoom
                 _canvas.MouseUp += _canvas_MouseUp;
+                _canvas.Drop += _canvas_Drop;
+            }
+        }
+
+        private void _canvas_Drop(object sender, DragEventArgs e)
+        {
+            object data = e.Data.GetData(DataFormats.Serializable);
+            
+            if(data is UIElement element)
+            {
+                Point dropPosition = e.GetPosition(_canvas);
+                Canvas.SetLeft(element, dropPosition.X);
+                Canvas.SetTop(element, dropPosition.Y);
+
+                _canvas.Children.Add(element);
             }
         }
 

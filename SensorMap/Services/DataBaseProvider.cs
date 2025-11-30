@@ -30,6 +30,7 @@ namespace SensorMap.Services
                 {
                     dBContext.Entry<T>(entity).State = EntityState.Added;
                     await dBContext.SaveChangesAsync();
+                    MessageBox.Show("Данные добавлены в Базу Данных!","Результат операции",MessageBoxButton.OK);
                 }
                 catch(DbUpdateException ex)
                 {
@@ -44,6 +45,7 @@ namespace SensorMap.Services
             {
                 dBContext.Entry<T>(entity).State = EntityState.Deleted;
                 await dBContext.SaveChangesAsync();
+                MessageBox.Show("Данные удалены из Базы Данных!", "Результат операции", MessageBoxButton.OK);
             }
         }
 
@@ -53,6 +55,7 @@ namespace SensorMap.Services
             {
                 dBContext.Entry<T>(entity).State = EntityState.Modified;
                 await dBContext.SaveChangesAsync();
+                MessageBox.Show("Данные обновлены в Базе Данных!", "Результат операции", MessageBoxButton.OK);
             }
         }
         public async Task<IEnumerable<Mechanism>> GetAllMechanisms()

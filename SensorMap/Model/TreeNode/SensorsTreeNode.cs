@@ -12,6 +12,7 @@ namespace SensorMap.Model.TreeNode
     public class SensorsTreeNode:ReactiveObject
     {
         [Reactive] public string Name { get; set; } = string.Empty;
+        [Reactive] public byte[]? Image { get; set; } 
         [Reactive] public ObservableCollection<Sensor> Children { get; set; } = new();
     }
 }

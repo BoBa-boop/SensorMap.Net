@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Reactive.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -24,17 +25,19 @@ namespace SensorMap.ViewModel
         private readonly IDataService _service;
         private readonly ITempImage _tempImage;
 
+        [Reactive] public bool IsEditMode { get; set; }
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
-        [Reactive] public ObservableCollection<SensorType> TempSensorTypes {  get; set; }
+        [Reactive] 
+        public ObservableCollection<SensorType> TempSensorTypes { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
-        
 
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage,bool _IsEditMode=false) 
         {
+            IsEditMode = _IsEditMode;
             Navigation = nav;
             _tempImage = tempImage;
             _provider = provider;
@@ -50,7 +53,7 @@ namespace SensorMap.ViewModel
                 if(Sensor is Sensor) 
                     Navigation.NavigateTo<SensorVM>(Sensor); 
             });
-            SaveCommand = ReactiveCommand.Create<object>((arg) =>
+            SaveCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
@@ -116,10 +119,32 @@ namespace SensorMap.ViewModel
                 var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(image as byte[])) {Title="Просмотр схемы" };
                 browser.ShowDialog();
             });
-            AddNodeTitleType = new RelayCommand<string>((name) => { TempSensorTypes.Add(new SensorType() { Name = name }); }, (name) => { return !string.IsNullOrWhiteSpace(name); });
+            AddNodeTitleType = new RelayCommand<object>((param) => 
+            {
+                var values = (object[])param;
+                var name = (string)values[0];
+                var image = (Uri)values[1];
+                byte[] photoBytes;
+                SensorType sType = new SensorType();
+                sType.Name = name;
+
+                if (image!= null)
+                {
+                    using (FileStream fs = new FileStream(image.LocalPath, FileMode.Open, FileAccess.Read))
+                    {
+                        photoBytes = new byte[fs.Length];
+                        fs.Read(photoBytes, 0, photoBytes.Length);
+                    }
+                    sType.Image = photoBytes;
+                }
+                if(!TempSensorTypes.Where(x=>x.Name==sType.Name).Any())
+                {
+                    sType.IsNew = true;
+                    TempSensorTypes.Add(sType);
+                }
+            }, (param) => { var values = (object[]?)param; return !string.IsNullOrWhiteSpace((string)values[0]); });
             DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType); }, (type) => { return type != null; });
             
-
         }
 
         public ICommand DeleteCommand { get; set; }
@@ -131,5 +156,6 @@ namespace SensorMap.ViewModel
         public ICommand AddNodeTitleType { get; }
         public ICommand SaveNodeTitleType { get; }
         public ICommand DeleteNodeTitleType { get; }
+        
     }
 }

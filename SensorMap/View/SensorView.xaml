@@ -61,7 +61,7 @@
                         <StackPanel Grid.Row="1">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Тип:" Margin="5,0" FontSize="14"/>
-                                <TextBlock Text="{Binding SelectedNode.SensorType}"
+                                <TextBlock Text="{Binding SelectedNode.SensorType.Name}"
                                            FontSize="14"
                                            Style="{StaticResource TextBlockBoldBaseStyle}"/>
                                 <Button Name="GetInfoButton" Width="20" Height="20" Padding="0" Margin="5,-3" Background="Transparent"

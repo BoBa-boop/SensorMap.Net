@@ -16,7 +16,8 @@ namespace SensorMap.EF
         public DbSet<Sensor> Sensors { get; set; }
         public DbSet<SensorType> SensorTypes { get; set; }
         public DbSet<PLC> PLCs { get; set; }
-        public DbSet<PLCInputs> SensorAssignments { get; set; }
+        public DbSet<PLCManufacturer> PLC_Manufacturers { get; set; }
+        public DbSet<SensorAssignments> SensorAssignments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,6 +27,7 @@ namespace SensorMap.EF
             modelBuilder.ApplyConfiguration(new SensorTypeConfiguration());
             modelBuilder.ApplyConfiguration(new PLCConfiguration());
             modelBuilder.ApplyConfiguration(new SensorAssignmentConfiguration());
+            modelBuilder.ApplyConfiguration(new PLCManufConfiguration());
             base.OnModelCreating(modelBuilder);
         }
     }
@@ -63,7 +65,10 @@ namespace SensorMap.EF
                 .WithMany(plc => plc.Mechanisms)
                 .HasForeignKey(mechanism => mechanism.PLCID)
                 .OnDelete(DeleteBehavior.Restrict); // Механизмы остаются, если устройство удалено
-
+            builder
+                .HasMany(x => x.SensorsAssig)
+                .WithOne(sens => sens.Mechanism)
+                .HasForeignKey(sens => sens.MechanismId);
         }
     }
     public class SensorConfiguration : IEntityTypeConfiguration<Sensor>
@@ -81,18 +86,22 @@ namespace SensorMap.EF
             builder.HasKey(x => x.Id);
         }
     }
-    public class SensorAssignmentConfiguration : IEntityTypeConfiguration<PLCInputs>
+    public class SensorAssignmentConfiguration : IEntityTypeConfiguration<SensorAssignments>
     {
-        public void Configure(EntityTypeBuilder<PLCInputs> builder)
+        public void Configure(EntityTypeBuilder<SensorAssignments> builder)
         {
             builder.HasKey(x => x.Id);
-            builder.HasOne(pi => pi.PLC)
+            builder.HasOne(se => se.PLC)
                .WithMany(p => p.Inputs)
-               .HasForeignKey(pi => pi.PLCId);
-            builder.HasOne(pi => pi.Sensor)
+               .HasForeignKey(se => se.PLCId);
+
+            builder.HasOne(se => se.Sensor)
                .WithMany()
-               .HasForeignKey(pi => pi.SensorId)
-               .OnDelete(DeleteBehavior.Restrict);
+               .HasForeignKey(se => se.SensorId);
+
+            builder.HasOne(se=>se.Mechanism)
+                .WithMany(m=>m.SensorsAssig)
+                .HasForeignKey(se=>se.MechanismId);
         }
     }
     public class PLCConfiguration : IEntityTypeConfiguration<PLC>
@@ -110,6 +119,18 @@ namespace SensorMap.EF
                 .HasMany(plc => plc.Mechanisms)
                 .WithOne(mech=>mech.PLC)
                 .HasForeignKey(p => p.PLCID);
+            builder
+                .HasOne(p => p.PLCManufacturer)
+                .WithMany(m => m.PLCs)
+                .HasForeignKey(p => p.PLCManufId);
+
+        }
+    }
+    public class PLCManufConfiguration : IEntityTypeConfiguration<PLCManufacturer>
+    {
+        public void Configure(EntityTypeBuilder<PLCManufacturer> builder)
+        {
+            builder.HasKey(x => x.Id);
         }
     }
 }

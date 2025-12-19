@@ -12,5 +12,8 @@ namespace SensorMap.View
         {
             InitializeComponent();
         }
+
+
+        
     }
 }

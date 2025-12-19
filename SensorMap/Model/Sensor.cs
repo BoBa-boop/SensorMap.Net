@@ -14,9 +14,6 @@ namespace SensorMap.Model
     public class Sensor : ReactiveObject, IEditableObject, IDataErrorInfo
     {
         private string _name = string.Empty;
-        private double? _x;
-        private double? _y;
-        private byte[]? _locImage;
         private byte[]? _image;
         [Key]
         [Reactive] public int Id { get; set; }
@@ -58,35 +55,6 @@ namespace SensorMap.Model
                     this.RaiseAndSetIfChanged(ref _image, value);
                     IsModified = true;
                 }
-            }
-        }
-
-       [Reactive] public byte[]? LocationImage
-        {
-            get => _locImage;
-            set
-            {
-                if (value != _locImage)
-                {
-                    this.RaiseAndSetIfChanged(ref _locImage, value);
-                    IsModified = true;
-                }
-            }
-        }
-        public double? XPoint
-        {
-            get => _x;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _x, value);                 
-            }
-        }
-        public double? YPoint
-        {
-            get => _y;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _y, value);               
             }
         }
 

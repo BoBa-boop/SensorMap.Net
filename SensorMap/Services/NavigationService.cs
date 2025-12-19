@@ -2,6 +2,7 @@
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
+using SensorMap.View;
 using System.Windows;
 
 namespace SensorMap.Services
@@ -45,17 +46,8 @@ namespace SensorMap.Services
 
             var dialogWindow = _serviceProvider.GetRequiredService<TWindow>();
             var viewModel = _vmFact.Invoke(typeof(TViewModel));
-
+            dialogWindow.ShowInTaskbar = false;
             dialogWindow.DataContext = viewModel;
-            dialogWindow.Owner = _mainWindow;
-
-            _mainWindow.Hide(); // Скрываем главное окно
-
-            dialogWindow.Closed += (s, args) =>
-            {
-                _mainWindow.Show(); // Показываем когда диалог закрыт
-                _mainWindow.Activate();
-            };
 
             dialogWindow.ShowDialog();
         }

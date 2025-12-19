@@ -1,27 +1,22 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using HandyControl.Controls;
-using HandyControl.Tools;
-using System;
-using System.Collections.Generic;
+﻿using HandyControl.Controls;
+using SensorMap.Commands.SensorCommands;
+using SensorMap.Model;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
-using System.Security.Cryptography.Xml;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
 
 namespace SensorMap.CustomControls
 {
+    
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
-    [TemplatePart(Name = "PART_Sensor", Type = typeof(Ellipse))]
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control
     {
@@ -29,25 +24,15 @@ namespace SensorMap.CustomControls
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SensorDragDrop),
                 new FrameworkPropertyMetadata(typeof(SensorDragDrop)));
+           
         }
         private Canvas _canvas;
-        private Ellipse _sensor;
         private Image _image;
         private bool _isDragging = false;
 
         #region Dependency Properties
+
         #region managmentProps
-        public static readonly DependencyProperty CanZoomProperty =
-           DependencyProperty.Register("CanZoom", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
-
-        public bool CanZoom
-        {
-            get { return (bool)GetValue(CanZoomProperty); }
-            set { SetValue(CanZoomProperty, value); }
-        }
-        public static readonly DependencyProperty CanPanningProperty =
-           DependencyProperty.Register("CanPanning", typeof(bool), typeof(SensorDragDrop),new PropertyMetadata(false));
-
         public static readonly DependencyProperty ZoomFactorProp =
            DependencyProperty.Register("ZoomFactor", typeof(double), typeof(SensorDragDrop), new PropertyMetadata(1.08));
 
@@ -56,36 +41,19 @@ namespace SensorMap.CustomControls
             get { return (double)GetValue(ZoomFactorProp); }
             set { SetValue(ZoomFactorProp, value); }
         }
-
-        public bool CanPanning
-        {
-            get { return (bool)GetValue(CanPanningProperty); }
-            set { SetValue(CanPanningProperty, value); }
-        }
         #endregion
-        public static readonly DependencyProperty XProperty =
-            DependencyProperty.Register("X", typeof(double), typeof(SensorDragDrop),
-                new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
-        public double X
+        public static readonly DependencyProperty UndoRedoStackProperty = DependencyProperty.Register("UndoRedoStack", typeof(UndoRedoStack),typeof(SensorDragDrop),
+         new PropertyMetadata(null));
+
+        public UndoRedoStack UndoRedoStack
         {
-            get { return (double)GetValue(XProperty); }
-            set { SetValue(XProperty, value); }
+            get => (UndoRedoStack)GetValue(UndoRedoStackProperty);
+            set => SetValue(UndoRedoStackProperty, value);
         }
-
-        public static readonly DependencyProperty YProperty =
-            DependencyProperty.Register("Y", typeof(double), typeof(SensorDragDrop),
-                new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
-
-        public double Y
-        {
-            get { return (double)GetValue(YProperty); }
-            set { SetValue(YProperty, value); }
-        }
-
         public static readonly DependencyProperty SensorDropCommandProperty =
             DependencyProperty.Register("SensorDropCommand", typeof(ICommand), typeof(SensorDragDrop));
-
+        
         public ICommand SensorDropCommand
         {
             get { return (ICommand)GetValue(SensorDropCommandProperty); }
@@ -100,12 +68,22 @@ namespace SensorMap.CustomControls
             set { SetValue(ImageSourceProperty, value); }
         }
 
+        public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
+            typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop), new PropertyMetadata(null, OnItemsSourceChanged));
+
+        public ObservableCollection<SensorAssignments> ItemsSource
+        {
+            get { return (ObservableCollection<SensorAssignments>)GetValue(ItemsSourceProperty); }
+            set { SetValue(ItemsSourceProperty, value); }
+        }
         #endregion
         private readonly MatrixTransform _transform = new MatrixTransform();
         private Point _initialMousePosition;
         private UIElement _selectedElement;
+        private SensorAssignments _selectedSensor = new();
         private double scaleFactor;
         private Vector _draggingDelta;
+        private bool _isDropAdd = false;
         private double _scaleDeltaSensor;
         private Rect movingObject;  // Границы нашего объекта
         private Size parentSize; // Размер родительского элемента
@@ -115,40 +93,156 @@ namespace SensorMap.CustomControls
             scaleFactor = ZoomFactor;
             _scaleDeltaSensor = ZoomFactor;
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
-            _sensor = GetTemplateChild("PART_Sensor") as Ellipse;
             _image = GetTemplateChild("PART_Image") as Image;
-
-            
-            
             if (_canvas != null)
             {
-                if (_sensor != null)
-                {
-                    _sensor.MouseLeftButtonUp += Canvas_Drop;
-                }
                 _canvas.DragLeave += Canvas_DragLeave;
                 _canvas.MouseMove += _canvas_MouseMove;
                 _canvas.MouseDown += _canvas_MouseDown;
-                _canvas.MouseWheel += _canvas_MouseWheel;//zoom
-                _canvas.MouseUp += _canvas_MouseUp;
+                _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
+                
             }
         }
 
+
+        #region ItemsSource events
+        private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (SensorDragDrop)d;
+            control.UnsubscribeFromCollection(e.OldValue as ObservableCollection<SensorAssignments>);
+            control.SubscribeToCollection(e.NewValue as ObservableCollection<SensorAssignments>);
+        }
+
+        private void SubscribeToCollection(ObservableCollection<SensorAssignments> collection)
+        {
+            if (collection != null)
+            {
+                collection.CollectionChanged += OnCollectionChanged;
+            }
+            
+        }
+        private void UnsubscribeFromCollection(ObservableCollection<SensorAssignments> collection)
+        {
+            if (collection != null)
+            {
+                collection.CollectionChanged -= OnCollectionChanged;
+            }
+        }
+
+        private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    foreach (SensorAssignments newItem in e.NewItems)
+                    {
+                        AddEllipseToCanvas(newItem);
+                    }
+                    break;
+
+                case NotifyCollectionChangedAction.Remove:
+                    foreach (SensorAssignments oldItem in e.OldItems)
+                    {
+                        RemoveEllipseFromCanvas(oldItem);
+                    }
+                    break;
+                
+                
+            }
+            _isDropAdd = false;
+        }
+        #endregion
+
+        #region SensorActionsLogic
+        private void RemoveEllipseFromCanvas(SensorAssignments oldItem)
+        {
+            //if (_canvas == null) return;
+
+            //var ellipseToRemove = _canvas.Children.
+
+            //if (ellipseToRemove != null)
+            //{
+            //    _canvas.Children.Remove(ellipseToRemove);
+            //}
+            //отписаться от событий клика
+        }
+
+        private void AddEllipseToCanvas(SensorAssignments sensor)
+        {
+            int sensorsInMap = _canvas.Children.OfType<Ellipse>().Count();
+            if (sensor!=null && !_isDropAdd&&ItemsSource.Count()!= sensorsInMap)
+            {
+                if (sensor.X < 0 && sensor.Y < 0)
+                {
+                    sensor.X = 50;
+                    sensor.Y = 50; 
+                }
+
+                Ellipse element = CreateSensorObject(sensor, sensor.X, sensor.Y);
+                UndoRedoStack.Do(new AddSensor(sensor, element, _canvas, ItemsSource));
+                element.Tag = sensor.Id;
+            }
+        }
+
+        private void SensorSelected_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if(e.MiddleButton!=MouseButtonState.Pressed)
+            {
+            _selectedElement = (UIElement)e.Source;
+                if (_selectedElement is Ellipse)
+                {
+                    if (_selectedElement is FrameworkElement frameworkElement)
+                    {
+                        int tag = Convert.ToInt32(frameworkElement.Tag);
+                        if (tag != _selectedSensor.Id)
+                            _selectedSensor = ItemsSource.Where(x => x.Id == tag).FirstOrDefault();
+                    }
+                }
+            }
+        }
+
+
+        #endregion
+
+        #region SensorEvents
+        private void Sensor_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_selectedSensor.Sensor != null)
+            {
+                double X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
+                double Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
+                //_selectedSensor.X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
+                //_selectedSensor.Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
+                UndoRedoStack.Do(new MoveSensor(_selectedSensor, _selectedElement, X,Y));
+                ////SensorDropCommand?.Execute(_selectedSensor);
+                e.Handled = true;
+                _isDragging = false;
+                _selectedElement = null;
+                _selectedSensor = new SensorAssignments();
+            }
+        }
+        #endregion
+
+
+        #region CanvasEvents
         private void _canvas_Drop(object sender, DragEventArgs e)
         {
             object data = e.Data.GetData(DataFormats.Serializable);
-            
-            if(data is UIElement element)
-            {
-                Point dropPosition = e.GetPosition(_canvas);
-                Canvas.SetLeft(element, dropPosition.X);
-                Canvas.SetTop(element, dropPosition.Y);
+            if (data is SensorAssignments sensorData)
+            {  
+                if (sensorData != null)
+                {
+                    Point dropPosition = e.GetPosition(_canvas);
+                    Ellipse element = CreateSensorObject(sensorData, dropPosition.X, dropPosition.Y);
+                    _isDropAdd = true;
+                    UndoRedoStack.Do(new AddSensor(sensorData, element, _canvas, ItemsSource));
 
-                _canvas.Children.Add(element);
+                    element.Tag = sensorData.Id;
+
+                }
             }
         }
-
         private void _canvas_MouseMove(object sender, MouseEventArgs e)
         {
             parentSize = RenderSize;
@@ -203,8 +297,6 @@ namespace SensorMap.CustomControls
                     child.RenderTransform = _transform;
                 }
             }
-        
-
             if (_isDragging && e.LeftButton == MouseButtonState.Pressed)
             {
                 double x = Mouse.GetPosition(this).X;
@@ -214,14 +306,10 @@ namespace SensorMap.CustomControls
                 {
                     Canvas.SetLeft(_selectedElement, x + _draggingDelta.X);
                     Canvas.SetTop(_selectedElement, y + _draggingDelta.Y);
+                    x = x + _draggingDelta.X;
+                    y = y + _draggingDelta.Y;
                 }
             }
-        }
-
-        private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            _isDragging = false;
-            _selectedElement = null;
         }
 
         private void _canvas_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -328,49 +416,73 @@ namespace SensorMap.CustomControls
             {
                 _initialMousePosition = _transform.Inverse.Transform(e.GetPosition(this));
                 movingObject = VisualTreeHelper.GetDescendantBounds(this);
-                
             }
-
             if (e.ChangedButton == MouseButton.Left)
             {
-                //перемещаем только объект
-                if (_canvas.Children.Contains((UIElement)e.Source))
+                //перемещаем только датчик
+                _selectedElement = (UIElement)e.Source;
+                if (_selectedElement is Ellipse)
                 {
-                    _selectedElement = (UIElement)e.Source;
                     Point mousePosition = Mouse.GetPosition(_canvas);
                     double x = Canvas.GetLeft(_selectedElement);
                     double y = Canvas.GetTop(_selectedElement);
                     Point elementPosition = new Point(x, y);
                     _draggingDelta = elementPosition - mousePosition;
+                    _isDragging = true;
                 }
-                _isDragging = true;
+                else _selectedElement = null;
             }
         }
 
-        private void Canvas_Drop(object sender, MouseButtonEventArgs e)
-        {
-            X = Math.Round(Canvas.GetLeft(_selectedElement) / _scaleDeltaSensor, 1);
-            Y = Math.Round(Canvas.GetTop(_selectedElement) / _scaleDeltaSensor, 1);
-            SensorDropCommand?.Execute(null);
-            e.Handled = true;
-        }
+       
 
         private void Canvas_DragLeave(object sender, DragEventArgs e)
         {
            
         }
-
-        
-
-
-        // Метод для обновления позиции сенсора извне
-        public void SetPosition(double x, double y)
+        #endregion
+        private void Ellipse_ShowMoreInfo(object sender, MouseButtonEventArgs e)
         {
-            if (_sensor != null)
+            if (e.ChangedButton == MouseButton.Right)
             {
-                Canvas.SetLeft(_sensor, x - _sensor.ActualWidth / 2);
-                Canvas.SetTop(_sensor, y - _sensor.ActualHeight / 2);
+                var ellipse = sender as Ellipse;
+
+            if (ellipse != null)
+            {
+                var pop = new View.test();
+                var window = new PopupWindow()
+                {
+                    PopupElement = pop,
+                    DataContext = _selectedSensor
+                };
+                Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
+
+                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
+                {
+                    window.Close();
+                    Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
+                }
+                window.Show(ellipse, false);
             }
+
+                e.Handled = true;
+            }
+        }
+        private Ellipse CreateSensorObject(SensorAssignments sensorData, double X,double Y)
+        {           
+            var element = new Ellipse();
+            element.Width = 30;
+            element.Height = 30;
+            element.Fill = Brushes.Red;
+            
+            Canvas.SetLeft(element, X);
+            Canvas.SetTop(element, Y);
+
+            element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(Ellipse_ShowMoreInfo), false);
+            element.MouseLeftButtonUp += Sensor_MouseLeftButtonUp;
+            element.PreviewMouseDown += SensorSelected_MouseDown;
+
+            return element;
         }
     }
 }

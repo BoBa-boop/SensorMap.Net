@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -23,6 +24,7 @@ namespace SensorMap.Services
         private ObservableCollection<Sector> _sectors = new();
         private ObservableCollection<PLC> _plc = new();
         private ObservableCollection<SensorType> _sensorTypes = new();
+        private ObservableCollection<PLCManufacturer> _manufs = new();
         private ObservableCollection<Mechanism> _mechanisms= new();
         private IDataBaseProvider _provider;
 
@@ -35,11 +37,9 @@ namespace SensorMap.Services
             set => this.RaiseAndSetIfChanged(ref _isEdit, value);
         }
         public ObservableCollection<Sensor> Sensors => _sensors;
-
         public ObservableCollection<Sector> Sectors => _sectors;
-
         public ObservableCollection<Mechanism> Mechanisms => _mechanisms;
-
+        public ObservableCollection<PLCManufacturer> Manufacturers => _manufs;
         public ObservableCollection<SensorType> SensorTypes => _sensorTypes;
         public ObservableCollection<PLC> PLCs => _plc;
         public DataService(IDataBaseProvider provider)
@@ -57,7 +57,13 @@ namespace SensorMap.Services
                 _sensors = new ObservableCollection<Sensor>(await _provider.GetAllSensors());
                 _mechanisms = new ObservableCollection<Mechanism>(await _provider.GetAllMechanisms());
                 _sensorTypes = new ObservableCollection<SensorType>(await _provider.GetSensortypeAsync());
+                _manufs = new ObservableCollection<PLCManufacturer>(await _provider.GetManufacturersAsync());
             });
+        }
+
+        public void UpdateCollection<T>(T entity) where T : class
+        {
+           
         }
     }
 }

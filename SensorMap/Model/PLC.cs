@@ -60,8 +60,11 @@ namespace SensorMap.Model
                 }
             }
         }
+        public int PLCManufId {  get; set; }    
+        public PLCManufacturer PLCManufacturer { get; set; }
+        [Reactive]
         public string? Manufacturer { get; set; } = string.Empty;
-        public ObservableCollection<PLCInputs>? Inputs { get; set; }
+        public ObservableCollection<SensorAssignments>? Inputs { get; set; }
         public ObservableCollection<Mechanism>? Mechanisms { get; set; }
         [NotMapped]
         public bool IsModified

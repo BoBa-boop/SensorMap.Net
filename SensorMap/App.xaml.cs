@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using SensorMap.EF;
@@ -21,6 +22,7 @@ namespace SensorMap
     /// </summary>
     public partial class App : Application
     {
+        public static IConfiguration Configuration { get; private set; }
         protected Mutex? Mutex;
         private ServiceProvider _serviceProvider = null!;
         protected override void OnStartup(StartupEventArgs e)
@@ -30,13 +32,13 @@ namespace SensorMap
                 MessageBox.Show($"Fatal error: {args.ExceptionObject}");
                 Environment.Exit(1);
             };
-
             DispatcherUnhandledException += (s, args) =>
             {
                 MessageBox.Show($"UI error: {args.Exception.Message}");
                 args.Handled = true;
             };
             IServiceCollection services = new ServiceCollection();
+            Configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json",false,true).Build();
             ConfigurationServiceces(services);
             _serviceProvider = services.BuildServiceProvider();
 
@@ -70,7 +72,7 @@ namespace SensorMap
                 return window;
             });
             //Регистрация окон
-            
+            services.AddTransient<AuthorizationWindow>();
 
             //Регистрация VM
             services.AddSingleton<MainWindowVM>();
@@ -80,6 +82,7 @@ namespace SensorMap
             services.AddTransient<SectorsVM>();
             services.AddTransient<CRUD_VM>();
             services.AddTransient<SettingsVM>();
+            services.AddTransient<AuthVM>();
 
             //Регистрация сервисы
             ConfigurationDataBase(services);
@@ -87,6 +90,7 @@ namespace SensorMap
             services.AddSingleton<IDataBaseProvider, DataBaseProvider>();
             services.AddSingleton<INavigation, NavigationService>();
             services.AddSingleton<ITempImage,TempImage>();
+            services.AddSingleton<IConfiguration>(Configuration);
 
 
 
@@ -123,14 +127,7 @@ namespace SensorMap
 
         private static void ConfigurationDataBase(IServiceCollection services)
         {
-            var config = new ConfigurationBuilder()
-                                   .AddJsonFile("appsettings.json")
-                                   .SetBasePath(Directory.GetCurrentDirectory())
-                                   .Build();
-            string? connection_string = config.GetConnectionString("DefaultConnection");
-            //var baseDir = AppContext.BaseDirectory;
-            //string relativeDbPath = Path.Combine(baseDir, "..", "..", "AppDataBase.db");
-            //relativeDbPath = Path.GetFullPath(relativeDbPath);
+            string? connection_string = Configuration.GetConnectionString("DefaultConnection");
             if (!string.IsNullOrEmpty(connection_string))
                 services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
             else

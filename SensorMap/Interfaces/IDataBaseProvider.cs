@@ -14,8 +14,10 @@ namespace SensorMap.Interfaces
         Task<IEnumerable<Sensor>> GetAllSensors();
         Task<IEnumerable<PLC>> GetAllPLCsAsync();
         Task<IEnumerable<SensorType>> GetSensortypeAsync();
+        Task<IEnumerable<PLCManufacturer>> GetManufacturersAsync();
         Task<T> GetElementByID<T>(int id) where T:class;
         Task<IEnumerable<Mechanism>> GetAllMechanisms();
+        Task AddSensorAssignmentAsync(SensorAssignments assignment);
         Task Create<T>(T entity) where T : class;
         Task Delete<T>(T entity) where T : class;
         Task Update<T>(T entity) where T : class;

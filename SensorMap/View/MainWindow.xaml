@@ -6,9 +6,10 @@
            xmlns:hc="https://handyorg.github.io/handycontrol"
            xmlns:local="clr-namespace:SensorMap.View"
            xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+           xmlns:mv="clr-namespace:SensorMap.ViewModel"
            mc:Ignorable="d" x:Name="root"
            Title="Geron" ShowTitle="False"
-           DataContext="{Binding MainWindowVM}"
+           d:DataContext="{d:DesignInstance mv:MainWindowVM}"
            MinHeight="650" MinWidth="900" 
                Background="WhiteSmoke"       
                hc:WindowAttach.ExtendContentToNonClientArea="False"
@@ -35,7 +36,7 @@
                     <MenuItem Header="Редактор" Command="{Binding TurnOnEditMode}">
                         <MenuItem.Icon>
                             <Image Source="{StaticResource LockImage}" 
-                                   Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                   Visibility="{Binding IsEdit,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>
@@ -50,11 +51,8 @@
                 </MenuItem>
             </Menu>
             <Menu Background="Transparent">
-                <MenuItem Header="Настройки">
-                    <MenuItem Header="Вид 'Главное меню'" Command="{Binding NavigateToMenu}"/>
-                    <MenuItem Header="Резервная копия БД" Command="{Binding NavigateToSectors}"/>
-                    <MenuItem Header="Режим 'Редактор'" Command="{Binding NavigateToMechanisms}"/>                   
-                </MenuItem>
+                <MenuItem Header="Настройки" Command="{Binding NavigateToSettings}"/>
+                <MenuItem Header="Резервная копия БД" Command="{Binding NavigateToSectors}"/>
             </Menu>
             <Button Content="Help" Style="{StaticResource ButtonCustom}" Margin="10,0,20,0"/>
         </hc:SimpleStackPanel>
@@ -64,6 +62,7 @@
             <i:InvokeCommandAction Command="{Binding NavigateToMenu}"/>
         </i:EventTrigger>
     </i:Interaction.Triggers>
+    <Border Name="brdBack" Background="Transparent">
     <Grid>
         <Grid.Background>
             <ImageBrush ImageSource="{StaticResource AppBackground}"
@@ -71,6 +70,21 @@
                         ViewportUnits="Absolute" ViewboxUnits="RelativeToBoundingBox"
                         Stretch="UniformToFill" AlignmentX="Left" AlignmentY="Top"/>
         </Grid.Background>
-        <ContentControl x:Name="content" Content="{Binding Navigation.CurrentView,UpdateSourceTrigger=PropertyChanged}"/>
-    </Grid>
+
+            <ContentControl x:Name="content" Content="{Binding Navigation.CurrentView,UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding ActiveWindow}" Value="False">
+                        <Setter Property="Border.Effect">
+                            <Setter.Value>
+                                <BlurEffect Radius="20"/>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+    </Border>
 </hc:Window>

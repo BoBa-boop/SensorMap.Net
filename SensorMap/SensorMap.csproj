@@ -6,12 +6,17 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>rect1.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\2 нар линия механизация.jpg" />
     <None Remove="Resources\Схема МДМ.jpg" />
     <None Remove="Resources\Шаблон.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="rect1.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,8 +34,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="ReactiveUI" Version="21.0.1" />
     <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>

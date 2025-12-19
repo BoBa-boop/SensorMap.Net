@@ -50,7 +50,15 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
+    <DrawingImage x:Key="ChangeDataImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M14.06,9L15,9.94 5.92,19 5,19 5,18.08 14.06,9 M17.66,3C17.41,3,17.15,3.1,16.96,3.29L15.13,5.12 18.88,8.87 20.71,7.04C21.1,6.65,21.1,6,20.71,5.63L18.37,3.29C18.17,3.09,17.92,3,17.66,3 M14.06,6.19L3,17.25 3,21 6.75,21 17.81,9.94 14.06,6.19z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <Geometry x:Key="ChangeData">F1 M24,24z M0,0z M14.06,9L15,9.94 5.92,19 5,19 5,18.08 14.06,9 M17.66,3C17.41,3,17.15,3.1,16.96,3.29L15.13,5.12 18.88,8.87 20.71,7.04C21.1,6.65,21.1,6,20.71,5.63L18.37,3.29C18.17,3.09,17.92,3,17.66,3 M14.06,6.19L3,17.25 3,21 6.75,21 17.81,9.94 14.06,6.19z</Geometry>
 
     <DrawingImage x:Key="LoadImage">
         <DrawingImage.Drawing>

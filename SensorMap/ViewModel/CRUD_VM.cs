@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using DynamicData;
 using HandyControl.Controls;
 using Microsoft.Win32;
 using ReactiveUI;
@@ -31,8 +32,11 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
+        [Reactive] public ObservableCollection<PLCManufacturer> Manufacturers { get; set; }
         [Reactive] 
         public ObservableCollection<SensorType> TempSensorTypes { get; set; }
+        [Reactive]
+        public ObservableCollection<PLCManufacturer> TempPLCManuf { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
 
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage,bool _IsEditMode=false) 
@@ -46,7 +50,9 @@ namespace SensorMap.ViewModel
             PLCs = _service.PLCs;
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
+            Manufacturers = _service.Manufacturers;
             TempSensorTypes = new(SensorTypes);
+            TempPLCManuf = new(Manufacturers);
             Mechanisms = _service.Mechanisms;
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
@@ -73,6 +79,7 @@ namespace SensorMap.ViewModel
                     if (updateMethod.Invoke(_provider, new object[] { arg }) != null)
                         entityType?.GetProperty("IsModified")?.SetValue(arg, false);
                 }
+                _service.UpdateCollection(entityType);
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
             {
@@ -119,7 +126,7 @@ namespace SensorMap.ViewModel
                 var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(image as byte[])) {Title="Просмотр схемы" };
                 browser.ShowDialog();
             });
-            AddNodeTitleType = new RelayCommand<object>((param) => 
+            AddSensorType = new RelayCommand<object>((param) => 
             {
                 var values = (object[])param;
                 var name = (string)values[0];
@@ -143,7 +150,19 @@ namespace SensorMap.ViewModel
                     TempSensorTypes.Add(sType);
                 }
             }, (param) => { var values = (object[]?)param; return !string.IsNullOrWhiteSpace((string)values[0]); });
-            DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType); }, (type) => { return type != null; });
+            AddPLCManufactur = new RelayCommand<object>((name) =>
+            {
+                var manuf = (string)name;
+                PLCManufacturer sType = new PLCManufacturer() { Name=manuf};
+                if (!TempPLCManuf.Where(x => x.Name == sType.Name).Any())
+                {
+                    sType.IsNew = true;
+                    TempPLCManuf.Add(sType);
+                }
+
+            },(param) => { return !string.IsNullOrWhiteSpace((string)param);});
+
+            DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType);DeleteCommand.Execute(type); }, (type) => { return type != null; });
             
         }
 
@@ -153,7 +172,8 @@ namespace SensorMap.ViewModel
         public ICommand CancelCommand { get; set; }
         public ICommand AddImage {  get; set; }
         public ICommand ShowPreviewImage { get; set; }
-        public ICommand AddNodeTitleType { get; }
+        public ICommand AddSensorType { get; }
+        public ICommand AddPLCManufactur { get; }
         public ICommand SaveNodeTitleType { get; }
         public ICommand DeleteNodeTitleType { get; }
         

@@ -77,7 +77,7 @@ namespace SensorMap.Model
         }
         public int? PLCID { get; set; }
 
-        
+        public ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
 
         
 

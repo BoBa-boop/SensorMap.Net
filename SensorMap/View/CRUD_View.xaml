@@ -32,7 +32,8 @@
         </Grid.RowDefinitions>
         <Grid.Resources>
             <DataTemplate x:Key="CRUD_Buttons">
-                <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
+                <hc:ElementGroup Orientation="Horizontal" Layout="Stack"
+                                 Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                     <Button Name="Delete" ToolTip="Удалить"  Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
                             hc:IconElement.Geometry="{StaticResource DeleteGeometry}" Style="{StaticResource ButtonDanger}"/>
@@ -148,7 +149,7 @@
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               MinColumnWidth="90" MaxColumnWidth="250" Unloaded="DataGrid_Unloaded"
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
-                              IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
+                              IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
@@ -223,7 +224,7 @@
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               MinColumnWidth="90" MaxColumnWidth="250" Unloaded="DataGrid_Unloaded"
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
-                               IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
+                              IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
@@ -231,8 +232,8 @@
                             <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
                         </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Header="Название" IsReadOnly="{Binding IsEditMode}"/>
-                            <DataGridTemplateColumn Header="Участок" IsReadOnly="{Binding IsEditMode}">
+                            <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Header="Название"/>
+                            <DataGridTemplateColumn Header="Участок">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Path=Sector.Name}" Cursor="Hand" />
@@ -258,7 +259,7 @@
                                                     hc:IconElement.Geometry="{StaticResource FullScreenGeometry}" ToolTip="Просмотр"
                                                     Command="{Binding ElementName=root,Path=DataContext.ShowPreviewImage}"
                                                     CommandParameter="{Binding Image}"/>
-                                            <Image x:Name="imgPreview"  Source="{Binding Image}" Stretch="Uniform"/>
+                                            <Image x:Name="imgPreview"  Source="{StaticResource ImageDefault}" Stretch="Uniform"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                             <Grid.Triggers>
                                                 <EventTrigger RoutedEvent="MouseEnter">
@@ -294,10 +295,12 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Действие" IsReadOnly="{Binding IsEditMode}">
+                            <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
+                                        <hc:ElementGroup Orientation="Horizontal" Layout="Stack"
+                                                         Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,
+                                                                              Converter={StaticResource Boolean2VisibilityConverter}}">
                                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                             <Button Name="AddImage" ToolTip="Загрузить изображение"
                                                     Command="{Binding ElementName=root,Path=DataContext.AddImage}"
@@ -354,7 +357,7 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTemplateColumn Header="Тип" IsReadOnly="{Binding IsEditMode}">
+                            <DataGridTemplateColumn Header="Тип">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Path=SensorType.Name}" Cursor="Hand"/>
@@ -377,7 +380,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Действие" IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
+                            <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
@@ -393,7 +396,8 @@
                                                 AncestorType={x:Type DataGridRow}}, Path=Item}"
                                                     hc:IconElement.Geometry="{DynamicResource LoadNewImage}"
                                                     hc:IconElement.Width="18" hc:IconElement.Height="20"
-                                                    Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                                    Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,
+                                                Converter={StaticResource Boolean2VisibilityConverter}}"/>
 
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
@@ -438,21 +442,29 @@
             </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name, ValidatesOnDataErrors=True,
-                    UpdateSourceTrigger=PropertyChanged}" Header="Название" IsReadOnly="{Binding IsEditMode}">
+                    UpdateSourceTrigger=PropertyChanged}" Header="Название">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Cursor" Value="Hand"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Binding="{Binding Manufacturer, ValidatesOnDataErrors=True,
-                    UpdateSourceTrigger=PropertyChanged}" Header="Производитель" IsReadOnly="{Binding IsEditMode}">
-                                <DataGridTextColumn.ElementStyle>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                    </Style>
-                                </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Производитель">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=Manufacturer}" Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Manufacturers,
+                                    UpdateSourceTrigger=PropertyChanged}"
+                      SelectedItem="{Binding SensorType,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                  
+                      DisplayMemberPath="Name"                                                  
+                      Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -497,7 +509,7 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Действие" IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
+                            <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
@@ -558,7 +570,6 @@
                             </Grid.RowDefinitions>
                             <ListBox Effect="{StaticResource EffectShadow2}" Name="twSensors"
                                      ItemsSource="{Binding TempSensorTypes,UpdateSourceTrigger=PropertyChanged}"
-                                     SelectedItem="{Binding SelectedSensorType}"
                                      Height="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
@@ -656,7 +667,7 @@
                                                ItemWidth="55">
                                         <Button Style="{StaticResource ButtonSuccess}"
                                                  hc:IconElement.Geometry="{StaticResource AddGeometry}"
-                                                Command="{Binding AddNodeTitleType}">
+                                                Command="{Binding AddSensorType}">
                                             <Button.CommandParameter>
                                                 <MultiBinding Converter="{StaticResource CreateMultiParams}">
                                                     <Binding Path="Text" ElementName="tbSensorType"/>
@@ -694,7 +705,139 @@
                         </Grid>
                         
                     </GroupBox>
-                    
+                    <GroupBox Header="Контроллеры" Style="{StaticResource BaseStyle}" Width="350"
+                              HorizontalAlignment="Left" Margin="8" Grid.Column="1">
+                        <Grid Margin="5,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="220"/>
+                                <RowDefinition/>
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <ListBox Effect="{StaticResource EffectShadow2}" Name="lbManufacturers"
+                                     ItemsSource="{Binding TempPLCManuf,UpdateSourceTrigger=PropertyChanged}"
+                                     Height="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <ListBox.Style>
+                                    <Style TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
+                                        <Setter Property="Background" Value="{StaticResource DefaultBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ElementName=lbManufacturers,Path=Items.Count}" Value="0">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBox">
+                                                            <Grid Background="{StaticResource DarkDefaultBrush}">
+                                                                <TextBlock Text="Нет данных" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                       FontSize="20"/>
+                                                            </Grid>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.Style>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                        <Setter Property="Margin" Value="3"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <hc:Badge x:Name="badge" Background="{StaticResource InfoBrush}" Text="Новый"
+                                                              ShowBadge="{Binding IsNew}">
+                                                        <Border x:Name="brd" BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="1" CornerRadius="5" Cursor="Hand"
+                                                                Background="{TemplateBinding Background}">
+                                                            <ContentPresenter VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </hc:Badge>
+                                                    <ControlTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding IsNew}"  Value="True">
+                                                            <Setter Property="BorderBrush" TargetName="brd"  Value="{StaticResource WarningBrush}"/>
+                                                            <Setter Property="Background" TargetName="brd" Value="{StaticResource NewSensorType}"/>
+                                                            <Setter Property="ShowBadge" TargetName="badge" Value="True"/>
+                                                        </DataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsNew,UpdateSourceTrigger=PropertyChanged}" Value="True"/>
+                                                                <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="BorderBrush" TargetName="brd"  Value="{StaticResource DangerBrush}"/>
+                                                            <Setter Property="Background" TargetName="brd" Value="#c5e0eb"/>
+                                                        </MultiDataTrigger>
+
+                                                        <DataTrigger Binding="{Binding IsMouseOver,RelativeSource={RelativeSource Self}}" Value="True">
+                                                            <Setter Property="Background" Value="#e3e3e3"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True">
+                                                            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
+                                                        </DataTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Width="320" Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                            </ListBox>
+                            <StackPanel Orientation="Horizontal"  Grid.ColumnSpan="2" Grid.Row="1"
+                                        VerticalAlignment="Top" HorizontalAlignment="Center"
+                                         Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <StackPanel Margin="10,0">
+                                    <hc:TextBox Name="tbManufacturer" hc:InfoElement.Placeholder="Производитель"
+                                                Width="150" Height="30"
+                                                Text="{Binding ElementName=lbManufacturers,Path=SelectedItem.Name}"/>
+
+                                    <WrapPanel Orientation="Horizontal" Grid.Row="1" Margin="0,15" HorizontalAlignment="Center"
+                                               ItemWidth="55">
+                                        <Button Style="{StaticResource ButtonSuccess}"
+                                                hc:IconElement.Geometry="{StaticResource AddGeometry}"
+                                                Command="{Binding AddPLCManufactur}" CommandParameter="{Binding ElementName=tbManufacturer,Path=Text}">
+                                            
+                                        </Button>
+                                        <Button Style="{StaticResource ButtonDanger}" 
+                                                hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
+                                                Command="{Binding DeleteNodeTitleType}" CommandParameter="{Binding ElementName=lbManufacturers,Path=SelectedItem}"/>
+                                        <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}"
+                                                Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=lbManufacturers,Path=SelectedItem}">
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="Click">
+                                                    <i:ChangePropertyAction TargetObject="{Binding ElementName=lbManufacturers, Path=SelectedItem}"
+                                                        PropertyName="IsNew" Value="False"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ElementName=lbManufacturers,Path=SelectedItem.IsNew}" Value="false">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ElementName=lbManufacturers,Path=SelectedItem}" Value="{x:Null}">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+
+                    </GroupBox>
                 </Grid>
             </hc:TabItem>
         </hc:TabControl>

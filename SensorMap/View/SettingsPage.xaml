@@ -12,11 +12,11 @@
             <hc:ElementGroup.Background>
                 <SolidColorBrush Color="Gray" Opacity="0.2"/>
             </hc:ElementGroup.Background>
-            <TextBlock Style="{StaticResource TextBlockDefaultInfo}"
-                   Text="Путь к Базе Данных: "/>
-            <hc:TextBox 
-                        Background="Transparent">
-            </hc:TextBox>
+            <StackPanel Orientation="Horizontal">
+            <hc:TextBox Name="txtEditorPass" Width="200" hc:InfoElement.Placeholder="Пароль редактора"/>
+                <Button Width="35" Style="{StaticResource ButtonInfo}" hc:IconElement.Geometry="{StaticResource ChangeData}"
+                        Command="{Binding ChangeEditorPassword}" CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
+            </StackPanel>
         </hc:ElementGroup>
     </hc:TransitioningContentControl>
 </UserControl>

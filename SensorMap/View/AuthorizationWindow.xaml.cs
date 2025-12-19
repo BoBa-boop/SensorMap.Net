@@ -1,14 +1,19 @@
-﻿using HandyControl.Controls;
+﻿
+using SensorMap.ViewModel;
+using System.Windows;
+
 namespace SensorMap.View
 {
     /// <summary>
     /// Логика взаимодействия для AuthorizationWindow.xaml
     /// </summary>
-    public partial class AuthorizationWindow : HandyControl.Controls.Window
+    public partial class AuthorizationWindow : Window
     {
         public AuthorizationWindow()
         {
             InitializeComponent();
         }
+
+       
     }
 }

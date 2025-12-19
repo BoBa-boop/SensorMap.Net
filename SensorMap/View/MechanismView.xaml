@@ -16,6 +16,7 @@
     <UserControl.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
     </UserControl.Resources>
+    
     <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
     <Grid>
         <Grid.RowDefinitions>
@@ -26,15 +27,23 @@
             <ColumnDefinition Width="*" MaxWidth="200" MinWidth="50"/>
             <ColumnDefinition Width="*" MinWidth="400"/>
         </Grid.ColumnDefinitions>
-        <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
-        Grid.Row="0" Grid.ColumnSpan="2">
-            <MenuItem Header="Сохранить" Command="{Binding SaveLayout}"/>
-            <MenuItem Header="Открыть другой участок"/>
+            <hc:ButtonGroup Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Width="110">
+                <Button hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" hc:IconElement.Width="20" hc:IconElement.Height="20"
+                        ToolTip="Отменить CTRL+Z" 
+                        Command="{Binding UndoCommand}"/>
+                <Button hc:IconElement.Geometry="{StaticResource RotateRightGeometry}" hc:IconElement.Width="20" hc:IconElement.Height="20"
+                        ToolTip="Вернуть CTRL+Y"
+                        Command="{Binding RedoCommand}"/>
+            </hc:ButtonGroup>
+            <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
+              Grid.Row="0" Grid.Column="1">
+                <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}"/>
+            <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
         </Menu>
 
         <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
             <StackPanel Orientation="Vertical">
-                <Expander Header="{Binding CurrentSector.Name}" IsExpanded="True">
+                <Expander Header="{Binding CurrentSector.Name,FallbackValue='Не выбран участок'}" IsExpanded="True">
                         <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}"
                                  SelectedItem="{Binding CurrentMech,UpdateSourceTrigger=PropertyChanged}">
                             <ListBox.ItemTemplate>
@@ -43,25 +52,41 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
+                        <Expander.Style>
+                            <Style TargetType="Expander" BasedOn="{StaticResource ExpanderBaseStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CurrentSector.Name}" Value="{x:Null}">
+                                        <Setter Property="Background" Value="{StaticResource WarningBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Expander.Style>
                 </Expander>
                 <Expander Header="Датчики" IsExpanded="True">
                         <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}">
                             <i:Interaction.Behaviors>
                                 <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
-                        </i:Interaction.Behaviors>
+                            </i:Interaction.Behaviors>
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseDoubleClick">
+                                    <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding ElementName=twSensors,Path=SelectedItem}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
                             <TreeView.ItemTemplate>
                                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                     <StackPanel Orientation="Horizontal">
-                                        <Image Source="{Binding Image}" Width="25" Height="25">
-                                            <Image.Clip>
-                                                <EllipseGeometry RadiusX="13" RadiusY="13" Center="13,13"/>
-                                            </Image.Clip>
-                                        </Image>
-                                        <TextBlock Text="{Binding Name}" FontSize="16" Margin="5,0"/>
+                                        <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="DemiBold"/>
                                     </StackPanel>
                                     <HierarchicalDataTemplate.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="{Binding Path=Name}"/>
+                                            <TextBlock x:Name="txt" Text="{Binding Path=Name}">
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                                                        <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.DragSensorCommand}" 
+                                                                                   CommandParameter="{Binding ElementName=txt}" />
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
+                                            </TextBlock>
                                         </DataTemplate>
                                     </HierarchicalDataTemplate.ItemTemplate>
                                 </HierarchicalDataTemplate>
@@ -77,9 +102,9 @@
             </Grid.RowDefinitions>
             <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                 <!--<hc:ImageViewer ImageSource="{Binding CurrentMech.Image}"/>-->
-                <myCC:SensorDragDrop SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
-                                 X="{Binding X,Mode=TwoWay}" Y="{Binding Y,Mode=TwoWay}" 
-                                 ImageSource="{Binding CurrentMech.Image}"/>
+                <myCC:SensorDragDrop ItemsSource="{Binding CanvasSensors,Mode=TwoWay}"
+                                     SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
+                                 ImageSource="{Binding CurrentMech.Image}" UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}"/>
             </Border>
         </Grid>
     </Grid>

@@ -16,12 +16,8 @@ namespace SensorMap.Behaviors
         private TransformGroup? _transformGroup;
         private TranslateTransform? _translateTransform;
         private ScaleTransform? _scaleTransform;
-        private Point _startPoint;
         private bool _isDragging;
-        private Rect _boundsRect;
 
-        private bool _canMoveX;
-        private bool _canMoveY;
         private Point _mouseDownPoint;
         private Size _imgSize;
 
@@ -98,7 +94,6 @@ namespace SensorMap.Behaviors
         {
             _isDragging = true;
             _mouseDownPoint = e.GetPosition(AssociatedObject);
-            _canMoveX = _canMoveY = false;
             AssociatedObject.CaptureMouse();
         }
 
@@ -127,7 +122,6 @@ namespace SensorMap.Behaviors
                     marginX = 0;
                 else if (-marginX + AssociatedObject.ActualWidth >= _imgSize.Width * _scaleTransform.ScaleX)
                     marginX = AssociatedObject.ActualWidth - _imgSize.Width * _scaleTransform.ScaleX;
-                _canMoveX = true;
             }
 
             if (_imgSize.Height * _scaleTransform.ScaleY > AssociatedObject.ActualHeight)
@@ -137,7 +131,6 @@ namespace SensorMap.Behaviors
                     marginY = 0;
                 else if (-marginY + AssociatedObject.ActualHeight >= _imgSize.Height * _scaleTransform.ScaleY)
                     marginY = AssociatedObject.ActualHeight - _imgSize.Height * _scaleTransform.ScaleY;
-                _canMoveY = true;
             }
 
             _translateTransform.X = marginX;

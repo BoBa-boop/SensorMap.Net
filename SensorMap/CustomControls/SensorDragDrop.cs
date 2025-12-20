@@ -76,7 +76,7 @@ namespace SensorMap.CustomControls
             get { return (ObservableCollection<SensorAssignments>)GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
-        #endregion
+        #endregion        
         private readonly MatrixTransform _transform = new MatrixTransform();
         private Point _initialMousePosition;
         private UIElement _selectedElement;
@@ -170,18 +170,20 @@ namespace SensorMap.CustomControls
 
         private void AddEllipseToCanvas(SensorAssignments sensor)
         {
-            int sensorsInMap = _canvas.Children.OfType<Ellipse>().Count();
-            if (sensor!=null && !_isDropAdd&&ItemsSource.Count()!= sensorsInMap)
+            int sensorsInMap = 0;
+            foreach (var item in _canvas.Children)
             {
-                if (sensor.X < 0 && sensor.Y < 0)
-                {
-                    sensor.X = 50;
-                    sensor.Y = 50; 
-                }
+                if (IsUIElementSensor(item, out Border element))
+                    sensorsInMap++;
+            }
+            if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
+            {
+                sensor.X = sensor.X < 0 ? 50 : sensor.X;
+                sensor.Y = sensor.Y < 0 ? 50 : sensor.Y; 
 
-                Ellipse element = CreateSensorObject(sensor, sensor.X, sensor.Y);
+                Border element = CreateSensorObject(sensor, sensor.X, sensor.Y);
                 UndoRedoStack.Do(new AddSensor(sensor, element, _canvas, ItemsSource));
-                element.Tag = sensor.Id;
+                element.Tag = ItemsSource.IndexOf(sensor);
             }
         }
 
@@ -190,14 +192,9 @@ namespace SensorMap.CustomControls
             if(e.MiddleButton!=MouseButtonState.Pressed)
             {
             _selectedElement = (UIElement)e.Source;
-                if (_selectedElement is Ellipse)
+                if (IsUIElementSensor(_selectedElement,out Border element))
                 {
-                    if (_selectedElement is FrameworkElement frameworkElement)
-                    {
-                        int tag = Convert.ToInt32(frameworkElement.Tag);
-                        if (tag != _selectedSensor.Id)
-                            _selectedSensor = ItemsSource.Where(x => x.Id == tag).FirstOrDefault();
-                    }
+                    _selectedSensor = ItemsSource[Convert.ToInt32(element.Tag)];
                 }
             }
         }
@@ -210,14 +207,19 @@ namespace SensorMap.CustomControls
         {
             if (_selectedSensor.Sensor != null)
             {
-                double X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
-                double Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
-                //_selectedSensor.X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
-                //_selectedSensor.Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
-                UndoRedoStack.Do(new MoveSensor(_selectedSensor, _selectedElement, X,Y));
+                if(IsUIElementSensor(_selectedElement,out Border element))
+                {
+                    double X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
+                    double Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
+                    //_selectedSensor.X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
+                    //_selectedSensor.Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
+                    UndoRedoStack.Do(new MoveSensor(_selectedSensor, element, X, Y));
+                    element.BorderBrush = Brushes.Transparent;
+                }
                 ////SensorDropCommand?.Execute(_selectedSensor);
                 e.Handled = true;
                 _isDragging = false;
+                
                 _selectedElement = null;
                 _selectedSensor = new SensorAssignments();
             }
@@ -234,11 +236,11 @@ namespace SensorMap.CustomControls
                 if (sensorData != null)
                 {
                     Point dropPosition = e.GetPosition(_canvas);
-                    Ellipse element = CreateSensorObject(sensorData, dropPosition.X, dropPosition.Y);
+                    Border element = CreateSensorObject(sensorData, dropPosition.X, dropPosition.Y);
                     _isDropAdd = true;
                     UndoRedoStack.Do(new AddSensor(sensorData, element, _canvas, ItemsSource));
 
-                    element.Tag = sensorData.Id;
+                    element.Tag = ItemsSource.IndexOf(sensorData);
 
                 }
             }
@@ -302,10 +304,10 @@ namespace SensorMap.CustomControls
                 double x = Mouse.GetPosition(this).X;
                 double y = Mouse.GetPosition(this).Y;
 
-                if (_selectedElement != null)
+                if (IsUIElementSensor(_selectedElement,out Border element))
                 {
-                    Canvas.SetLeft(_selectedElement, x + _draggingDelta.X);
-                    Canvas.SetTop(_selectedElement, y + _draggingDelta.Y);
+                    Canvas.SetLeft(element, x + _draggingDelta.X);
+                    Canvas.SetTop(element, y + _draggingDelta.Y);
                     x = x + _draggingDelta.X;
                     y = y + _draggingDelta.Y;
                 }
@@ -421,64 +423,77 @@ namespace SensorMap.CustomControls
             {
                 //перемещаем только датчик
                 _selectedElement = (UIElement)e.Source;
-                if (_selectedElement is Ellipse)
+                if (IsUIElementSensor(_selectedElement,out Border element))
                 {
+                    element.BorderBrush = Brushes.ForestGreen;
                     Point mousePosition = Mouse.GetPosition(_canvas);
-                    double x = Canvas.GetLeft(_selectedElement);
-                    double y = Canvas.GetTop(_selectedElement);
+                    double x = Canvas.GetLeft(element);
+                    double y = Canvas.GetTop(element);
                     Point elementPosition = new Point(x, y);
                     _draggingDelta = elementPosition - mousePosition;
                     _isDragging = true;
                 }
-                else _selectedElement = null;
             }
         }
 
-       
+        private bool IsUIElementSensor(object UIElement,out Border element)
+        {
+            if(UIElement is Border brd && brd.Tag != null && ItemsSource.Contains(ItemsSource.ElementAt((Int32)brd.Tag)))
+            {
+                element = brd;
+                return true;
+            }
+            else
+            {
+                element = new Border();
+                return false;
+            }
+                
+        }
+
 
         private void Canvas_DragLeave(object sender, DragEventArgs e)
         {
            
         }
         #endregion
-        private void Ellipse_ShowMoreInfo(object sender, MouseButtonEventArgs e)
+        private void UIElementSensor_ShowMoreInfo(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Right)
             {
-                var ellipse = sender as Ellipse;
-
-            if (ellipse != null)
-            {
-                var pop = new View.test();
-                var window = new PopupWindow()
+                if (IsUIElementSensor(sender,out Border element))
                 {
-                    PopupElement = pop,
-                    DataContext = _selectedSensor
-                };
-                Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
+                    var pop = new View.SensorAddInfo();
+                    var window = new PopupWindow()
+                    {
+                        PopupElement = pop,
+                        DataContext = _selectedSensor
+                    };
+                    Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
 
-                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
-                {
-                    window.Close();
-                    Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
+                    void OnMainWindowClick(object sender, MouseButtonEventArgs e)
+                    {
+                        window.Close();
+                        Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
+                    }
+                    window.Show(element, false);
                 }
-                window.Show(ellipse, false);
-            }
-
                 e.Handled = true;
             }
         }
-        private Ellipse CreateSensorObject(SensorAssignments sensorData, double X,double Y)
+        private Border CreateSensorObject(SensorAssignments sensorData, double X,double Y)
         {           
-            var element = new Ellipse();
+            var element = new Border();
+            element.CornerRadius = new CornerRadius(20);
+            element.BorderThickness=new Thickness(1.5);
             element.Width = 30;
             element.Height = 30;
-            element.Fill = Brushes.Red;
+            element.Background = Brushes.Red;
             
             Canvas.SetLeft(element, X);
             Canvas.SetTop(element, Y);
 
-            element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(Ellipse_ShowMoreInfo), false);
+            element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             element.MouseLeftButtonUp += Sensor_MouseLeftButtonUp;
             element.PreviewMouseDown += SensorSelected_MouseDown;
 

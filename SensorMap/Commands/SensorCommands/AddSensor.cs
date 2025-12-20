@@ -14,11 +14,11 @@ namespace SensorMap.Commands.SensorCommands
 {
     public class AddSensor : ICommandSensors
     {
-        private readonly Ellipse _element;
+        private readonly Border _element;
         private readonly SensorAssignments _sensorData;
         private readonly Canvas _canvas;
         private readonly ObservableCollection<SensorAssignments> _collection;
-        public AddSensor(SensorAssignments sensor, Ellipse sensorVisual,Canvas canvas,
+        public AddSensor(SensorAssignments sensor, Border sensorVisual,Canvas canvas,
         ObservableCollection<SensorAssignments> collection) 
         {
             _element = sensorVisual;

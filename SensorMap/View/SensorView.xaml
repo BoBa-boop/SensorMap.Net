@@ -64,10 +64,6 @@
                                 <TextBlock Text="{Binding SelectedNode.SensorType.Name}"
                                            FontSize="14"
                                            Style="{StaticResource TextBlockBoldBaseStyle}"/>
-                                <Button Name="GetInfoButton" Width="20" Height="20" Padding="0" Margin="5,-3" Background="Transparent"
-                                        hc:IconElement.Geometry="{StaticResource InfoGeometry}"
-                                        Command="{Binding GetInfoAboutType}" CommandParameter="{Binding}"
-                                        ToolTip="Получить информацию"/>
                             </StackPanel>
                             <Grid>
                                 <Grid.ColumnDefinitions>

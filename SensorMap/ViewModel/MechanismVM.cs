@@ -144,7 +144,8 @@ namespace SensorMap.ViewModel
                 if (CurrentMech != null)
                 {
                     CanvasSensors.Clear();
-                    CanvasSensors.AddRange(CurrentMech.SensorsAssig);
+                    if(CurrentMech.SensorsAssig!=null)
+                        CanvasSensors.AddRange(CurrentMech.SensorsAssig);
                 }
             });
             this.WhenAnyValue(x => x.UndoRedoStack.UndoCount).ObserveOn(RxApp.MainThreadScheduler)

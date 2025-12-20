@@ -11,6 +11,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Shapes;
 
 namespace SensorMap.ViewModel
 {
@@ -33,25 +34,8 @@ namespace SensorMap.ViewModel
             _provider = provider;
             sensorTypes = _service.SensorTypes;
             Sensors = new ObservableCollection<SensorsTreeNode>(TreeNodeSensors());
-            GetInfoAboutType = new RelayCommand<object>((s) =>{ShowPopup(s);});
         }
 
-        private static void ShowPopup(object sender)
-        {
-            var button = sender as FrameworkElement;
-            var picker = SingleOpenHelper.CreateControl<ColorPicker>();
-            var window = new PopupWindow
-            {
-                PopupElement = picker,
-                WindowStartupLocation= WindowStartupLocation.CenterOwner
-            };
-            picker.SelectedColorChanged += delegate { window.Close(); };
-            picker.Canceled += delegate { window.Close(); };
-            window.Show(button,false);
-        }
-
-        public ICommand GetInfoAboutType { get; }
-        
         private IEnumerable<SensorsTreeNode> TreeNodeSensors()
         {
             var mainNodes = new ObservableCollection<SensorsTreeNode>();

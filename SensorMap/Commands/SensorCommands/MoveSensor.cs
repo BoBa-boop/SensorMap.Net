@@ -14,13 +14,13 @@ namespace SensorMap.Commands.SensorCommands
     public class MoveSensor : ICommandSensors
     {
         private readonly SensorAssignments _sensor;
-        private readonly UIElement _element;
+        private readonly Border _element;
         private readonly double _oldX;
         private readonly double _oldY;
         private readonly double _newX;
         private readonly double _newY;
 
-        public MoveSensor(SensorAssignments sensor,UIElement element, double newX, double newY)
+        public MoveSensor(SensorAssignments sensor,Border element, double newX, double newY)
         {
             _element = element;
             _sensor = sensor;
@@ -36,6 +36,7 @@ namespace SensorMap.Commands.SensorCommands
             _sensor.Y = _newY; 
             Canvas.SetLeft(_element, _sensor.X);
             Canvas.SetTop(_element, _sensor.Y);
+            //MessageBox.Show($"New: {_sensor.X};{_sensor.Y}\rOld:{_oldX};{_oldY}");
         }
 
         public void Undo()

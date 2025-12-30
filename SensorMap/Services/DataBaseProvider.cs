@@ -1,7 +1,9 @@
-﻿using HandyControl.Controls;
+﻿using DynamicData;
+using HandyControl.Controls;
 using HandyControl.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Newtonsoft.Json.Linq;
 using SensorMap.EF;
 using SensorMap.Interfaces;
@@ -14,6 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using INavigation = Microsoft.EntityFrameworkCore.Metadata.INavigation;
 
 namespace SensorMap.Services
 {
@@ -40,6 +43,7 @@ namespace SensorMap.Services
                         ShowDateTime = false,
                         WaitTime = 2
                     });
+                    DataBaseEvents.RaiseEntityCreated(entity);
                 }
                 catch(DbUpdateException ex)
                 {
@@ -48,6 +52,7 @@ namespace SensorMap.Services
                 }
             }
         }
+
         public async Task AddSensorAssignmentAsync(SensorAssignments assignment)
         {
             using (AppDBContext _context = _dbContextFactory.CreateDbContext())
@@ -111,13 +116,14 @@ namespace SensorMap.Services
                     ShowDateTime = false,
                     WaitTime = 2
                 });
+                DataBaseEvents.RaiseEntityDeleted(entity);
             }
         }
         public async Task Update<T>(T entity) where T : class
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                dBContext.Entry<T>(entity).State = EntityState.Modified;
+                dBContext.Entry<T>(entity).State = EntityState.Modified;                
                 await dBContext.SaveChangesAsync();
                 Growl.Success(new GrowlInfo
                 {
@@ -126,6 +132,7 @@ namespace SensorMap.Services
                     ShowDateTime = false,
                     WaitTime = 2
                 });
+                DataBaseEvents.RaiseEntityUpdated(entity);
             }
         }
         public async Task<IEnumerable<Mechanism>> GetAllMechanisms()
@@ -133,10 +140,17 @@ namespace SensorMap.Services
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
                 return await dBContext.Mechanisms.Include(x=>x.Sector)
-                    .Include(x=>x.SensorsAssig)
-                    .ThenInclude(x=>x.Sensor)
-                    .ThenInclude(sen=>sen.SensorType)
+                    .Include(x=>x!.SensorsAssig)
+                    .ThenInclude(x=>x!.Sensor)
+                    .ThenInclude(sen=>sen!.SensorType)
                     .ToListAsync();
+            }
+        }
+        public async Task<IEnumerable<Mechanism>> GetAllMechanismsWithSector()
+        {
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
+            {
+                return await dBContext.Mechanisms.Include(x => x.Sector).ToListAsync();
             }
         }
 
@@ -188,16 +202,10 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.PLCs.Include(x => x.Mechanisms).ToListAsync();
+                return await dBContext.PLCs.ToListAsync();
             }
         }
 
-        public async Task<IEnumerable<PLCManufacturer>> GetManufacturersAsync()
-        {
-            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
-            {
-                return await dBContext.PLC_Manufacturers.ToListAsync();
-            }
-        }
+        
     }
 }

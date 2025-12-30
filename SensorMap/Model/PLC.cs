@@ -20,6 +20,7 @@ namespace SensorMap.Model
         private byte[]? _image;
         private string _name = string.Empty;
         private string _ip;
+        private string? _creator = string.Empty;
 
         public int Id { get; set; }
         [Reactive]
@@ -60,12 +61,20 @@ namespace SensorMap.Model
                 }
             }
         }
-        public int PLCManufId {  get; set; }    
-        public PLCManufacturer PLCManufacturer { get; set; }
         [Reactive]
-        public string? Manufacturer { get; set; } = string.Empty;
-        public ObservableCollection<SensorAssignments>? Inputs { get; set; }
-        public ObservableCollection<Mechanism>? Mechanisms { get; set; }
+        public string? Manufacturer
+        {
+            get => _creator;
+            set
+            {
+                if (_creator != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _creator, value);
+                }
+            }
+        }
+        public virtual ObservableCollection<SensorAssignments>? Inputs { get; set; }
+        public virtual ObservableCollection<Mechanism>? Mechanisms { get; set; }
         [NotMapped]
         public bool IsModified
         {

@@ -11,12 +11,10 @@ namespace SensorMap.Interfaces
     public interface IDataService
     {
         bool IsEditMode { get; set; }
-        ObservableCollection<PLCManufacturer> Manufacturers { get; }
         ObservableCollection<SensorType> SensorTypes {  get; }
         ObservableCollection<Sensor> Sensors { get; }
         ObservableCollection<Sector> Sectors { get; }
         ObservableCollection<Mechanism> Mechanisms { get; }
         ObservableCollection<PLC> PLCs { get; }
-        void UpdateCollection<T>(T entity) where T:class;
     }
 }

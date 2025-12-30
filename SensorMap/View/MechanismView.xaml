@@ -63,7 +63,7 @@
                         </Expander.Style>
                 </Expander>
                 <Expander Header="Датчики" IsExpanded="True">
-                        <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors}">
+                        <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}">
                             <i:Interaction.Behaviors>
                                 <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
                             </i:Interaction.Behaviors>

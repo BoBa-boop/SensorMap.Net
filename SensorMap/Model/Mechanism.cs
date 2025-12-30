@@ -51,22 +51,11 @@ namespace SensorMap.Model
                 }
             }
         }
-        public int SectorID { get; set; }
+        public virtual int SectorID { get; set; }
         [Reactive]
-        public Sector? Sector 
-        {
-            get => sector;
-            set 
-            {
-                if (sector != value)
-                {                    
-                    this.RaiseAndSetIfChanged(ref sector, value);
-                    IsModified = true;
-                }
-            } 
-        }
+        public virtual Sector? Sector { get; set; }
         [Reactive]
-        public PLC? PLC 
+        public virtual PLC? PLC 
         {
             get => _plc;
             set
@@ -75,9 +64,9 @@ namespace SensorMap.Model
                 IsModified = true;
             }
         }
-        public int? PLCID { get; set; }
+        public virtual int? PLCID { get; set; }
 
-        public ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
+        public virtual ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
 
         
 

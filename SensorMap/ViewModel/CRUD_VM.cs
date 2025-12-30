@@ -1,6 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using DynamicData;
-using HandyControl.Controls;
 using Microsoft.Win32;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -8,15 +6,12 @@ using SensorMap.Behaviors;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
-using SensorMap.View;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Reactive.Linq;
 using System.Reflection;
-using System.Reflection.Metadata;
+using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace SensorMap.ViewModel
 {
@@ -25,18 +20,15 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private readonly ITempImage _tempImage;
-
+        
         [Reactive] public bool IsEditMode { get; set; }
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
-        [Reactive] public ObservableCollection<PLCManufacturer> Manufacturers { get; set; }
-        [Reactive] 
-        public ObservableCollection<SensorType> TempSensorTypes { get; set; }
-        [Reactive]
-        public ObservableCollection<PLCManufacturer> TempPLCManuf { get; set; }
+        [Reactive] public ObservableCollection<SensorType> TempSensorTypes { get; set; }
+        [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
 
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage,bool _IsEditMode=false) 
@@ -48,11 +40,10 @@ namespace SensorMap.ViewModel
             _service = service;
             Sectors = _service.Sectors;
             PLCs = _service.PLCs;
+            Manufacturers = new(PLCs.Where(x=>x.Manufacturer!=null).Select(x => x.Manufacturer));
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
-            Manufacturers = _service.Manufacturers;
             TempSensorTypes = new(SensorTypes);
-            TempPLCManuf = new(Manufacturers);
             Mechanisms = _service.Mechanisms;
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
@@ -79,7 +70,6 @@ namespace SensorMap.ViewModel
                     if (updateMethod.Invoke(_provider, new object[] { arg }) != null)
                         entityType?.GetProperty("IsModified")?.SetValue(arg, false);
                 }
-                _service.UpdateCollection(entityType);
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
             {
@@ -150,20 +140,57 @@ namespace SensorMap.ViewModel
                     TempSensorTypes.Add(sType);
                 }
             }, (param) => { var values = (object[]?)param; return !string.IsNullOrWhiteSpace((string)values[0]); });
-            AddPLCManufactur = new RelayCommand<object>((name) =>
-            {
-                var manuf = (string)name;
-                PLCManufacturer sType = new PLCManufacturer() { Name=manuf};
-                if (!TempPLCManuf.Where(x => x.Name == sType.Name).Any())
-                {
-                    sType.IsNew = true;
-                    TempPLCManuf.Add(sType);
-                }
-
-            },(param) => { return !string.IsNullOrWhiteSpace((string)param);});
 
             DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType);DeleteCommand.Execute(type); }, (type) => { return type != null; });
-            
+
+            DataBaseEvents.EntityCreated.Subscribe(OnEntityCreated);
+            DataBaseEvents.EntityDeleted.Subscribe(OnEntityDeleted);
+            DataBaseEvents.EntityUpdated.Subscribe(OnEntityUpdated);
+        }
+
+        private void OnEntityUpdated(DataBaseEvents.TEntityEvent @event)
+        {
+            switch (@event.EntityType.Name)
+            {
+                case nameof(Sector):
+                    var newSector = Sectors.FirstOrDefault(s => s.Id == @event.Id);
+                    foreach (var mech in _service.Mechanisms.Where(sect => sect.Id == @event.Id).ToList())
+                    {
+                        mech.Sector = newSector;
+                    }
+                    
+                    break;
+                case nameof(Mechanism):
+                    // Обновляем коллекцию механизмов
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void OnEntityDeleted(DataBaseEvents.TEntityEvent @event)
+        {
+            switch (@event.EntityType.Name)
+            {
+                case nameof(Sector):
+                    
+                    foreach (var mech in _service.Mechanisms.Where(sect => sect.Id == @event.Id).ToList())
+                    {
+                        mech.Sector = null;
+                    }
+
+                    break;
+                case nameof(Mechanism):
+                    // Обновляем коллекцию механизмов
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void OnEntityCreated(DataBaseEvents.TEntityEvent @event)
+        {
+            throw new NotImplementedException();
         }
 
         public ICommand DeleteCommand { get; set; }

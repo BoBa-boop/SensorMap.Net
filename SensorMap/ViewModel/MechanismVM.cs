@@ -10,7 +10,7 @@ using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using SensorMap.Model.TreeNode;
+using SensorMap.Services;
 using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
@@ -89,7 +89,7 @@ namespace SensorMap.ViewModel
         
         [Reactive] public ObservableCollection<SensorAssignments> CanvasSensors { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
-        [Reactive] public ObservableCollection<SensorsTreeNode> Sensors { get; set; } = new();
+        [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav, Sector sector = null)
         {
@@ -101,7 +101,8 @@ namespace SensorMap.ViewModel
             CanvasSensors = new();
             CurrentSector = sector;
             Sectors = _service.Sectors;
-            Sensors = new ObservableCollection<SensorsTreeNode>(TreeNodeSensors());
+            Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
+            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, _service.Sensors, filter);
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
             Mechanisms = new(_service.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector?.Id ?? 0)).ToList());
             AddSensorToMap = new RelayCommand<object>((obj) =>
@@ -200,26 +201,6 @@ namespace SensorMap.ViewModel
                     _provider.Update<SensorAssignments>(obj);
                 }
             }
-        }
-
-        private IEnumerable<SensorsTreeNode> TreeNodeSensors()
-        {
-            var mainNodes = new ObservableCollection<SensorsTreeNode>();
-            var types = sensorTypes;
-            foreach (var type in types)
-            {
-                mainNodes.Add(new SensorsTreeNode()
-                {
-                    Name = type.Name,
-                    Image = type.Image
-                });
-            }
-            foreach (var sensor in _service.Sensors)
-            {
-                var node = mainNodes.FirstOrDefault(nodes => nodes.Name == sensor.SensorType.Name.ToString());
-                node?.Children.Add(sensor);
-            }
-            return mainNodes;
         }
         public ICommand SaveLayout { get; set; }
         public ICommand SaveSensorPlace { get; }

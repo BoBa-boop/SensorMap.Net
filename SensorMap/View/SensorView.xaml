@@ -24,8 +24,7 @@
         </Grid.ColumnDefinitions>
             <Grid Margin="30,20">
                 <Border Background="WhiteSmoke" CornerRadius="12">
-                <StackPanel>
-                <TreeView ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Children">
+                    <TreeView ItemsSource="{Binding SensorsTree.Nodes,UpdateSourceTrigger=PropertyChanged}"  SelectedValuePath="Children">
                         <i:Interaction.Behaviors>
                             <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
                         </i:Interaction.Behaviors>
@@ -35,12 +34,13 @@
                             </HierarchicalDataTemplate>
                         </TreeView.ItemTemplate>
                     </TreeView>
-                    
-                </StackPanel>
                 </Border>
             </Grid>
         <GridSplitter/>
-        <hc:ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+            <TextBlock Text="Выберите датчик из списка" FontSize="20" Grid.Column="1"
+                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                       Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityReConverter},UpdateSourceTrigger=PropertyChanged}"/>
+            <hc:ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
                 <hc:TransitioningContentControl TransitionMode="Right2Left"  Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityConverter},UpdateSourceTrigger=PropertyChanged}">
                     <Grid>
                         <Grid.RowDefinitions>

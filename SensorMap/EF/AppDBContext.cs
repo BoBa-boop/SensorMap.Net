@@ -16,7 +16,6 @@ namespace SensorMap.EF
         public DbSet<Sensor> Sensors { get; set; }
         public DbSet<SensorType> SensorTypes { get; set; }
         public DbSet<PLC> PLCs { get; set; }
-        public DbSet<PLCManufacturer> PLC_Manufacturers { get; set; }
         public DbSet<SensorAssignments> SensorAssignments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,7 +26,6 @@ namespace SensorMap.EF
             modelBuilder.ApplyConfiguration(new SensorTypeConfiguration());
             modelBuilder.ApplyConfiguration(new PLCConfiguration());
             modelBuilder.ApplyConfiguration(new SensorAssignmentConfiguration());
-            modelBuilder.ApplyConfiguration(new PLCManufConfiguration());
             base.OnModelCreating(modelBuilder);
         }
     }
@@ -119,18 +117,7 @@ namespace SensorMap.EF
                 .HasMany(plc => plc.Mechanisms)
                 .WithOne(mech=>mech.PLC)
                 .HasForeignKey(p => p.PLCID);
-            builder
-                .HasOne(p => p.PLCManufacturer)
-                .WithMany(m => m.PLCs)
-                .HasForeignKey(p => p.PLCManufId);
 
-        }
-    }
-    public class PLCManufConfiguration : IEntityTypeConfiguration<PLCManufacturer>
-    {
-        public void Configure(EntityTypeBuilder<PLCManufacturer> builder)
-        {
-            builder.HasKey(x => x.Id);
         }
     }
 }

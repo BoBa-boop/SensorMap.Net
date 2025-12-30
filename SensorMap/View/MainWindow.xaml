@@ -47,7 +47,7 @@
                     <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
                     <MenuItem Header="Механизмы" Command="{Binding NavigateToMechanisms}"/>
                     <MenuItem Header="Датчики" Command="{Binding NavigateToSensors}"/>
-                    <MenuItem Header="Контроллеры"/>
+                    <MenuItem Header="Контроллеры" Command="{Binding NavigateToPLC}"/>
                 </MenuItem>
             </Menu>
             <Menu Background="Transparent">

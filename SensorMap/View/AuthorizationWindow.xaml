@@ -59,7 +59,7 @@
 
                 <hc:PasswordBox Name="password" hc:InfoElement.Placeholder="{Binding UIMessageState}"
                                 ShowEyeButton="True" Width="200"/>
-                <Button Content="Подтвердить" Margin="0,20,0,10">
+                <Button Content="Подтвердить" Margin="0,20,0,10" IsDefault="True">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="Click">
                             <i:InvokeCommandAction Command="{Binding VerifyCommand}" CommandParameter="{Binding ElementName=password}"/>

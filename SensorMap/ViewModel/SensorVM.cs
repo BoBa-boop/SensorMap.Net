@@ -5,7 +5,7 @@ using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using SensorMap.Model.TreeNode;
+using SensorMap.Services;
 using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -25,7 +25,8 @@ namespace SensorMap.ViewModel
             get => _sensorsTreeNode;
             set { this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value); }
         }
-        [Reactive]public ObservableCollection<SensorsTreeNode> Sensors {  get; set; }
+        [Reactive]public ObservableCollection<Sensor> Sensors {  get; set; }
+        [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree { get; set; }
         private ObservableCollection<SensorType> sensorTypes {  get; set; }
         public SensorVM(IDataBaseProvider provider, IDataService service,Sensor sensor=null)
         {
@@ -33,26 +34,10 @@ namespace SensorMap.ViewModel
             _service = service;
             _provider = provider;
             sensorTypes = _service.SensorTypes;
-            Sensors = new ObservableCollection<SensorsTreeNode>(TreeNodeSensors());
+            Sensors = _service.Sensors;
+            Func<SensorType, Sensor,bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
+            SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name",sensorTypes, Sensors, filter);
         }
-
-        private IEnumerable<SensorsTreeNode> TreeNodeSensors()
-        {
-            var mainNodes = new ObservableCollection<SensorsTreeNode>();
-            var types = sensorTypes;
-            foreach (var type in types)
-            {
-                mainNodes.Add(new SensorsTreeNode()
-                {
-                    Name = type.Name
-                });
-            }
-            foreach (var sensor in _service.Sensors)
-            {
-                var node = mainNodes.FirstOrDefault(nodes => nodes.Name == sensor.SensorType.Name.ToString());
-                node?.Children.Add(sensor);
-            }
-            return mainNodes;
-        }
+        
     }
 }

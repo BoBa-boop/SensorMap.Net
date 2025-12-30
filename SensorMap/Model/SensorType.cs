@@ -53,7 +53,8 @@ namespace SensorMap.Model
                 this.RaiseAndSetIfChanged(ref _isNew, value);
             }
         }
-        [Reactive]public ObservableCollection<Sensor>? Sensors { get; set; }
+        
+        public virtual ObservableCollection<Sensor>? Sensors { get; set; }
         
     }
 }

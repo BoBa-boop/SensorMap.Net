@@ -4,6 +4,7 @@ using HandyControl.Data;
 using Microsoft.Extensions.Configuration;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.Properties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,6 @@ namespace SensorMap.ViewModel
 {
     public class SettingsVM:ReactiveObject
     {
-        private IConfiguration config;
         private string passwordEditor;
         [Reactive]
         public string PasswordEditor
@@ -24,12 +24,12 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref passwordEditor, value); }
         }
         
-        public SettingsVM(IConfiguration _config)
+        public SettingsVM()
         {
-            config = _config;
             ChangeEditorPassword = new RelayCommand<string>((newPass) => 
             {
-                config["SecurityData:Editor:Password"] = newPass;
+                Settings.Default.EditorPassword = newPass;
+                Settings.Default.Save();
                 Growl.Warning(new GrowlInfo
                 {
                     Message = "Изменен пароль для Редактора БД!",

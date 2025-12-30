@@ -7,6 +7,7 @@ using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using SensorMap.Properties;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -23,7 +24,6 @@ namespace SensorMap.ViewModel
     public class AuthVM:ReactiveObject
     {
         private IDataService dataService;
-        private readonly IConfiguration configuration;
         bool _isAuth = false;
         private string _pass;
         private string _state = "Пароль";
@@ -44,9 +44,8 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref _state, value); 
             }
         }
-        public AuthVM(IDataService _data,IConfiguration config) 
+        public AuthVM(IDataService _data) 
         {
-            configuration = config;
             dataService = _data;
             VerifyCommand = new RelayCommand<object>((obj) =>
             {
@@ -62,7 +61,7 @@ namespace SensorMap.ViewModel
         private void CheckEditorPassword(object? obj)
         {
             var pass = obj as PasswordBox;
-            if (string.IsNullOrEmpty(configuration["SecurityData:Editor:Password"]))
+            if (string.IsNullOrEmpty(Settings.Default.EditorPassword))
             {
                 pass.Password = string.Empty;
                 UIMessageState = "Создайте пароль в настройках!";
@@ -78,7 +77,7 @@ namespace SensorMap.ViewModel
 
         private void VerifyUser(string uiPass)
         {
-            if (uiPass == configuration["SecurityData:Editor:Password"]) IsAuth = true;
+            if (uiPass == Settings.Default.EditorPassword) IsAuth = true;
         }
         public ICommand VerifyCommand { get; set; }
     }

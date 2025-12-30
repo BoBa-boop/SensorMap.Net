@@ -20,6 +20,12 @@ namespace SensorMap.Model
     /// </summary>
     public class Sector : ReactiveObject,IEditableObject
     {
+        private bool _isModified;
+        private Sector? backupCopy;
+        private string _name;
+        private byte[]? _image;
+        private ObservableCollection<Mechanism> _mech;
+
         [Key]
         public int Id {  get; set; }
         [MaxLength(100)]
@@ -36,7 +42,6 @@ namespace SensorMap.Model
                 }
             }
         }
-        public ObservableCollection<Mechanism>? Mechanisms { get; set; }
         [Reactive]
         public byte[]? Image
         {
@@ -51,10 +56,18 @@ namespace SensorMap.Model
             }
         }
 
-        private bool _isModified;
-        private Sector? backupCopy;
-        private string _name;
-        private byte[]? _image;
+
+        public virtual ObservableCollection<Mechanism>? Mechanisms
+        {
+            get => _mech;
+            set
+            {
+                if (_mech != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _mech, value);
+                }
+            }
+        }
 
         [NotMapped]
         public bool IsModified

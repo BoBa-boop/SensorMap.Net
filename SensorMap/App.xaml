@@ -24,6 +24,9 @@
             <DataTemplate DataType="{x:Type menuView:CRUD_VM}">
                 <view:CRUD_View/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:PLC_VM}">
+                <view:PLC_View/>
+            </DataTemplate>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>

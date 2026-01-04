@@ -63,7 +63,6 @@ namespace SensorMap.Services
                 {
                     // ПРОВЕРЬТЕ, что связанные объекты уже сохранены в БД
                     var sensorExists = await _context.Sensors.AnyAsync(s => s.Id == assignment.SensorId);
-                    //var plcExists = await _context.PLCs.AnyAsync(p => p.Id == assignment.PLCId);
                     var mechanismExists = await _context.Mechanisms.AnyAsync(m => m.Id == assignment.MechanismId);
 
                     if (!sensorExists)
@@ -76,21 +75,39 @@ namespace SensorMap.Services
                             Type = InfoType.Error,
                             WaitTime = 2
                         });
+                        return;
                     }
 
-
-
-                    // Убедитесь, что объекты отслеживаются
-                    if (assignment.Sensor != null && _context.Entry(assignment.Sensor).State == EntityState.Detached)
+                    if (!mechanismExists)
                     {
-                        _context.Attach(assignment.Sensor);
+                        Growl.Error(new GrowlInfo
+                        {
+                            Message = $"[SYSTEM] Не найден механизм id:{assignment.MechanismId}",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            Type = InfoType.Error,
+                            WaitTime = 2
+                        });
+                        return;
                     }
 
-                    if (assignment.Mechanism != null && _context.Entry(assignment.Mechanism).State == EntityState.Detached)
+                    // Важно: сначала получить сущности из контекста, а не прикреплять внешние
+                    var existingMechanism = await _context.Mechanisms
+                        .FirstOrDefaultAsync(m => m.Id == assignment.MechanismId);
+
+                    var existingSensor = await _context.Sensors
+                        .FirstOrDefaultAsync(s => s.Id == assignment.SensorId);
+
+                    if (existingMechanism == null || existingSensor == null)
                     {
-                        _context.Attach(assignment.Mechanism);
+                        throw new Exception("Не найдены связанные сущности в базе данных");
                     }
 
+                    // Присваиваем отслеживаемые сущности
+                    assignment.Mechanism = existingMechanism;
+                    assignment.Sensor = existingSensor;
+
+                    // Добавляем assignment (связанные сущности уже отслеживаются)
                     _context.SensorAssignments.Add(assignment);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -140,9 +157,10 @@ namespace SensorMap.Services
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
                 return await dBContext.Mechanisms.Include(x=>x.Sector)
-                    .Include(x=>x!.SensorsAssig)
-                    .ThenInclude(x=>x!.Sensor)
-                    .ThenInclude(sen=>sen!.SensorType)
+                    .AsNoTracking()
+                    .Include(x=>x.SensorsAssig)
+                    .ThenInclude(x=>x.Sensor)
+                    .ThenInclude(sen=>sen.SensorType)
                     .ToListAsync();
             }
         }
@@ -158,7 +176,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Sectors.Include(x=>x.Mechanisms).ToListAsync();
+                return await dBContext.Sectors.Include(x=>x.Mechanisms).AsNoTracking().ToListAsync();
             }
         }
 
@@ -166,7 +184,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Sensors.Include(x=>x.SensorType).ToListAsync();
+                return await dBContext.Sensors.Include(x => x.SensorType).AsNoTracking().ToListAsync();
             }
         }
 
@@ -194,7 +212,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.SensorTypes.ToListAsync();
+                return await dBContext.SensorTypes.AsNoTracking().ToListAsync();
             }
         }
 
@@ -202,7 +220,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.PLCs.ToListAsync();
+                return await dBContext.PLCs.Include(x => x.Mechanisms).AsNoTracking().ToListAsync();
             }
         }
 

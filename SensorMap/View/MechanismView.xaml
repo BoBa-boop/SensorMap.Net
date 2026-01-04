@@ -99,14 +99,16 @@
         <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="20"/>
             </Grid.RowDefinitions>
             <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                 <!--<hc:ImageViewer ImageSource="{Binding CurrentMech.Image}"/>-->
-                <myCC:SensorDragDrop ItemsSource="{Binding CanvasSensors,Mode=TwoWay}"
+                <myCC:SensorDragDrop x:Name="ccSensorMap"  ItemsSource="{Binding CanvasSensors,Mode=TwoWay}"
                                      SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
-                                 ImageSource="{Binding CurrentMech.Image}" UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}"/>
+                                     ImageSource="{Binding CurrentMech.Image}" UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}"/>
             </Border>
-        </Grid>
+                <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
     </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

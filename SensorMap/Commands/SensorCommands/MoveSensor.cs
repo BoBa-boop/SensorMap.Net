@@ -13,38 +13,45 @@ namespace SensorMap.Commands.SensorCommands
 {
     public class MoveSensor : ICommandSensors
     {
+        private readonly UIElement _element;
         private readonly SensorAssignments _sensor;
-        private readonly Border _element;
-        private readonly double _oldX;
-        private readonly double _oldY;
-        private readonly double _newX;
-        private readonly double _newY;
+        private readonly double _oldWorldX;
+        private readonly double _oldWorldY;
+        private readonly double _newWorldX;
+        private readonly double _newWorldY;
+        private readonly Func<double, double, Point> _worldToScreen;
 
-        public MoveSensor(SensorAssignments sensor,Border element, double newX, double newY)
+        public MoveSensor(UIElement element,
+                         double newWorldX, double newWorldY, SensorAssignments sensor,
+                         Func<double, double, Point> worldToScreen)
         {
             _element = element;
             _sensor = sensor;
-            _oldX = sensor.X;
-            _oldY = sensor.Y;
-            _newX = newX;
-            _newY = newY;
+            _oldWorldX = sensor.X;
+            _oldWorldY = sensor.Y;
+            _newWorldX = newWorldX;
+            _newWorldY = newWorldY;
+            _worldToScreen = worldToScreen;
         }
 
         public void Do()
         {
-            _sensor.X = _newX;
-            _sensor.Y = _newY; 
-            Canvas.SetLeft(_element, _sensor.X);
-            Canvas.SetTop(_element, _sensor.Y);
-            //MessageBox.Show($"New: {_sensor.X};{_sensor.Y}\rOld:{_oldX};{_oldY}");
+            // Конвертируем мировые в экранные и устанавливаем
+            Point screenPos = _worldToScreen(_newWorldX, _newWorldY);
+            Canvas.SetLeft(_element, screenPos.X);
+            Canvas.SetTop(_element, screenPos.Y);
+            _sensor.X = screenPos.X;
+            _sensor.Y = screenPos.Y;
         }
 
         public void Undo()
         {
-            _sensor.X = _oldX;
-            _sensor.Y = _oldY;
-            Canvas.SetLeft( _element, _sensor.X );
-            Canvas.SetTop(_element, _sensor.Y );
+            // Конвертируем мировые в экранные и устанавливаем
+            Point screenPos = _worldToScreen(_oldWorldX, _oldWorldY);
+            Canvas.SetLeft(_element, screenPos.X);
+            Canvas.SetTop(_element, screenPos.Y);
+            _sensor.X = screenPos.X; 
+            _sensor.Y = screenPos.Y;
         }
     }
 }

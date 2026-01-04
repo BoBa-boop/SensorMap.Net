@@ -1,12 +1,15 @@
 ﻿using HandyControl.Controls;
 using SensorMap.Commands.SensorCommands;
 using SensorMap.Model;
+using SensorMap.ViewModel;
+using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -30,18 +33,14 @@ namespace SensorMap.CustomControls
         private Image _image;
         private bool _isDragging = false;
 
+        //private ScaleTransform _scaleTransform = new ScaleTransform();
+        //private TranslateTransform _translateTransform = new TranslateTransform();
+        //private TransformGroup _transformGroup = new TransformGroup();
+        private double dOffsetX = 0;
+        private double dOffsetY = 0;
+        private double dStartPanX = 0;
+        private double dStartPanY = 0;
         #region Dependency Properties
-
-        #region managmentProps
-        public static readonly DependencyProperty ZoomFactorProp =
-           DependencyProperty.Register("ZoomFactor", typeof(double), typeof(SensorDragDrop), new PropertyMetadata(1.08));
-
-        public double ZoomFactor
-        {
-            get { return (double)GetValue(ZoomFactorProp); }
-            set { SetValue(ZoomFactorProp, value); }
-        }
-        #endregion
 
         public static readonly DependencyProperty UndoRedoStackProperty = DependencyProperty.Register("UndoRedoStack", typeof(UndoRedoStack),typeof(SensorDragDrop),
          new PropertyMetadata(null));
@@ -67,7 +66,13 @@ namespace SensorMap.CustomControls
             get { return (BitmapFrame)GetValue(ImageSourceProperty); }
             set { SetValue(ImageSourceProperty, value); }
         }
-
+        public static readonly DependencyProperty CoordProperty = DependencyProperty.Register("Coord", typeof(Point), typeof(SensorDragDrop),
+            new PropertyMetadata(default(Point)));
+        public Point Coord
+        {
+            get { return (Point)GetValue(CoordProperty); }
+            set { SetValue(CoordProperty, value); }
+        }
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
             typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop), new PropertyMetadata(null, OnItemsSourceChanged));
 
@@ -77,25 +82,28 @@ namespace SensorMap.CustomControls
             set { SetValue(ItemsSourceProperty, value); }
         }
         #endregion        
-        private readonly MatrixTransform _transform = new MatrixTransform();
+        private MatrixTransform _viewMatrixTransform;
+        private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
         private UIElement _selectedElement;
         private SensorAssignments _selectedSensor = new();
-        private double scaleFactor;
+        private double scaleLevel = 1;
         private Vector _draggingDelta;
         private bool _isDropAdd = false;
-        private double _scaleDeltaSensor;
         private Rect movingObject;  // Границы нашего объекта
         private Size parentSize; // Размер родительского элемента
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            scaleFactor = ZoomFactor;
-            _scaleDeltaSensor = ZoomFactor;
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
             _image = GetTemplateChild("PART_Image") as Image;
+
             if (_canvas != null)
             {
+                _viewMatrixTransform = new MatrixTransform(Matrix.Identity);
+                _canvas.RenderTransform = _viewMatrixTransform;
+                _viewMatrix = _viewMatrixTransform.Matrix;
+
                 _canvas.DragLeave += Canvas_DragLeave;
                 _canvas.MouseMove += _canvas_MouseMove;
                 _canvas.MouseDown += _canvas_MouseDown;
@@ -180,8 +188,8 @@ namespace SensorMap.CustomControls
             {
                 sensor.X = sensor.X < 0 ? 50 : sensor.X;
                 sensor.Y = sensor.Y < 0 ? 50 : sensor.Y; 
-
-                Border element = CreateSensorObject(sensor, sensor.X, sensor.Y);
+                
+                Border element = CreateSensorObject(sensor,ScreenToWorld(new Point(sensor.X+Math.Abs(_viewMatrixTransform.Matrix.OffsetX), sensor.Y + Math.Abs(_viewMatrixTransform.Matrix.OffsetY))));
                 UndoRedoStack.Do(new AddSensor(sensor, element, _canvas, ItemsSource));
                 element.Tag = ItemsSource.IndexOf(sensor);
             }
@@ -208,12 +216,22 @@ namespace SensorMap.CustomControls
             if (_selectedSensor.Sensor != null)
             {
                 if(IsUIElementSensor(_selectedElement,out Border element))
-                {
-                    double X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
-                    double Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
-                    //_selectedSensor.X = Math.Round(Canvas.GetLeft(_selectedElement), 2);
-                    //_selectedSensor.Y = Math.Round(Canvas.GetTop(_selectedElement), 2);
-                    UndoRedoStack.Do(new MoveSensor(_selectedSensor, element, X, Y));
+                { 
+                    // 1. Получаем текущие экранные координаты
+                    double screenX = Canvas.GetLeft(_selectedElement);
+                    double screenY = Canvas.GetTop(_selectedElement);
+
+                    // 2. Конвертируем в мировые
+                    Point worldPoint = ScreenToWorld(new Point(screenX, screenY));
+
+                    // 5. Создаем команду с МИРОВЫМИ координатами
+                    UndoRedoStack.Do(new MoveSensor(
+                        _selectedElement,
+                        worldPoint.X, worldPoint.Y,    // Новые мировые
+                        _selectedSensor,        
+                        (x, y) => WorldToScreen(worldPoint)                  // Функция преобразования
+                    ));
+
                     element.BorderBrush = Brushes.Transparent;
                 }
                 ////SensorDropCommand?.Execute(_selectedSensor);
@@ -236,7 +254,7 @@ namespace SensorMap.CustomControls
                 if (sensorData != null)
                 {
                     Point dropPosition = e.GetPosition(_canvas);
-                    Border element = CreateSensorObject(sensorData, dropPosition.X, dropPosition.Y);
+                    Border element = CreateSensorObject(sensorData,WorldToScreen(dropPosition));
                     _isDropAdd = true;
                     UndoRedoStack.Do(new AddSensor(sensorData, element, _canvas, ItemsSource));
 
@@ -251,122 +269,117 @@ namespace SensorMap.CustomControls
             if (e.RightButton == MouseButtonState.Pressed)
             {
                 //запрет на перемещение
-                if(movingObject.Width <= parentSize.Width || movingObject.Height <= parentSize.Height)
+                if (movingObject.Width <= parentSize.Width || movingObject.Height <= parentSize.Height)
                 {
                     return;
                 }
-                Point mousePosition = _transform.Inverse.Transform(e.GetPosition(_canvas));
+                Point mousePosition = e.GetPosition(_canvas);
                 Vector delta = Point.Subtract(mousePosition, _initialMousePosition);
                 //задание границ
                 if (movingObject.Width > parentSize.Width)
                 {
                     //левая граница
-                    if (delta.X + _transform.Matrix.OffsetX >= 0.0)
+                    if (delta.X + _viewMatrixTransform.Matrix.OffsetX >= 0.0)
                     {
                         delta.X = 0.0;
                         _initialMousePosition = mousePosition;
                     }
                     //правая граница
-                    else if (delta.X +  _transform.Matrix.OffsetX < parentSize.Width - movingObject.Width)
+                    else if (delta.X + _viewMatrixTransform.Matrix.OffsetX < parentSize.Width - movingObject.Width)
                     {
-                        delta.X = parentSize.Width - movingObject.Width - _transform.Matrix.OffsetX;
+                        delta.X = parentSize.Width - movingObject.Width - _viewMatrixTransform.Matrix.OffsetX;
                         _initialMousePosition = mousePosition;
                     }
                 }
                 if (movingObject.Height > parentSize.Height)
-                { 
+                {
                     //верхняя граница
-                    if (delta.Y + _transform.Matrix.OffsetY >= 0.0)
+                    if (delta.Y + _viewMatrixTransform.Matrix.OffsetY >= 0.0)
                     {
                         delta.Y = 0.0;
                         _initialMousePosition = mousePosition;
                     }
                     //нижняя граница
-                    else if (delta.Y + _transform.Matrix.OffsetY < parentSize.Height - movingObject.Height)
+                    else if (delta.Y + _viewMatrixTransform.Matrix.OffsetY < parentSize.Height - movingObject.Height)
                     {
-                        delta.Y = parentSize.Height - movingObject.Height - _transform.Matrix.OffsetY;
+                        delta.Y = parentSize.Height - movingObject.Height - _viewMatrixTransform.Matrix.OffsetY;
                         _initialMousePosition = mousePosition;
                     }
 
                 }
 
                 var translate = new TranslateTransform(delta.X, delta.Y);
-                _transform.Matrix = translate.Value * _transform.Matrix;
+                _viewMatrixTransform.Matrix = translate.Value * _viewMatrixTransform.Matrix;
 
-
-                foreach (UIElement child in _canvas.Children)
-                {
-                    child.RenderTransform = _transform;
-                }
             }
             if (_isDragging && e.LeftButton == MouseButtonState.Pressed)
             {
-                double x = Mouse.GetPosition(this).X;
-                double y = Mouse.GetPosition(this).Y;
-
+                double x = Mouse.GetPosition(_canvas).X;
+                double y = Mouse.GetPosition(_canvas).Y;
+                
                 if (IsUIElementSensor(_selectedElement,out Border element))
                 {
                     Canvas.SetLeft(element, x + _draggingDelta.X);
                     Canvas.SetTop(element, y + _draggingDelta.Y);
-                    x = x + _draggingDelta.X;
-                    y = y + _draggingDelta.Y;
+                    //Point scr = new Point(Math.Round(Canvas.GetLeft(element), 0), Math.Round(Canvas.GetTop(element), 0));
+                    //TextBlock tb = (TextBlock)element.Child;
+                    //tb.Text = $"scale: {Math.Round(scaleLevel)}" +
+                    //    $" \rworld: {Math.Round(ScreenToWorld(scr).X,0)};{Math.Round(ScreenToWorld(scr).Y, 0)}";
                 }
             }
+            Coord = new Point(Math.Round(Mouse.GetPosition(_image).X,0), Math.Round(Mouse.GetPosition(_image).Y, 0));
+
         }
 
         private void _canvas_MouseWheel(object sender, MouseWheelEventArgs e)
-        {
+        {            
             parentSize = RenderSize;
             Point mousePosition = e.GetPosition(this);
-            scaleFactor = ZoomFactor;
-            if (e.Delta < 0)
-            {
-                scaleFactor = 1.0 / scaleFactor;
-            }
-
-            Matrix scaleMatrix = _transform.Matrix;
-            double newScale = scaleMatrix.M11 * scaleFactor;
+            double delta = e.Delta > 0 ? 1.08 : 1.0 / 1.08;
+            
+            Matrix scaleMatrix = _viewMatrixTransform.Matrix;
+            double newZoom = scaleMatrix.M11 * delta;
 
             // Проверка предела масштаба
-            if (newScale < 0.5 || newScale > 10.0) return;
+            if (newZoom < 0.2 || newZoom > 10.0) return;
 
-            // Сохраняем текущее состояние перед масштабированием
-            double currentScale = scaleMatrix.M11;
+            Point mouseScreen = e.GetPosition(_canvas);
+            Point mouseWorldBefore = ScreenToWorld(mouseScreen);
+
+            
             double currentOffsetX = scaleMatrix.OffsetX;
             double currentOffsetY = scaleMatrix.OffsetY;
 
-            // Применяем масштабирование
-            scaleMatrix.ScaleAt(scaleFactor, scaleFactor, mousePosition.X, mousePosition.Y);
+            //// Применяем масштабирование
+            scaleMatrix.ScaleAt(delta, delta, mousePosition.X, mousePosition.Y);
+            
+            //// Вычисляем новые размеры изображения
+            double scaledWidth = _image.ActualWidth * newZoom;
+            double scaledHeight = _image.ActualHeight * newZoom;
 
-            // Вычисляем новые размеры изображения
-            double scaledWidth = _image.ActualWidth * newScale;
-            double scaledHeight = _image.ActualHeight * newScale;
 
-            // Применяем границы только при уменьшении
-            if (e.Delta < 0) // Уменьшение
+            ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize, currentOffsetX, currentOffsetY, scaleLevel);
+            _viewMatrixTransform.Matrix = scaleMatrix;
+            foreach (UIElement wo in _canvas.Children)
             {
-                ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize, currentOffsetX, currentOffsetY, scaleFactor);
-            }
+                if (wo != null)
+                {
+                    if (IsUIElementSensor(wo, out Border element))
+                    {
+                        var sensor = ItemsSource.ElementAt((Int32)element.Tag);
 
-            _scaleDeltaSensor = _scaleDeltaSensor * scaleFactor;
-            _transform.Matrix = scaleMatrix;
-
-            foreach (UIElement child in _canvas.Children)
-            {
-                double x = Canvas.GetLeft(child);
-                double y = Canvas.GetTop(child);
-
-                double sx = Math.Round(x * scaleFactor, 2);
-                double sy = Math.Round(y * scaleFactor, 2);
-
-                Canvas.SetLeft(child, sx);
-                Canvas.SetTop(child, sy);
-
-                child.RenderTransform = _transform;
+                        Point screen = WorldToScreen(new Point(sensor.X, sensor.Y));
+                        Canvas.SetLeft(wo, screen.X);
+                        Canvas.SetTop(wo, screen.Y);
+                    }
+                }
             }
             
         }
-
+        
+        /// <summary>
+        /// Коррекция пустоты у границы
+        /// </summary>
         private void ApplyBounds(ref Matrix matrix, double scaledWidth, double scaledHeight, Size parentSize,
                                 double prevOffsetX, double prevOffsetY, double scaleFactor)
         {
@@ -411,12 +424,12 @@ namespace SensorMap.CustomControls
             matrix.OffsetX = offsetX;
             matrix.OffsetY = offsetY;
         }
-
+        
         private void _canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Right)
             {
-                _initialMousePosition = _transform.Inverse.Transform(e.GetPosition(this));
+                _initialMousePosition = e.GetPosition(_canvas);
                 movingObject = VisualTreeHelper.GetDescendantBounds(this);
             }
             if (e.ChangedButton == MouseButton.Left)
@@ -481,17 +494,19 @@ namespace SensorMap.CustomControls
                 e.Handled = true;
             }
         }
-        private Border CreateSensorObject(SensorAssignments sensorData, double X,double Y)
+        private Border CreateSensorObject(SensorAssignments sensor, Point point)
         {           
             var element = new Border();
             element.CornerRadius = new CornerRadius(20);
             element.BorderThickness=new Thickness(1.5);
-            element.Width = 30;
-            element.Height = 30;
+            element.Width = 40;
+            element.Height = 40;
             element.Background = Brushes.Red;
-            
-            Canvas.SetLeft(element, X);
-            Canvas.SetTop(element, Y);
+
+            Canvas.SetLeft(element, point.X);
+            Canvas.SetTop(element, point.Y);
+
+            sensor.X = Math.Round(point.X,0); sensor.Y = Math.Round(point.Y,0);
 
             element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             element.MouseLeftButtonUp += Sensor_MouseLeftButtonUp;
@@ -499,6 +514,33 @@ namespace SensorMap.CustomControls
 
             return element;
         }
+
+
+
+
+
+        // 1. Мировые → Экранные
+        private Point WorldToScreen(Point world)
+        {
+            double x = world.X;
+            double y = world.Y;
+            double sx = _viewMatrix.M11 * x + _viewMatrix.M12 * y + _viewMatrix.OffsetX;
+            double sy = _viewMatrix.M21 * x + _viewMatrix.M22 * y + _viewMatrix.OffsetY;
+            return new Point(sx, sy);
+        }
+
+        private Point ScreenToWorld(Point screen)
+        {
+            if (!_viewMatrix.HasInverse) return new Point(0, 0);
+            Matrix inv = _viewMatrix;
+            inv.Invert();
+            double x = screen.X, y = screen.Y;
+            double wx = inv.M11 * x + inv.M12 * y + inv.OffsetX;
+            double wy = inv.M21 * x + inv.M22 * y + inv.OffsetY;
+            return new Point(wx, wy);
+        }
+
+        
     }
 }
 

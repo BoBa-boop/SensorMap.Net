@@ -30,7 +30,7 @@ namespace SensorMap.Commands.SensorCommands
         {
             if (!_canvas.Children.Contains(_element))
             {
-                _canvas.Children.Add(_element);
+                _canvas.Children.Add(_element);                
             }
             if (!_collection.Contains(_sensorData))
             {

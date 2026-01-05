@@ -1,4 +1,5 @@
-﻿using SensorMap.Model;
+﻿using Microsoft.EntityFrameworkCore;
+using SensorMap.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,7 +18,7 @@ namespace SensorMap.Interfaces
         Task<T> GetElementByID<T>(int id) where T:class;
         Task<IEnumerable<Mechanism>> GetAllMechanisms();
         Task<IEnumerable<Mechanism>> GetAllMechanismsWithSector();
-        Task AddSensorAssignmentAsync(SensorAssignments assignment);
+        Task AddSensorsAssignmentAsync(IEnumerable<SensorAssignments> coll);
         Task Create<T>(T entity) where T : class;
         Task Delete<T>(T entity) where T : class;
         Task Update<T>(T entity) where T : class;

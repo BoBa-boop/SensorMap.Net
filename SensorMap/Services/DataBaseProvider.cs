@@ -1,31 +1,21 @@
-﻿using DynamicData;
-using HandyControl.Controls;
+﻿using HandyControl.Controls;
 using HandyControl.Data;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Newtonsoft.Json.Linq;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using INavigation = Microsoft.EntityFrameworkCore.Metadata.INavigation;
 
 namespace SensorMap.Services
 {
     public class DataBaseProvider : IDataBaseProvider
     {
         private readonly IAppDbContextFactory _dbContextFactory;
+
         public DataBaseProvider(IAppDbContextFactory dBContextFactory) 
         {
             _dbContextFactory = dBContextFactory;
+            
         }
 
         public async Task Create<T>(T entity) where T : class
@@ -53,64 +43,105 @@ namespace SensorMap.Services
             }
         }
 
-        public async Task AddSensorAssignmentAsync(SensorAssignments assignment)
+        public async Task AddSensorsAssignmentAsync(IEnumerable<SensorAssignments> sensors)
         {
-            using (AppDBContext _context = _dbContextFactory.CreateDbContext())
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                using var transaction = await _context.Database.BeginTransactionAsync();
+                using var transaction = await dBContext.Database.BeginTransactionAsync();
 
                 try
                 {
-                    // ПРОВЕРЬТЕ, что связанные объекты уже сохранены в БД
-                    var sensorExists = await _context.Sensors.AnyAsync(s => s.Id == assignment.SensorId);
-                    var mechanismExists = await _context.Mechanisms.AnyAsync(m => m.Id == assignment.MechanismId);
-
-                    if (!sensorExists)
+                    foreach (SensorAssignments sensor in sensors)
                     {
-                        Growl.Error(new GrowlInfo
+                        if (sensor.Id == 0)
                         {
-                            Message = $"[SYSTEM] Не найден датчик id:{assignment.SensorId}",
+                            // ПРОВЕРЬТЕ, что связанные объекты уже сохранены в БД
+                            if (!await dBContext.Sensors.AnyAsync(s => s.Id == sensor.SensorId))
+                            {
+                                Growl.Error(new GrowlInfo
+                                {
+                                    Message = $"[SYSTEM] Не найден датчик id:{sensor.SensorId}",
+                                    CancelStr = "Ignore",
+                                    ShowDateTime = false,
+                                    Type = InfoType.Error,
+                                    WaitTime = 2
+                                });
+                                throw new Exception($"Не найден датчик id:{sensor.SensorId} в базе данных");
+                            }
+                            if (!await dBContext.Mechanisms.AnyAsync(m => m.Id == sensor.MechanismId))
+                            {
+                                Growl.Error(new GrowlInfo
+                                {
+                                    Message = $"[SYSTEM] Не найден механизм id:{sensor.MechanismId}",
+                                    CancelStr = "Ignore",
+                                    ShowDateTime = false,
+                                    Type = InfoType.Error,
+                                    WaitTime = 2
+                                });
+                                throw new Exception($"Не найден механизм id:{sensor.MechanismId} в базе данных");
+                            }
+                            if (!await dBContext.PLCs.AnyAsync(p => p.Id == sensor.PLCId))
+                            {
+                                Growl.Error(new GrowlInfo
+                                {
+                                    Message = $"[SYSTEM] Не найден PLC id:{sensor.PLCId}",
+                                    CancelStr = "Ignore",
+                                    ShowDateTime = false,
+                                    Type = InfoType.Error,
+                                    WaitTime = 2
+                                });
+                                throw new Exception($"Не найден PLC id:{sensor.PLCId} в базе данных");
+                            }
+
+                            // Важно: сначала получить сущности из контекста, а не прикреплять внешние
+                            var existingMechanism = await dBContext.Mechanisms
+                                .FirstOrDefaultAsync(m => m.Id == sensor.MechanismId);
+
+                            var existingSensor = await dBContext.Sensors
+                                .FirstOrDefaultAsync(s => s.Id == sensor.SensorId);
+
+                            if (existingMechanism == null || existingSensor == null)
+                            {
+                                throw new Exception("Не найдены связанные сущности в базе данных");
+                            }
+
+                            // Присваиваем отслеживаемые сущности
+                            sensor.Mechanism = existingMechanism;
+                            sensor.Sensor = existingSensor;
+
+                            // Добавляем assignment (связанные сущности уже отслеживаются)
+                            dBContext.SensorAssignments.Add(sensor);
+                        }
+                        else
+                        {
+                            // Обновление существующей записи
+                            var currentSensor = await dBContext.SensorAssignments
+                                .FirstOrDefaultAsync(a => a.Id == sensor.Id);
+
+                            if (currentSensor == null)
+                            {
+                                Growl.Error(new GrowlInfo
+                                {
+                                    Message = $"[SYSTEM] Не найден датчик id:{sensor.Id}",
+                                    CancelStr = "Ignore",
+                                    ShowDateTime = false,
+                                    Type = InfoType.Error,
+                                    WaitTime = 2
+                                });
+                                continue;
+                            }
+                            dBContext.Entry<SensorAssignments>(sensor).State = EntityState.Modified;
+                        }
+                        await dBContext.SaveChangesAsync();                        
+                        await transaction.CommitAsync();
+                        Growl.Success(new GrowlInfo
+                        {
+                            Message = "Сохранено в Базу Данных!",
                             CancelStr = "Ignore",
                             ShowDateTime = false,
-                            Type = InfoType.Error,
                             WaitTime = 2
                         });
-                        return;
                     }
-
-                    if (!mechanismExists)
-                    {
-                        Growl.Error(new GrowlInfo
-                        {
-                            Message = $"[SYSTEM] Не найден механизм id:{assignment.MechanismId}",
-                            CancelStr = "Ignore",
-                            ShowDateTime = false,
-                            Type = InfoType.Error,
-                            WaitTime = 2
-                        });
-                        return;
-                    }
-
-                    // Важно: сначала получить сущности из контекста, а не прикреплять внешние
-                    var existingMechanism = await _context.Mechanisms
-                        .FirstOrDefaultAsync(m => m.Id == assignment.MechanismId);
-
-                    var existingSensor = await _context.Sensors
-                        .FirstOrDefaultAsync(s => s.Id == assignment.SensorId);
-
-                    if (existingMechanism == null || existingSensor == null)
-                    {
-                        throw new Exception("Не найдены связанные сущности в базе данных");
-                    }
-
-                    // Присваиваем отслеживаемые сущности
-                    assignment.Mechanism = existingMechanism;
-                    assignment.Sensor = existingSensor;
-
-                    // Добавляем assignment (связанные сущности уже отслеживаются)
-                    _context.SensorAssignments.Add(assignment);
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
                 }
                 catch (Exception ex)
                 {
@@ -140,7 +171,8 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                dBContext.Entry<T>(entity).State = EntityState.Modified;                
+                dBContext.Entry<T>(entity).State = EntityState.Modified;
+                dBContext.Mechanisms.Local.ToObservableCollection();
                 await dBContext.SaveChangesAsync();
                 Growl.Success(new GrowlInfo
                 {
@@ -157,7 +189,7 @@ namespace SensorMap.Services
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
                 return await dBContext.Mechanisms.Include(x=>x.Sector)
-                    .AsNoTracking()
+                    .Include(m=>m.PLC)
                     .Include(x=>x.SensorsAssig)
                     .ThenInclude(x=>x.Sensor)
                     .ThenInclude(sen=>sen.SensorType)

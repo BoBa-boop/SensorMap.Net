@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Behaviors;
+using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -17,6 +19,7 @@ namespace SensorMap.ViewModel
 {
     public class CRUD_VM:ReactiveObject
     {
+        private readonly IAppDbContextFactory contextFactory;
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private readonly ITempImage _tempImage;
@@ -31,20 +34,25 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
 
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage,bool _IsEditMode=false) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage,bool _IsEditMode=false) 
         {
+            contextFactory = cxFactory;
+            using var context = contextFactory.CreateDbContext();
+            context.Sectors.Load();
+            context.Mechanisms.Load();
             IsEditMode = _IsEditMode;
             Navigation = nav;
             _tempImage = tempImage;
             _provider = provider;
             _service = service;
-            Sectors = _service.Sectors;
+            Sectors = context.Sectors.Local.ToObservableCollection();
+            Mechanisms = context.Mechanisms.Local.ToObservableCollection();
             PLCs = _service.PLCs;
             Manufacturers = new(PLCs.Where(x=>x.Manufacturer!=null).Select(x => x.Manufacturer));
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
             TempSensorTypes = new(SensorTypes);
-            Mechanisms = _service.Mechanisms;
+            //Mechanisms = _service.Mechanisms;
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
                 if(Sensor is Sensor) 
@@ -143,9 +151,9 @@ namespace SensorMap.ViewModel
 
             DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType);DeleteCommand.Execute(type); }, (type) => { return type != null; });
 
-            DataBaseEvents.EntityCreated.Subscribe(OnEntityCreated);
-            DataBaseEvents.EntityDeleted.Subscribe(OnEntityDeleted);
-            DataBaseEvents.EntityUpdated.Subscribe(OnEntityUpdated);
+            //DataBaseEvents.EntityCreated.Subscribe(OnEntityCreated);
+            //DataBaseEvents.EntityDeleted.Subscribe(OnEntityDeleted);
+            //DataBaseEvents.EntityUpdated.Subscribe(OnEntityUpdated);
         }
 
         private void OnEntityUpdated(DataBaseEvents.TEntityEvent @event)
@@ -154,14 +162,15 @@ namespace SensorMap.ViewModel
             {
                 case nameof(Sector):
                     var newSector = Sectors.FirstOrDefault(s => s.Id == @event.Id);
-                    foreach (var mech in _service.Mechanisms.Where(sect => sect.Id == @event.Id).ToList())
+                    foreach (var mech in _service.Mechanisms.Where(meh => meh.Id == @event.Id).ToList())
                     {
                         mech.Sector = newSector;
                     }
-                    
+
                     break;
                 case nameof(Mechanism):
-                    // Обновляем коллекцию механизмов
+                    var CurrentSector = Sectors.FirstOrDefault(s => s.Id == @event.Id);
+                    if (CurrentSector != null) CurrentSector.Mechanisms = new(Mechanisms.Where(meh => meh.Id == @event.Id).ToList());
                     break;
                 default:
                     break;

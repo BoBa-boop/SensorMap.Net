@@ -35,7 +35,7 @@ namespace SensorMap.Services
             if (idProp != null)
             {
                 int id = (int)idProp.GetValue(entity)!;
-                EntityDeleted.OnNext(new TEntityEvent(id, entity.GetType()));
+                EntityCreated.OnNext(new TEntityEvent(id, entity.GetType()));
             }
         }
         /// <summary>
@@ -47,7 +47,7 @@ namespace SensorMap.Services
             if (idProp != null)
             {
                 int id = (int)idProp.GetValue(entity)!;
-                EntityDeleted.OnNext(new TEntityEvent(id, entity.GetType()));
+                EntityUpdated.OnNext(new TEntityEvent(id, entity.GetType()));
             }
         }
         public struct TEntityEvent

@@ -89,6 +89,7 @@ namespace SensorMap.ViewModel
         
         [Reactive] public ObservableCollection<SensorAssignments> CanvasSensors { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
+        [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav, Sector sector = null)
@@ -100,6 +101,7 @@ namespace SensorMap.ViewModel
             sensorTypes = _service.SensorTypes;
             CanvasSensors = new();
             CurrentSector = sector;
+            PLCs = _service.PLCs;
             Sectors = _service.Sectors;
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, _service.Sensors, filter);
@@ -188,19 +190,9 @@ namespace SensorMap.ViewModel
 
         private void SaveCoordinates()
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
-            //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
-            //разобраться с сохранением
-            foreach (var obj in CanvasSensors)
-            {
-                if (obj.Id == 0)
-                {
-                    _provider.AddSensorAssignmentAsync(obj);
-                }
-                else
-                {
-                    _provider.Update<SensorAssignments>(obj);
-                }
-            }
+         //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
+         //разобраться с сохранением
+            _provider.AddSensorsAssignmentAsync(CanvasSensors);
         }
         public ICommand SaveLayout { get; set; }
         public ICommand SaveSensorPlace { get; }

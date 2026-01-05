@@ -17,9 +17,9 @@ namespace SensorMap.Model
         private Mechanism? backupCopy;
         private string _name = string.Empty;
         private byte[]? _image;
-        private Sector? sector;
         private PLC? _plc;
-        
+        private Sector? sector;
+
         [Key]
         public int Id { get; set; }
         [MaxLength(250)]
@@ -53,15 +53,31 @@ namespace SensorMap.Model
         }
         public virtual int SectorID { get; set; }
         [Reactive]
-        public virtual Sector? Sector { get; set; }
+        public virtual Sector? Sector 
+        {
+            get => sector;
+            set
+            {
+                if (value!=null)
+                {
+                    this.RaiseAndSetIfChanged(ref sector, value);
+                    SectorID = sector.Id;
+                    IsModified = true;
+                }
+            }
+        }
         [Reactive]
         public virtual PLC? PLC 
         {
             get => _plc;
             set
             {
-                this.RaiseAndSetIfChanged(ref _plc, value);
-                IsModified = true;
+                if(value!=null)
+                {
+                    this.RaiseAndSetIfChanged(ref _plc, value);
+                    PLCID = _plc.Id;
+                    IsModified = true;
+                }
             }
         }
         public virtual int? PLCID { get; set; }

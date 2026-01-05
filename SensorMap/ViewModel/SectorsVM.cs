@@ -17,6 +17,7 @@ namespace SensorMap.ViewModel
 {
     public class SectorsVM:ReactiveObject
     {
+        private readonly IAppDbContextFactory contextFactory;
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _data;
         private INavigation navigation; 
@@ -39,14 +40,14 @@ namespace SensorMap.ViewModel
             set => this.RaiseAndSetIfChanged(ref _coll, value);
         }
         [Reactive] public Sector? SelectedSector { get; set; }
-        public SectorsVM(INavigation _nav, IDataBaseProvider provider,IDataService data)
-        {
+        public SectorsVM(INavigation _nav, IDataBaseProvider provider, IAppDbContextFactory cxFactory, IDataService data)
+        {            
             navigation = _nav;
             _data = data;
             GoToSector = new RelayCommand<Sector>((s) => navigation.NavigateTo<MechanismVM>(s));
             _provider = provider;
 
-            Sectors = new ObservableCollection<Sector>(_data.Sectors);
+            Sectors = _data.Sectors;
             var tempCollection = Sectors;
             this.WhenAnyValue(x => x.SearchText)
             .Throttle(TimeSpan.FromMilliseconds(300))

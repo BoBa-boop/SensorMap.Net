@@ -187,13 +187,15 @@ namespace SensorMap.CustomControls
             if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
             {
                 sensor.X = sensor.X < 0 ? 50 : sensor.X;
-                sensor.Y = sensor.Y < 0 ? 50 : sensor.Y; 
-                
-                Border element = CreateSensorObject(sensor,ScreenToWorld(new Point(sensor.X+Math.Abs(_viewMatrixTransform.Matrix.OffsetX), sensor.Y + Math.Abs(_viewMatrixTransform.Matrix.OffsetY))));
+                sensor.Y = sensor.Y < 0 ? 50 : sensor.Y;
+                double offsetX, offsetY;
+                GetLeftTopPoint(out offsetX, out offsetY);
+                Border element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
                 UndoRedoStack.Do(new AddSensor(sensor, element, _canvas, ItemsSource));
                 element.Tag = ItemsSource.IndexOf(sensor);
             }
         }
+        
 
         private void SensorSelected_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -225,11 +227,7 @@ namespace SensorMap.CustomControls
                     Point worldPoint = ScreenToWorld(new Point(screenX, screenY));
 
                     // 5. Создаем команду с МИРОВЫМИ координатами
-                    UndoRedoStack.Do(new MoveSensor(
-                        _selectedElement,
-                        worldPoint.X, worldPoint.Y,    // Новые мировые
-                        _selectedSensor,        
-                        (x, y) => WorldToScreen(worldPoint)                  // Функция преобразования
+                    UndoRedoStack.Do(new MoveSensor(_selectedElement,worldPoint,_selectedSensor,(x) => WorldToScreen(worldPoint)
                     ));
 
                     element.BorderBrush = Brushes.Transparent;
@@ -274,7 +272,9 @@ namespace SensorMap.CustomControls
                     return;
                 }
                 Point mousePosition = e.GetPosition(_canvas);
-                Vector delta = Point.Subtract(mousePosition, _initialMousePosition);
+                mousePosition = new Point(Math.Round(mousePosition.X, 0), Math.Round(mousePosition.Y, 0));
+                Point initMouseRounded = new Point(Math.Round(_initialMousePosition.X, 0), Math.Round(_initialMousePosition.Y, 0));
+                Vector delta = Point.Subtract(mousePosition, initMouseRounded);
                 //задание границ
                 if (movingObject.Width > parentSize.Width)
                 {
@@ -320,14 +320,10 @@ namespace SensorMap.CustomControls
                 if (IsUIElementSensor(_selectedElement,out Border element))
                 {
                     Canvas.SetLeft(element, x + _draggingDelta.X);
-                    Canvas.SetTop(element, y + _draggingDelta.Y);
-                    //Point scr = new Point(Math.Round(Canvas.GetLeft(element), 0), Math.Round(Canvas.GetTop(element), 0));
-                    //TextBlock tb = (TextBlock)element.Child;
-                    //tb.Text = $"scale: {Math.Round(scaleLevel)}" +
-                    //    $" \rworld: {Math.Round(ScreenToWorld(scr).X,0)};{Math.Round(ScreenToWorld(scr).Y, 0)}";
+                    Canvas.SetTop(element, y + _draggingDelta.Y);                    
                 }
             }
-            Coord = new Point(Math.Round(Mouse.GetPosition(_image).X,0), Math.Round(Mouse.GetPosition(_image).Y, 0));
+            Coord = new Point(Math.Round(Mouse.GetPosition(_canvas).X,0), Math.Round(Mouse.GetPosition(_canvas).Y, 0));
 
         }
 
@@ -539,8 +535,32 @@ namespace SensorMap.CustomControls
             double wy = inv.M21 * x + inv.M22 * y + inv.OffsetY;
             return new Point(wx, wy);
         }
+        /// <summary>
+        /// Получение точки верхнего левого угла
+        /// </summary>
+        /// <param name="offsetX"></param>
+        /// <param name="offsetY"></param>
+        private void GetLeftTopPoint(out double offsetX, out double offsetY)
+        {            
+            offsetX = _viewMatrixTransform.Matrix.OffsetX;
+            offsetY = _viewMatrixTransform.Matrix.OffsetY;
+            if (_viewMatrixTransform.Matrix.M11 != 1)
+            {
+                offsetX /= _viewMatrixTransform.Matrix.M11;
+                offsetY /= _viewMatrixTransform.Matrix.M22;
+            }
+            if (offsetX > 0 && offsetY < 0)
+            {
+                offsetX = 0;
+                offsetY = _viewMatrixTransform.Matrix.OffsetY;
+            }
+            if (offsetY > 0 && offsetX < 0)
+            {
+                offsetY = 0;
+                offsetX = _viewMatrixTransform.Matrix.OffsetX;
+            }
+        }
 
-        
     }
 }
 

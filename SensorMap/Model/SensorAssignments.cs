@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace SensorMap.Model
 {
     /// <summary>
-    /// Тип для входного сигнала в ПЛК
+    /// Координаты, изображение месторасположния, адрес в ПЛК
     /// </summary>
     public class SensorAssignments:ReactiveObject
     {

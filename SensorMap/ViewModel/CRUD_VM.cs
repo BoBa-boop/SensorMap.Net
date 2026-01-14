@@ -36,17 +36,19 @@ namespace SensorMap.ViewModel
 
         public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage,bool _IsEditMode=false) 
         {
-            contextFactory = cxFactory;
-            using var context = contextFactory.CreateDbContext();
-            context.Sectors.Load();
-            context.Mechanisms.Load();
+            //contextFactory = cxFactory;
+            //using var context = contextFactory.CreateDbContext();
+            //context.Sectors.Load();
+            //context.Mechanisms.Load();
             IsEditMode = _IsEditMode;
             Navigation = nav;
             _tempImage = tempImage;
             _provider = provider;
             _service = service;
-            Sectors = context.Sectors.Local.ToObservableCollection();
-            Mechanisms = context.Mechanisms.Local.ToObservableCollection();
+            //Sectors = context.Sectors.Local.ToObservableCollection();
+            //Mechanisms = context.Mechanisms.Local.ToObservableCollection();
+            Sectors = _service.Sectors;
+            Mechanisms = _service.Mechanisms;
             PLCs = _service.PLCs;
             Manufacturers = new(PLCs.Where(x=>x.Manufacturer!=null).Select(x => x.Manufacturer));
             Sensors = _service.Sensors;

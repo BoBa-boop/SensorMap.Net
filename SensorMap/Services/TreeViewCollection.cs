@@ -5,11 +5,13 @@ namespace SensorMap.Services
     public class TreeNode<TChild>
     {
         public string Name { get; set; }
-        public ICollection<TChild> Children { get; set; } = new List<TChild>();
+        public ICollection<TreeNode<TChild>> Children { get; set; } = new List<TreeNode<TChild>>();
+        public TChild Data { get; set; }
 
-        public TreeNode(string parentName)
+        public TreeNode(string parentName, TChild data = default)
         {
             Name = parentName;
+            Data = data;
         }
     }
     public class TreeViewCollection<TParent, TChild>
@@ -46,7 +48,8 @@ namespace SensorMap.Services
                 var matchingParentNode = Nodes.FirstOrDefault(n => _parentCollection.Where(p => GetDisplayNameFromObject(p) == n.Name).Any(p => _filter(p, child)));
                 if (matchingParentNode != null)
                 {
-                    matchingParentNode.Children.Add(child);
+                    var childNode = new TreeNode<TChild>(matchingParentNode.Name,child);
+                    matchingParentNode.Children.Add(childNode);
                 }
             }
         }

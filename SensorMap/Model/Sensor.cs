@@ -1,5 +1,6 @@
 ﻿using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -65,6 +66,8 @@ namespace SensorMap.Model
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
+
+        [NotMapped] public AdditionalData AdditionalData { get; set; }
 
         public string Error => throw new NotImplementedException();
 

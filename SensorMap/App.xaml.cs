@@ -87,6 +87,7 @@ namespace SensorMap
             services.AddSingleton<IDataBaseProvider, DataBaseProvider>();
             services.AddSingleton<INavigation, NavigationService>();
             services.AddSingleton<ITempImage,TempImage>();
+            services.AddTransient<IJsonSerialization, JsonSerializationService>();
 
 
 

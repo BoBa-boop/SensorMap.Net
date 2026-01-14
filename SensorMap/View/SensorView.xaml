@@ -24,13 +24,18 @@
         </Grid.ColumnDefinitions>
             <Grid Margin="30,20">
                 <Border Background="WhiteSmoke" CornerRadius="12">
-                    <TreeView ItemsSource="{Binding SensorsTree.Nodes,UpdateSourceTrigger=PropertyChanged}"  SelectedValuePath="Children">
+                    <TreeView x:Name="tvSensors" ItemsSource="{Binding SensorsTree.Nodes,UpdateSourceTrigger=PropertyChanged}"  SelectedValuePath="Children">
                         <i:Interaction.Behaviors>
-                            <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                            <beh:TreeViewBehavior SelectedItem="{Binding SelectedNode,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                                                  SelectedItemType="Sensor"/>
                         </i:Interaction.Behaviors>
                         <TreeView.ItemTemplate>
                             <HierarchicalDataTemplate  ItemsSource="{Binding Children}">
-                                <TextBlock Text="{Binding Name}"/>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" Visibility="{Binding Data,Converter={StaticResource Object2VisibilityReConverter}}"/>
+                                    <TextBlock Text="{Binding Data.Name}"
+                                               Visibility="{Binding Data,Converter={StaticResource Object2VisibilityConverter}}"/>
+                                </StackPanel>
                             </HierarchicalDataTemplate>
                         </TreeView.ItemTemplate>
                     </TreeView>
@@ -89,15 +94,37 @@
                                 </ListBox>
                             </Grid>
                             <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">
-                        <WrapPanel Orientation="Horizontal" ItemWidth="200" Margin="10">
-                            <hc:TextBox hc:TitleElement.Title="Вид корпуса" MaxLength="80" Margin="10,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Способ подключения" MaxLength="180" Margin="10,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Зона чувствительности,мм" Margin="10,0,5,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Диапазон рабочих напряжений,В" hc:TitleElement.TitleWidth="30" Margin="5,0,0,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Схема подключения" Margin="10,0,10,0"/>
-                            <hc:TextBox hc:TitleElement.Title="Функция коммутации" Margin="10,0"/>
-                        </WrapPanel>
-                    </GroupBox>
+                                <StackPanel Orientation="Vertical">
+                                <ListBox ItemsSource="{Binding SelectedNode.AdditionalData.Data}"
+                                         BorderThickness="0" Background="Transparent">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <hc:TextBox hc:TitleElement.Title="{Binding Parameter}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}"
+                                                        MaxLength="50" Width="150"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="{x:Type ListBoxItem}">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                        <Border Margin="10,0">
+                                                            <ContentPresenter/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" VirtualizingPanel.IsVirtualizing="True"/>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                                <Button Content="Сохранить" Command="{Binding SaveMoreData}"/>
+                                </StackPanel>
+                            </GroupBox>
             </StackPanel>
         </Grid>
                 </hc:TransitioningContentControl>

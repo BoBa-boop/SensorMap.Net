@@ -29,10 +29,10 @@
         </Grid.ColumnDefinitions>
             <hc:ButtonGroup Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Width="110">
                 <Button hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" hc:IconElement.Width="20" hc:IconElement.Height="20"
-                        ToolTip="Отменить CTRL+Z" 
+                        ToolTip="Отменить (Ctrl+Z)" 
                         Command="{Binding UndoCommand}"/>
                 <Button hc:IconElement.Geometry="{StaticResource RotateRightGeometry}" hc:IconElement.Width="20" hc:IconElement.Height="20"
-                        ToolTip="Вернуть CTRL+Y"
+                        ToolTip="Вернуть (Ctrl+Y)"
                         Command="{Binding RedoCommand}"/>
             </hc:ButtonGroup>
             <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
@@ -74,12 +74,12 @@
                             </i:Interaction.Triggers>
                             <TreeView.ItemTemplate>
                                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="DemiBold"/>
+                                    <StackPanel>                                        
+                                        <TextBlock Text="{Binding Name}"/>
                                     </StackPanel>
                                     <HierarchicalDataTemplate.ItemTemplate>
                                         <DataTemplate>
-                                            <TextBlock x:Name="txt" Text="{Binding Path=Name}">
+                                            <TextBlock x:Name="txt" Text="{Binding Path=Data.Name}">
                                                 <i:Interaction.Triggers>
                                                     <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
                                                         <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.DragSensorCommand}" 

@@ -155,8 +155,11 @@ namespace SensorMap.CustomControls
                         RemoveEllipseFromCanvas(oldItem);
                     }
                     break;
-                
-                
+                case NotifyCollectionChangedAction.Reset:
+                    //необходимо очищать коллекцию
+                    break;
+
+
             }
             _isDropAdd = false;
         }

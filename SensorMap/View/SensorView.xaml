@@ -78,11 +78,11 @@
                                 <TextBlock Text="Используется на:"
                            FontSize="14" Grid.Column="0" VerticalAlignment="Center" Margin="5,0"/>
                                 <ListBox Background="Transparent" Grid.Column="1" BorderThickness="0"
-                         ItemsSource="{Binding Sensors}" DisplayMemberPath="Name">
+                         ItemsSource="{Binding FilteredMechanisms,UpdateSourceTrigger=PropertyChanged}">
                                     <ListBox.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel VirtualizingPanel.IsVirtualizing="True"
-                           Orientation="Horizontal"/>
+                                                       Orientation="Horizontal"/>
                                         </ItemsPanelTemplate>
                                     </ListBox.ItemsPanel>
                                     <ListBox.ItemContainerStyle>
@@ -91,6 +91,13 @@
                                             <Setter Property="FontSize" Value="14"/>
                                         </Style>
                                     </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border>
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
                                 </ListBox>
                             </Grid>
                             <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">

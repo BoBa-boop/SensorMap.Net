@@ -11,6 +11,7 @@ using SensorMap.Services;
 using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -24,13 +25,20 @@ namespace SensorMap.ViewModel
         private readonly IJsonSerialization _json;
         private Sensor _sensorsTreeNode;
         private List<AdditionalData> _additionalData;
+        private ObservableCollection<Mechanism> _FilteredMechanisms;
+
         [Reactive]public Sensor SelectedNode
         {
             get => _sensorsTreeNode;
             set { this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value); }
         }
         [Reactive]public ObservableCollection<Sensor> Sensors {  get; set; }
-        
+        private ObservableCollection<Mechanism> Mechanisms { get; set; }
+        [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms 
+        {
+            get => _FilteredMechanisms;
+            set { this.RaiseAndSetIfChanged(ref _FilteredMechanisms, value); }
+        }
         [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree { get; set; }
         private ObservableCollection<SensorType> sensorTypes {  get; set; }
 
@@ -41,11 +49,21 @@ namespace SensorMap.ViewModel
             _service = service;
             sensorTypes = _service.SensorTypes;
             Sensors = _service.Sensors;
+            Mechanisms = _service.Mechanisms;
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
             _additionalData = LoadMoreData();
 
             SaveMoreData = new RelayCommand(SaveDataFileds);
+
+            this.WhenAnyValue(x => x.SelectedNode)
+                .Where(sensor => sensor != null)
+                .Select(sensor => Mechanisms.Where(mech =>mech.SensorsAssig.Any(sa => sa.SensorId == sensor.Id)))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(filteredMechanisms =>
+                { 
+                    FilteredMechanisms = new(filteredMechanisms); 
+                });
         }
 
         private List<AdditionalData> LoadMoreData()

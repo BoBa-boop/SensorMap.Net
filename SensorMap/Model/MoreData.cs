@@ -25,6 +25,23 @@ namespace SensorMap.Model
             get => _data;
             set => this.RaiseAndSetIfChanged(ref _data, value); 
         }
+        public bool HasData() => Data?.Any() == true;
+        public static AdditionalData CreateDefault(string sensorName)
+        {
+            return new AdditionalData
+            {
+                NameSensor = sensorName,
+                Data = new ObservableCollection<MoreData>
+                {
+                    new MoreData { Parameter = "Вид Корпуса" },
+                    new MoreData { Parameter = "Способ Подключения" },
+                    new MoreData { Parameter = "Зона Чувствительности" },
+                    new MoreData { Parameter = "Рабочие Напряжения" },
+                    new MoreData { Parameter = "Схема Подключения" },
+                    new MoreData { Parameter = "Функция Коммутации" },
+                }
+            };
+        }
     }
     public class MoreData:ReactiveObject
     {
@@ -40,19 +57,4 @@ namespace SensorMap.Model
 
     }
     
-        //private string видКорпуса = string.Empty;
-        //private string способПодключения = string.Empty;
-        //private string зонаЧувствительности = string.Empty;
-        //private string рабочиеНапряжения = string.Empty;
-        //private string схемаПодключения = string.Empty;
-        //private string функцияКоммутации = string.Empty;
-
-        
-        //[Reactive] public string ВидКорпуса { get => видКорпуса; set => this.RaiseAndSetIfChanged(ref видКорпуса, value); }
-        //[Reactive] public string СпособПодключения { get => способПодключения; set => this.RaiseAndSetIfChanged(ref способПодключения, value); }
-        //[Reactive] public string ЗонаЧувствительности { get => зонаЧувствительности; set => this.RaiseAndSetIfChanged(ref зонаЧувствительности, value); }
-        //[Reactive] public string РабочиеНапряжения { get => рабочиеНапряжения; set => this.RaiseAndSetIfChanged(ref рабочиеНапряжения, value); }
-        //[Reactive] public string СхемаПодключения { get => схемаПодключения; set => this.RaiseAndSetIfChanged(ref схемаПодключения, value); }
-        //[Reactive] public string ФункцияКоммутации { get => функцияКоммутации; set => this.RaiseAndSetIfChanged(ref функцияКоммутации, value); }
-
-    }
+}

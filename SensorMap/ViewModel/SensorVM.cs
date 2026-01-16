@@ -52,36 +52,33 @@ namespace SensorMap.ViewModel
         {
             List<AdditionalData> tempList = new List<AdditionalData>();
             if (File.Exists("SensorMoreData.json"))
+            {
+                //заполнение данными из файла
                 foreach (var item in _json.ReadFromJsonFile<List<AdditionalData>>("SensorMoreData.json"))
                 {
-                    var element = Sensors.FirstOrDefault(x => x.Name == item.NameSensor);
-                    if (element != null)
+                    var sensor = Sensors.FirstOrDefault(x => x.Name == item.NameSensor);
+                    if (sensor != null)
                     {
-                        element.AdditionalData.Data = item.Data;
-                        tempList.Add(item);
+                        if (item.HasData())
+                        {
+                            sensor.AdditionalData = item;
+
+                        }
+                        else
+                        {
+                            sensor.AdditionalData = AdditionalData.CreateDefault(sensor.Name);
+                        }
+                        tempList.Add(sensor.AdditionalData);
                     }
                 }
-            if (tempList.Count == 0)
+            }
+            //заполение доп. данных у датчиков которые не были в файле
+            foreach (var sensor in Sensors.Where(s => s.AdditionalData == null || !s.AdditionalData.HasData()))
             {
-                //временный способ заполнение базовыми параметрами
-                foreach (var item in Sensors)
-                {
-                    item.AdditionalData = new AdditionalData()
-                    {
-                        Data = new ObservableCollection<MoreData>()
-                        {
-                            new MoreData {Parameter = "Вид Корпуса" },
-                            new MoreData { Parameter = "Способ Подключения" },
-                            new MoreData { Parameter = "Зона Чувствительности" },
-                            new MoreData { Parameter = "Рабочие Напряжения" },
-                            new MoreData { Parameter = "Схема Подключения" },
-                            new MoreData { Parameter = "Функция Коммутации" },
-                        }
-                    };
-                }
+                sensor.AdditionalData = AdditionalData.CreateDefault(sensor.Name);
+                tempList.Add(sensor.AdditionalData);
             }
             return tempList;
-
         }
 
         public ICommand SaveMoreData { get; }
@@ -98,22 +95,14 @@ namespace SensorMap.ViewModel
             {
                 _additionalData.Add(SelectedNode.AdditionalData);
             }
-                try
-                {
-                    _json.WriteToJsonFile<List<AdditionalData>>(FILE_PATH, _additionalData);
-                    Growl.Success(new GrowlInfo
-                    {
-                        Message = "Дополнительные данные сохранены!",
-                        CancelStr = "Ignore",
-                        ShowDateTime = false,
-                        WaitTime = 2
-                    });
-                }
-                catch
-                {
-
-                }
-
+            _json.WriteToJsonFile<List<AdditionalData>>(FILE_PATH, _additionalData);
+            Growl.Success(new GrowlInfo
+            {
+                Message = "Дополнительные данные сохранены!",
+                CancelStr = "Ignore",
+                ShowDateTime = false,
+                WaitTime = 2
+            });
         }
     }
 }

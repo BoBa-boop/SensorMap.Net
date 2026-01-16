@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,60 +25,39 @@ namespace SensorMap.ViewModel
     public class AuthVM:ReactiveObject
     {
         private IDataService dataService;
-        bool _isAuth = false;
-        private string _pass;
-        private string _state = "Пароль";
+        private IAuthorization _authorization;
+        private readonly ObservableAsPropertyHelper<bool> _isAuthHelper;
+        private readonly ObservableAsPropertyHelper<string> _messageHelper;
 
-        [Reactive]
-        public bool IsAuth
-        {
-            get => _isAuth;
-            set { this.RaiseAndSetIfChanged(ref _isAuth, value); }
-        }
-        
-        [Reactive]
-        public string UIMessageState
-        {
-            get => _state;
-            set 
-            {
-                this.RaiseAndSetIfChanged(ref _state, value); 
-            }
-        }
-        public AuthVM(IDataService _data) 
+        public bool IsAuth => _isAuthHelper.Value;
+        public string UIMessageState => _messageHelper.Value;
+
+
+
+
+        public AuthVM(IDataService _data,IAuthorization authorization) 
         {
             dataService = _data;
-            VerifyCommand = new RelayCommand<object>((obj) =>
+            _authorization = authorization;
+
+            authorization.WhenAnyValue(x => x.IsSuccessAuth)
+                     .ToProperty(this, x => x.IsAuth, out _isAuthHelper);
+
+            authorization.WhenAnyValue(x => x.MessageState)
+                         .ToProperty(this, x => x.UIMessageState, out _messageHelper);
+
+            VerifyCommand = ReactiveCommand.Create<object>((obj) =>
             {
-                CheckEditorPassword(obj);
+                if (obj is PasswordBox pBox)
+                {
+                    _authorization.Authorization(pBox.Password);
+                    if (IsAuth == false) pBox.Password = string.Empty;
+                }
             });
-            this.WhenAnyValue(x => x.IsAuth).ObserveOn(RxApp.MainThreadScheduler).Subscribe((s) =>
-            {
-                dataService.IsEditMode = IsAuth;
-            });
+            this.WhenAnyValue(x => x.IsAuth)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe( isAuth => dataService.IsEditMode = isAuth);
            
-        }
-
-        private void CheckEditorPassword(object? obj)
-        {
-            var pass = obj as PasswordBox;
-            if (string.IsNullOrEmpty(Settings.Default.EditorPassword))
-            {
-                pass.Password = string.Empty;
-                UIMessageState = "Создайте пароль в настройках!";
-                return;
-            }
-            VerifyUser(pass.Password);
-            if (!IsAuth)
-            {
-                pass.Password = string.Empty;
-                UIMessageState = "Неверный пароль!";
-            }
-        }
-
-        private void VerifyUser(string uiPass)
-        {
-            if (uiPass == Settings.Default.EditorPassword) IsAuth = true;
         }
         public ICommand VerifyCommand { get; set; }
     }

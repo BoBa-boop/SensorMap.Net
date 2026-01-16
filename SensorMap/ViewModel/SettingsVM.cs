@@ -4,6 +4,7 @@ using HandyControl.Data;
 using Microsoft.Extensions.Configuration;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.Interfaces;
 using SensorMap.Properties;
 using System;
 using System.Collections.Generic;
@@ -16,28 +17,11 @@ namespace SensorMap.ViewModel
 {
     public class SettingsVM:ReactiveObject
     {
-        private string passwordEditor;
-        [Reactive]
-        public string PasswordEditor
+        private IAuthorization _auth;
+        public SettingsVM(IAuthorization authorization)
         {
-            get => passwordEditor;
-            set { this.RaiseAndSetIfChanged(ref passwordEditor, value); }
-        }
-        
-        public SettingsVM()
-        {
-            ChangeEditorPassword = new RelayCommand<string>((newPass) => 
-            {
-                Settings.Default.EditorPassword = newPass;
-                Settings.Default.Save();
-                Growl.Warning(new GrowlInfo
-                {
-                    Message = "Изменен пароль для Редактора БД!",
-                    CancelStr = "Ignore",
-                    ShowDateTime = false,
-                    WaitTime = 2
-                });
-            });
+            _auth = authorization;
+            ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass),(newPass)=>!string.IsNullOrEmpty(newPass));
         }
 
         public ICommand ChangeEditorPassword { get;private set; }

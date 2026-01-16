@@ -88,6 +88,8 @@ namespace SensorMap
             services.AddSingleton<INavigation, NavigationService>();
             services.AddSingleton<ITempImage,TempImage>();
             services.AddTransient<IJsonSerialization, JsonSerializationService>();
+            services.AddScoped<IPasswordHash,PasswordHashService>();
+            services.AddScoped<IAuthorization, AuthorizationService>();
 
 
 

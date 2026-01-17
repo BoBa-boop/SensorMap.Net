@@ -623,7 +623,8 @@
                                                         <Border x:Name="brd" BorderBrush="{TemplateBinding BorderBrush}"
                                                             BorderThickness="1" CornerRadius="5" Cursor="Hand"
                                                             Background="{TemplateBinding Background}">
-                                                            <ContentPresenter VerticalAlignment="Center"/>
+                                                            <ContentPresenter VerticalAlignment="Center"
+                                                                              ToolTip="{Binding Name}"/>
                                                         </Border>
                                                     </hc:Badge>
                                                     <ControlTemplate.Triggers>
@@ -664,10 +665,17 @@
                                         Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                                 <hc:ImageSelector Name="imgIconSensor" Width="70" Height="70" Background="LightBlue"
                                                   Effect="{StaticResource EffectShadow3}" StrokeDashArray="3"
-                                                  Stretch="UniformToFill" Margin="0,0,0,15"/>
+                                                  Stretch="UniformToFill" Margin="0,0,0,15">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="ImageSelected">
+                                            <i:ChangePropertyAction TargetObject="{Binding ElementName=twSensors, Path=SelectedItem}"
+                                                                    PropertyName="IsNew" Value="True"/>
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </hc:ImageSelector>
                                 <StackPanel Margin="10,0">
                                     <hc:TextBox Name="tbSensorType" hc:InfoElement.Placeholder="Тип датчика" Width="150" Height="30"
-                                                Text="{Binding ElementName=twSensors,Path=SelectedItem.Name}"/>
+                                                Text="{Binding ElementName=twSensors,Path=SelectedItem.Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
 
                                     <WrapPanel Orientation="Horizontal" Grid.Row="1" Margin="0,15" HorizontalAlignment="Center"
                                                ItemWidth="55">

@@ -28,6 +28,7 @@ namespace SensorMap.Model
                 if (!string.IsNullOrWhiteSpace(value))
                 {
                     this.RaiseAndSetIfChanged(ref _name, value);
+                    IsNew = true;
                 }
             } 
         }
@@ -40,6 +41,7 @@ namespace SensorMap.Model
                 if (value != _image)
                 {
                     this.RaiseAndSetIfChanged(ref _image, value);
+                    IsNew = true;
                 }
             }
         }

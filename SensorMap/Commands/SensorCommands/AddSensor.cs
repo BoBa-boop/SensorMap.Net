@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using System;
@@ -14,11 +15,11 @@ namespace SensorMap.Commands.SensorCommands
 {
     public class AddSensor : ICommandSensors
     {
-        private readonly Border _element;
+        private readonly CustomSensor _element;
         private readonly SensorAssignments _sensorData;
         private readonly Canvas _canvas;
         private readonly ObservableCollection<SensorAssignments> _collection;
-        public AddSensor(SensorAssignments sensor, Border sensorVisual,Canvas canvas,
+        public AddSensor(SensorAssignments sensor, CustomSensor sensorVisual,Canvas canvas,
         ObservableCollection<SensorAssignments> collection) 
         {
             _element = sensorVisual;

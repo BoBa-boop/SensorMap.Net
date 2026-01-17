@@ -17,21 +17,28 @@ namespace SensorMap.Converters
     public class ConvertByteToBitmapImage : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value == null) return null;
-            var image = new BitmapImage();
-            using (var mem = new MemoryStream(value as byte[]))
+        {            
+            if (value is byte[])
             {
-                mem.Position = 0;
-                image.BeginInit();
-                image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.UriSource = null;
-                image.StreamSource = mem;
-                image.EndInit();
+                var image = new BitmapImage();
+                using (var mem = new MemoryStream(value as byte[]))
+                {
+                    mem.Position = 0;
+                    image.BeginInit();
+                    image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+                    image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.UriSource = null;
+                    image.StreamSource = mem;
+                    image.EndInit();
+                }
+                image.Freeze();
+                return image;
             }
-            image.Freeze();
-            return image;
+            if(value is Uri path)
+            {
+                return File.ReadAllBytes(path.LocalPath);
+            }
+            return null;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

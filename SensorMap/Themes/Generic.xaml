@@ -72,7 +72,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:SensorDragDrop}">
                     <Canvas x:Name="PART_Canvas" AllowDrop="True" Background="Transparent">
-                        <Image x:Name="PART_Image"  Source="{TemplateBinding ImageSource}" Stretch="UniformToFill"/>
+                        <Image x:Name="PART_Image" Source="{TemplateBinding ImageSource}" Stretch="UniformToFill"/>
                     </Canvas>
                 </ControlTemplate>
             </Setter.Value>
@@ -86,10 +86,9 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
                     <Border Background="{TemplateBinding Property=CustomBackground}"
-                            BorderBrush="Black"
-                            BorderThickness="1" CornerRadius="60"
-                            Width="{TemplateBinding Property=CustomWidth}"
-                            Height="{TemplateBinding  Property=CustomHeight}">
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="3" CornerRadius="60"
+                            >
                         <Label Content="{TemplateBinding Letter}" Background="Transparent"
                                BorderThickness="0"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>

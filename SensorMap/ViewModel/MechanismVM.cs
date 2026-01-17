@@ -86,8 +86,6 @@ namespace SensorMap.ViewModel
                 }
             }
         }
-        
-        [Reactive] public ObservableCollection<SensorAssignments> CanvasSensors { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
@@ -99,7 +97,6 @@ namespace SensorMap.ViewModel
             _service = service;
             UndoRedoStack = new UndoRedoStack();
             sensorTypes = _service.SensorTypes;
-            CanvasSensors = new();
             CurrentSector = sector;
             PLCs = _service.PLCs;
             Sectors = _service.Sectors;
@@ -115,23 +112,23 @@ namespace SensorMap.ViewModel
                     {
                         SensorId = sensor.Id,
                         Sensor = sensor,
-                        MechanismId = CurrentMech.Id,
+                        MechanismId = CurrentMech!.Id,
                         PLCId = CurrentMech.PLCID,
                         Mechanism = CurrentMech,
                         PLC = CurrentMech.PLC
                     };
-                    CanvasSensors.Add(sensorAssignments);
+                    CurrentMech.SensorsAssig!.Add(sensorAssignments);
                 }
             }, (j) => CanExecuteAddSensor(j));
             DragSensorCommand = new RelayCommand<object>((obj) =>
             {
                 var tb = obj as TextBlock;
-                if (tb.DataContext is Sensor sensor)
+                if (tb.DataContext is TreeNode<Sensor> node)
                 {
                     SensorAssignments sensorAssignments = new SensorAssignments()
                     {
-                        SensorId = sensor.Id,
-                        Sensor = sensor,
+                        SensorId = node.Data.Id,
+                        Sensor = _service.Sensors.FirstOrDefault(x=>x.Id== node.Data.Id),
                         MechanismId = CurrentMech.Id,
                         PLCId = CurrentMech.PLCID,
                         Mechanism = CurrentMech,
@@ -141,15 +138,12 @@ namespace SensorMap.ViewModel
                     DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
                 }
             }, (j) => CanExecuteAddSensor(j));
-            SaveSensorPlace = new RelayCommand(() => SaveCoordinates());
-            this.WhenAnyValue(x => x.CurrentMech).Subscribe((obj) =>
+            SaveSensorPlace = new RelayCommand<Mechanism>((m) => SaveCoordinates()
+            ,(mech)=> 
             {
-                if (CurrentMech != null)
-                {
-                    CanvasSensors.Clear();
-                    if(CurrentMech.SensorsAssig!=null)
-                        CanvasSensors.AddRange(CurrentMech.SensorsAssig);
-                }
+                if (mech != null)
+                    return mech.SensorsAssig!.Count > 0;
+                return false; 
             });
             this.WhenAnyValue(x => x.UndoRedoStack.UndoCount).ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe((count) => CanUndo = count > 0 );
@@ -192,7 +186,7 @@ namespace SensorMap.ViewModel
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
          //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
          //разобраться с сохранением
-            _provider.AddSensorsAssignmentAsync(CanvasSensors);
+            _provider.AddSensorsAssignmentAsync(CurrentMech!.SensorsAssig!);
         }
         public ICommand SaveLayout { get; set; }
         public ICommand SaveSensorPlace { get; }

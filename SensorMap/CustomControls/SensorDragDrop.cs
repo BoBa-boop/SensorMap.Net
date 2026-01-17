@@ -5,6 +5,7 @@ using SensorMap.ViewModel;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Windows;
@@ -33,13 +34,6 @@ namespace SensorMap.CustomControls
         private Image _image;
         private bool _isDragging = false;
 
-        //private ScaleTransform _scaleTransform = new ScaleTransform();
-        //private TranslateTransform _translateTransform = new TranslateTransform();
-        //private TransformGroup _transformGroup = new TransformGroup();
-        private double dOffsetX = 0;
-        private double dOffsetY = 0;
-        private double dStartPanX = 0;
-        private double dStartPanY = 0;
         #region Dependency Properties
 
         public static readonly DependencyProperty UndoRedoStackProperty = DependencyProperty.Register("UndoRedoStack", typeof(UndoRedoStack),typeof(SensorDragDrop),
@@ -81,6 +75,7 @@ namespace SensorMap.CustomControls
             get { return (ObservableCollection<SensorAssignments>)GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
+        
         #endregion        
         private MatrixTransform _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
@@ -104,13 +99,23 @@ namespace SensorMap.CustomControls
                 _canvas.RenderTransform = _viewMatrixTransform;
                 _viewMatrix = _viewMatrixTransform.Matrix;
 
-                _canvas.DragLeave += Canvas_DragLeave;
+                
                 _canvas.MouseMove += _canvas_MouseMove;
                 _canvas.MouseDown += _canvas_MouseDown;
                 _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
-                
+
+                Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
+
+                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
+                {
+                    foreach (var uiElement in _canvas.Children.OfType<CustomSensor>())
+                    {
+                        uiElement.IsSelected = false;
+                    }
+                }
             }
+            
         }
 
 
@@ -118,23 +123,22 @@ namespace SensorMap.CustomControls
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (SensorDragDrop)d;
-            control.UnsubscribeFromCollection(e.OldValue as ObservableCollection<SensorAssignments>);
-            control.SubscribeToCollection(e.NewValue as ObservableCollection<SensorAssignments>);
+            (e.NewValue as INotifyCollectionChanged).CollectionChanged += control.OnCollectionChanged;
+            if (!e.NewValue.Equals(e.OldValue)) control.SourceCollectionChanged();
         }
 
-        private void SubscribeToCollection(ObservableCollection<SensorAssignments> collection)
+        private void SourceCollectionChanged()
         {
-            if (collection != null)
+            var nonSensorChildren = _canvas.Children.OfType<UIElement>()
+                                                    .Where(element=>element.GetType().Name!="CustomSensor").ToList();
+            _canvas.Children.Clear();
+            foreach (var element in nonSensorChildren)
             {
-                collection.CollectionChanged += OnCollectionChanged;
+                _canvas.Children.Add(element);
             }
-            
-        }
-        private void UnsubscribeFromCollection(ObservableCollection<SensorAssignments> collection)
-        {
-            if (collection != null)
+            foreach (var sensor in ItemsSource)
             {
-                collection.CollectionChanged -= OnCollectionChanged;
+                AddSensorToCanvas(sensor);
             }
         }
 
@@ -145,7 +149,7 @@ namespace SensorMap.CustomControls
                 case NotifyCollectionChangedAction.Add:
                     foreach (SensorAssignments newItem in e.NewItems)
                     {
-                        AddEllipseToCanvas(newItem);
+                        AddSensorToCanvas(newItem);
                     }
                     break;
 
@@ -155,11 +159,6 @@ namespace SensorMap.CustomControls
                         RemoveEllipseFromCanvas(oldItem);
                     }
                     break;
-                case NotifyCollectionChangedAction.Reset:
-                    //необходимо очищать коллекцию
-                    break;
-
-
             }
             _isDropAdd = false;
         }
@@ -179,14 +178,10 @@ namespace SensorMap.CustomControls
             //отписаться от событий клика
         }
 
-        private void AddEllipseToCanvas(SensorAssignments sensor)
+        private void AddSensorToCanvas(SensorAssignments sensor)
         {
-            int sensorsInMap = 0;
-            foreach (var item in _canvas.Children)
-            {
-                if (IsUIElementSensor(item, out CustomSensor element))
-                    sensorsInMap++;
-            }
+            int sensorsInMap = _canvas.Children.OfType<CustomSensor>().Count();
+            
             if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
             {
                 sensor.X = sensor.X < 0 ? 50 : sensor.X;
@@ -208,6 +203,7 @@ namespace SensorMap.CustomControls
                 if (IsUIElementSensor(_selectedElement,out CustomSensor element))
                 {
                     _selectedSensor = ItemsSource[Convert.ToInt32(element.Tag)];
+                    element.IsSelected = true;
                 }
             }
         }
@@ -232,8 +228,6 @@ namespace SensorMap.CustomControls
                     // 5. Создаем команду с МИРОВЫМИ координатами
                     UndoRedoStack.Do(new MoveSensor(_selectedElement,worldPoint,_selectedSensor,(x) => WorldToScreen(worldPoint)
                     ));
-
-                    element.BorderBrush = Brushes.Transparent;
                 }
                 ////SensorDropCommand?.Execute(_selectedSensor);
                 e.Handled = true;
@@ -448,25 +442,21 @@ namespace SensorMap.CustomControls
             }
         }
 
-        private bool IsUIElementSensor(object UIElement,out CustomSensor element)
+        private bool IsUIElementSensor(object UIElement,out CustomSensor sensor)
         {
-            if(UIElement is CustomSensor brd && brd.Tag != null && ItemsSource.Contains(ItemsSource.ElementAt((Int32)brd.Tag)))
+            if (UIElement is CustomSensor brd && brd.Tag is int tagIndex && tagIndex >= 0 && tagIndex < ItemsSource.Count)
             {
-                element = brd;
+                // Получаем соответствующий объект SensorAssignments по индексу
+                var assignment = ItemsSource[(int)tagIndex];
+                sensor = brd;
                 return true;
             }
             else
             {
-                element = new CustomSensor();
+                sensor = default(CustomSensor);
                 return false;
             }
-                
-        }
 
-
-        private void Canvas_DragLeave(object sender, DragEventArgs e)
-        {
-           
         }
         #endregion
         private void UIElementSensor_ShowMoreInfo(object sender, MouseButtonEventArgs e)
@@ -505,6 +495,7 @@ namespace SensorMap.CustomControls
             element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             element.MouseLeftButtonUp += Sensor_MouseLeftButtonUp;
             element.PreviewMouseDown += SensorSelected_MouseDown;
+           
 
             return element;
         }

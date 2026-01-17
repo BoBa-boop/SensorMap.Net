@@ -37,7 +37,7 @@
             </hc:ButtonGroup>
             <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
               Grid.Row="0" Grid.Column="1">
-                <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}"/>
+                <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}" CommandParameter="{Binding CurrentMech}"/>
             <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
         </Menu>
 
@@ -65,11 +65,12 @@
                 <Expander Header="Датчики" IsExpanded="True">
                         <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}">
                             <i:Interaction.Behaviors>
-                                <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"/>
+                                <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
+                                                      SelectedItemType="Sensor"/>
                             </i:Interaction.Behaviors>
                             <i:Interaction.Triggers>
                                 <i:EventTrigger EventName="MouseDoubleClick">
-                                    <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding ElementName=twSensors,Path=SelectedItem}"/>
+                                    <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding CurrentSensor}"/>
                                 </i:EventTrigger>
                             </i:Interaction.Triggers>
                             <TreeView.ItemTemplate>
@@ -103,7 +104,7 @@
             </Grid.RowDefinitions>
             <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                 <!--<hc:ImageViewer ImageSource="{Binding CurrentMech.Image}"/>-->
-                <myCC:SensorDragDrop x:Name="ccSensorMap"  ItemsSource="{Binding CanvasSensors,Mode=TwoWay}"
+                <myCC:SensorDragDrop x:Name="ccSensorMap"  ItemsSource="{Binding CurrentMech.SensorsAssig,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                      SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
                                      ImageSource="{Binding CurrentMech.Image}" UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}"/>
             </Border>

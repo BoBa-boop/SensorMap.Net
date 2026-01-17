@@ -31,7 +31,7 @@ namespace SensorMap.CustomControls
         public double CustomWidth
         {
             get { return (double)GetValue(CustomWidthProperty); }
-            set { SetValue(CWidthProperty, value); }
+            set { SetValue(CustomWidthProperty, value); }
         }
         public static readonly DependencyProperty CustomWidthProperty =
             DependencyProperty.Register("CustomWidth", typeof(double), typeof(CustomSensor), new PropertyMetadata(30.0));
@@ -72,6 +72,32 @@ namespace SensorMap.CustomControls
                 typeof(CustomSensor), 
                 new PropertyMetadata(new SolidColorBrush(Colors.Red)));
 
+
+
+        public SolidColorBrush BorderBrush
+        {
+            get { return (SolidColorBrush)GetValue(BorderBrushProperty); }
+            set { SetValue(BorderBrushProperty, value); }
+        }
+
+        public static readonly DependencyProperty BorderBrushProperty =
+            DependencyProperty.Register("BorderBrush", typeof(SolidColorBrush), typeof(CustomSensor), new PropertyMetadata(Brushes.Black));
+
+
+
+        public bool IsSelected
+        {
+            get { return (bool)GetValue(IsSelectedProperty); }
+            set { SetValue(IsSelectedProperty, value); SelectedChanged(); }
+        }
+
+       
+
+        public static readonly DependencyProperty IsSelectedProperty =
+            DependencyProperty.Register("IsSelected", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
+
+
+
         static CustomSensor()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomSensor), new FrameworkPropertyMetadata(typeof(CustomSensor)));
@@ -81,6 +107,11 @@ namespace SensorMap.CustomControls
         {
             base.OnApplyTemplate();
             Letter = SensorType.Name.ToUpper().First();
+            
+        }
+        private void SelectedChanged()
+        {
+            BorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
         }
     }
 }

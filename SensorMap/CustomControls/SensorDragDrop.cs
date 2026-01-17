@@ -184,7 +184,7 @@ namespace SensorMap.CustomControls
             int sensorsInMap = 0;
             foreach (var item in _canvas.Children)
             {
-                if (IsUIElementSensor(item, out Border element))
+                if (IsUIElementSensor(item, out CustomSensor element))
                     sensorsInMap++;
             }
             if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
@@ -193,7 +193,7 @@ namespace SensorMap.CustomControls
                 sensor.Y = sensor.Y < 0 ? 50 : sensor.Y;
                 double offsetX, offsetY;
                 GetLeftTopPoint(out offsetX, out offsetY);
-                Border element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
+                CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
                 UndoRedoStack.Do(new AddSensor(sensor, element, _canvas, ItemsSource));
                 element.Tag = ItemsSource.IndexOf(sensor);
             }
@@ -205,7 +205,7 @@ namespace SensorMap.CustomControls
             if(e.MiddleButton!=MouseButtonState.Pressed)
             {
             _selectedElement = (UIElement)e.Source;
-                if (IsUIElementSensor(_selectedElement,out Border element))
+                if (IsUIElementSensor(_selectedElement,out CustomSensor element))
                 {
                     _selectedSensor = ItemsSource[Convert.ToInt32(element.Tag)];
                 }
@@ -220,7 +220,7 @@ namespace SensorMap.CustomControls
         {
             if (_selectedSensor.Sensor != null)
             {
-                if(IsUIElementSensor(_selectedElement,out Border element))
+                if(IsUIElementSensor(_selectedElement,out CustomSensor element))
                 { 
                     // 1. Получаем текущие экранные координаты
                     double screenX = Canvas.GetLeft(_selectedElement);
@@ -255,7 +255,7 @@ namespace SensorMap.CustomControls
                 if (sensorData != null)
                 {
                     Point dropPosition = e.GetPosition(_canvas);
-                    Border element = CreateSensorObject(sensorData,WorldToScreen(dropPosition));
+                    CustomSensor element = CreateSensorObject(sensorData,WorldToScreen(dropPosition));
                     _isDropAdd = true;
                     UndoRedoStack.Do(new AddSensor(sensorData, element, _canvas, ItemsSource));
 
@@ -320,7 +320,7 @@ namespace SensorMap.CustomControls
                 double x = Mouse.GetPosition(_canvas).X;
                 double y = Mouse.GetPosition(_canvas).Y;
                 
-                if (IsUIElementSensor(_selectedElement,out Border element))
+                if (IsUIElementSensor(_selectedElement,out CustomSensor element))
                 {
                     Canvas.SetLeft(element, x + _draggingDelta.X);
                     Canvas.SetTop(element, y + _draggingDelta.Y);                    
@@ -363,7 +363,7 @@ namespace SensorMap.CustomControls
             {
                 if (wo != null)
                 {
-                    if (IsUIElementSensor(wo, out Border element))
+                    if (IsUIElementSensor(wo, out CustomSensor element))
                     {
                         var sensor = ItemsSource.ElementAt((Int32)element.Tag);
 
@@ -435,7 +435,7 @@ namespace SensorMap.CustomControls
             {
                 //перемещаем только датчик
                 _selectedElement = (UIElement)e.Source;
-                if (IsUIElementSensor(_selectedElement,out Border element))
+                if (IsUIElementSensor(_selectedElement,out CustomSensor element))
                 {
                     element.BorderBrush = Brushes.ForestGreen;
                     Point mousePosition = Mouse.GetPosition(_canvas);
@@ -448,16 +448,16 @@ namespace SensorMap.CustomControls
             }
         }
 
-        private bool IsUIElementSensor(object UIElement,out Border element)
+        private bool IsUIElementSensor(object UIElement,out CustomSensor element)
         {
-            if(UIElement is Border brd && brd.Tag != null && ItemsSource.Contains(ItemsSource.ElementAt((Int32)brd.Tag)))
+            if(UIElement is CustomSensor brd && brd.Tag != null && ItemsSource.Contains(ItemsSource.ElementAt((Int32)brd.Tag)))
             {
                 element = brd;
                 return true;
             }
             else
             {
-                element = new Border();
+                element = new CustomSensor();
                 return false;
             }
                 
@@ -473,7 +473,7 @@ namespace SensorMap.CustomControls
         {
             if (e.ChangedButton == MouseButton.Right)
             {
-                if (IsUIElementSensor(sender,out Border element))
+                if (IsUIElementSensor(sender,out CustomSensor element))
                 {
                     var pop = new View.SensorAddInfo();
                     var window = new PopupWindow()
@@ -493,15 +493,10 @@ namespace SensorMap.CustomControls
                 e.Handled = true;
             }
         }
-        private Border CreateSensorObject(SensorAssignments sensor, Point point)
+        private CustomSensor CreateSensorObject(SensorAssignments sensor, Point point)
         {           
-            var element = new Border();
-            element.CornerRadius = new CornerRadius(20);
-            element.BorderThickness=new Thickness(1.5);
-            element.Width = 40;
-            element.Height = 40;
-            element.Background = Brushes.Red;
-
+            var element = new CustomSensor();
+            element.SensorType = sensor.Sensor.SensorType;
             Canvas.SetLeft(element, point.X);
             Canvas.SetTop(element, point.Y);
 

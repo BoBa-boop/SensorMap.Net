@@ -1,0 +1,86 @@
+﻿using SensorMap.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace SensorMap.CustomControls
+{
+    
+    public class CustomSensor : Control
+    {
+        public double CustomHeight
+        {
+            get { return (double)GetValue(CHeightProperty); }
+            set { SetValue(CHeightProperty, value); }
+        }
+        public static readonly DependencyProperty CHeightProperty =
+            DependencyProperty.Register("CustomHeight", typeof(double), typeof(CustomSensor), new PropertyMetadata(30.0));
+
+
+        public double CustomWidth
+        {
+            get { return (double)GetValue(CustomWidthProperty); }
+            set { SetValue(CWidthProperty, value); }
+        }
+        public static readonly DependencyProperty CustomWidthProperty =
+            DependencyProperty.Register("CustomWidth", typeof(double), typeof(CustomSensor), new PropertyMetadata(30.0));
+
+
+
+        public SensorType SensorType
+        {
+            get { return (SensorType)GetValue(SensorTypeProperty); }
+            set { SetValue(SensorTypeProperty, value); }
+        }
+
+        public static readonly DependencyProperty SensorTypeProperty =
+            DependencyProperty.Register("SensorType", typeof(SensorType), typeof(CustomSensor));
+
+
+        public char Letter
+        {
+            get { return (char)GetValue(LetterProperty); }
+            set { SetValue(LetterProperty, value); }
+        }
+
+        
+        public static readonly DependencyProperty LetterProperty =
+            DependencyProperty.Register("Letter", typeof(char), typeof(CustomSensor), new PropertyMetadata('-'));
+
+
+        public SolidColorBrush CustomBackground
+        {
+            get { return (SolidColorBrush)GetValue(CustomBackgroundProperty); }
+            set { SetValue(CustomBackgroundProperty, value); }
+        }
+
+        public static readonly DependencyProperty CustomBackgroundProperty =
+            DependencyProperty.Register(
+                "CustomBackground", 
+                typeof(SolidColorBrush), 
+                typeof(CustomSensor), 
+                new PropertyMetadata(new SolidColorBrush(Colors.Red)));
+
+        static CustomSensor()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomSensor), new FrameworkPropertyMetadata(typeof(CustomSensor)));
+        }
+
+        public override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+            Letter = SensorType.Name.ToUpper().First();
+        }
+    }
+}

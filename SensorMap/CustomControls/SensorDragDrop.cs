@@ -492,7 +492,7 @@ namespace SensorMap.CustomControls
         private CustomSensor CreateSensorObject(SensorAssignments sensor, Point point)
         {           
             var element = new CustomSensor();
-            element.SensorType = sensor.Sensor.SensorType;
+            element.SensorData = sensor.Sensor.SensorType;
             Canvas.SetLeft(element, point.X);
             Canvas.SetTop(element, point.Y);
 

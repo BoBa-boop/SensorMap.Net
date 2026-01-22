@@ -29,6 +29,9 @@ namespace SensorMap.Services
 
         
         private bool _isEdit;
+        private Mechanism _curMech;
+        private Sector _curSector;
+
         [Reactive]
         public bool IsEditMode
         {
@@ -40,6 +43,18 @@ namespace SensorMap.Services
         public ObservableCollection<Mechanism> Mechanisms => _mechanisms;
         public ObservableCollection<SensorType> SensorTypes => _sensorTypes;
         public ObservableCollection<PLC> PLCs => _plc;
+
+        public Mechanism CurrentMechanism_Global 
+        {
+            get => _curMech;
+            set => this.RaiseAndSetIfChanged(ref _curMech, value);
+        }
+        public Sector CurrentSector_Global 
+        {
+            get => _curSector;
+            set => this.RaiseAndSetIfChanged(ref _curSector, value);
+        }
+
         public DataService(IDataBaseProvider provider)
         {
             _provider = provider;

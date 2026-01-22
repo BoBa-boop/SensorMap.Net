@@ -104,9 +104,9 @@
             </Grid.RowDefinitions>
             <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                 <!--<hc:ImageViewer ImageSource="{Binding CurrentMech.Image}"/>-->
-                <myCC:SensorDragDrop x:Name="ccSensorMap"  ItemsSource="{Binding CurrentMech.SensorsAssig,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                    <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}" ItemsSource="{Binding CurrentMech.SensorsAssig,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                      SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
-                                     ImageSource="{Binding CurrentMech.Image}" UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}"/>
+                                      UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}"/>
             </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>
             </Grid>

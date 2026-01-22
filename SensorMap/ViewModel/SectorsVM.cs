@@ -44,7 +44,14 @@ namespace SensorMap.ViewModel
         {            
             navigation = _nav;
             _data = data;
-            GoToSector = new RelayCommand<Sector>((s) => navigation.NavigateTo<MechanismVM>(s));
+            GoToSector = new RelayCommand<Sector>((sector) => 
+            {
+                if(sector != null) 
+                {
+                    _data.CurrentSector_Global = sector;
+                    navigation.NavigateTo<MechanismVM>();
+                } 
+            });
             _provider = provider;
 
             Sectors = _data.Sectors;

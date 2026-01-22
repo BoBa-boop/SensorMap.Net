@@ -10,6 +10,8 @@ namespace SensorMap.Interfaces
 {
     public interface IDataService
     {
+        Mechanism CurrentMechanism_Global { get; set; }
+        Sector CurrentSector_Global { get; set; }
         bool IsEditMode { get; set; }
         ObservableCollection<SensorType> SensorTypes {  get; }
         ObservableCollection<Sensor> Sensors { get; }

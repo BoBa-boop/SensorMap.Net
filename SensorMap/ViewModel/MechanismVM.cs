@@ -90,14 +90,15 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
-        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav, Sector sector = null)
+        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav)
         {
             Navigation = _nav;
             _provider = provider;
             _service = service;
             UndoRedoStack = new UndoRedoStack();
             sensorTypes = _service.SensorTypes;
-            CurrentSector = sector;
+            CurrentSector = _service.CurrentSector_Global;
+            CurrentMech = _service.CurrentMechanism_Global;
             PLCs = _service.PLCs;
             Sectors = _service.Sectors;
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;

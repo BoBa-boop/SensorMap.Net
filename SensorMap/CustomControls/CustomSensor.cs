@@ -38,14 +38,14 @@ namespace SensorMap.CustomControls
 
 
 
-        public SensorType SensorType
+        public SensorAssignments SensorData
         {
-            get { return (SensorType)GetValue(SensorTypeProperty); }
-            set { SetValue(SensorTypeProperty, value); }
+            get { return (SensorAssignments)GetValue(SensorProperty); }
+            set { SetValue(SensorProperty, value); }
         }
 
-        public static readonly DependencyProperty SensorTypeProperty =
-            DependencyProperty.Register("SensorType", typeof(SensorType), typeof(CustomSensor));
+        public static readonly DependencyProperty SensorProperty =
+            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor));
 
 
         public char Letter
@@ -106,7 +106,7 @@ namespace SensorMap.CustomControls
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            Letter = SensorType.Name.ToUpper().First();
+            Letter = SensorData.Sensor.SensorType.Name.ToUpper().First();
             
         }
         private void SelectedChanged()

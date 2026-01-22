@@ -37,7 +37,7 @@ namespace SensorMap.CustomControls
         #region Dependency Properties
 
         public static readonly DependencyProperty UndoRedoStackProperty = DependencyProperty.Register("UndoRedoStack", typeof(UndoRedoStack),typeof(SensorDragDrop),
-         new PropertyMetadata(null));
+         new PropertyMetadata(new UndoRedoStack()));
 
         public UndoRedoStack UndoRedoStack
         {
@@ -53,13 +53,7 @@ namespace SensorMap.CustomControls
             set { SetValue(SensorDropCommandProperty, value); }
         }
 
-        public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource", typeof(BitmapFrame), typeof(SensorDragDrop),
-            new PropertyMetadata(default(BitmapFrame)));
-        public BitmapFrame ImageSource
-        {
-            get { return (BitmapFrame)GetValue(ImageSourceProperty); }
-            set { SetValue(ImageSourceProperty, value); }
-        }
+        
         public static readonly DependencyProperty CoordProperty = DependencyProperty.Register("Coord", typeof(Point), typeof(SensorDragDrop),
             new PropertyMetadata(default(Point)));
         public Point Coord
@@ -75,8 +69,15 @@ namespace SensorMap.CustomControls
             get { return (ObservableCollection<SensorAssignments>)GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
-        
-        #endregion        
+        public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource", typeof(BitmapFrame), typeof(SensorDragDrop),
+            new PropertyMetadata(default(BitmapFrame)));
+        public BitmapFrame ImageSource
+        {
+            get { return (BitmapFrame)GetValue(ImageSourceProperty); }
+            set { SetValue(ImageSourceProperty, value); }
+        }
+
+        #endregion
         private MatrixTransform _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
@@ -120,11 +121,16 @@ namespace SensorMap.CustomControls
 
 
         #region ItemsSource events
+
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (SensorDragDrop)d;
-            (e.NewValue as INotifyCollectionChanged).CollectionChanged += control.OnCollectionChanged;
-            if (!e.NewValue.Equals(e.OldValue)) control.SourceCollectionChanged();
+            control._viewMatrixTransform.Matrix = Matrix.Identity;
+            if (e.NewValue != null)
+            {
+                if (e.NewValue is INotifyCollectionChanged notify) notify.CollectionChanged += control.OnCollectionChanged;
+                if (!e.NewValue.Equals(e.OldValue)) control.SourceCollectionChanged();
+            }
         }
 
         private void SourceCollectionChanged()

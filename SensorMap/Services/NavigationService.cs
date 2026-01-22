@@ -30,7 +30,6 @@ namespace SensorMap.Services
             ReactiveObject viewModel = _vmFact.Invoke(typeof(T));
             CurrentView = viewModel;
         }
-
         public void NavigateTo<T>(object parameter)
         {
             ReactiveObject viewModel = _vmFactWithParam.Invoke(typeof(T), parameter);
@@ -73,5 +72,7 @@ namespace SensorMap.Services
 
             dialogWindow.ShowDialog();
         }
+
+        
     }
 }

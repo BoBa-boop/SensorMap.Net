@@ -3,6 +3,7 @@ using DynamicData;
 using HandyControl.Controls;
 using HandyControl.Data;
 using HandyControl.Tools;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
@@ -21,6 +22,7 @@ namespace SensorMap.ViewModel
 {
     public class SensorVM:ReactiveObject
     {
+        private readonly INavigation _navigation;
         private readonly IDataService _service;
         private readonly IJsonSerialization _json;
         private Sensor _sensorsTreeNode;
@@ -41,24 +43,35 @@ namespace SensorMap.ViewModel
         }
         [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree { get; set; }
         private ObservableCollection<SensorType> sensorTypes {  get; set; }
+        [Reactive] public bool IsEditMode { get; set; }
 
-        public SensorVM(IDataService service,IJsonSerialization json,Sensor sensor=null)
+        public SensorVM(IDataService service,IJsonSerialization json,INavigation navigation,Sensor sensor=null)
         {
             SelectedNode = sensor;
+            _navigation = navigation;
             _json = json;
             _service = service;
             sensorTypes = _service.SensorTypes;
             Sensors = _service.Sensors;
             Mechanisms = _service.Mechanisms;
+            IsEditMode = _service.IsEditMode;
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
             _additionalData = LoadMoreData();
 
             SaveMoreData = new RelayCommand(SaveDataFileds);
+            NavigateToMech = new RelayCommand<Mechanism>((mech) => 
+            {
+                if (mech == null) return;
+                _service.CurrentMechanism_Global = mech;
+                _service.CurrentSector_Global = mech.Sector!;
+                _navigation.NavigateTo<MechanismVM>(); 
+            });
 
             this.WhenAnyValue(x => x.SelectedNode)
                 .Where(sensor => sensor != null)
-                .Select(sensor => Mechanisms.Where(mech =>mech.SensorsAssig.Any(sa => sa.SensorId == sensor.Id)))
+                .Select(sensor => Mechanisms.Where(mech =>mech.SensorsAssig!=null)
+                .Where(x=>x.SensorsAssig!.Any(sa => sa.SensorId == sensor.Id)))
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(filteredMechanisms =>
                 { 
@@ -100,6 +113,7 @@ namespace SensorMap.ViewModel
         }
 
         public ICommand SaveMoreData { get; }
+        public ICommand NavigateToMech {  get; }
         private void SaveDataFileds()
         {
             string FILE_PATH = "SensorMoreData.json";

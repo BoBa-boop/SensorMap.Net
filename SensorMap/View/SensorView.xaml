@@ -30,10 +30,13 @@
                                                   SelectedItemType="Sensor"/>
                         </i:Interaction.Behaviors>
                         <TreeView.ItemTemplate>
-                            <HierarchicalDataTemplate  ItemsSource="{Binding Children}">
+                            <HierarchicalDataTemplate ItemsSource="{Binding Children}">
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Name}" Visibility="{Binding Data,Converter={StaticResource Object2VisibilityReConverter}}"/>
-                                    <TextBlock Text="{Binding Data.Name}"
+                                    <StackPanel Orientation="Horizontal" Visibility="{Binding Data,Converter={StaticResource Object2VisibilityReConverter}}">
+                                        
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </StackPanel>
+                                    <TextBlock Name="ch" Text="{Binding Data.Name}"
                                                Visibility="{Binding Data,Converter={StaticResource Object2VisibilityConverter}}"/>
                                 </StackPanel>
                             </HierarchicalDataTemplate>
@@ -95,6 +98,12 @@
                                         <DataTemplate>
                                             <Border>
                                                 <TextBlock Text="{Binding Name}"/>
+                                                <i:Interaction.Triggers>
+                                                    <i:EventTrigger EventName="MouseLeftButtonDown">
+                                                        <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.NavigateToMech}"
+                                                                               CommandParameter="{Binding}"/>
+                                                    </i:EventTrigger>
+                                                </i:Interaction.Triggers>
                                             </Border>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -107,7 +116,9 @@
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <hc:TextBox hc:TitleElement.Title="{Binding Parameter}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}"
-                                                        MaxLength="50" Width="150"/>
+                                                        MaxLength="50" Width="150"
+                                                        IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,
+                                                                    Converter={StaticResource Boolean2BooleanReConverter}}"/>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                     <ListBox.ItemContainerStyle>
@@ -129,7 +140,8 @@
                                         </ItemsPanelTemplate>
                                     </ListBox.ItemsPanel>
                                 </ListBox>
-                                <Button Content="Сохранить" Command="{Binding SaveMoreData}"/>
+                                <Button Content="Сохранить" Command="{Binding SaveMoreData}" 
+                                        Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                 </StackPanel>
                             </GroupBox>
             </StackPanel>

@@ -31,15 +31,7 @@
                 </Button.Style>
             </Button>
             <Menu Background="Transparent">
-                <MenuItem Header="Данные">
-                    <MenuItem Header="Просмотр" Command="{Binding NavigateToDB}"/>
-                    <MenuItem Header="Редактор" Command="{Binding TurnOnEditMode}">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource LockImage}" 
-                                   Visibility="{Binding IsEdit,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                </MenuItem>
+                <MenuItem Header="Данные" Command="{Binding NavigateToDB}"/>
             </Menu>
             <Menu Background="Transparent">
                 <MenuItem Header="Окна">
@@ -53,6 +45,40 @@
             <Menu Background="Transparent">
                 <MenuItem Header="Настройки" Command="{Binding NavigateToSettings}"/>
                 <MenuItem Header="Резервная копия БД" Command="{Binding NavigateToSectors}"/>
+            </Menu>
+            <Menu Background="Transparent">
+                <MenuItem Header="Режим работы">
+                    <MenuItem Header="Просмотр" Command="{Binding TurnOnEditMode}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource NoImage}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Редактор" Command="{Binding TurnOnEditMode}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource ChangeDataImage}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem.Style>
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=root,Path=DataContext.IsEdit}" Value="True">
+                                    <Setter Property="Icon">
+                                        <Setter.Value>
+                                            <Image Source="{StaticResource ChangeDataImage}"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ElementName=root,Path=DataContext.IsEdit}" Value="False">
+                                    <Setter Property="Icon">
+                                        <Setter.Value>
+                                            <Image Source="{StaticResource NoImage}"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </MenuItem.Style>
+                </MenuItem>                
             </Menu>
             <Button Content="Help" Style="{StaticResource ButtonCustom}" Margin="10,0,20,0"/>
         </hc:SimpleStackPanel>

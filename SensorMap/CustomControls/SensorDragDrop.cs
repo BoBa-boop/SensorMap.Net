@@ -1,4 +1,5 @@
-﻿using HandyControl.Controls;
+﻿using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using SensorMap.Commands.SensorCommands;
 using SensorMap.Model;
 using SensorMap.ViewModel;
@@ -35,6 +36,13 @@ namespace SensorMap.CustomControls
         private bool _isDragging = false;
 
         #region Dependency Properties
+        public bool IsEditMode
+        {
+            get { return (bool)GetValue(IsEditModeProperty); }
+            set { SetValue(IsEditModeProperty, value); }
+        }
+        public static readonly DependencyProperty IsEditModeProperty =
+            DependencyProperty.Register("IsEditMode", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
 
         public static readonly DependencyProperty UndoRedoStackProperty = DependencyProperty.Register("UndoRedoStack", typeof(UndoRedoStack),typeof(SensorDragDrop),
          new PropertyMetadata(new UndoRedoStack()));
@@ -44,16 +52,23 @@ namespace SensorMap.CustomControls
             get => (UndoRedoStack)GetValue(UndoRedoStackProperty);
             set => SetValue(UndoRedoStackProperty, value);
         }
-        public static readonly DependencyProperty SensorDropCommandProperty =
-            DependencyProperty.Register("SensorDropCommand", typeof(ICommand), typeof(SensorDragDrop));
-        
-        public ICommand SensorDropCommand
+
+        public static readonly DependencyProperty SaveSensorsCommandProperty =
+            DependencyProperty.Register("SaveSensorsCommand", typeof(ICommand), typeof(SensorDragDrop));
+        public ICommand SaveSensorsCommand
         {
-            get { return (ICommand)GetValue(SensorDropCommandProperty); }
-            set { SetValue(SensorDropCommandProperty, value); }
+            get { return (ICommand)GetValue(SaveSensorsCommandProperty); }
+            set { SetValue(SaveSensorsCommandProperty, value); }
+        }
+        public static readonly DependencyProperty ShowAddressCommandProperty =
+            DependencyProperty.Register("ShowAddress", typeof(ICommand), typeof(SensorDragDrop),new PropertyMetadata(null));
+
+        public ICommand ShowAddressCommand
+        {
+            get { return (ICommand)GetValue(ShowAddressCommandProperty); }
+            set { SetValue(ShowAddressCommandProperty, value); }
         }
 
-        
         public static readonly DependencyProperty CoordProperty = DependencyProperty.Register("Coord", typeof(Point), typeof(SensorDragDrop),
             new PropertyMetadata(default(Point)));
         public Point Coord
@@ -62,7 +77,7 @@ namespace SensorMap.CustomControls
             set { SetValue(CoordProperty, value); }
         }
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
-            typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop), new PropertyMetadata(null, OnItemsSourceChanged));
+            typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop), new PropertyMetadata(new ObservableCollection<SensorAssignments>(), OnItemsSourceChanged));
 
         public ObservableCollection<SensorAssignments> ItemsSource
         {
@@ -115,11 +130,18 @@ namespace SensorMap.CustomControls
                         uiElement.IsSelected = false;
                     }
                 }
+                ShowAddressCommand = new RelayCommand(ShowAddressChanged);
             }
             
         }
 
-
+        private void ShowAddressChanged()
+        {
+            foreach (var uiElement in _canvas.Children.OfType<CustomSensor>())
+            {
+                uiElement.ShowAddresses = !uiElement.ShowAddresses;
+            }
+        }
         #region ItemsSource events
 
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -187,7 +209,7 @@ namespace SensorMap.CustomControls
         private void AddSensorToCanvas(SensorAssignments sensor)
         {
             int sensorsInMap = _canvas.Children.OfType<CustomSensor>().Count();
-            
+            if (IsEditMode == false) return;
             if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
             {
                 sensor.X = sensor.X < 0 ? 50 : sensor.X;
@@ -203,7 +225,7 @@ namespace SensorMap.CustomControls
 
         private void SensorSelected_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(e.MiddleButton!=MouseButtonState.Pressed)
+            if(e.MiddleButton!=MouseButtonState.Pressed&&IsEditMode)
             {
             _selectedElement = (UIElement)e.Source;
                 if (IsUIElementSensor(_selectedElement,out CustomSensor element))
@@ -220,7 +242,7 @@ namespace SensorMap.CustomControls
         #region SensorEvents
         private void Sensor_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (_selectedSensor.Sensor != null)
+            if (_selectedSensor.Sensor != null&&IsEditMode)
             {
                 if(IsUIElementSensor(_selectedElement,out CustomSensor element))
                 { 
@@ -250,7 +272,7 @@ namespace SensorMap.CustomControls
         private void _canvas_Drop(object sender, DragEventArgs e)
         {
             object data = e.Data.GetData(DataFormats.Serializable);
-            if (data is SensorAssignments sensorData)
+            if (data is SensorAssignments sensorData&&IsEditMode)
             {  
                 if (sensorData != null)
                 {
@@ -315,7 +337,7 @@ namespace SensorMap.CustomControls
                 _viewMatrixTransform.Matrix = translate.Value * _viewMatrixTransform.Matrix;
 
             }
-            if (_isDragging && e.LeftButton == MouseButtonState.Pressed)
+            if (_isDragging && e.LeftButton == MouseButtonState.Pressed&&IsEditMode)
             {
                 double x = Mouse.GetPosition(_canvas).X;
                 double y = Mouse.GetPosition(_canvas).Y;
@@ -431,7 +453,7 @@ namespace SensorMap.CustomControls
                 _initialMousePosition = e.GetPosition(_canvas);
                 movingObject = VisualTreeHelper.GetDescendantBounds(this);
             }
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.ChangedButton == MouseButton.Left && IsEditMode)
             {
                 //перемещаем только датчик
                 _selectedElement = (UIElement)e.Source;
@@ -492,7 +514,7 @@ namespace SensorMap.CustomControls
         private CustomSensor CreateSensorObject(SensorAssignments sensor, Point point)
         {           
             var element = new CustomSensor();
-            element.SensorData = sensor.Sensor.SensorType;
+            element.SensorData = sensor;
             Canvas.SetLeft(element, point.X);
             Canvas.SetTop(element, point.Y);
 

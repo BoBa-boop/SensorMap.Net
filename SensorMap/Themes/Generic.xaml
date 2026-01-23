@@ -4,11 +4,14 @@
     xmlns:myCC="clr-namespace:SensorMap.CustomControls"
     xmlns:interactivity="clr-namespace:HandyControl.Interactivity;assembly=HandyControl" 
     xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:cnv="clr-namespace:SensorMap.Converters"
     xmlns:local="clr-namespace:SensorMap">
+    
     <ResourceDictionary.MergedDictionaries>
         <hc:Theme/>
         <hc:SharedResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
     </ResourceDictionary.MergedDictionaries>
+    
     <Style TargetType="{x:Type myCC:ImageViewerCC}">
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Background" Value="Transparent" />
@@ -86,6 +89,9 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
                     <Grid>
+                        <Grid.Resources>
+                            <cnv:Bool2Vis x:Key="bool2Vis"/>
+                        </Grid.Resources>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
@@ -94,7 +100,12 @@
                             <RowDefinition/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <Label Content="{Binding SensorData.Address}" Grid.Row="0" Grid.Column="1" IsHitTestVisible="False"/>
+                        <TextBox Text="{Binding SensorData.Address, FallbackValue='Empty'}"
+                               FontSize="14" Padding="3" IsReadOnly="{Binding}"
+                               Grid.Row="0" Grid.Column="1" IsHitTestVisible="False"
+                               BorderBrush="Black" BorderThickness="1.5" Background="BlanchedAlmond"
+                               Visibility="{TemplateBinding ShowAddresses,Converter={StaticResource bool2Vis}}"/>
+                       
                         <Border Background="{TemplateBinding Property=CustomBackground}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="3" CornerRadius="60" Grid.Row="1" Grid.Column="0">

@@ -1,4 +1,5 @@
-﻿using SensorMap.Model;
+﻿using CommunityToolkit.Mvvm.Input;
+using SensorMap.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -84,19 +85,22 @@ namespace SensorMap.CustomControls
             DependencyProperty.Register("BorderBrush", typeof(SolidColorBrush), typeof(CustomSensor), new PropertyMetadata(Brushes.Black));
 
 
-
+        public bool ShowAddresses
+        {
+            get { return (bool)GetValue(ShowAddressesProperty); }
+            set { SetValue(ShowAddressesProperty, value);}
+        }
+        public static readonly DependencyProperty ShowAddressesProperty =
+            DependencyProperty.Register("ShowAddresses", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
         public bool IsSelected
         {
             get { return (bool)GetValue(IsSelectedProperty); }
             set { SetValue(IsSelectedProperty, value); SelectedChanged(); }
         }
-
-       
-
         public static readonly DependencyProperty IsSelectedProperty =
             DependencyProperty.Register("IsSelected", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
 
-
+        
 
         static CustomSensor()
         {

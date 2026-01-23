@@ -50,7 +50,7 @@ namespace SensorMap.ViewModel
         {
             ActiveWindow = false;
             if(!IsEdit) Navigation.ShowDialog<AuthorizationWindow, AuthVM>();
-            if(IsEdit)Navigation.NavigateTo<CRUD_VM>(IsEdit);
+            if(IsEdit) IsEdit=false;
             ActiveWindow = true; 
         }
 

@@ -100,6 +100,8 @@ namespace SensorMap.Services
                             var existingSensor = await dBContext.Sensors
                                 .FirstOrDefaultAsync(s => s.Id == sensor.SensorId);
 
+                            var existingPLC = await dBContext.PLCs
+                                .FirstOrDefaultAsync(s => s.Id == sensor.PLCId);
                             if (existingMechanism == null || existingSensor == null)
                             {
                                 throw new Exception("Не найдены связанные сущности в базе данных");
@@ -108,6 +110,7 @@ namespace SensorMap.Services
                             // Присваиваем отслеживаемые сущности
                             sensor.Mechanism = existingMechanism;
                             sensor.Sensor = existingSensor;
+                            sensor.PLC = existingPLC;
 
                             // Добавляем assignment (связанные сущности уже отслеживаются)
                             dBContext.SensorAssignments.Add(sensor);

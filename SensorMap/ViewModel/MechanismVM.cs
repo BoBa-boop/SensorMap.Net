@@ -32,6 +32,7 @@ namespace SensorMap.ViewModel
         private ObservableCollection<SensorType> sensorTypes { get; set; }
         public UndoRedoStack UndoRedoStack { get; set; }
 
+        [Reactive] public bool IsEditMode { get; set; }
         [Reactive] public INavigation? Navigation { get; set; }
         [Reactive] public Sector? CurrentSector
         {
@@ -95,6 +96,7 @@ namespace SensorMap.ViewModel
             Navigation = _nav;
             _provider = provider;
             _service = service;
+            IsEditMode = _service.IsEditMode;
             UndoRedoStack = new UndoRedoStack();
             sensorTypes = _service.SensorTypes;
             CurrentSector = _service.CurrentSector_Global;
@@ -168,18 +170,18 @@ namespace SensorMap.ViewModel
                 });
                 return false;
             }
-            //else if (CurrentMech.PLC == null)
-            //{
-            //    Growl.Error(new GrowlInfo
-            //    {
-            //        Message = $"Необходимо добавить PLC к механизации",
-            //        CancelStr = "Ignore",
-            //        ShowDateTime = false,
-            //        Type = InfoType.Error,
-            //        WaitTime = 2
-            //    });
-            //    return false;
-            //}
+            else if (CurrentMech.PLC == null)
+            {
+                Growl.Error(new GrowlInfo
+                {
+                    Message = $"Необходимо добавить PLC к механизации",
+                    CancelStr = "Ignore",
+                    ShowDateTime = false,
+                    Type = InfoType.Error,
+                    WaitTime = 2
+                });
+                return false;
+            }
             else return true;
         }
 

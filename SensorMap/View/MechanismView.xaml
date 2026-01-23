@@ -36,10 +36,12 @@
                         Command="{Binding RedoCommand}"/>
             </hc:ButtonGroup>
             <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
-              Grid.Row="0" Grid.Column="1">
+                  Grid.Row="0" Grid.Column="1">
                 <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}" CommandParameter="{Binding CurrentMech}"/>
-            <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
-        </Menu>
+                               
+                <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
+                <MenuItem x:Name="mShowAddress" Header="Показать адреса" Command="{Binding ElementName=ccSensorMap, Path=ShowAddressCommand}"/>
+            </Menu>
 
         <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
             <StackPanel Orientation="Vertical">
@@ -63,50 +65,61 @@
                         </Expander.Style>
                 </Expander>
                 <Expander Header="Датчики" IsExpanded="True">
-                        <TreeView Name="twSensors"  ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}">
-                            <i:Interaction.Behaviors>
-                                <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
+                        <Grid>
+                            <TextBlock Text="Доступно в режиме Редактирования"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       FontSize="18" Panel.ZIndex="2"
+                                       Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityReConverter},UpdateSourceTrigger=PropertyChanged}">
+                                <TextBlock.Background>
+                                    <SolidColorBrush Color="WhiteSmoke" Opacity="0.8"/>
+                                </TextBlock.Background>
+                            </TextBlock>
+
+                            <TreeView Name="twSensors" IsEnabled="{Binding IsEditMode}"
+                                      ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}">
+                                <i:Interaction.Behaviors>
+                                    <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
                                                       SelectedItemType="Sensor"/>
-                            </i:Interaction.Behaviors>
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="MouseDoubleClick">
-                                    <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding CurrentSensor}"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                            <TreeView.ItemTemplate>
-                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                    <StackPanel>                                        
-                                        <TextBlock Text="{Binding Name}"/>
-                                    </StackPanel>
-                                    <HierarchicalDataTemplate.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock x:Name="txt" Text="{Binding Path=Data.Name}">
+                                </i:Interaction.Behaviors>
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="MouseDoubleClick">
+                                        <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding CurrentSensor}"/>
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                                <TreeView.ItemTemplate>
+                                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </StackPanel>
+                                        <HierarchicalDataTemplate.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock x:Name="txt" Text="{Binding Path=Data.Name}">
                                                 <i:Interaction.Triggers>
                                                     <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
                                                         <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.DragSensorCommand}" 
                                                                                    CommandParameter="{Binding ElementName=txt}" />
                                                     </i:EventTrigger>
                                                 </i:Interaction.Triggers>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </HierarchicalDataTemplate.ItemTemplate>
-                                </HierarchicalDataTemplate>
-                                
-                        </TreeView.ItemTemplate>
-                    </TreeView>
-                </Expander>
-            </StackPanel>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </HierarchicalDataTemplate.ItemTemplate>
+                                    </HierarchicalDataTemplate>
+
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+                        </Grid>
+                    </Expander>
+                </StackPanel>
         </Border>
         <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="20"/>
             </Grid.RowDefinitions>
-            <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
-                <!--<hc:ImageViewer ImageSource="{Binding CurrentMech.Image}"/>-->
+                <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}" ItemsSource="{Binding CurrentMech.SensorsAssig,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                                     SensorDropCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
-                                      UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}"/>
+                                      SaveSensorsCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
+                                      UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}" IsEditMode="{Binding IsEditMode}"/>
             </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>
             </Grid>

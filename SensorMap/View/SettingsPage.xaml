@@ -8,15 +8,34 @@
              xmlns:hc="https://handyorg.github.io/handycontrol"
              d:DesignHeight="450" d:DesignWidth="800">
     <hc:TransitioningContentControl TransitionMode="Bottom2Top" Margin="10">
-        <hc:ElementGroup Width="300">
-            <hc:ElementGroup.Background>
-                <SolidColorBrush Color="Gray" Opacity="0.2"/>
-            </hc:ElementGroup.Background>
-            <StackPanel Orientation="Horizontal">
-            <hc:TextBox Name="txtEditorPass" Width="200" hc:InfoElement.Placeholder="Пароль редактора"/>
-                <Button Width="35" Style="{StaticResource ButtonInfo}" hc:IconElement.Geometry="{StaticResource ChangeData}"
-                        Command="{Binding ChangeEditorPassword}" CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
+        <StackPanel>
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
+                <TextBlock Text="Вход в 'Редактор'" HorizontalAlignment="Left"  Margin="0,5" 
+               Style="{StaticResource TextBlockSubTitle}"/>
+                <StackPanel Orientation="Horizontal">
+                    <hc:TextBox Name="txtEditorPass" Width="200" hc:InfoElement.Placeholder="Новый пароль"/>
+                    <Button Width="35" Style="{StaticResource ButtonInfo}" hc:IconElement.Geometry="{StaticResource ChangeData}"
+                Command="{Binding ChangeEditorPassword}" CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
+                </StackPanel>
             </StackPanel>
-        </hc:ElementGroup>
+
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
+                <TextBlock Text="Загрузить новую БД" HorizontalAlignment="Left" Margin="0,5" Style="{StaticResource TextBlockSubTitle}"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Name="txtDB_Name" Width="200" Background="WhiteSmoke"/>
+                    <Button Width="35" Style="{StaticResource ButtonInfo}" hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
+        Command="{Binding ChangeEditorPassword}" CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
+                <TextBlock Text="Изображения в Меню" HorizontalAlignment="Left" Margin="0,5" Style="{StaticResource TextBlockSubTitle}"/>
+                <hc:FlexPanel >
+                    <hc:ImageSelector Height="70" Width="70"/>
+                    <hc:ImageSelector Height="70" Width="70"/>
+                    <hc:ImageSelector Height="70" Width="70"/>
+                </hc:FlexPanel>
+            </StackPanel>
+        </StackPanel>
     </hc:TransitioningContentControl>
 </UserControl>

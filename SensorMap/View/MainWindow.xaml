@@ -35,25 +35,51 @@
             </Menu>
             <Menu Background="Transparent">
                 <MenuItem Header="Окна">
-                    <MenuItem Header="Главное меню" Command="{Binding NavigateToMenu}"/>
-                    <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
-                    <MenuItem Header="Механизмы" Command="{Binding NavigateToMechanisms}"/>
-                    <MenuItem Header="Датчики" Command="{Binding NavigateToSensors}"/>
-                    <MenuItem Header="Контроллеры" Command="{Binding NavigateToPLC}"/>
+                    <MenuItem Header="Главное меню" Command="{Binding NavigateToMenu}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource MenuImage}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Участки" Command="{Binding NavigateToSectors}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource SectorImage}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Механизмы" Command="{Binding NavigateToMechanisms}">
+                        <MenuItem.Icon>
+                        <Image Source="{StaticResource CogsImage}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Датчики" Command="{Binding NavigateToSensors}">
+                        <MenuItem.Icon>
+                        <Image Source="{StaticResource SensImage}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Контроллеры" Command="{Binding NavigateToPLC}">
+                        <MenuItem.Icon>
+                        <Image Source="{StaticResource ControllerImage}"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
             </Menu>
-            <Menu Background="Transparent">
+            <Menu Background="Transparent" Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <MenuItem Header="Настройки" Command="{Binding NavigateToSettings}"/>
                 <MenuItem Header="Резервная копия БД" Command="{Binding NavigateToSectors}"/>
             </Menu>
             <Menu Background="Transparent">
                 <MenuItem Header="Режим работы">
-                    <MenuItem Header="Просмотр" Command="{Binding TurnOnEditMode}">
+                    <MenuItem Header="Просмотр" IsEnabled="{Binding IsEditMode}">
                         <MenuItem.Icon>
-                            <Image Source="{StaticResource NoImage}"/>
+                            <Image Source="{StaticResource Eye}"/>
                         </MenuItem.Icon>
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="Click">
+                                <i:ChangePropertyAction TargetObject="{Binding}" PropertyName="IsEditMode" Value="False"/>
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
                     </MenuItem>
-                    <MenuItem Header="Редактор" Command="{Binding TurnOnEditMode}">
+                    <MenuItem Header="Редактор" IsEnabled="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}"
+                              Command="{Binding TurnOnEditMode}">
                         <MenuItem.Icon>
                             <Image Source="{StaticResource ChangeDataImage}"/>
                         </MenuItem.Icon>
@@ -61,17 +87,37 @@
                     <MenuItem.Style>
                         <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ElementName=root,Path=DataContext.IsEdit}" Value="True">
+                                <DataTrigger Binding="{Binding IsEditMode}" Value="True">
                                     <Setter Property="Icon">
                                         <Setter.Value>
                                             <Image Source="{StaticResource ChangeDataImage}"/>
                                         </Setter.Value>
                                     </Setter>
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="#1baba1"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Foreground">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="WhiteSmoke"/>
+                                        </Setter.Value>
+                                    </Setter>
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding ElementName=root,Path=DataContext.IsEdit}" Value="False">
+                                <DataTrigger Binding="{Binding IsEditMode}" Value="False">
                                     <Setter Property="Icon">
                                         <Setter.Value>
-                                            <Image Source="{StaticResource NoImage}"/>
+                                            <Image Source="{StaticResource Eye}"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="#679fc7"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Foreground">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="WhiteSmoke"/>
                                         </Setter.Value>
                                     </Setter>
                                 </DataTrigger>

@@ -48,10 +48,6 @@
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </EventTrigger>
-                                <DataTrigger Binding="{Binding IsAuth}" Value="True">
-                                    <Setter Property="Source" Value="{StaticResource UnlockImage}"/>
-
-                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Image.Style>
@@ -59,7 +55,7 @@
 
                 <hc:PasswordBox Name="password" hc:InfoElement.Placeholder="{Binding UIMessageState}"
                                 ShowEyeButton="True" Width="200"/>
-                <Button Content="Подтвердить" Margin="0,20,0,10" IsDefault="True">
+                <Button Content="Подтвердить" Margin="0,20,0,10" IsDefault="True" Cursor="Hand">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="Click">
                             <i:InvokeCommandAction Command="{Binding VerifyCommand}" CommandParameter="{Binding ElementName=password}"/>

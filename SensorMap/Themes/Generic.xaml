@@ -100,10 +100,10 @@
                             <RowDefinition/>
                             <RowDefinition/>
                         </Grid.RowDefinitions>
-                        <TextBox Text="{Binding SensorData.Address, FallbackValue='Empty'}"
-                               FontSize="14" Padding="3" IsReadOnly="{Binding}"
+                        <TextBlock Text="{Binding SensorData.Address, FallbackValue='Empty'}"
+                               FontSize="14" Padding="3"
                                Grid.Row="0" Grid.Column="1" IsHitTestVisible="False"
-                               BorderBrush="Black" BorderThickness="1.5" Background="BlanchedAlmond"
+                               Background="BlanchedAlmond"
                                Visibility="{TemplateBinding ShowAddresses,Converter={StaticResource bool2Vis}}"/>
                        
                         <Border Background="{TemplateBinding Property=CustomBackground}"

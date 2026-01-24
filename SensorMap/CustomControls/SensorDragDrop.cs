@@ -43,7 +43,13 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsEditModeProperty =
             DependencyProperty.Register("IsEditMode", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
-
+        public bool IsShowAddresses
+        {
+            get { return (bool)GetValue(IsShowAddressesProperty); }
+            set { SetValue(IsShowAddressesProperty, value); }
+        }
+        public static readonly DependencyProperty IsShowAddressesProperty =
+            DependencyProperty.Register("IsShowAddresses", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
         public static readonly DependencyProperty UndoRedoStackProperty = DependencyProperty.Register("UndoRedoStack", typeof(UndoRedoStack),typeof(SensorDragDrop),
          new PropertyMetadata(new UndoRedoStack()));
 
@@ -118,6 +124,7 @@ namespace SensorMap.CustomControls
                 
                 _canvas.MouseMove += _canvas_MouseMove;
                 _canvas.MouseDown += _canvas_MouseDown;
+                _canvas.MouseUp += _canvas_MouseUp;
                 _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
 
@@ -135,12 +142,19 @@ namespace SensorMap.CustomControls
             
         }
 
+        private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            _initialMousePosition = new Point();
+        }
+
         private void ShowAddressChanged()
         {
+            IsShowAddresses = !IsShowAddresses;
             foreach (var uiElement in _canvas.Children.OfType<CustomSensor>())
             {
-                uiElement.ShowAddresses = !uiElement.ShowAddresses;
+                uiElement.ShowAddresses = IsShowAddresses;
             }
+            
         }
         #region ItemsSource events
 
@@ -209,7 +223,6 @@ namespace SensorMap.CustomControls
         private void AddSensorToCanvas(SensorAssignments sensor)
         {
             int sensorsInMap = _canvas.Children.OfType<CustomSensor>().Count();
-            if (IsEditMode == false) return;
             if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
             {
                 sensor.X = sensor.X < 0 ? 50 : sensor.X;
@@ -289,7 +302,7 @@ namespace SensorMap.CustomControls
         private void _canvas_MouseMove(object sender, MouseEventArgs e)
         {
             parentSize = RenderSize;
-            if (e.RightButton == MouseButtonState.Pressed)
+            if (e.RightButton == MouseButtonState.Pressed&&_initialMousePosition.X>0)
             {
                 //запрет на перемещение
                 if (movingObject.Width <= parentSize.Width || movingObject.Height <= parentSize.Height)
@@ -497,7 +510,7 @@ namespace SensorMap.CustomControls
                     var window = new PopupWindow()
                     {
                         PopupElement = pop,
-                        DataContext = _selectedSensor
+                        DataContext = element.SensorData
                     };
                     Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
 

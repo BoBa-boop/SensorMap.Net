@@ -15,14 +15,7 @@ namespace SensorMap.Services
 {
     public sealed class AuthorizationService(IDataService data,IPasswordHash passwordHash) : ReactiveObject,IAuthorization
     {
-        private bool _isAuth = false;
         private string messageState = "Введите пароль";
-
-        [Reactive] public bool IsSuccessAuth
-        {
-            get => _isAuth;
-            private set => this.RaiseAndSetIfChanged(ref _isAuth, value);
-        }
 
         [Reactive] public string MessageState
         {
@@ -30,15 +23,16 @@ namespace SensorMap.Services
             private set => this.RaiseAndSetIfChanged(ref messageState, value);
         }
 
-        public void Authorization(string password)
+        public bool Authorization(string password)
         {
-                ErrorMessages();
-                if (passwordHash.Verify(password, Settings.Default.EditorPassword)) IsSuccessAuth = true;
-                else
-                {
-                    password = string.Empty;
-                    MessageState = "Неверный пароль!";
-                }
+            ErrorMessages();
+            if (passwordHash.Verify(password, Settings.Default.EditorPassword)) return true;
+            else
+            {
+                password = string.Empty;
+                MessageState = "Неверный пароль!";
+                return false;
+            }
         }
 
         private void ErrorMessages()

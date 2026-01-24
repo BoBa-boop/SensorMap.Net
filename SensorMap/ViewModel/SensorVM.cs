@@ -28,6 +28,7 @@ namespace SensorMap.ViewModel
         private Sensor _sensorsTreeNode;
         private List<AdditionalData> _additionalData;
         private ObservableCollection<Mechanism> _FilteredMechanisms;
+        private bool isEditMode;
 
         [Reactive]public Sensor SelectedNode
         {
@@ -43,7 +44,7 @@ namespace SensorMap.ViewModel
         }
         [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree { get; set; }
         private ObservableCollection<SensorType> sensorTypes {  get; set; }
-        [Reactive] public bool IsEditMode { get; set; }
+        [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
 
         public SensorVM(IDataService service,IJsonSerialization json,INavigation navigation,Sensor sensor=null)
         {
@@ -54,7 +55,6 @@ namespace SensorMap.ViewModel
             sensorTypes = _service.SensorTypes;
             Sensors = _service.Sensors;
             Mechanisms = _service.Mechanisms;
-            IsEditMode = _service.IsEditMode;
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
             _additionalData = LoadMoreData();
@@ -77,6 +77,8 @@ namespace SensorMap.ViewModel
                 { 
                     FilteredMechanisms = new(filteredMechanisms); 
                 });
+            _service.WhenAnyValue(x => x.IsEditMode)
+                .BindTo(this, x => x.IsEditMode);
         }
 
         private List<AdditionalData> LoadMoreData()

@@ -48,10 +48,7 @@ namespace SensorMap.Services
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
                 using var transaction = await dBContext.Database.BeginTransactionAsync();
-
-                try
-                {
-                    foreach (SensorAssignments sensor in sensors)
+                foreach (SensorAssignments sensor in sensors)
                     {
                         if (sensor.Id == 0)
                         {
@@ -145,19 +142,12 @@ namespace SensorMap.Services
                             WaitTime = 2
                         });
                     }
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    Debug.WriteLine($"Ошибка при добавлении SensorAssignment: {ex.Message}");
-                    throw;
-                }
             }
         }
         public async Task Delete<T>(T entity) where T : class
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
-            {
+            {                
                 dBContext.Entry<T>(entity).State = EntityState.Deleted;
                 await dBContext.SaveChangesAsync();
                 Growl.Success(new GrowlInfo

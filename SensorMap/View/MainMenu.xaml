@@ -7,12 +7,12 @@
              xmlns:hc="https://handyorg.github.io/handycontrol"
              mc:Ignorable="d" >
     <hc:TransitioningContentControl TransitionMode="Fade">
-        <hc:Carousel AutoRun="True" IsCenter="True" HorizontalAlignment="Center" Width="1100" >
-            <Border Width="1100" Height="550"  Background="MediumPurple">
-                <TextBlock Text="Simple Text" FontSize="30" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-            </Border>
-            <Border Width="1100" Height="550" Background="RosyBrown"/>
-            <Border Width="1100" Height="550" Background="IndianRed"/>
+        <Grid>
+            <hc:Carousel AutoRun="True" IsCenter="True" HorizontalAlignment="Center" Width="1200" Height="600">
+                <Image Source="/Resources/MenuImages/menuImage2.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
+                <Image Source="/Resources/MenuImages/menuImage1jpg.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
+                <Image Source="/Resources/MenuImages/menuImage3.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
             </hc:Carousel>
+        </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

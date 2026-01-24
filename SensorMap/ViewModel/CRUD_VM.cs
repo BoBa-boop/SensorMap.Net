@@ -23,8 +23,9 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private readonly ITempImage _tempImage;
-        
-        [Reactive] public bool IsEditMode { get; set; }
+        private bool isEditMode;
+
+        [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
@@ -34,19 +35,12 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
 
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage,bool _IsEditMode=false) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage) 
         {
-            //contextFactory = cxFactory;
-            //using var context = contextFactory.CreateDbContext();
-            //context.Sectors.Load();
-            //context.Mechanisms.Load();
-            IsEditMode = _IsEditMode;
             Navigation = nav;
             _tempImage = tempImage;
             _provider = provider;
             _service = service;
-            //Sectors = context.Sectors.Local.ToObservableCollection();
-            //Mechanisms = context.Mechanisms.Local.ToObservableCollection();
             Sectors = _service.Sectors;
             Mechanisms = _service.Mechanisms;
             PLCs = _service.PLCs;
@@ -54,7 +48,7 @@ namespace SensorMap.ViewModel
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
             TempSensorTypes = new(SensorTypes);
-            //Mechanisms = _service.Mechanisms;
+            
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
                 if(Sensor is Sensor) 
@@ -152,7 +146,9 @@ namespace SensorMap.ViewModel
             }, (param) => { var values = (object[]?)param; return !string.IsNullOrWhiteSpace((string)values[0]); });
 
             DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType);DeleteCommand.Execute(type); }, (type) => { return type != null; });
-
+            
+            _service.WhenAnyValue(x => x.IsEditMode)
+                .BindTo(this, x => x.IsEditMode);
             //DataBaseEvents.EntityCreated.Subscribe(OnEntityCreated);
             //DataBaseEvents.EntityDeleted.Subscribe(OnEntityDeleted);
             //DataBaseEvents.EntityUpdated.Subscribe(OnEntityUpdated);

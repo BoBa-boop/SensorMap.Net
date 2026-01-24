@@ -62,13 +62,12 @@ namespace SensorMap.ViewModel
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(_ =>
             {
-                if(!string.IsNullOrWhiteSpace(SearchText))
+                if (!string.IsNullOrWhiteSpace(SearchText))
                 {
-                    
                     var result = from sector in tempCollection
                                  where sector.Name.ToLower().Contains(SearchText) || sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
                                  select sector;
-                    Sectors = new (result);
+                    Sectors = new(result);
                 }
                 else Sectors = new ObservableCollection<Sector>(_data.Sectors);
             });

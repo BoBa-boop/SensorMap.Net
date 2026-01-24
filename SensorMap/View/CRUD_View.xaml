@@ -312,8 +312,10 @@
                                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                             <Button Name="AddImage" ToolTip="Загрузить изображение"
                                                     Command="{Binding ElementName=root,Path=DataContext.AddImage}"
-                                                    CommandParameter="{Binding}"
-                                                    hc:IconElement.Geometry="{StaticResource LoadNewImage}" Foreground="Black"/>
+                                                    CommandParameter="{Binding}" Padding="0" Width="40"
+                                                    hc:IconElement.Geometry="{StaticResource LoadNewImage}"
+                                                     hc:IconElement.Width="23" hc:IconElement.Height="23"
+                                                    Foreground="Black"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
@@ -439,8 +441,9 @@
                                                     Command="{Binding ElementName=root,Path=DataContext.AddImage}"
                                                     CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor,
                                                 AncestorType={x:Type DataGridRow}}, Path=Item}"
-                                                    hc:IconElement.Geometry="{DynamicResource LoadNewImage}"
-                                                    hc:IconElement.Width="18" hc:IconElement.Height="20"
+                                                    Padding="0" Width="40"
+                                                    hc:IconElement.Geometry="{StaticResource LoadNewImage}"
+                                                     hc:IconElement.Width="23" hc:IconElement.Height="23"
                                                     Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,
                                                 Converter={StaticResource Boolean2VisibilityConverter}}"/>
 
@@ -563,9 +566,9 @@
                                             <Button Name="AddImage" ToolTip="Загрузить изображение"
                                         Command="{Binding ElementName=root,Path=DataContext.AddImage}"
                                         CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, 
-                                                AncestorType={x:Type DataGridRow}}, Path=Item}"
-                                                    hc:IconElement.Geometry="{DynamicResource LoadNewImage}"
-                                                    hc:IconElement.Width="18" hc:IconElement.Height="20"
+                                                AncestorType={x:Type DataGridRow}}, Path=Item}" Padding="0" Width="40"
+                                                    hc:IconElement.Geometry="{StaticResource LoadNewImage}"
+                                                     hc:IconElement.Width="23" hc:IconElement.Height="23"
                                                     Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,
                                                 Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
@@ -599,21 +602,20 @@
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    <GroupBox Header="Датчики" Style="{StaticResource BaseStyle}" Width="350"
-                              HorizontalAlignment="Left" Margin="8">
+                    <GroupBox Header="Типы датчиков" Grid.Column="0" Style="{StaticResource BaseStyle}" 
+                              Margin="8">
                         <Grid Margin="5,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="220"/>
-                                <RowDefinition/>
-                                <RowDefinition />
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="150"/>
                             </Grid.RowDefinitions>
-                            <ListBox Effect="{StaticResource EffectShadow2}" Name="twSensors"
+                            <ListBox Effect="{StaticResource EffectShadow2}" Name="twSensors" Margin="0,0,0,20"
                                      ItemsSource="{Binding TempSensorTypes,UpdateSourceTrigger=PropertyChanged}"
-                                     Height="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
+                                     MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Width="90">
@@ -693,7 +695,7 @@
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <WrapPanel Width="320" ItemWidth="80" ItemHeight="90" Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
+                                        <WrapPanel ItemWidth="80" ItemHeight="90" Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                             </ListBox>
@@ -754,7 +756,11 @@
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
-
+                    </GroupBox>
+                    <GroupBox Header="Другое" Grid.Column="1"  Margin="8" Style="{StaticResource BaseStyle}">
+                        <Grid>
+                            
+                        </Grid>
                     </GroupBox>
                 </Grid>
             </hc:TabItem>

@@ -26,12 +26,18 @@ namespace SensorMap.ViewModel
     {
         private IDataService dataService;
         private IAuthorization _authorization;
-        private readonly ObservableAsPropertyHelper<bool> _isAuthHelper;
+        private bool _isAuth;
         private readonly ObservableAsPropertyHelper<string> _messageHelper;
 
-        public bool IsAuth => _isAuthHelper.Value;
         public string UIMessageState => _messageHelper.Value;
-
+        [Reactive]public bool IsAuth 
+        {
+            get => _isAuth;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _isAuth, value);
+            }
+        }
 
 
 
@@ -40,9 +46,6 @@ namespace SensorMap.ViewModel
             dataService = _data;
             _authorization = authorization;
 
-            authorization.WhenAnyValue(x => x.IsSuccessAuth)
-                     .ToProperty(this, x => x.IsAuth, out _isAuthHelper);
-
             authorization.WhenAnyValue(x => x.MessageState)
                          .ToProperty(this, x => x.UIMessageState, out _messageHelper);
 
@@ -50,15 +53,14 @@ namespace SensorMap.ViewModel
             {
                 if (obj is PasswordBox pBox)
                 {
-                    _authorization.Authorization(pBox.Password);
+                    IsAuth = _authorization.Authorization(pBox.Password);
+                    if(IsAuth) _data.IsEditMode = true;
                     if (IsAuth == false) pBox.Password = string.Empty;
                 }
             });
-            this.WhenAnyValue(x => x.IsAuth)
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe( isAuth => dataService.IsEditMode = isAuth);
            
         }
         public ICommand VerifyCommand { get; set; }
+        
     }
 }

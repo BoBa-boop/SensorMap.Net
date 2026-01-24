@@ -32,7 +32,7 @@ namespace SensorMap.ViewModel
         private ObservableCollection<SensorType> sensorTypes { get; set; }
         public UndoRedoStack UndoRedoStack { get; set; }
 
-        [Reactive] public bool IsEditMode { get; set; }
+        [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation? Navigation { get; set; }
         [Reactive] public Sector? CurrentSector
         {
@@ -64,6 +64,8 @@ namespace SensorMap.ViewModel
         private Sensor? _curSensor;
         private bool _CanUndo;
         private bool _CanRedo;
+        private bool isEditMode;
+
         [Reactive]
         public bool CanUndo
         {
@@ -96,7 +98,6 @@ namespace SensorMap.ViewModel
             Navigation = _nav;
             _provider = provider;
             _service = service;
-            IsEditMode = _service.IsEditMode;
             UndoRedoStack = new UndoRedoStack();
             sensorTypes = _service.SensorTypes;
             CurrentSector = _service.CurrentSector_Global;
@@ -141,15 +142,11 @@ namespace SensorMap.ViewModel
                     DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
                 }
             }, (j) => CanExecuteAddSensor(j));
-            SaveSensorPlace = new RelayCommand<Mechanism>((m) => SaveCoordinates()
-            ,(mech)=> 
-            {
-                if (mech != null)
-                    return mech.SensorsAssig!.Count > 0;
-                return false; 
-            });
+            SaveSensorPlace = new RelayCommand<Mechanism>((m) => SaveCoordinates());
             this.WhenAnyValue(x => x.UndoRedoStack.UndoCount).ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe((count) => CanUndo = count > 0 );
+            _service.WhenAnyValue(x => x.IsEditMode)
+               .BindTo(this, x => x.IsEditMode);
             UndoCommand = new RelayCommand(()=> UndoRedoStack.Undo());
             RedoCommand = new RelayCommand(() => UndoRedoStack.Redo());
 

@@ -15,6 +15,7 @@
         Height="auto" Width="auto" x:Name="root">
     <UserControl.Resources>
         <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
+        
     </UserControl.Resources>
     
     <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
@@ -37,10 +38,40 @@
             </hc:ButtonGroup>
             <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
                   Grid.Row="0" Grid.Column="1">
-                <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}" CommandParameter="{Binding CurrentMech}"/>
+                <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}">
+                    <MenuItem.Style>
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
+                            <Setter Property="IsEnabled" Value="True"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsEditMode}" Value="False">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </MenuItem.Style>
+                </MenuItem>
                                
                 <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
-                <MenuItem x:Name="mShowAddress" Header="Показать адреса" Command="{Binding ElementName=ccSensorMap, Path=ShowAddressCommand}"/>
+                <MenuItem x:Name="mShowAddress" 
+                          Header="Показать адреса"
+                          Command="{Binding ElementName=ccSensorMap, Path=ShowAddressCommand}">
+                    <MenuItem.Icon>
+                        <CheckBox x:Name="chBox" IsChecked="{Binding ElementName=ccSensorMap, Path=IsShowAddresses,UpdateSourceTrigger=PropertyChanged}"/>
+                    </MenuItem.Icon>
+                    <MenuItem.Style>
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </MenuItem.Style>
+                </MenuItem>
             </Menu>
 
         <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
@@ -64,50 +95,39 @@
                             </Style>
                         </Expander.Style>
                 </Expander>
-                <Expander Header="Датчики" IsExpanded="True">
-                        <Grid>
-                            <TextBlock Text="Доступно в режиме Редактирования"
-                                       TextWrapping="Wrap" TextAlignment="Center"
-                                       FontSize="18" Panel.ZIndex="2"
-                                       Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityReConverter},UpdateSourceTrigger=PropertyChanged}">
-                                <TextBlock.Background>
-                                    <SolidColorBrush Color="WhiteSmoke" Opacity="0.8"/>
-                                </TextBlock.Background>
-                            </TextBlock>
-
-                            <TreeView Name="twSensors" IsEnabled="{Binding IsEditMode}"
+                    <Expander Header="Датчики" IsExpanded="True">
+                        <TreeView Name="twSensors" IsEnabled="{Binding IsEditMode,UpdateSourceTrigger=PropertyChanged}"
                                       ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}">
-                                <i:Interaction.Behaviors>
-                                    <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
+                            <i:Interaction.Behaviors>
+                                <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
                                                       SelectedItemType="Sensor"/>
-                                </i:Interaction.Behaviors>
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="MouseDoubleClick">
-                                        <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding CurrentSensor}"/>
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                                <TreeView.ItemTemplate>
-                                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Name}"/>
-                                        </StackPanel>
-                                        <HierarchicalDataTemplate.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock x:Name="txt" Text="{Binding Path=Data.Name}">
+                            </i:Interaction.Behaviors>
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="MouseDoubleClick">
+                                    <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding CurrentSensor}"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </StackPanel>
+                                    <HierarchicalDataTemplate.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock x:Name="txt" Text="{Binding Path=Data.Name}">
                                                 <i:Interaction.Triggers>
                                                     <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
                                                         <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.DragSensorCommand}" 
                                                                                    CommandParameter="{Binding ElementName=txt}" />
                                                     </i:EventTrigger>
                                                 </i:Interaction.Triggers>
-                                                </TextBlock>
-                                            </DataTemplate>
-                                        </HierarchicalDataTemplate.ItemTemplate>
-                                    </HierarchicalDataTemplate>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </HierarchicalDataTemplate.ItemTemplate>
+                                </HierarchicalDataTemplate>
 
-                                </TreeView.ItemTemplate>
-                            </TreeView>
-                        </Grid>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
                     </Expander>
                 </StackPanel>
         </Border>

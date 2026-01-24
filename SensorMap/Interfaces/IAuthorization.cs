@@ -8,10 +8,9 @@ namespace SensorMap.Interfaces
 {
     public interface IAuthorization
     {
-        bool IsSuccessAuth { get;}
         string MessageState { get;}
         void ChangePassword(string password);
-        void Authorization(string password);
+        bool Authorization(string password);
     }
 
 }

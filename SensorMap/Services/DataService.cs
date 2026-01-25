@@ -69,7 +69,7 @@ namespace SensorMap.Services
                 _plc = new ObservableCollection<PLC>(await _provider.GetAllPLCsAsync());
                 _sensors = new ObservableCollection<Sensor>(await _provider.GetAllSensors());
                 _mechanisms = new ObservableCollection<Mechanism>(await _provider.GetAllMechanisms());
-                _sensorTypes = new ObservableCollection<SensorType>(await _provider.GetSensortypeAsync());
+                _sensorTypes = new ObservableCollection<SensorType>(await _provider.GetSensorTypeAsync());
             });
         }
     }

@@ -13,11 +13,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewmodel:MechanismVM}"
         Height="auto" Width="auto" x:Name="root">
-    <UserControl.Resources>
-        <Converter:RatioToPixelConverter x:Key="CoordConverter"/>
-        
-    </UserControl.Resources>
-    
+
     <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
     <Grid>
         <Grid.RowDefinitions>

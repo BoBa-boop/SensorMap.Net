@@ -9,8 +9,8 @@ namespace SensorMap.Behaviors
     [TemplatePart(Name = "PART_PanelTop", Type = typeof(Border))]
     public class CustomImageBrowser:Window
     {
-        private const string ElementPanelTop = "PART_PanelTop"; 
-        private Border _panelTop;
+        private const string ElementPanelTop = "PART_PanelTop";
+        private Border? _panelTop;
         static CustomImageBrowser()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomImageBrowser),

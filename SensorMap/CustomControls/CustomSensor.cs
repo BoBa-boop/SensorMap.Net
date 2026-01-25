@@ -49,7 +49,7 @@ namespace SensorMap.CustomControls
             DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor));
 
 
-        public char Letter
+        public char? Letter
         {
             get { return (char)GetValue(LetterProperty); }
             set { SetValue(LetterProperty, value); }
@@ -75,13 +75,13 @@ namespace SensorMap.CustomControls
 
 
 
-        public SolidColorBrush BorderBrush
+        public SolidColorBrush custBorderBrush
         {
-            get { return (SolidColorBrush)GetValue(BorderBrushProperty); }
-            set { SetValue(BorderBrushProperty, value); }
+            get { return (SolidColorBrush)GetValue(custBorderBrushProperty); }
+            set { SetValue(custBorderBrushProperty, value); }
         }
 
-        public static readonly DependencyProperty BorderBrushProperty =
+        public static readonly DependencyProperty custBorderBrushProperty =
             DependencyProperty.Register("BorderBrush", typeof(SolidColorBrush), typeof(CustomSensor), new PropertyMetadata(Brushes.Black));
 
 
@@ -110,12 +110,13 @@ namespace SensorMap.CustomControls
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            Letter = SensorData.Sensor.SensorType.Name.ToUpper().First();
+            if(SensorData!=null&& SensorData.Sensor != null && SensorData.Sensor.SensorType!=null)
+                Letter = SensorData.Sensor.SensorType.Name.ToUpper().First();
             
         }
         private void SelectedChanged()
         {
-            BorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
+            custBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
         }
     }
 }

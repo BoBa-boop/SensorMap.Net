@@ -11,10 +11,9 @@ namespace SensorMap.Model
     /// <summary>
     /// Описывает оборудование
     /// </summary>
-    public class Mechanism : ReactiveObject, IEditableObject
+    public class Mechanism : ReactiveObject
     {
         private bool _isModified;
-        private Mechanism? backupCopy;
         private string _name = string.Empty;
         private byte[]? _image;
         private PLC? _plc;
@@ -52,6 +51,8 @@ namespace SensorMap.Model
             }
         }
         public virtual int SectorID { get; set; }
+        public virtual int? PLCID { get; set; }
+
         [Reactive]
         public virtual Sector? Sector 
         {
@@ -61,7 +62,7 @@ namespace SensorMap.Model
                 if (value!=null)
                 {
                     this.RaiseAndSetIfChanged(ref sector, value);
-                    SectorID = sector.Id;
+                    SectorID = sector!.Id;
                     IsModified = true;
                 }
             }
@@ -75,13 +76,11 @@ namespace SensorMap.Model
                 if(value!=null)
                 {
                     this.RaiseAndSetIfChanged(ref _plc, value);
-                    PLCID = _plc.Id;
+                    PLCID = _plc!.Id;
                     IsModified = true;
                 }
             }
         }
-        public virtual int? PLCID { get; set; }
-
         public virtual ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
 
         
@@ -92,29 +91,5 @@ namespace SensorMap.Model
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
-
-        public void BeginEdit()
-        {
-            if (IsModified) return;
-            backupCopy = this.MemberwiseClone() as Mechanism;
-        }
-
-        public void CancelEdit()
-        {
-            if (!IsModified) return;
-            if (backupCopy == null) return;
-            IsModified = false;
-            this.Name = backupCopy.Name;
-            this.Id = backupCopy.Id;
-            this.Image = backupCopy.Image;
-            this.Path = backupCopy.Path;
-        }
-
-        public void EndEdit()
-        {
-
-        }
-
-       
     }
 }

@@ -14,7 +14,6 @@
         Height="auto" Width="auto" x:Name="root">
     <UserControl.Resources>
         <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
-        <cnv:ConvertByteToBitmapImage x:Key="byteToImg"/>
     </UserControl.Resources>
     <hc:TransitioningContentControl TransitionMode="Bottom2Top">
     <Grid>
@@ -59,7 +58,7 @@
                             <Border CornerRadius="140" Width="270" Height="270"
                                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1.5">
                                 <Border.Background>
-                                    <ImageBrush ImageSource="{Binding SelectedNode.Image,Converter={StaticResource byteToImg}}"/>
+                                    <ImageBrush ImageSource="{Binding SelectedNode.Image}"/>
                                 </Border.Background>
                             </Border>
                             <TextBlock Text="{Binding SelectedNode.Name}"

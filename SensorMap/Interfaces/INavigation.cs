@@ -9,7 +9,6 @@ namespace SensorMap.Interfaces
         void NavigateTo<T>();
         void NavigateTo<T>(object parameter);
         void ShowDialog<TWindow,TViewModel>() where TWindow : Window where TViewModel : class;
-        void ShowDialog<TWindow, TViewModel>(object parameter) where TWindow : Window where TViewModel : class;
         void SetMainWindow(Window mainWindow);
     }
 }

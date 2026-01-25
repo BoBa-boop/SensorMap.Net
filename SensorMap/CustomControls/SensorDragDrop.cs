@@ -31,8 +31,8 @@ namespace SensorMap.CustomControls
                 new FrameworkPropertyMetadata(typeof(SensorDragDrop)));
            
         }
-        private Canvas _canvas;
-        private Image _image;
+        private Canvas? _canvas;
+        private Image? _image;
         private bool _isDragging = false;
 
         #region Dependency Properties
@@ -99,10 +99,10 @@ namespace SensorMap.CustomControls
         }
 
         #endregion
-        private MatrixTransform _viewMatrixTransform;
+        private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
-        private UIElement _selectedElement;
+        private UIElement? _selectedElement;
         private SensorAssignments _selectedSensor = new();
         private double scaleLevel = 1;
         private Vector _draggingDelta;
@@ -150,7 +150,7 @@ namespace SensorMap.CustomControls
         private void ShowAddressChanged()
         {
             IsShowAddresses = !IsShowAddresses;
-            foreach (var uiElement in _canvas.Children.OfType<CustomSensor>())
+            foreach (var uiElement in _canvas!.Children.OfType<CustomSensor>())
             {
                 uiElement.ShowAddresses = IsShowAddresses;
             }
@@ -161,7 +161,8 @@ namespace SensorMap.CustomControls
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (SensorDragDrop)d;
-            control._viewMatrixTransform.Matrix = Matrix.Identity;
+            if (control._canvas == null) return;
+            control._viewMatrixTransform!.Matrix = Matrix.Identity;
             if (e.NewValue != null)
             {
                 if (e.NewValue is INotifyCollectionChanged notify) notify.CollectionChanged += control.OnCollectionChanged;
@@ -171,6 +172,7 @@ namespace SensorMap.CustomControls
 
         private void SourceCollectionChanged()
         {
+            if (_canvas == null) return;
             var nonSensorChildren = _canvas.Children.OfType<UIElement>()
                                                     .Where(element=>element.GetType().Name!="CustomSensor").ToList();
             _canvas.Children.Clear();
@@ -189,6 +191,7 @@ namespace SensorMap.CustomControls
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
+                    if (e.NewItems == null) return;
                     foreach (SensorAssignments newItem in e.NewItems)
                     {
                         AddSensorToCanvas(newItem);
@@ -196,6 +199,7 @@ namespace SensorMap.CustomControls
                     break;
 
                 case NotifyCollectionChangedAction.Remove:
+                    if (e.OldItems == null) return;
                     foreach (SensorAssignments oldItem in e.OldItems)
                     {
                         RemoveEllipseFromCanvas(oldItem);
@@ -222,7 +226,7 @@ namespace SensorMap.CustomControls
 
         private void AddSensorToCanvas(SensorAssignments sensor)
         {
-            int sensorsInMap = _canvas.Children.OfType<CustomSensor>().Count();
+            int sensorsInMap = _canvas!.Children.OfType<CustomSensor>().Count();
             if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
             {
                 sensor.X = sensor.X < 0 ? 50 : sensor.X;
@@ -255,7 +259,7 @@ namespace SensorMap.CustomControls
         #region SensorEvents
         private void Sensor_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (_selectedSensor.Sensor != null&&IsEditMode)
+            if (_selectedSensor.Sensor != null && _selectedElement !=null && IsEditMode)
             {
                 if(IsUIElementSensor(_selectedElement,out CustomSensor element))
                 { 
@@ -292,7 +296,7 @@ namespace SensorMap.CustomControls
                     Point dropPosition = e.GetPosition(_canvas);
                     CustomSensor element = CreateSensorObject(sensorData,WorldToScreen(dropPosition));
                     _isDropAdd = true;
-                    UndoRedoStack.Do(new AddSensor(sensorData, element, _canvas, ItemsSource));
+                    UndoRedoStack.Do(new AddSensor(sensorData, element, _canvas!, ItemsSource));
 
                     element.Tag = ItemsSource.IndexOf(sensorData);
 
@@ -317,7 +321,7 @@ namespace SensorMap.CustomControls
                 if (movingObject.Width > parentSize.Width)
                 {
                     //левая граница
-                    if (delta.X + _viewMatrixTransform.Matrix.OffsetX >= 0.0)
+                    if (delta.X + _viewMatrixTransform!.Matrix.OffsetX >= 0.0)
                     {
                         delta.X = 0.0;
                         _initialMousePosition = mousePosition;
@@ -332,7 +336,7 @@ namespace SensorMap.CustomControls
                 if (movingObject.Height > parentSize.Height)
                 {
                     //верхняя граница
-                    if (delta.Y + _viewMatrixTransform.Matrix.OffsetY >= 0.0)
+                    if (delta.Y + _viewMatrixTransform!.Matrix.OffsetY >= 0.0)
                     {
                         delta.Y = 0.0;
                         _initialMousePosition = mousePosition;
@@ -347,7 +351,7 @@ namespace SensorMap.CustomControls
                 }
 
                 var translate = new TranslateTransform(delta.X, delta.Y);
-                _viewMatrixTransform.Matrix = translate.Value * _viewMatrixTransform.Matrix;
+                _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
 
             }
             if (_isDragging && e.LeftButton == MouseButtonState.Pressed&&IsEditMode)
@@ -355,7 +359,7 @@ namespace SensorMap.CustomControls
                 double x = Mouse.GetPosition(_canvas).X;
                 double y = Mouse.GetPosition(_canvas).Y;
                 
-                if (IsUIElementSensor(_selectedElement,out CustomSensor element))
+                if (IsUIElementSensor(_selectedElement!,out CustomSensor element))
                 {
                     Canvas.SetLeft(element, x + _draggingDelta.X);
                     Canvas.SetTop(element, y + _draggingDelta.Y);                    
@@ -371,7 +375,7 @@ namespace SensorMap.CustomControls
             Point mousePosition = e.GetPosition(this);
             double delta = e.Delta > 0 ? 1.08 : 1.0 / 1.08;
             
-            Matrix scaleMatrix = _viewMatrixTransform.Matrix;
+            Matrix scaleMatrix = _viewMatrixTransform!.Matrix;
             double newZoom = scaleMatrix.M11 * delta;
 
             // Проверка предела масштаба
@@ -388,13 +392,13 @@ namespace SensorMap.CustomControls
             scaleMatrix.ScaleAt(delta, delta, mousePosition.X, mousePosition.Y);
             
             //// Вычисляем новые размеры изображения
-            double scaledWidth = _image.ActualWidth * newZoom;
+            double scaledWidth = _image!.ActualWidth * newZoom;
             double scaledHeight = _image.ActualHeight * newZoom;
 
 
             ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize, currentOffsetX, currentOffsetY, scaleLevel);
             _viewMatrixTransform.Matrix = scaleMatrix;
-            foreach (UIElement wo in _canvas.Children)
+            foreach (UIElement wo in _canvas!.Children)
             {
                 if (wo != null)
                 {
@@ -472,7 +476,7 @@ namespace SensorMap.CustomControls
                 _selectedElement = (UIElement)e.Source;
                 if (IsUIElementSensor(_selectedElement,out CustomSensor element))
                 {
-                    element.BorderBrush = Brushes.ForestGreen;
+                    element.custBorderBrush = Brushes.ForestGreen;
                     Point mousePosition = Mouse.GetPosition(_canvas);
                     double x = Canvas.GetLeft(element);
                     double y = Canvas.GetTop(element);
@@ -494,7 +498,7 @@ namespace SensorMap.CustomControls
             }
             else
             {
-                sensor = default(CustomSensor);
+                sensor = default(CustomSensor)!;
                 return false;
             }
 
@@ -572,7 +576,7 @@ namespace SensorMap.CustomControls
         /// <param name="offsetY"></param>
         private void GetLeftTopPoint(out double offsetX, out double offsetY)
         {            
-            offsetX = _viewMatrixTransform.Matrix.OffsetX;
+            offsetX = _viewMatrixTransform!.Matrix.OffsetX;
             offsetY = _viewMatrixTransform.Matrix.OffsetY;
             if (_viewMatrixTransform.Matrix.M11 != 1)
             {

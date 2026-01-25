@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace SensorMap.Services
 {
-    public sealed class AuthorizationService(IDataService data,IPasswordHash passwordHash) : ReactiveObject,IAuthorization
+    public sealed class AuthorizationService(IPasswordHash passwordHash) : ReactiveObject,IAuthorization
     {
         private string messageState = "Введите пароль";
 

@@ -41,7 +41,8 @@ namespace SensorMap.EF
             builder
                 .HasMany(sector => sector.Mechanisms)
                 .WithOne(mech => mech.Sector)
-                .HasForeignKey(mech => mech.SectorID);
+                .HasForeignKey(mech => mech.SectorID)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
     public class MechanismConfiguration : IEntityTypeConfiguration<Mechanism>
@@ -50,23 +51,25 @@ namespace SensorMap.EF
         {
             builder
                 .HasKey(mech => mech.Id);
-            // Навигационное свойство к сектору
-            builder
-                .HasOne(mechanism => mechanism.Sector)
-                .WithMany(sector => sector.Mechanisms)
-                .HasForeignKey(mechanism => mechanism.SectorID)
-                .OnDelete(DeleteBehavior.Cascade); // Удаление механизмов при удалении сектора
+            //// Навигационное свойство к сектору
+            //builder
+            //    .HasOne(mechanism => mechanism.Sector)
+            //    .WithMany(sector => sector.Mechanisms)
+            //    .HasForeignKey(mechanism => mechanism.SectorID)
+            //    .OnDelete(DeleteBehavior.Restrict); // Механизмы остаются при удалении сектора
 
-            // Навигационное свойство к устройству PLC
-            builder
-                .HasOne(mechanism => mechanism.PLC)
-                .WithMany(plc => plc.Mechanisms)
-                .HasForeignKey(mechanism => mechanism.PLCID)
-                .OnDelete(DeleteBehavior.Restrict); // Механизмы остаются, если устройство удалено
+            //// Навигационное свойство к устройству PLC
+            //builder
+            //    .HasOne(mechanism => mechanism.PLC)
+            //    .WithMany(plc => plc.Mechanisms)
+            //    .HasForeignKey(mechanism => mechanism.PLCID)
+            //    .OnDelete(DeleteBehavior.Restrict); // Механизмы остаются, если устройство удалено
+            
             builder
                 .HasMany(x => x.SensorsAssig)
                 .WithOne(sens => sens.Mechanism)
-                .HasForeignKey(sens => sens.MechanismId);
+                .HasForeignKey(sens => sens.MechanismId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
     public class SensorConfiguration : IEntityTypeConfiguration<Sensor>
@@ -89,17 +92,17 @@ namespace SensorMap.EF
         public void Configure(EntityTypeBuilder<SensorAssignments> builder)
         {
             builder.HasKey(x => x.Id);
-            builder.HasOne(se => se.PLC)
-               .WithMany(p => p.Inputs)
-               .HasForeignKey(se => se.PLCId);
+            //builder.HasOne(se => se.PLC)
+            //   .WithMany(p => p.Inputs)
+            //   .HasForeignKey(se => se.PLCId);
 
             builder.HasOne(se => se.Sensor)
-               .WithMany()
+               .WithMany(s=>s.Sensors)
                .HasForeignKey(se => se.SensorId);
 
-            builder.HasOne(se=>se.Mechanism)
-                .WithMany(m=>m.SensorsAssig)
-                .HasForeignKey(se=>se.MechanismId);
+            //builder.HasOne(se=>se.Mechanism)
+            //    .WithMany(m=>m.SensorsAssig)
+            //    .HasForeignKey(se=>se.MechanismId);
         }
     }
     public class PLCConfiguration : IEntityTypeConfiguration<PLC>
@@ -115,7 +118,7 @@ namespace SensorMap.EF
 
             builder
                 .HasMany(plc => plc.Mechanisms)
-                .WithOne(mech=>mech.PLC)
+                .WithOne(mech => mech.PLC)
                 .HasForeignKey(p => p.PLCID);
 
         }

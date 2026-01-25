@@ -50,29 +50,6 @@ namespace SensorMap.Services
 
             dialogWindow.ShowDialog();
         }
-
-        public void ShowDialog<TWindow, TViewModel>(object parameter)
-            where TWindow : Window
-            where TViewModel : class
-        {
-            if (_mainWindow == null) return;
-
-            var dialogWindow = _serviceProvider.GetRequiredService<TWindow>();
-            var viewModel = _vmFactWithParam.Invoke(typeof(TViewModel), parameter);
-
-            dialogWindow.DataContext = viewModel;
-            dialogWindow.Owner = _mainWindow;
-            _mainWindow.IsEnabled = false;
-
-            dialogWindow.Closed += (s, args) =>
-            {
-                _mainWindow.IsEnabled = true;
-                _mainWindow.Activate();
-            };
-
-            dialogWindow.ShowDialog();
-        }
-
         
     }
 }

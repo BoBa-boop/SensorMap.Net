@@ -12,10 +12,13 @@ namespace SensorMap.Model
     /// <summary>
     /// Описывает датчик (тип, картинка, название)
     /// </summary>
-    public class Sensor : ReactiveObject, IEditableObject, IDataErrorInfo
+    public class Sensor : ReactiveObject
     {
         private string _name = string.Empty;
+        private bool _isModified;
+        private SensorType? _sensorType;
         private byte[]? _image;
+
         [Key]
         [Reactive] public int Id { get; set; }
         [MaxLength(250)]
@@ -32,19 +35,6 @@ namespace SensorMap.Model
             }
         }
         public int SensorTypeID { get; set; }
-        public SensorType? SensorType
-        {
-            get => _sensorType;
-            set
-            {
-                if (value != null)
-                {
-                    this.RaiseAndSetIfChanged(ref _sensorType, value);
-                    IsModified = true;
-                }
-            }
-        }
-
         [Reactive]
         public byte[]? Image
         {
@@ -58,8 +48,19 @@ namespace SensorMap.Model
                 }
             }
         }
-
-        private bool _isModified;
+        public SensorType? SensorType
+        {
+            get => _sensorType;
+            set
+            {
+                if (value != null)
+                {
+                    this.RaiseAndSetIfChanged(ref _sensorType, value);
+                    IsModified = true;
+                }
+            }
+        }
+        public ObservableCollection<SensorAssignments> Sensors { get; set; }
         [NotMapped]
         public bool IsModified
         {
@@ -68,62 +69,5 @@ namespace SensorMap.Model
         }
 
         [NotMapped] public AdditionalData AdditionalData { get; set; }
-
-        public string Error => throw new NotImplementedException();
-
-        public string this[string columnName]
-        {
-            get
-            {
-                switch (columnName)
-                {
-                    case "Name":
-                        if (string.IsNullOrWhiteSpace(_name))
-                        {
-                            IsModified = false;
-                            return "Обязательное поле к заполнению!";
-                        }
-                        break;
-                }
-                return string.Empty;
-            }
-        }
-
-        public Sensor()
-        {
-
-        }
-
-
-        private Sensor backupCopy;
-        private SensorType? _sensorType;
-
-        public void BeginEdit()
-        {
-            if (IsModified) return;
-            backupCopy = this.MemberwiseClone() as Sensor;
-        }
-
-        public void CancelEdit()
-        {
-            if (!IsModified) return;
-            if (backupCopy == null) return;
-            IsModified = false;
-            this.Name = backupCopy.Name;
-            this.Id = backupCopy.Id;
-            this.Image = backupCopy.Image;
-            this.SensorType = backupCopy.SensorType;
-        }
-
-        public void EndEdit()
-        {
-            //if (!IsModified) return;
-            //if (backupCopy == this.MemberwiseClone())
-            //{
-            //    IsModified = false;
-            //    backupCopy = null;
-            //}
-
-        }
     }
 }

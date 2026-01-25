@@ -123,10 +123,15 @@ namespace SensorMap.ViewModel
                     };
                     CurrentMech.SensorsAssig!.Add(sensorAssignments);
                 }
-            }, (j) => CanExecuteAddSensor(j));
+            }, (obj) =>
+            { 
+                if (obj is Sensor sensor)
+                    return CanExecuteAddSensor(sensor);
+                return false; 
+            });
             DragSensorCommand = new RelayCommand<object>((obj) =>
             {
-                var tb = obj as TextBlock;
+                if(obj is TextBlock tb)
                 if (tb.DataContext is TreeNode<Sensor> node)
                 {
                     SensorAssignments sensorAssignments = new SensorAssignments()
@@ -141,7 +146,13 @@ namespace SensorMap.ViewModel
 
                     DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
                 }
-            }, (j) => CanExecuteAddSensor(j));
+            }, (obj) => 
+            {
+                if (obj is TextBlock tb)
+                    if (tb.DataContext is TreeNode<Sensor> node)
+                        return CanExecuteAddSensor(node);
+                return false;
+            });
             SaveSensorPlace = new RelayCommand<Mechanism>((m) => SaveCoordinates());
             this.WhenAnyValue(x => x.UndoRedoStack.UndoCount).ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe((count) => CanUndo = count > 0 );
@@ -188,7 +199,6 @@ namespace SensorMap.ViewModel
          //разобраться с сохранением
             _provider.AddSensorsAssignmentAsync(CurrentMech!.SensorsAssig!);
         }
-        public ICommand SaveLayout { get; set; }
         public ICommand SaveSensorPlace { get; }
         public ICommand NavigateToSectors { get; }
         public ICommand AddSensorToMap { get; }

@@ -19,7 +19,6 @@ namespace SensorMap.ViewModel
 {
     public class CRUD_VM:ReactiveObject
     {
-        private readonly IAppDbContextFactory contextFactory;
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private readonly ITempImage _tempImage;
@@ -83,8 +82,11 @@ namespace SensorMap.ViewModel
                 if (deleteMethod.Invoke(_provider, new object[] { arg }) != null)
                 {
                     PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
-                    var collection = prop.GetValue(this) as System.Collections.IList;
-                    collection?.Remove(arg);
+                    if(prop!=null)
+                    {
+                        var collection = prop.GetValue(this) as System.Collections.IList;
+                        collection?.Remove(arg);
+                    }
                 }
             });
             CancelCommand = new RelayCommand<object>((arg)=>
@@ -93,8 +95,6 @@ namespace SensorMap.ViewModel
                 var entityType = arg.GetType();
                 entityType.GetMethod("CancelEdit")!.Invoke(arg, null);
                 entityType?.GetProperty("IsModified")?.SetValue(arg, false);
-
-
             });
             AddImage = new RelayCommand<object>((arg) =>
             {
@@ -109,19 +109,23 @@ namespace SensorMap.ViewModel
                     using (FileStream fs = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read))
                     {
                         byte[] photoBytes = new byte[fs.Length];
-                        fs.Read(photoBytes, 0, photoBytes.Length);
+                        fs.ReadExactly(photoBytes);
                         entityType.GetProperty("Image")?.SetValue(arg, photoBytes);
                     }
                 }
             });
             ShowPreviewImage = new RelayCommand<object>((image) => 
             {
-                if(image as byte[] == null) return;
-                var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(image as byte[])) {Title="Просмотр схемы" };
-                browser.ShowDialog();
+                if(image is byte[] img && img!=null)
+                {
+                    var browser = new CustomImageBrowser(_tempImage.CreateImageFromBytes(img)) {Title="Просмотр схемы" };
+                    browser.ShowDialog();
+                }
             });
             AddSensorType = new RelayCommand<object>((param) => 
             {
+                if(param is null) return;
+
                 var values = (object[])param;
                 var name = (string)values[0];
                 var image = (Uri)values[1];
@@ -134,7 +138,7 @@ namespace SensorMap.ViewModel
                     using (FileStream fs = new FileStream(image.LocalPath, FileMode.Open, FileAccess.Read))
                     {
                         photoBytes = new byte[fs.Length];
-                        fs.Read(photoBytes, 0, photoBytes.Length);
+                        fs.ReadExactly(photoBytes);
                     }
                     sType.Image = photoBytes;
                 }
@@ -143,9 +147,18 @@ namespace SensorMap.ViewModel
                     sType.IsNew = true;
                     TempSensorTypes.Add(sType);
                 }
-            }, (param) => { var values = (object[]?)param; return !string.IsNullOrWhiteSpace((string)values[0]); });
+            }, (param) => 
+            {
+                if (param == null) return false;
+                var values = (object[])param;
+                return !string.IsNullOrWhiteSpace(values[0].ToString()); 
+            });
 
-            DeleteNodeTitleType = new RelayCommand<object>((type) => { TempSensorTypes.Remove(type as SensorType);DeleteCommand.Execute(type); }, (type) => { return type != null; });
+            DeleteNodeTitleType = new RelayCommand<object>((type) => 
+            {
+                if(type is SensorType sensorType&& sensorType!=null)
+                    TempSensorTypes.Remove(sensorType);DeleteCommand.Execute(type); 
+            }, (type) => { return type != null; });
             
             _service.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(this, x => x.IsEditMode);
@@ -207,8 +220,6 @@ namespace SensorMap.ViewModel
         public ICommand AddImage {  get; set; }
         public ICommand ShowPreviewImage { get; set; }
         public ICommand AddSensorType { get; }
-        public ICommand AddPLCManufactur { get; }
-        public ICommand SaveNodeTitleType { get; }
         public ICommand DeleteNodeTitleType { get; }
         
     }

@@ -15,8 +15,7 @@ namespace SensorMap.ViewModel
     public class MainWindowVM:ReactiveObject
     {
         private readonly IDataService _dataService;
-        private readonly IConfiguration _configuration;
-        [Reactive] public INavigation? Navigation { get; set; }
+        [Reactive] public INavigation Navigation { get; set; }
 
         private bool _isEdit = false;
         private bool _activeWindow=true;

@@ -14,7 +14,7 @@ namespace SensorMap.Interfaces
         Task<IEnumerable<Sector>> GetAllSectorsAsync();
         Task<IEnumerable<Sensor>> GetAllSensors();
         Task<IEnumerable<PLC>> GetAllPLCsAsync();
-        Task<IEnumerable<SensorType>> GetSensortypeAsync();
+        Task<IEnumerable<SensorType>> GetSensorTypeAsync();
         Task<T> GetElementByID<T>(int id) where T:class;
         Task<IEnumerable<Mechanism>> GetAllMechanisms();
         Task<IEnumerable<Mechanism>> GetAllMechanismsWithSector();

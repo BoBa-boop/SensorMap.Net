@@ -18,13 +18,12 @@ namespace SensorMap.Model
     /// <summary>
     /// Описывает участок оборудования
     /// </summary>
-    public class Sector : ReactiveObject,IEditableObject
+    public class Sector : ReactiveObject
     {
         private bool _isModified;
-        private Sector? backupCopy;
-        private string _name;
+        private string _name = string.Empty;
         private byte[]? _image;
-        private ObservableCollection<Mechanism> _mech;
+        private ObservableCollection<Mechanism> _mech = new();
 
         [Key]
         public int Id {  get; set; }
@@ -64,7 +63,7 @@ namespace SensorMap.Model
             {
                 if (_mech != value)
                 {
-                    this.RaiseAndSetIfChanged(ref _mech, value);
+                    this.RaiseAndSetIfChanged(ref _mech!, value);
                 }
             }
         }
@@ -74,26 +73,6 @@ namespace SensorMap.Model
         {
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
-        }
-
-        public void BeginEdit()
-        {
-            if (IsModified) return;
-            backupCopy = this.MemberwiseClone() as Sector;
-        }
-
-        public void CancelEdit()
-        {
-            if (!IsModified) return;
-            if (backupCopy == null) return;
-            IsModified = false;
-            this.Name = backupCopy.Name;
-            this.Id = backupCopy.Id;
-        }
-
-        public void EndEdit()
-        {
-
         }
     }
 }

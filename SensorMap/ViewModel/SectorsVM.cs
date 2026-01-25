@@ -17,7 +17,6 @@ namespace SensorMap.ViewModel
 {
     public class SectorsVM:ReactiveObject
     {
-        private readonly IAppDbContextFactory contextFactory;
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _data;
         private INavigation navigation; 
@@ -65,7 +64,8 @@ namespace SensorMap.ViewModel
                 if (!string.IsNullOrWhiteSpace(SearchText))
                 {
                     var result = from sector in tempCollection
-                                 where sector.Name.ToLower().Contains(SearchText) || sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
+                                 where sector.Name.ToLower().Contains(SearchText) || 
+                                 sector.Mechanisms!=null && sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
                                  select sector;
                     Sectors = new(result);
                 }

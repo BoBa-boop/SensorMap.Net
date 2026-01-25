@@ -181,7 +181,8 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Mechanisms.Include(x=>x.Sector)
+                return await dBContext.Mechanisms
+                    .Include(x=>x.Sector)
                     .Include(m=>m.PLC)
                     .Include(x=>x.SensorsAssig)
                     .ThenInclude(x=>x.Sensor)
@@ -201,7 +202,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Sectors.Include(x=>x.Mechanisms).AsNoTracking().ToListAsync();
+                return await dBContext.Sectors.Include(x=>x.Mechanisms).ToListAsync();
             }
         }
 
@@ -209,7 +210,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.Sensors.Include(x => x.SensorType).AsNoTracking().ToListAsync();
+                return await dBContext.Sensors.Include(x => x.SensorType).ToListAsync();
             }
         }
 
@@ -233,11 +234,11 @@ namespace SensorMap.Services
             }
         }
 
-        public async Task<IEnumerable<SensorType>> GetSensortypeAsync()
+        public async Task<IEnumerable<SensorType>> GetSensorTypeAsync()
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.SensorTypes.AsNoTracking().ToListAsync();
+                return await dBContext.SensorTypes.ToListAsync();
             }
         }
 
@@ -245,7 +246,7 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                return await dBContext.PLCs.Include(x => x.Mechanisms).AsNoTracking().ToListAsync();
+                return await dBContext.PLCs.Include(m=>m.Mechanisms).ToListAsync();
             }
         }
 

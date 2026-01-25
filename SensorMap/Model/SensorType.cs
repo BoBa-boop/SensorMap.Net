@@ -13,7 +13,7 @@ namespace SensorMap.Model
 {
     public class SensorType:ReactiveObject
     {
-        private string _name;
+        private string _name = string.Empty;
         private byte[]? _image;
         private bool _isNew;
 

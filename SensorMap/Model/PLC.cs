@@ -19,7 +19,7 @@ namespace SensorMap.Model
         private bool _isModified;
         private byte[]? _image;
         private string _name = string.Empty;
-        private string _ip;
+        private string _ip = string.Empty;
         private string? _creator = string.Empty;
 
         public int Id { get; set; }
@@ -42,9 +42,9 @@ namespace SensorMap.Model
             get => _ip;
             set
             {
-                if (_ip != value)
+                if (_ip != value && value!=null)
                 {
-                    this.RaiseAndSetIfChanged(ref _ip, value);
+                    this.RaiseAndSetIfChanged(ref _ip!, value);
                 }
             }
         }
@@ -70,6 +70,7 @@ namespace SensorMap.Model
                 if (_creator != value)
                 {
                     this.RaiseAndSetIfChanged(ref _creator, value);
+                    IsModified = true;
                 }
             }
         }

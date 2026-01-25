@@ -55,7 +55,7 @@ namespace SensorMap.Behaviors
             var valueProperty = type.GetProperty("Data");
                 if (valueProperty != null && valueProperty.GetValue(e.NewValue) != null)
                 {
-                    this.SelectedItem = valueProperty.GetValue(e.NewValue);
+                    this.SelectedItem = valueProperty.GetValue(e.NewValue)!;
                 }
             }
         }

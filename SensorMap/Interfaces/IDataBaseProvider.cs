@@ -22,5 +22,8 @@ namespace SensorMap.Interfaces
         Task Create<T>(T entity) where T : class;
         Task Delete<T>(T entity) where T : class;
         Task Update<T>(T entity) where T : class;
+
+        bool ChangeDataBase(string path);
+        void CreateBackupDB(string backupDir,string name);
     }
 }

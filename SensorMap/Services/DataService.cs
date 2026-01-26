@@ -72,5 +72,18 @@ namespace SensorMap.Services
                 _sensorTypes = new ObservableCollection<SensorType>(await _provider.GetSensorTypeAsync());
             });
         }
+
+        public string GetConnectionString()
+        {
+            string connection_string = string.Empty;
+            var builder = new ConfigurationBuilder();
+            builder.SetBasePath(Directory.GetCurrentDirectory());
+            builder.AddJsonFile("appsettings.json");
+            var config = builder.Build();
+            if (config != null)
+                connection_string = config.GetConnectionString("DefaultConnection")!;
+
+            return connection_string;
+        }
     }
 }

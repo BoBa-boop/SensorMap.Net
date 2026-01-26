@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using SensorMap.EF;
@@ -126,13 +127,23 @@ namespace SensorMap
 
         private static void ConfigurationDataBase(IServiceCollection services)
         {
-            string? connection_string = Settings.Default.ConnectionString;
-            if (!string.IsNullOrEmpty(connection_string))
-                services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
-            else
-            {
-                MessageBox.Show("Отсутствует путь к БД. Установите его в настройках", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            string connection_string = string.Empty;
+            var builder = new ConfigurationBuilder();
+            // установка пути к текущему каталогу
+            builder.SetBasePath(Directory.GetCurrentDirectory());
+            // получаем конфигурацию из файла appsettings.json
+            builder.AddJsonFile("appsettings.json");
+            // создаем конфигурацию
+            var config = builder.Build();
+            if (config != null)
+                connection_string = config.GetConnectionString("DefaultConnection")!;
+            //string? connection_string = Settings.Default.ConnectionString;
+            //if (!string.IsNullOrEmpty(connectionString))
+            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
+            //else
+            //{
+            //    MessageBox.Show("Отсутствует путь к БД. Установите его в настройках", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            //}
         }
 
         private bool IsStartOneApp(StartupEventArgs e)

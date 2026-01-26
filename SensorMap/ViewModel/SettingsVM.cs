@@ -20,6 +20,7 @@ namespace SensorMap.ViewModel
     public class SettingsVM:ReactiveObject
     {
         private IAuthorization _auth;
+        private IDataService _dataService;
         private string _dbName = string.Empty;
 
         [Reactive]public string DbName
@@ -28,13 +29,17 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _dbName, value); }
         }
 
-        public SettingsVM(IAuthorization authorization)
+        public SettingsVM(IAuthorization authorization, IDataService dataService)
         {
+            _dataService = dataService;
             _auth = authorization;
-            DbName = Properties.Settings.Default.ConnectionString;
-            ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass),(newPass)=>!string.IsNullOrEmpty(newPass));
+            DbName = _dataService.GetConnectionString();
+            ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
+            
+            //ChangeDataBase = new RelayCommand
         }
 
         public ICommand ChangeEditorPassword { get;private set; }
+        public ICommand ChangeDataBase { get; private set; }
     }
 }

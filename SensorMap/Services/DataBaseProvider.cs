@@ -1,10 +1,15 @@
 ﻿using HandyControl.Controls;
 using HandyControl.Data;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Win32;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using System.Diagnostics;
+using System.IO;
+using static Azure.Core.HttpHeader;
 
 namespace SensorMap.Services
 {
@@ -250,6 +255,48 @@ namespace SensorMap.Services
             }
         }
 
-        
+        public bool ChangeDataBase(string path)
+        {
+            var builder = new ConfigurationBuilder();
+            builder.SetBasePath(Directory.GetCurrentDirectory());
+            builder.AddJsonFile("appsettings.json");
+            return true;
+        }
+
+        public void CreateBackupDB(string backupDirectory, string name)
+        {
+            // Создаем директорию для бэкапов, если её нет
+            if (!Directory.Exists(backupDirectory))
+            {
+                Directory.CreateDirectory(backupDirectory);
+            }
+            var builder = new ConfigurationBuilder();
+            builder.SetBasePath(Directory.GetCurrentDirectory());
+            builder.AddJsonFile("appsettings.json");
+            var cfg = builder.Build();
+            string connection_string = cfg.GetConnectionString("DefaultConnection");
+
+            // Генерируем имя файла для бэкапа
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string backupPath = Path.Combine(
+                backupDirectory,
+                $"{name}_backup_{timestamp}.db"
+            );
+
+            // Создаем соединение с исходной базой
+            using(SqliteConnection sourceConnection = new SqliteConnection(connection_string))
+            {
+                sourceConnection.Open();
+
+                // Создаем соединение для бэкапа
+                using (var backupConnection = new SqliteConnection($"Data Source={backupPath}"))
+                {
+                    backupConnection.Open();
+
+                    // Выполняем бэкап
+                    sourceConnection.BackupDatabase(backupConnection);
+                }
+            }
+        }
     }
 }

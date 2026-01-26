@@ -14,6 +14,7 @@ namespace SensorMap.ViewModel
 {
     public class MainWindowVM:ReactiveObject
     {
+        private readonly IDataBaseProvider _provider;
         private readonly IDataService _dataService;
         [Reactive] public INavigation Navigation { get; set; }
 
@@ -32,8 +33,9 @@ namespace SensorMap.ViewModel
             get => _activeWindow;
             set => this.RaiseAndSetIfChanged(ref _activeWindow, value);
         }
-        public MainWindowVM(INavigation _nav, IDataService service)
+        public MainWindowVM(INavigation _nav, IDataService service, IDataBaseProvider provider)
         {
+            _provider = provider;
             _dataService = service;
             Navigation = _nav;
             IsEditMode = _dataService.IsEditMode;
@@ -45,6 +47,12 @@ namespace SensorMap.ViewModel
             NavigateToMechanisms = new RelayCommand(() => Navigation.NavigateTo<MechanismVM>());
             NavigateToPLC = new RelayCommand(()=>Navigation.NavigateTo<PLC_VM>());
             TurnOnEditMode = new RelayCommand(() => OpenAuthWindow());
+            CreateBackupDB = new RelayCommand(() => 
+            {
+                FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
+                folderBrowser.ShowDialog();
+                _provider.CreateBackupDB();
+            });
 
             this.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(_dataService, x => x.IsEditMode);
@@ -68,5 +76,6 @@ namespace SensorMap.ViewModel
         public ICommand NavigateToMenu { get; set; }
         public ICommand NavigateToPLC { get; set; }
         public ICommand NavigateToMechanisms { get; set; }
+        public ICommand CreateBackupDB { get; set; }
     }
 }

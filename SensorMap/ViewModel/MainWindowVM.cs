@@ -50,8 +50,10 @@ namespace SensorMap.ViewModel
             CreateBackupDB = new RelayCommand(() => 
             {
                 FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
+                folderBrowser.Multiselect = false;
                 folderBrowser.ShowDialog();
-                _provider.CreateBackupDB();
+                if(!string.IsNullOrEmpty(folderBrowser.SelectedPath))
+                    _provider.CreateBackupDB(folderBrowser.SelectedPath);
             });
 
             this.WhenAnyValue(x => x.IsEditMode)

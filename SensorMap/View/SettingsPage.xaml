@@ -15,18 +15,26 @@
                 <TextBlock Text="Вход в 'Редактор'" HorizontalAlignment="Left"  Margin="0,5" 
                Style="{StaticResource TextBlockSubTitle}"/>
                 <StackPanel Orientation="Horizontal">
-                    <hc:TextBox Name="txtEditorPass" Width="200" hc:InfoElement.Placeholder="Новый пароль"/>
-                    <Button Width="35" Style="{StaticResource ButtonInfo}" hc:IconElement.Geometry="{StaticResource ChangeData}"
-                Command="{Binding ChangeEditorPassword}" CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
+                    <hc:TextBox Name="txtEditorPass"
+                                Width="200"
+                                hc:InfoElement.Placeholder="Новый пароль"/>
+                    <Button Width="35" Style="{StaticResource ButtonInfo}"
+                            hc:IconElement.Geometry="{StaticResource ChangeData}"
+                            Command="{Binding ChangeEditorPassword}" 
+                            CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
                 </StackPanel>
             </StackPanel>
 
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
                 <TextBlock Text="Загрузить новую БД" HorizontalAlignment="Left" Margin="0,5" Style="{StaticResource TextBlockSubTitle}"/>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Name="txtDB_Name" Text="{Binding DbName}" Width="200" Background="WhiteSmoke"/>
-                    <Button Width="35" Style="{StaticResource ButtonInfo}" hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
-        Command="{Binding ChangeEditorPassword}" CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
+                    <TextBlock Name="txtDB_Name"
+                               Text="{Binding DbName}"
+                               Width="200" 
+                               Background="WhiteSmoke"/>
+                    <Button Width="35" Style="{StaticResource ButtonInfo}"
+                            hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
+                            Command="{Binding ChangeDataBase}"/>
                 </StackPanel>
             </StackPanel>
 

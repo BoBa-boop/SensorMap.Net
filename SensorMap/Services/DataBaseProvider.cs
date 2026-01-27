@@ -257,31 +257,32 @@ namespace SensorMap.Services
 
         public bool ChangeDataBase(string path)
         {
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(Directory.GetCurrentDirectory());
-            builder.AddJsonFile("appsettings.json");
+            string connection_string = Properties.Settings.Default.ConnectionString;
+            string newDB_connectionString = "DataSource=" + path;
+
+            using (SqliteConnection sourceConnection = new SqliteConnection(connection_string))
+            {
+                sourceConnection.Close();
+                File.Copy(path,sourceConnection.DataSource,true);
+                //File.Move(path, sourceConnection.DataSource,true);
+            }
+            
+            using (SqliteConnection sourceConnection = new SqliteConnection(newDB_connectionString))
+            {
+                sourceConnection.Open();
+            }
+            Properties.Settings.Default.ConnectionString = newDB_connectionString;
+            Properties.Settings.Default.Save();
             return true;
         }
 
-        public void CreateBackupDB(string backupDirectory, string name)
+        public void CreateBackupDB(string backupDirectory)
         {
-            // Создаем директорию для бэкапов, если её нет
-            if (!Directory.Exists(backupDirectory))
-            {
-                Directory.CreateDirectory(backupDirectory);
-            }
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(Directory.GetCurrentDirectory());
-            builder.AddJsonFile("appsettings.json");
-            var cfg = builder.Build();
-            string connection_string = cfg.GetConnectionString("DefaultConnection");
+            string connection_string = Properties.Settings.Default.ConnectionString;
 
             // Генерируем имя файла для бэкапа
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string backupPath = Path.Combine(
-                backupDirectory,
-                $"{name}_backup_{timestamp}.db"
-            );
+            string backupPath = Path.Combine(backupDirectory,$"DataBase_backup_{timestamp}.db");
 
             // Создаем соединение с исходной базой
             using(SqliteConnection sourceConnection = new SqliteConnection(connection_string))
@@ -295,7 +296,9 @@ namespace SensorMap.Services
 
                     // Выполняем бэкап
                     sourceConnection.BackupDatabase(backupConnection);
+                    backupConnection.Close();
                 }
+                sourceConnection.Close();
             }
         }
     }

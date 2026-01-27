@@ -18,7 +18,7 @@ namespace SensorMap.View
     /// <summary>
     /// Логика взаимодействия для MainMenu.xaml
     /// </summary>
-    public partial class MainMenu : UserControl
+    public partial class MainMenu : System.Windows.Controls.UserControl
     {
         public MainMenu()
         {

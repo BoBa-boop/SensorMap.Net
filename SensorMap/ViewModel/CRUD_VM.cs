@@ -14,6 +14,7 @@ using System.Reactive.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace SensorMap.ViewModel
 {

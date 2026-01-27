@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Shapes;
+using Point = System.Windows.Point;
 
 namespace SensorMap.Commands.SensorCommands
 {

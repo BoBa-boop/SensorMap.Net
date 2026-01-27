@@ -11,6 +11,7 @@ using System.Windows.Media;
 using Microsoft.Xaml.Behaviors;
 using System.Windows.Controls.Primitives;
 using System.Diagnostics;
+using Point = System.Windows.Point;
 
 namespace SensorMap.Behaviors
 {

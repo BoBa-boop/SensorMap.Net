@@ -17,6 +17,15 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Xml.Linq;
+using Application = System.Windows.Application;
+using Brushes = System.Windows.Media.Brushes;
+using Control = System.Windows.Controls.Control;
+using DataFormats = System.Windows.DataFormats;
+using DragEventArgs = System.Windows.DragEventArgs;
+using Image = System.Windows.Controls.Image;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using Point = System.Windows.Point;
+using Size = System.Windows.Size;
 
 namespace SensorMap.CustomControls
 {

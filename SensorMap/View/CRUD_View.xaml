@@ -219,10 +219,14 @@
         </Grid.Resources>
         
         <hc:TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                       Style="{StaticResource TabControlSliding}"
                        Background="Transparent" BorderThickness="0" IsAnimationEnabled="False">
 
              <!--SECTION FOR SECTORS--> 
-            <hc:TabItem Header="Участки" Tag="Участки">
+            <hc:TabItem Tag="Участки">
+                <hc:TabItem.Header>
+                    <TextBlock Text="Участки" FontSize="16"/>
+                </hc:TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -300,7 +304,10 @@
             </hc:TabItem>
 
              <!--SECTION FOR MECHANISMS-->
-            <hc:TabItem Header="Механизмы" Tag="Механизмы">
+            <hc:TabItem Tag="Механизмы">
+                <hc:TabItem.Header>
+                    <TextBlock Text="Механизмы" FontSize="16"/>
+                </hc:TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -383,7 +390,10 @@
             </hc:TabItem>
 
              <!--SECTION FOR SENSORS--> 
-            <hc:TabItem Header="Датчики" Tag="Датчики">
+            <hc:TabItem Tag="Датчики">
+                <hc:TabItem.Header>
+                    <TextBlock Text="Датчики" FontSize="16"/>
+                </hc:TabItem.Header>
                 <Grid>
                     <Grid.Resources>
                         <Style x:Key="NewOrChangedItemStyle" TargetType="ListBoxItem">
@@ -475,7 +485,10 @@
             </hc:TabItem>
             
             <!--SECTION FOR PLC-->
-            <hc:TabItem Header="Контроллеры" Tag="Контроллеры">
+            <hc:TabItem  Tag="Контроллеры">
+                <hc:TabItem.Header>
+                    <TextBlock Text="Контроллеры" FontSize="16"/>
+                </hc:TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -600,7 +613,10 @@
             </hc:TabItem>
             
             <!--SECTION FOR INFO-->
-            <hc:TabItem Header="Дополнительно" Tag="Дополнительно">
+            <hc:TabItem Tag="Дополнительно">
+                <hc:TabItem.Header>
+                    <TextBlock Text="Дополнительно" FontSize="16"/>
+                </hc:TabItem.Header>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>

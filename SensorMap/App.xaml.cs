@@ -11,6 +11,8 @@ using SensorMap.ViewModel;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 
 namespace SensorMap
 {
@@ -127,7 +129,6 @@ namespace SensorMap
 
         private static void ConfigurationDataBase(IServiceCollection services)
         {
-            string connection_string = string.Empty;
             var builder = new ConfigurationBuilder();
             // установка пути к текущему каталогу
             builder.SetBasePath(Directory.GetCurrentDirectory());
@@ -135,15 +136,11 @@ namespace SensorMap
             builder.AddJsonFile("appsettings.json");
             // создаем конфигурацию
             var config = builder.Build();
-            if (config != null)
-                connection_string = config.GetConnectionString("DefaultConnection")!;
-            //string? connection_string = Settings.Default.ConnectionString;
-            //if (!string.IsNullOrEmpty(connectionString))
+            string connection_string = config.GetConnectionString("DefaultConnection");
+            Settings.Default.ConnectionString = connection_string;
+            Settings.Default.Save();
+            
             services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
-            //else
-            //{
-            //    MessageBox.Show("Отсутствует путь к БД. Установите его в настройках", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            //}
         }
 
         private bool IsStartOneApp(StartupEventArgs e)

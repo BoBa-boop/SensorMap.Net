@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using TreeView = System.Windows.Controls.TreeView;
 
 namespace SensorMap.Behaviors
 {

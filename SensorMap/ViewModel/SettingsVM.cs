@@ -21,6 +21,7 @@ namespace SensorMap.ViewModel
     {
         private IAuthorization _auth;
         private IDataService _dataService;
+        private IDataBaseProvider _dbProvider;
         private string _dbName = string.Empty;
 
         [Reactive]public string DbName
@@ -29,14 +30,26 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _dbName, value); }
         }
 
-        public SettingsVM(IAuthorization authorization, IDataService dataService)
+        public SettingsVM(IAuthorization authorization, IDataService dataService, IDataBaseProvider dbProvider)
         {
+            _dbProvider = dbProvider;
             _dataService = dataService;
             _auth = authorization;
-            DbName = _dataService.GetConnectionString();
+            DbName = Path.GetFileName(Settings.Default.ConnectionString);
             ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
-            
-            //ChangeDataBase = new RelayCommand
+
+            ChangeDataBase = new RelayCommand(() =>
+            {
+                OpenFileDialog fileBrowser = new OpenFileDialog();
+                fileBrowser.Multiselect = false;
+                fileBrowser.ShowDialog();
+                if (!string.IsNullOrEmpty(fileBrowser.FileName))
+                {
+                    _dbProvider.ChangeDataBase(fileBrowser.FileName);
+                    DbName = Path.GetFileName(Properties.Settings.Default.ConnectionString);
+                }
+
+            });
         }
 
         public ICommand ChangeEditorPassword { get;private set; }

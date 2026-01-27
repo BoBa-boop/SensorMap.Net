@@ -24,6 +24,6 @@ namespace SensorMap.Interfaces
         Task Update<T>(T entity) where T : class;
 
         bool ChangeDataBase(string path);
-        void CreateBackupDB(string backupDir,string name);
+        void CreateBackupDB(string backupDir);
     }
 }

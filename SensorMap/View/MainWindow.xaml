@@ -64,7 +64,7 @@
             </Menu>
             <Menu Background="Transparent" Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <MenuItem Header="Настройки" Command="{Binding NavigateToSettings}"/>
-                <MenuItem Header="Резервная копия БД" Command="{Binding NavigateToSectors}"/>
+                <MenuItem Header="Резервная копия БД" Command="{Binding CreateBackupDB}"/>
             </Menu>
             <Menu Background="Transparent">
                 <MenuItem Header="Режим работы">

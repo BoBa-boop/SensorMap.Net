@@ -46,7 +46,8 @@ namespace SensorMap.ViewModel
                 if (!string.IsNullOrEmpty(fileBrowser.FileName))
                 {
                     _dbProvider.ChangeDataBase(fileBrowser.FileName);
-                    DbName = Path.GetFileName(Properties.Settings.Default.ConnectionString);
+                    DbName = Path.GetFileName(Settings.Default.ConnectionString);
+                    dataService.UpdateDataFromDB();
                 }
 
             });

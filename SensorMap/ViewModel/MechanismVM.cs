@@ -120,9 +120,7 @@ namespace SensorMap.ViewModel
                         SensorId = sensor.Id,
                         Sensor = sensor,
                         MechanismId = CurrentMech!.Id,
-                        PLCId = CurrentMech.PLCID,
-                        Mechanism = CurrentMech,
-                        PLC = CurrentMech.PLC
+                        Mechanism = CurrentMech
                     };
                     CurrentMech.SensorsAssig!.Add(sensorAssignments);
                 }
@@ -142,9 +140,7 @@ namespace SensorMap.ViewModel
                         SensorId = node.Data.Id,
                         Sensor = _service.Sensors.FirstOrDefault(x=>x.Id== node.Data.Id),
                         MechanismId = CurrentMech.Id,
-                        PLCId = CurrentMech.PLCID,
                         Mechanism = CurrentMech,
-                        PLC = CurrentMech.PLC
                     };
 
                     DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);

@@ -47,7 +47,6 @@ namespace SensorMap.Services
                 }
             }
         }
-
         public async Task AddSensorsAssignmentAsync(IEnumerable<SensorAssignments> sensors)
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
@@ -82,18 +81,6 @@ namespace SensorMap.Services
                                 });
                                 throw new Exception($"Не найден механизм id:{sensor.MechanismId} в базе данных");
                             }
-                            if (!await dBContext.PLCs.AnyAsync(p => p.Id == sensor.PLCId))
-                            {
-                                Growl.Error(new GrowlInfo
-                                {
-                                    Message = $"[SYSTEM] Не найден PLC id:{sensor.PLCId}",
-                                    CancelStr = "Ignore",
-                                    ShowDateTime = false,
-                                    Type = InfoType.Error,
-                                    WaitTime = 2
-                                });
-                                throw new Exception($"Не найден PLC id:{sensor.PLCId} в базе данных");
-                            }
 
                             // Важно: сначала получить сущности из контекста, а не прикреплять внешние
                             var existingMechanism = await dBContext.Mechanisms
@@ -101,9 +88,6 @@ namespace SensorMap.Services
 
                             var existingSensor = await dBContext.Sensors
                                 .FirstOrDefaultAsync(s => s.Id == sensor.SensorId);
-
-                            var existingPLC = await dBContext.PLCs
-                                .FirstOrDefaultAsync(s => s.Id == sensor.PLCId);
                             if (existingMechanism == null || existingSensor == null)
                             {
                                 throw new Exception("Не найдены связанные сущности в базе данных");
@@ -112,7 +96,6 @@ namespace SensorMap.Services
                             // Присваиваем отслеживаемые сущности
                             sensor.Mechanism = existingMechanism;
                             sensor.Sensor = existingSensor;
-                            sensor.PLC = existingPLC;
 
                             // Добавляем assignment (связанные сущности уже отслеживаются)
                             dBContext.SensorAssignments.Add(sensor);
@@ -152,17 +135,24 @@ namespace SensorMap.Services
         public async Task Delete<T>(T entity) where T : class
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
-            {                
-                dBContext.Entry<T>(entity).State = EntityState.Deleted;
-                await dBContext.SaveChangesAsync();
-                Growl.Success(new GrowlInfo
+            {
+                try
                 {
-                    Message = "Удалено из Базы Данных!",
-                    CancelStr = "Ignore",
-                    ShowDateTime = false,
-                    WaitTime = 2
-                });
-                DataBaseEvents.RaiseEntityDeleted(entity);
+                    dBContext.Entry<T>(entity).State = EntityState.Deleted;
+                    await dBContext.SaveChangesAsync();
+                    Growl.Success(new GrowlInfo
+                    {
+                        Message = "Удалено из Базы Данных!",
+                        CancelStr = "Ignore",
+                        ShowDateTime = false,
+                        WaitTime = 2
+                    });
+                    DataBaseEvents.RaiseEntityDeleted(entity);
+                }
+                catch (Exception ex) 
+                {
+                    System.Windows.MessageBox.Show(ex.Message);
+                }
             }
         }
         public async Task Update<T>(T entity) where T : class
@@ -299,6 +289,16 @@ namespace SensorMap.Services
                     backupConnection.Close();
                 }
                 sourceConnection.Close();
+            }
+            if (File.Exists(backupPath))
+            {
+                Growl.Success(new GrowlInfo
+                {
+                    Message = "Резервная копия БД создана.",
+                    CancelStr = "Ignore",
+                    ShowDateTime = false,
+                    WaitTime = 2
+                });
             }
         }
     }

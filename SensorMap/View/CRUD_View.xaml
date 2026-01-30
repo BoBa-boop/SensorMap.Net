@@ -41,17 +41,13 @@
                             Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"
                             hc:IconElement.Geometry="{StaticResource SaveGeometry}" Foreground="#059fff"/>
 
-                    <Button Name="Cancel" ToolTip="Отменить" Command="{Binding ElementName=root,Path=DataContext.CancelCommand}"
-                            CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
-                            hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" Foreground="#059fff"
-                            Visibility="{Binding IsModified, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                    
                     <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                 </hc:ElementGroup>
                 <DataTemplate.Triggers>
                     <!--Триггер для скрытия кнопок, если есть ошибка-->
                     <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
                                              Path=(Validation.HasError)}"  Value="True">
-                        <Setter Property="Visibility" TargetName="Cancel" Value="Collapsed"/>
                         <Setter Property="Visibility" TargetName="Save" Value="Collapsed"/>
                     </DataTrigger>
                     <!--Триггер для скрытия кнопок из последней добавленной строки-->
@@ -353,7 +349,7 @@
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.PLCs}" 
                                                   DisplayMemberPath="Name"
                                                   Cursor="Hand" 
-                                                  SelectedItem="{Binding PLC,UpdateSourceTrigger=PropertyChanged}"/>
+                                                  SelectedItem="{Binding PLC}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
@@ -493,7 +489,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding PLCs,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                    <DataGrid ItemsSource="{Binding PLCs}" Grid.Row="0"
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -517,7 +513,7 @@
                             <DataGridTemplateColumn Header="Производитель">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Manufacturer,UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBlock Text="{Binding Manufacturer}"
                                                    HorizontalAlignment="Center"
                                                    Cursor="Hand"/>
                                     </DataTemplate>

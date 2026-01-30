@@ -74,7 +74,6 @@ namespace SensorMap.Model
                 }
             }
         }
-        public virtual ObservableCollection<SensorAssignments>? Inputs { get; set; }
         public virtual ObservableCollection<Mechanism>? Mechanisms { get; set; }
         [NotMapped]
         public bool IsModified

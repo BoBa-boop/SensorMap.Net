@@ -25,6 +25,7 @@ namespace SensorMap.Services
         private ObservableCollection<PLC> _plc = new();
         private ObservableCollection<SensorType> _sensorTypes = new();
         private ObservableCollection<Mechanism> _mechanisms= new();
+        private ObservableCollection<string> _manufacturers = new();
         private IDataBaseProvider _provider;
 
         
@@ -43,6 +44,7 @@ namespace SensorMap.Services
         public ObservableCollection<Mechanism> Mechanisms => _mechanisms;
         public ObservableCollection<SensorType> SensorTypes => _sensorTypes;
         public ObservableCollection<PLC> PLCs => _plc;
+        public ObservableCollection<string> PLC_Manufacturers => _manufacturers;
 
         public Mechanism CurrentMechanism_Global 
         {
@@ -58,32 +60,22 @@ namespace SensorMap.Services
         public DataService(IDataBaseProvider provider)
         {
             _provider = provider;
-            GetDataFromDB();
         }
 
-        private async void GetDataFromDB()
+        public async void UpdateDataFromDB()
         {
             await Task.Run(async () => 
             {
-                _sectors = new ObservableCollection<Sector>(await _provider.GetAllSectorsAsync());
-                _plc = new ObservableCollection<PLC>(await _provider.GetAllPLCsAsync());
-                _sensors = new ObservableCollection<Sensor>(await _provider.GetAllSensors());
-                _mechanisms = new ObservableCollection<Mechanism>(await _provider.GetAllMechanisms());
-                _sensorTypes = new ObservableCollection<SensorType>(await _provider.GetSensorTypeAsync());
+                _sectors = new(await _provider.GetAllSectorsAsync());
+                _plc = new (await _provider.GetAllPLCsAsync());
+                _sensors = new (await _provider.GetAllSensors());
+                _mechanisms = new (await _provider.GetAllMechanisms());
+                _sensorTypes = new (await _provider.GetSensorTypeAsync());
             });
-        }
-
-        public string GetConnectionString()
-        {
-            string connection_string = string.Empty;
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(Directory.GetCurrentDirectory());
-            builder.AddJsonFile("appsettings.json");
-            var config = builder.Build();
-            if (config != null)
-                connection_string = config.GetConnectionString("DefaultConnection")!;
-
-            return connection_string;
+            //foreach (var plc in _plc)
+            //{
+            //    _manufacturers.Add(plc.Manufacturer);
+            //}
         }
     }
 }

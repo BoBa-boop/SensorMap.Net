@@ -44,8 +44,10 @@ namespace SensorMap
             AnalyzeDataBase();
             if (IsStartOneApp(e))
             {
+                var data = _serviceProvider.GetRequiredService<IDataService>();
                 var menuApp = _serviceProvider.GetRequiredService<MainWindow>();
                 var navigation = _serviceProvider.GetRequiredService<INavigation>();
+                data.UpdateDataFromDB();
                 navigation.SetMainWindow(menuApp);
                 menuApp.Show();
             }
@@ -129,6 +131,18 @@ namespace SensorMap
 
         private static void ConfigurationDataBase(IServiceCollection services)
         {
+            string? connection_string = string.Empty;
+            IConfigurationRoot config = AppSettingBuilder();
+            connection_string = string.IsNullOrEmpty(connection_string)?config.GetConnectionString("DefaultConnection"): Settings.Default.ConnectionString;
+            if(string.IsNullOrEmpty(connection_string)) connection_string = Settings.Default.BackupDBPath;
+            
+            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
+            Settings.Default.ConnectionString = connection_string;
+            Settings.Default.Save();
+        }
+
+        private static IConfigurationRoot AppSettingBuilder()
+        {
             var builder = new ConfigurationBuilder();
             // установка пути к текущему каталогу
             builder.SetBasePath(Directory.GetCurrentDirectory());
@@ -136,11 +150,7 @@ namespace SensorMap
             builder.AddJsonFile("appsettings.json");
             // создаем конфигурацию
             var config = builder.Build();
-            string connection_string = config.GetConnectionString("DefaultConnection");
-            Settings.Default.ConnectionString = connection_string;
-            Settings.Default.Save();
-            
-            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
+            return config;
         }
 
         private bool IsStartOneApp(StartupEventArgs e)

@@ -77,7 +77,9 @@ namespace SensorMap.EF
         public void Configure(EntityTypeBuilder<Sensor> builder)
         {
             builder.HasKey(x => x.Id);
-            builder.HasOne(t => t.SensorType).WithMany(s => s.Sensors).HasForeignKey(s=>s.SensorTypeID);
+            builder.HasOne(t => t.SensorType).WithMany(s => s.Sensors)
+                .HasForeignKey(s=>s.SensorTypeID)
+                .OnDelete(DeleteBehavior.Restrict); 
         }
     }
     public class SensorTypeConfiguration : IEntityTypeConfiguration<SensorType>
@@ -98,7 +100,8 @@ namespace SensorMap.EF
 
             builder.HasOne(se => se.Sensor)
                .WithMany(s=>s.Sensors)
-               .HasForeignKey(se => se.SensorId);
+               .HasForeignKey(se => se.SensorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             //builder.HasOne(se=>se.Mechanism)
             //    .WithMany(m=>m.SensorsAssig)
@@ -110,16 +113,11 @@ namespace SensorMap.EF
         public void Configure(EntityTypeBuilder<PLC> builder)
         {
             builder.HasKey(x => x.Id);
-
-            builder
-                .HasMany(p => p.Inputs)
-                .WithOne(i => i.PLC)
-                .HasForeignKey(i => i.PLCId);
-
             builder
                 .HasMany(plc => plc.Mechanisms)
                 .WithOne(mech => mech.PLC)
-                .HasForeignKey(p => p.PLCID);
+                .HasForeignKey(p => p.PLCID)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }

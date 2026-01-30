@@ -44,7 +44,7 @@ namespace SensorMap.ViewModel
             Sectors = _service.Sectors;
             Mechanisms = _service.Mechanisms;
             PLCs = _service.PLCs;
-            Manufacturers = new(PLCs.Where(x=>x.Manufacturer!=null).Select(x => x.Manufacturer));
+            Manufacturers = _service.PLC_Manufacturers;
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
             TempSensorTypes = new(SensorTypes);
@@ -90,13 +90,7 @@ namespace SensorMap.ViewModel
                     }
                 }
             });
-            CancelCommand = new RelayCommand<object>((arg)=>
-            {
-                if (arg is null) return;
-                var entityType = arg.GetType();
-                entityType.GetMethod("CancelEdit")!.Invoke(arg, null);
-                entityType?.GetProperty("IsModified")?.SetValue(arg, false);
-            });
+            
             AddImage = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
@@ -217,7 +211,6 @@ namespace SensorMap.ViewModel
         public ICommand DeleteCommand { get; set; }
         public ICommand SaveCommand { get; set; }
         public ICommand ShowCommand { get; set; }
-        public ICommand CancelCommand { get; set; }
         public ICommand AddImage {  get; set; }
         public ICommand ShowPreviewImage { get; set; }
         public ICommand AddSensorType { get; }

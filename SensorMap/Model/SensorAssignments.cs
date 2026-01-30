@@ -61,8 +61,6 @@ namespace SensorMap.Model
 
         public virtual int SensorId { get; set; }
         public virtual Sensor? Sensor { get; set; }
-        public virtual int? PLCId { get; set; }
-        public virtual PLC? PLC { get; set; }
         public virtual int MechanismId { get; set; }
         public virtual Mechanism? Mechanism { get; set; }
     }

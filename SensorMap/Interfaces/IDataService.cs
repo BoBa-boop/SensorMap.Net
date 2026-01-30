@@ -18,7 +18,8 @@ namespace SensorMap.Interfaces
         ObservableCollection<Sector> Sectors { get; }
         ObservableCollection<Mechanism> Mechanisms { get; }
         ObservableCollection<PLC> PLCs { get; }
+        ObservableCollection<string> PLC_Manufacturers { get; }
 
-        string GetConnectionString();
+        void UpdateDataFromDB();
     }
 }

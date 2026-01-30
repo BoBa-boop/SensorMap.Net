@@ -19,7 +19,7 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _plcSelected, value); }
         }
         [Reactive] public ObservableCollection<PLC> PLC { get; set; }
-        private ObservableCollection<string> manufacturers { get; set; }
+        private ObservableCollection<string> _manufacturers { get; set; }
         [Reactive] public TreeViewCollection<string, PLC> PLCTree { get; set; }
         public PLC_VM(IDataBaseProvider provider, IDataService service, PLC plc = null)
         {
@@ -27,9 +27,9 @@ namespace SensorMap.ViewModel
             _provider = provider;
             SelectedPLC = plc;            
             PLC = service.PLCs;
-            manufacturers = new(PLC.Select(x => x.Manufacturer).ToList());
+            _manufacturers = service.PLC_Manufacturers;
             Func<string, PLC, bool> filter = (m, p) => p.Manufacturer == m;
-            PLCTree = new TreeViewCollection<string, PLC>("Manufacturer", manufacturers, PLC, filter);
+            PLCTree = new TreeViewCollection<string, PLC>("Manufacturer", _manufacturers, PLC, filter);
         }
 
     }

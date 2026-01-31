@@ -31,7 +31,6 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
-        [Reactive] public ObservableCollection<SensorType> TempSensorTypes { get; set; }
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
 
@@ -44,10 +43,9 @@ namespace SensorMap.ViewModel
             Sectors = _service.Sectors;
             Mechanisms = _service.Mechanisms;
             PLCs = _service.PLCs;
-            Manufacturers = _service.PLC_Manufacturers;
+            //Manufacturers = _service.PLC_Manufacturers;
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
-            TempSensorTypes = new(SensorTypes);
             
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
@@ -137,10 +135,10 @@ namespace SensorMap.ViewModel
                     }
                     sType.Image = photoBytes;
                 }
-                if(!TempSensorTypes.Where(x=>x.Name==sType.Name).Any())
+                if(!SensorTypes.Where(x=>x.Name==sType.Name).Any())
                 {
                     sType.IsNew = true;
-                    TempSensorTypes.Add(sType);
+                    SensorTypes.Add(sType);
                 }
             }, (param) => 
             {
@@ -152,7 +150,11 @@ namespace SensorMap.ViewModel
             DeleteNodeTitleType = new RelayCommand<object>((type) => 
             {
                 if(type is SensorType sensorType&& sensorType!=null)
-                    TempSensorTypes.Remove(sensorType);DeleteCommand.Execute(type); 
+                {
+                    SensorTypes.Remove(sensorType);
+                    if (_service.SensorTypes.Contains(sensorType))
+                        DeleteCommand.Execute(type); 
+                }
             }, (type) => { return type != null; });
             
             _service.WhenAnyValue(x => x.IsEditMode)

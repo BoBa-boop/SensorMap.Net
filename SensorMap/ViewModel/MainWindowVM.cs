@@ -17,7 +17,6 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _dataService;
         [Reactive] public INavigation Navigation { get; set; }
-
         private bool _isEdit = false;
         private bool _activeWindow=true;
 
@@ -39,6 +38,10 @@ namespace SensorMap.ViewModel
             _dataService = service;
             Navigation = _nav;
             IsEditMode = _dataService.IsEditMode;
+#if DEBUG==true
+            IsEditMode = true;
+#endif
+            
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
             NavigateToSettings = new RelayCommand(() => Navigation.NavigateTo<SettingsVM>());
             NavigateToSensors = new RelayCommand(() => Navigation.NavigateTo<SensorVM>());

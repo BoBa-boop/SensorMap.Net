@@ -424,14 +424,13 @@
                             <DataGridTemplateColumn Header="Тип">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=SensorType.Name}" Cursor="Hand"/>
+                                        <TextBlock Text="{Binding Path=SensorType.Name,UpdateSourceTrigger=PropertyChanged}" Cursor="Hand"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes,
-                                                                UpdateSourceTrigger=PropertyChanged}"
-                                                  SelectedItem="{Binding SensorType,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                                                  
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes}"
+                                                  SelectedItem="{Binding SensorType}"                                                  
                                                   DisplayMemberPath="Name"                                                  
                                                   Cursor="Hand"/>
                                     </DataTemplate>
@@ -501,8 +500,8 @@
                 <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
             </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name, ValidatesOnDataErrors=True,
-                    UpdateSourceTrigger=PropertyChanged}" Header="Название">
+                            <DataGridTextColumn Binding="{Binding Name, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
+                                                Header="Название">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Cursor" Value="Hand"/>
@@ -630,7 +629,7 @@
                                 <RowDefinition Height="150"/>
                             </Grid.RowDefinitions>
                             <ListBox Effect="{StaticResource EffectShadow2}" Name="twSensors" Margin="0,0,0,20"
-                                     ItemsSource="{Binding TempSensorTypes,UpdateSourceTrigger=PropertyChanged}"
+                                     ItemsSource="{Binding SensorTypes,UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>

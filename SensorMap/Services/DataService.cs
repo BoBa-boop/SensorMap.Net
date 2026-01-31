@@ -68,6 +68,7 @@ namespace SensorMap.Services
             {
                 _sectors = new(await _provider.GetAllSectorsAsync());
                 _plc = new (await _provider.GetAllPLCsAsync());
+                //_plc = new() { new PLC() { Name = "sd", Id = 15 } };
                 _sensors = new (await _provider.GetAllSensors());
                 _mechanisms = new (await _provider.GetAllMechanisms());
                 _sensorTypes = new (await _provider.GetSensorTypeAsync());

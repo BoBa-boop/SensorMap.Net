@@ -256,10 +256,11 @@ namespace SensorMap.Services
                 File.Copy(path,sourceConnection.DataSource,true);
                 //File.Move(path, sourceConnection.DataSource,true);
             }
-            
+            _dbContextFactory.UpdateConnectionString(newDB_connectionString);
             using (SqliteConnection sourceConnection = new SqliteConnection(newDB_connectionString))
             {
                 sourceConnection.Open();
+                sourceConnection.Close();
             }
             Properties.Settings.Default.ConnectionString = newDB_connectionString;
             Properties.Settings.Default.Save();

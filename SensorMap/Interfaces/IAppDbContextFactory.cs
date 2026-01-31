@@ -11,5 +11,6 @@ namespace SensorMap.Interfaces
     public interface IAppDbContextFactory
     {
         AppDBContext CreateDbContext();
+        void UpdateConnectionString(string path);
     }
 }

@@ -31,7 +31,6 @@ namespace SensorMap.Model
                 if (_name != value)
                 {
                     this.RaiseAndSetIfChanged(ref _name, value);
-                    IsModified = true;
                 }
             }
         }
@@ -46,7 +45,6 @@ namespace SensorMap.Model
                 if (_image != value)
                 {
                     this.RaiseAndSetIfChanged(ref _image, value);
-                    IsModified = true;
                 }
             }
         }
@@ -63,7 +61,6 @@ namespace SensorMap.Model
                 {
                     this.RaiseAndSetIfChanged(ref sector, value);
                     SectorID = sector!.Id;
-                    IsModified = true;
                 }
             }
         }
@@ -77,7 +74,6 @@ namespace SensorMap.Model
                 {
                     this.RaiseAndSetIfChanged(ref _plc, value);
                     PLCID = _plc!.Id;
-                    IsModified = true;
                 }
             }
         }

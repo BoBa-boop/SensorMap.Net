@@ -13,7 +13,7 @@ namespace SensorMap.Services
 {
     public class DBContextFactory:IAppDbContextFactory
     {
-        private readonly string _connectionString;
+        private string _connectionString;
         public DBContextFactory(string connectionString)
         {
             _connectionString = connectionString;
@@ -23,6 +23,11 @@ namespace SensorMap.Services
         {
             DbContextOptions options = new DbContextOptionsBuilder().UseSqlite(_connectionString).Options;
             return new AppDBContext(options);
+        }
+
+        public void UpdateConnectionString(string path)
+        {
+            _connectionString = path;
         }
     }
 }

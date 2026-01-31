@@ -131,11 +131,10 @@ namespace SensorMap
 
         private static void ConfigurationDataBase(IServiceCollection services)
         {
-            string? connection_string = string.Empty;
+            string? connection_string = Settings.Default.ConnectionString;
             IConfigurationRoot config = AppSettingBuilder();
-            connection_string = string.IsNullOrEmpty(connection_string)?config.GetConnectionString("DefaultConnection"): Settings.Default.ConnectionString;
-            if(string.IsNullOrEmpty(connection_string)) connection_string = Settings.Default.BackupDBPath;
-            
+            if(string.IsNullOrEmpty(connection_string)) connection_string= config.GetConnectionString("DefaultConnection");
+
             services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
             Settings.Default.ConnectionString = connection_string;
             Settings.Default.Save();

@@ -20,7 +20,7 @@ namespace SensorMap.Model
         private byte[]? _image;
         private string _name = string.Empty;
         private string _ip = string.Empty;
-        private string? _creator = string.Empty;
+        private string _manufacturer = string.Empty;
 
         public int Id { get; set; }
         [Reactive]
@@ -32,12 +32,11 @@ namespace SensorMap.Model
                 if (value != _image)
                 {
                     this.RaiseAndSetIfChanged(ref _image, value);
-                    IsModified = true;
                 }
             }
         }
         [MaxLength(15)]
-        public string? IP
+        public string IP
         {
             get => _ip;
             set
@@ -57,20 +56,18 @@ namespace SensorMap.Model
                 if (_name != value)
                 {
                     this.RaiseAndSetIfChanged(ref _name, value);
-                    IsModified = true;
                 }
             }
         }
         [Reactive]
-        public string? Manufacturer
+        public string Manufacturer
         {
-            get => _creator;
+            get => _manufacturer;
             set
             {
-                if (_creator != value)
+                if (_manufacturer != value)
                 {
-                    this.RaiseAndSetIfChanged(ref _creator, value);
-                    IsModified = true;
+                    this.RaiseAndSetIfChanged(ref _manufacturer, value);
                 }
             }
         }

@@ -24,16 +24,17 @@
             <ColumnDefinition Width="*" MaxWidth="200" MinWidth="50"/>
             <ColumnDefinition Width="*" MinWidth="400"/>
         </Grid.ColumnDefinitions>
-            <hc:ButtonGroup Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Width="110">
-                <Button hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" hc:IconElement.Width="20" hc:IconElement.Height="20"
-                        ToolTip="Отменить (Ctrl+Z)" 
+            <hc:SimpleStackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="{StaticResource BorderBrush}">
+                <Button hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" hc:IconElement.Width="18" hc:IconElement.Height="18"
+                        ToolTip="Отменить" 
+                        IsEnabled="{Binding CanUndo,UpdateSourceTrigger=PropertyChanged}"
                         Command="{Binding UndoCommand}"/>
-                <Button hc:IconElement.Geometry="{StaticResource RotateRightGeometry}" hc:IconElement.Width="20" hc:IconElement.Height="20"
-                        ToolTip="Вернуть (Ctrl+Y)"
+                <Button hc:IconElement.Geometry="{StaticResource RotateRightGeometry}" hc:IconElement.Width="18" hc:IconElement.Height="18"
+                        ToolTip="Вернуть"
+                        IsEnabled="{Binding CanRedo,UpdateSourceTrigger=PropertyChanged}"
                         Command="{Binding RedoCommand}"/>
-            </hc:ButtonGroup>
-            <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
-                  Grid.Row="0" Grid.Column="1">
+                <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
+                  >
                 <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}">
                     <MenuItem.Style>
                         <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
@@ -69,8 +70,8 @@
                     </MenuItem.Style>
                 </MenuItem>
             </Menu>
-
-        <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
+            </hc:SimpleStackPanel>
+            <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
             <StackPanel Orientation="Vertical">
                 <Expander Header="{Binding CurrentSector.Name,FallbackValue='Не выбран участок'}" IsExpanded="True">
                         <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}"
@@ -135,7 +136,7 @@
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}" ItemsSource="{Binding CurrentMech.SensorsAssig,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                       SaveSensorsCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
-                                      UndoRedoStack="{Binding UndoRedoStack,Mode=TwoWay}" IsEditMode="{Binding IsEditMode}"/>
+                                      ViewModel="{Binding }" IsEditMode="{Binding IsEditMode}"/>
             </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>
             </Grid>

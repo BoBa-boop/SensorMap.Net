@@ -12,7 +12,7 @@ using Point = System.Windows.Point;
 
 namespace SensorMap.Commands.SensorCommands
 {
-    public class MoveSensor : ICommandSensors
+    public class MoveSensor : IUndoRedoCommand
     {
         private readonly UIElement _element;
         private readonly SensorAssignments _sensor;

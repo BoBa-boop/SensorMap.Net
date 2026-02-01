@@ -213,8 +213,18 @@
                 </Style.Triggers>
             </Style>
         </Grid.Resources>
-        
-        <hc:TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+        <DockPanel Grid.Row="0" HorizontalAlignment="Left">
+            <Button Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo,UpdateSourceTrigger=PropertyChanged}"
+                        hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}">
+                    <Button.ToolTip>Отменить последнее действие</Button.ToolTip>
+                </Button>
+            <Button Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo,UpdateSourceTrigger=PropertyChanged}"
+                    hc:IconElement.Geometry="{StaticResource RotateRightGeometry}">
+                <Button.ToolTip>Повторить отмененное действие</Button.ToolTip>
+            </Button>
+
+        </DockPanel>
+            <hc:TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                        Style="{StaticResource TabControlSliding}"
                        Background="Transparent" BorderThickness="0" IsAnimationEnabled="False">
 
@@ -233,16 +243,16 @@
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                               IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior/>
+                            <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
                         <!--<DataGrid.RowValidationRules>
                             <valid:ValidationRuleSector ValidationStep="UpdatedValue"/>
                         </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
+                            <DataGridTextColumn Header="Название" Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}"/>
                             
                             <!--Колонка отображения механизмов участка-->
-                            <DataGridTemplateColumn>
+                            <DataGridTemplateColumn IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ComboBox ItemsSource="{Binding Mechanisms}" DisplayMemberPath="Name" MinWidth="100" MaxWidth="250"
@@ -280,7 +290,7 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             
-                            <DataGridTemplateColumn Header="Действие">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
@@ -314,7 +324,7 @@
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                               IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior/>
+                            <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
                         <!--<DataGrid.RowValidationRules>
                             <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
@@ -356,7 +366,7 @@
 
                             <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
-                            <DataGridTemplateColumn Header="Действие">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack"
@@ -406,7 +416,7 @@
                                IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior/>
+                            <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
                         <!--<DataGrid.RowValidationRules>
                             <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
@@ -439,7 +449,7 @@
 
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True"  CellTemplate="{StaticResource imgView_Button}"/>
 
-                            <DataGridTemplateColumn Header="Действие">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
@@ -494,7 +504,7 @@
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                               IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior/>
+                            <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
                         <!--<DataGrid.RowValidationRules>
                 <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
@@ -528,7 +538,7 @@
 
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
-                            <DataGridTemplateColumn>
+                            <DataGridTemplateColumn IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                         <hc:ComboBox ItemsSource="{Binding Mechanisms}"
@@ -567,7 +577,7 @@
                             </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             
-                            <DataGridTemplateColumn Header="Действие">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
@@ -648,7 +658,7 @@
                                     <Style TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
                                         <Setter Property="Background" Value="{StaticResource DefaultBrush}"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding TempSensorTypes.Count}" Value="0">
+                                            <DataTrigger Binding="{Binding SensorTypes.Count}" Value="0">
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="ListBox">

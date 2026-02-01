@@ -7,22 +7,26 @@ namespace SensorMap.Model
 {
     public class UndoRedoStack:ReactiveObject
     {
-        private Stack<ICommandSensors> _undo;
-        private Stack<ICommandSensors> _redo;
-        private int _undoCount;
-        private int _redoCount;
+        private Stack<IUndoRedoCommand> _undo = new Stack<IUndoRedoCommand>();
+        private Stack<IUndoRedoCommand> _redo = new Stack<IUndoRedoCommand>();
+        private bool _canUndo;
+        private bool _canRedo;
 
-        [Reactive]
-        public int UndoCount
+        [Reactive]public bool CanUndo
         {
-            get => _undoCount; 
-            set=> this.RaiseAndSetIfChanged(ref _undoCount, value);
+            get { return _undo.Count > 0; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _canUndo, value);
+            }
         }
-        [Reactive]
-        public int RedoCount
+        [Reactive]public bool CanRedo
         {
-            get => _redoCount;
-            set=> this.RaiseAndSetIfChanged(ref _redoCount, value);
+            get { return _redo.Count > 0; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _canRedo, value);
+            }
         }
         public UndoRedoStack() 
         {
@@ -31,42 +35,42 @@ namespace SensorMap.Model
 
         private void Reset()
         {
-            _undo = new Stack<ICommandSensors>();
-            _redo = new Stack<ICommandSensors>();
+            _undo.Clear();
+            _redo.Clear();
+
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
         }
 
-        public void Do(ICommandSensors command)
+        public void Do(IUndoRedoCommand command)
         {
             command.Do();
             _undo.Push(command);
             _redo.Clear();
 
-            UndoCount = _undo.Count;
-            RedoCount = _redo.Count;
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
         }
         public void Undo()
         {
-            if (_undo.Count > 0)
-            {
-                ICommandSensors command = _undo.Pop();
-                command.Undo();
-                _redo.Push(command);
+            if (!CanUndo) return;
 
-                UndoCount = _undo.Count;
-                RedoCount = _redo.Count;
-            }
+            IUndoRedoCommand command = _undo.Pop();
+            command.Undo();
+            _redo.Push(command);
+
+            this.RaisePropertyChanged(nameof(CanUndo)); 
+            this.RaisePropertyChanged(nameof(CanRedo));
         }
         public void Redo() 
         {
-            if( _redo.Count > 0)
-            {
-                ICommandSensors command = _redo.Pop();
-                command.Do();
-                _undo.Push(command);
+            if (!CanRedo) return;
+            IUndoRedoCommand command = _redo.Pop();
+            command.Do();
+            _undo.Push(command);
 
-                UndoCount = _undo.Count;
-                RedoCount = _redo.Count;
-            }
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
         }
     }
 }

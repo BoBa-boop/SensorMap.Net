@@ -13,7 +13,7 @@ using System.Windows.Shapes;
 
 namespace SensorMap.Commands.SensorCommands
 {
-    public class AddSensor : ICommandSensors
+    public class AddSensor : IUndoRedoCommand
     {
         private readonly CustomSensor _element;
         private readonly SensorAssignments _sensorData;

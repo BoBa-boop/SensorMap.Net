@@ -10,6 +10,7 @@ using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Windows;
@@ -24,8 +25,10 @@ namespace SensorMap.ViewModel
         private readonly IDataService _service;
         private readonly ITempImage _tempImage;
         private bool isEditMode;
-
+        public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
+        [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
+        [Reactive] public bool CanRedo=>_undoRedoManager.CanRedo;
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
@@ -40,6 +43,7 @@ namespace SensorMap.ViewModel
             _tempImage = tempImage;
             _provider = provider;
             _service = service;
+
             Sectors = _service.Sectors;
             Mechanisms = _service.Mechanisms;
             PLCs = _service.PLCs;
@@ -156,9 +160,18 @@ namespace SensorMap.ViewModel
                         DeleteCommand.Execute(type); 
                 }
             }, (type) => { return type != null; });
-            
+
+            UndoCommand = new RelayCommand(_undoRedoManager!.Undo);
+            RedoCommand = new RelayCommand(_undoRedoManager.Redo);
+
             _service.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(this, x => x.IsEditMode);
+
+            _undoRedoManager.WhenAnyValue(x => x.CanUndo)
+            .Subscribe(_ => this.RaisePropertyChanged(nameof(CanUndo)));
+
+            _undoRedoManager.WhenAnyValue(x => x.CanRedo)
+                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
             //DataBaseEvents.EntityCreated.Subscribe(OnEntityCreated);
             //DataBaseEvents.EntityDeleted.Subscribe(OnEntityDeleted);
             //DataBaseEvents.EntityUpdated.Subscribe(OnEntityUpdated);
@@ -217,6 +230,12 @@ namespace SensorMap.ViewModel
         public ICommand ShowPreviewImage { get; set; }
         public ICommand AddSensorType { get; }
         public ICommand DeleteNodeTitleType { get; }
-        
+        public ICommand UndoCommand { get; }
+        public ICommand RedoCommand { get; }
+        public void RecordEdit<T>(T _inputObject, string propertyName, object oldValue, object newValue)
+        {
+            var command = new Commands.DataGridCommands.EditCell<T>(_inputObject, propertyName, oldValue, newValue);
+            _undoRedoManager.Do(command);
+        }
     }
 }

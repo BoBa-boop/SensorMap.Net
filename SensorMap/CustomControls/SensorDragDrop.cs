@@ -1,22 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
+using SensorMap.Behaviors;
 using SensorMap.Commands.SensorCommands;
 using SensorMap.Model;
 using SensorMap.ViewModel;
-using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Linq;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Xml.Linq;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
@@ -59,14 +54,6 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsShowAddressesProperty =
             DependencyProperty.Register("IsShowAddresses", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
-        public static readonly DependencyProperty UndoRedoStackProperty = DependencyProperty.Register("UndoRedoStack", typeof(UndoRedoStack),typeof(SensorDragDrop),
-         new PropertyMetadata(new UndoRedoStack()));
-
-        public UndoRedoStack UndoRedoStack
-        {
-            get => (UndoRedoStack)GetValue(UndoRedoStackProperty);
-            set => SetValue(UndoRedoStackProperty, value);
-        }
 
         public static readonly DependencyProperty SaveSensorsCommandProperty =
             DependencyProperty.Register("SaveSensorsCommand", typeof(ICommand), typeof(SensorDragDrop));
@@ -83,6 +70,13 @@ namespace SensorMap.CustomControls
             get { return (ICommand)GetValue(ShowAddressCommandProperty); }
             set { SetValue(ShowAddressCommandProperty, value); }
         }
+        public object ViewModel
+        {
+            get { return (object)GetValue(ViewModelProperty); }
+            set { SetValue(ViewModelProperty, value); }
+        }
+        public static readonly DependencyProperty ViewModelProperty =
+            DependencyProperty.Register("ViewModel", typeof(object), typeof(SensorDragDrop), new PropertyMetadata(null));
 
         public static readonly DependencyProperty CoordProperty = DependencyProperty.Register("Coord", typeof(Point), typeof(SensorDragDrop),
             new PropertyMetadata(default(Point)));
@@ -243,7 +237,8 @@ namespace SensorMap.CustomControls
                 double offsetX, offsetY;
                 GetLeftTopPoint(out offsetX, out offsetY);
                 CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
-                UndoRedoStack.Do(new AddSensor(sensor, element, _canvas, ItemsSource));
+                if (ViewModel != null && ViewModel is MechanismVM vm)
+                    vm.AddSensorCommand(sensor, element, _canvas, ItemsSource);
                 element.Tag = ItemsSource.IndexOf(sensor);
             }
         }
@@ -280,8 +275,8 @@ namespace SensorMap.CustomControls
                     Point worldPoint = ScreenToWorld(new Point(screenX, screenY));
 
                     // 5. Создаем команду с МИРОВЫМИ координатами
-                    UndoRedoStack.Do(new MoveSensor(_selectedElement,worldPoint,_selectedSensor,(x) => WorldToScreen(worldPoint)
-                    ));
+                    if (ViewModel != null && ViewModel is MechanismVM vm)
+                        vm.MoveSensorCommand(_selectedElement, worldPoint, _selectedSensor, (x) => WorldToScreen(worldPoint));
                 }
                 ////SensorDropCommand?.Execute(_selectedSensor);
                 e.Handled = true;
@@ -304,8 +299,9 @@ namespace SensorMap.CustomControls
                 {
                     Point dropPosition = e.GetPosition(_canvas);
                     CustomSensor element = CreateSensorObject(sensorData,WorldToScreen(dropPosition));
-                    _isDropAdd = true;
-                    UndoRedoStack.Do(new AddSensor(sensorData, element, _canvas!, ItemsSource));
+                    _isDropAdd = true; 
+                    if (ViewModel != null && ViewModel is MechanismVM vm)
+                        vm.AddSensorCommand(sensorData, element, _canvas!, ItemsSource);
 
                     element.Tag = ItemsSource.IndexOf(sensorData);
 

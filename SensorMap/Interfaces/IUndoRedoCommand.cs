@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SensorMap.Interfaces
 {
-    public interface ICommandSensors
+    public interface IUndoRedoCommand
     {
         void Do();
         void Undo();

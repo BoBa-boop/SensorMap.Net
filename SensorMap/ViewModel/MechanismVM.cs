@@ -8,6 +8,7 @@ using HandyControl.Tools.Extension;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -31,9 +32,10 @@ namespace SensorMap.ViewModel
     {
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
-        private Sector? currentSector;
+        private Sector? currentSector; 
+        private Mechanism? currentMech;
         private ObservableCollection<SensorType> sensorTypes { get; set; }
-        public UndoRedoStack UndoRedoStack { get; set; }
+        public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation? Navigation { get; set; }
@@ -49,10 +51,10 @@ namespace SensorMap.ViewModel
                 }
             }
         }
-        private Mechanism? currentMech;
+        [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
+        [Reactive] public bool CanRedo => _undoRedoManager.CanRedo;
 
-        [Reactive]
-        public Mechanism? CurrentMech
+        [Reactive] public Mechanism? CurrentMech
         {
             get => currentMech;
             set
@@ -65,22 +67,8 @@ namespace SensorMap.ViewModel
             }
         }
         private Sensor? _curSensor;
-        private bool _CanUndo;
-        private bool _CanRedo;
         private bool isEditMode;
-
-        [Reactive]
-        public bool CanUndo
-        {
-            get => _CanUndo;
-            set 
-            {
-                this.RaiseAndSetIfChanged(ref _CanUndo, value);
-            }
-        }
-
-        [Reactive]
-        public Sensor? CurrentSensor
+        [Reactive] public Sensor? CurrentSensor
         {
             get => _curSensor;
             set
@@ -101,7 +89,7 @@ namespace SensorMap.ViewModel
             Navigation = _nav;
             _provider = provider;
             _service = service;
-            UndoRedoStack = new UndoRedoStack();
+
             sensorTypes = _service.SensorTypes;
             CurrentSector = _service.CurrentSector_Global;
             CurrentMech = _service.CurrentMechanism_Global;
@@ -153,12 +141,15 @@ namespace SensorMap.ViewModel
                 return false;
             });
             SaveSensorPlace = new RelayCommand<Mechanism>((m) => SaveCoordinates());
-            this.WhenAnyValue(x => x.UndoRedoStack.UndoCount).ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe((count) => CanUndo = count > 0 );
             _service.WhenAnyValue(x => x.IsEditMode)
                .BindTo(this, x => x.IsEditMode);
-            UndoCommand = new RelayCommand(()=> UndoRedoStack.Undo());
-            RedoCommand = new RelayCommand(() => UndoRedoStack.Redo());
+            _undoRedoManager.WhenAnyValue(x => x.CanUndo)
+            .Subscribe(_ => this.RaisePropertyChanged(nameof(CanUndo)));
+
+            _undoRedoManager.WhenAnyValue(x => x.CanRedo)
+                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
+            UndoCommand = new RelayCommand(()=> _undoRedoManager.Undo());
+            RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
 
         }
 
@@ -204,5 +195,17 @@ namespace SensorMap.ViewModel
         public ICommand DragSensorCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
+
+        public void AddSensorCommand(SensorAssignments sensor,CustomSensor UI_Sensor,Canvas canvas, ObservableCollection<SensorAssignments> sensors)
+        {
+            var command = new Commands.SensorCommands.AddSensor(sensor,UI_Sensor,canvas,sensors);
+            _undoRedoManager.Do(command);
+        }
+        public void MoveSensorCommand(UIElement UI_Sensor, System.Windows.Point newPoint, SensorAssignments sensor,
+            Func<System.Windows.Point, System.Windows.Point> func)
+        {
+            var command = new Commands.SensorCommands.MoveSensor(UI_Sensor, newPoint, sensor,func);
+            _undoRedoManager.Do(command);
+        }
     }
 }

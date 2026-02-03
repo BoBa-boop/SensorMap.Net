@@ -7,8 +7,10 @@ using Microsoft.Win32;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using static Azure.Core.HttpHeader;
 
 namespace SensorMap.Services
@@ -138,16 +140,20 @@ namespace SensorMap.Services
             {
                 try
                 {
-                    dBContext.Entry<T>(entity).State = EntityState.Deleted;
-                    await dBContext.SaveChangesAsync();
-                    Growl.Success(new GrowlInfo
+                    if (Exists<T>(entity))
                     {
-                        Message = "Удалено из Базы Данных!",
-                        CancelStr = "Ignore",
-                        ShowDateTime = false,
-                        WaitTime = 2
-                    });
-                    DataBaseEvents.RaiseEntityDeleted(entity);
+                       
+                        dBContext.Entry<T>(entity).State = EntityState.Deleted;
+                        await dBContext.SaveChangesAsync();
+                        Growl.Success(new GrowlInfo
+                        {
+                            Message = "Удалено из Базы Данных!",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            WaitTime = 2
+                        });
+                        DataBaseEvents.RaiseEntityDeleted(entity);
+                    }
                 }
                 catch (Exception ex) 
                 {
@@ -170,6 +176,13 @@ namespace SensorMap.Services
                     WaitTime = 2
                 });
                 DataBaseEvents.RaiseEntityUpdated(entity);
+            }
+        }
+        public bool Exists<T>(T entity) where T:class
+        {
+            using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
+            {
+                return dBContext.Set<T>().Local.Any(e=>e==entity);
             }
         }
         public async Task<IEnumerable<Mechanism>> GetAllMechanisms()
@@ -302,5 +315,6 @@ namespace SensorMap.Services
                 });
             }
         }
+        
     }
 }

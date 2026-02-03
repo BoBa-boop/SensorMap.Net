@@ -14,14 +14,19 @@
         ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         Height="300" Width="300"
         WindowStyle="None" Topmost="{Binding Source={x:Static Application.Current},Path=MainWindow.IsActive,Mode=OneWay}">
+    <Window.Resources>
+        <FontFamily x:Key="passwordFont">pack://application:,,,/Resources/style/#password</FontFamily>
+    </Window.Resources>
     <hc:TransitioningContentControl TransitionMode="Bottom2Top">
         <Grid>
             <Button Width="30" Height="30" Style="{StaticResource ButtonDanger}"
                     Margin="3" IsCancel="True"
+                    Focusable="False"
                     hc:IconElement.Geometry="{StaticResource CloseGeometry}" 
                 VerticalAlignment="Top" HorizontalAlignment="Right"/>
             <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                <Image Source="{StaticResource LockImage}" Width="80" Margin="0,0,0,30">
+                <Image Source="{StaticResource LockImage}" Width="80" Margin="0,0,0,30"
+                       Focusable="False">
                     <Image.Style>
                         <Style TargetType="Image">
                             <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
@@ -53,12 +58,74 @@
                     </Image.Style>
                 </Image>
 
-                <hc:PasswordBox Name="password" hc:InfoElement.Placeholder="{Binding UIMessageState}"
-                                ShowEyeButton="True" Width="200"/>
+                <Grid Width="200" FocusManager.FocusedElement="{Binding ElementName=pinBox}">
+                    <hc:TextBox x:Name="pinBox" Width="200">
+                        <hc:TextBox.Style>
+                            <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource TextBoxBaseStyle}">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type TextBox}">
+                                            <Border Name="Border" CornerRadius="2"
+                                                    Background="#FFFFFF"
+                                                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                                <Grid>
+                                                    <ScrollViewer Margin="0" x:Name="PART_ContentHost"/>
+                                                    <TextBlock Visibility="Hidden"
+                                                               x:Name="WatermarkText"
+                                                               IsHitTestVisible="False"
+                                                               VerticalAlignment="Center"
+                                                               Padding="10,0"
+                                                               Foreground="LightGray"
+                                                               Text="{Binding UIMessageState}"
+                                                               FontFamily="Bahnschrift"/>
+                                                </Grid>
+                                            </Border>
+                                            
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="Text" Value="">
+                                                    <Setter Property="Visibility" TargetName="WatermarkText" Value="Visible"/>
+                                                </Trigger>
+                                                <Trigger Property="IsFocused" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChecked, ElementName=passwordHide}"
+                                        Value="False">
+                                        <Setter Property="FontFamily" Value="{DynamicResource passwordFont}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </hc:TextBox.Style>
+                    </hc:TextBox>
+                    <ToggleButton HorizontalAlignment="Right"
+                                  x:Name="passwordHide"
+                                  IsChecked="False"
+                                  Focusable="False"
+                                  Foreground="Black"
+                                  BorderThickness="0"
+                                  Background="Transparent">
+                        <FrameworkElement.Resources>
+                            <Style TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource ToggleButtonGroupItemBaseStyle}">
+                                <Setter Property="hc:IconElement.Geometry" Value="{StaticResource EyeOpenGeometry}"/>
+                                <Setter Property="hc:IconElement.Width" Value="20"/>
+                                <Setter Property="hc:IconElement.Height" Value="20"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="False">
+                                        <Setter Property="hc:IconElement.Geometry" Value="{StaticResource EyeCloseGeometry}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </FrameworkElement.Resources>
+                    </ToggleButton>
+                </Grid>                
                 <Button Content="Подтвердить" Margin="0,20,0,10" IsDefault="True" Cursor="Hand">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="Click">
-                            <i:InvokeCommandAction Command="{Binding VerifyCommand}" CommandParameter="{Binding ElementName=password}"/>
+                            <i:InvokeCommandAction Command="{Binding VerifyCommand}" CommandParameter="{Binding ElementName=pinBox}"/>
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
                     <Button.Style>
@@ -72,12 +139,12 @@
                     </Button.Style>
                 </Button>
                 <TextBlock Text="Забыли пароль?" HorizontalAlignment="Center"
+                           Focusable="False"
                        FontSize="10" FontWeight="DemiBold" Cursor="Hand"
                        Foreground="{StaticResource DarkPrimaryBrush}" Style="{StaticResource TextBlockDefaultInfo}"/>
 
             </StackPanel>
-
-
         </Grid>
     </hc:TransitioningContentControl>
+    
 </Window>

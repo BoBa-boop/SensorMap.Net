@@ -51,11 +51,11 @@ namespace SensorMap.ViewModel
 
             VerifyCommand = ReactiveCommand.Create<object>((obj) =>
             {
-                if (obj is PasswordBox pBox)
+                if (obj is System.Windows.Controls.TextBox pBox)
                 {
-                    IsAuth = _authorization.Authorization(pBox.Password);
+                    IsAuth = _authorization.Authorization(pBox.Text);
                     if(IsAuth) _data.IsEditMode = true;
-                    if (IsAuth == false) pBox.Password = string.Empty;
+                    if (IsAuth == false) pBox.Text = string.Empty;
                 }
             });
            

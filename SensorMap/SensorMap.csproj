@@ -15,6 +15,7 @@
     <None Remove="Resources\MenuImages\menuImage1jpg.jpg" />
     <None Remove="Resources\MenuImages\menuImage2.jpg" />
     <None Remove="Resources\MenuImages\menuImage3.jpg" />
+    <None Remove="Resources\style\password.ttf" />
     <None Remove="Resources\Схема МДМ.jpg" />
     <None Remove="Resources\Шаблон.jpg" />
   </ItemGroup>
@@ -61,6 +62,9 @@
     </Resource>
     <Resource Include="Resources\MenuImages\menuImage3.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\style\password.ttf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Resources\Схема МДМ.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

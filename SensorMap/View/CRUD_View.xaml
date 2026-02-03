@@ -1,18 +1,19 @@
 ﻿<UserControl x:Class="SensorMap.View.CRUD_View"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SensorMap.View"
-        xmlns:hc="https://handyorg.github.io/handycontrol"
-        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:cnv="clr-namespace:SensorMap.Converters"
-        xmlns:model="clr-namespace:SensorMap.Model"
-        xmlns:cmnd="clr-namespace:SensorMap.Commands"
-        xmlns:valid="clr-namespace:SensorMap.Model.Validation"
-        xmlns:beh="clr-namespace:SensorMap.Behaviors"
-        xmlns:MV="clr-namespace:SensorMap.ViewModel"
-        d:DataContext="{d:DesignInstance MV:CRUD_VM}"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SensorMap.View"
+             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:cnv="clr-namespace:SensorMap.Converters"
+             xmlns:model="clr-namespace:SensorMap.Model"
+             xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+             xmlns:cmnd="clr-namespace:SensorMap.Commands"
+             xmlns:valid="clr-namespace:SensorMap.Model.Validation"
+             xmlns:beh="clr-namespace:SensorMap.Behaviors"
+             xmlns:MV="clr-namespace:SensorMap.ViewModel"
+             d:DataContext="{d:DesignInstance MV:CRUD_VM}"
         mc:Ignorable="d"
         x:Name="root">
     <UserControl.Resources>
@@ -212,6 +213,7 @@
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
+            
         </Grid.Resources>
         <DockPanel Grid.Row="0" HorizontalAlignment="Left">
             <Button Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo,UpdateSourceTrigger=PropertyChanged}"
@@ -290,7 +292,8 @@
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             
-                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
+                                                    Width="*" MaxWidth="1700">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack">
@@ -315,10 +318,20 @@
                     <TextBlock Text="Механизмы" FontSize="16"/>
                 </hc:TabItem.Header>
                 <Grid>
+                    <Grid.Resources>
+                        <CollectionViewSource x:Key="MechCollection" Source="{Binding Mechanisms}">
+                            <CollectionViewSource.GroupDescriptions>
+                                <PropertyGroupDescription PropertyName="Sector.Name"/>
+                            </CollectionViewSource.GroupDescriptions>
+                            <CollectionViewSource.SortDescriptions>
+                                <scm:SortDescription PropertyName="Sector.Name"/>
+                            </CollectionViewSource.SortDescriptions>
+                        </CollectionViewSource>
+                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid Name="Mech" ItemsSource="{Binding Mechanisms,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                    <DataGrid Name="Mech" ItemsSource="{Binding Source={StaticResource MechCollection}}" Grid.Row="0"
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -326,6 +339,43 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
+                        <DataGrid.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.ContainerStyle>
+                                    <Style TargetType="{x:Type GroupItem}">
+                                        <Setter Property="Margin" Value="0,0,0,5"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                    <Expander IsExpanded="True">
+                                                        <Expander.Header>
+                                                            <DockPanel>
+                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="10,0"/>
+                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=ItemCount}" Foreground="LightGray"/>
+                                                            </DockPanel>
+                                                        </Expander.Header>
+                                                        <Expander.Content>
+                                                            <ItemsPresenter />
+                                                        </Expander.Content>
+                                                    </Expander>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </GroupStyle.ContainerStyle>
+                            </GroupStyle>
+                            <!-- Style for groups under the top level. -->
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <DockPanel>
+                                            <TextBlock Text="{Binding Path=Name}" />
+                                            <TextBlock Text="{Binding Path=ItemCount}"/>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
                         <!--<DataGrid.RowValidationRules>
                             <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
                         </DataGrid.RowValidationRules>-->
@@ -366,7 +416,8 @@
 
                             <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
-                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
+                                                    Width="*" MaxWidth="1600">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack"
@@ -405,11 +456,19 @@
                         <Style x:Key="NewOrChangedItemStyle" TargetType="ListBoxItem">
                             <Setter Property="Background" Value="LightYellow"/>
                         </Style>
+                        <CollectionViewSource x:Key="SensorCollection" Source="{Binding Sensors}">
+                            <CollectionViewSource.GroupDescriptions>
+                                <PropertyGroupDescription PropertyName="SensorType.Name"/>
+                            </CollectionViewSource.GroupDescriptions>
+                            <CollectionViewSource.SortDescriptions>
+                                <scm:SortDescription PropertyName="SensorType.Name"/>
+                            </CollectionViewSource.SortDescriptions>
+                        </CollectionViewSource>
                     </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                    <DataGrid ItemsSource="{Binding Source={StaticResource SensorCollection}}" Grid.Row="0"
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -421,6 +480,43 @@
                         <!--<DataGrid.RowValidationRules>
                             <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
                         </DataGrid.RowValidationRules>-->
+                        <DataGrid.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.ContainerStyle>
+                                    <Style TargetType="{x:Type GroupItem}">
+                                        <Setter Property="Margin" Value="0,0,0,5"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                    <Expander IsExpanded="True">
+                                                        <Expander.Header>
+                                                            <DockPanel>
+                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="10,0"/>
+                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=ItemCount}" Foreground="LightGray"/>
+                                                            </DockPanel>
+                                                        </Expander.Header>
+                                                        <Expander.Content>
+                                                            <ItemsPresenter />
+                                                        </Expander.Content>
+                                                    </Expander>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </GroupStyle.ContainerStyle>
+                            </GroupStyle>
+                            <!-- Style for groups under the top level. -->
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <DockPanel>
+                                            <TextBlock Text="{Binding Path=Name}" />
+                                            <TextBlock Text="{Binding Path=ItemCount}"/>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name, ValidatesOnDataErrors=True,
                                 UpdateSourceTrigger=PropertyChanged}" Header="Название">                               
@@ -449,7 +545,8 @@
 
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True"  CellTemplate="{StaticResource imgView_Button}"/>
 
-                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
+                                                    Width="*" MaxWidth="1700">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
@@ -577,7 +674,8 @@
                             </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             
-                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True">
+                            <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
+                                                    Width="*" MaxWidth="1700">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">

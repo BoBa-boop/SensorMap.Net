@@ -177,7 +177,7 @@ namespace SensorMap.CustomControls
         {
             if (_canvas == null) return;
             var nonSensorChildren = _canvas.Children.OfType<UIElement>()
-                                                    .Where(element=>element.GetType().Name!="CustomSensor").ToList();
+                                    .Where(element=>element.GetType().Name!="CustomSensor").ToList();
             _canvas.Children.Clear();
             foreach (var element in nonSensorChildren)
             {
@@ -237,8 +237,7 @@ namespace SensorMap.CustomControls
                 double offsetX, offsetY;
                 GetLeftTopPoint(out offsetX, out offsetY);
                 CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
-                if (ViewModel != null && ViewModel is MechanismVM vm)
-                    vm.AddSensorCommand(sensor, element, _canvas, ItemsSource);
+                
                 element.Tag = ItemsSource.IndexOf(sensor);
             }
         }
@@ -300,8 +299,7 @@ namespace SensorMap.CustomControls
                     Point dropPosition = e.GetPosition(_canvas);
                     CustomSensor element = CreateSensorObject(sensorData,WorldToScreen(dropPosition));
                     _isDropAdd = true; 
-                    if (ViewModel != null && ViewModel is MechanismVM vm)
-                        vm.AddSensorCommand(sensorData, element, _canvas!, ItemsSource);
+                    
 
                     element.Tag = ItemsSource.IndexOf(sensorData);
 
@@ -541,7 +539,8 @@ namespace SensorMap.CustomControls
             Canvas.SetTop(element, point.Y);
 
             sensor.X = Math.Round(point.X,0); sensor.Y = Math.Round(point.Y,0);
-
+            if (ViewModel != null && ViewModel is MechanismVM vm&&vm.IsEditMode)
+                vm.AddSensorCommand(sensor, element, _canvas!, ItemsSource);
             element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             element.MouseLeftButtonUp += Sensor_MouseLeftButtonUp;
             element.PreviewMouseDown += SensorSelected_MouseDown;

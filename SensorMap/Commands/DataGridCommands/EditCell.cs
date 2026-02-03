@@ -23,18 +23,19 @@ namespace SensorMap.Commands.DataGridCommands
         }
         public void Do()
         {
-            SetPropertyValue(_newValue);
+            SetPropertyValue(_newValue, _propertyName);
         }
 
         public void Undo()
         {
-            SetPropertyValue(_oldValue);
+            SetPropertyValue(_oldValue, _propertyName);
+            SetPropertyValue(true, "IsModified");
         }
-        private void SetPropertyValue(object value)
+        private void SetPropertyValue(object value,string prop)
         {
             if(_inputObject==null) return;
 
-            var property = _inputObject.GetType().GetProperty(_propertyName);
+            var property = _inputObject.GetType().GetProperty(prop);
             if (property != null&&property.GetSetMethod()!=null)
             {
                 property.SetValue(_inputObject, value);

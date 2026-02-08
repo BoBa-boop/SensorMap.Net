@@ -26,34 +26,51 @@
 
 
     <Style TargetType="{x:Type myCC:CustomSensor}">
+        <Setter Property="IsEditMode" Value="{Binding Path=IsEditMode, 
+                RelativeSource={RelativeSource Mode=FindAncestor, 
+                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
                     <Grid>
-                        <Grid.Resources>
-                            <cnv:Bool2Vis x:Key="bool2Vis"/>
-                        </Grid.Resources>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="{Binding SensorData.Address, FallbackValue='Empty'}"
-                               FontSize="14" Padding="3"
-                               Grid.Row="0" Grid.Column="1" IsHitTestVisible="False"
-                               Background="BlanchedAlmond"
-                               Visibility="{TemplateBinding ShowAddresses,Converter={StaticResource bool2Vis}}"/>
-                       
-                        <Border Background="{TemplateBinding Property=CustomBackground}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="3" CornerRadius="60" Grid.Row="1" Grid.Column="0">
-                        <Label Content="{TemplateBinding Letter}" Background="Transparent"
-                               BorderThickness="0"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                        <Border x:Name="PART_Sensor"
+                            Grid.Row="1" Grid.Column="0"
+                            Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                            Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}"
+                            Background="{TemplateBinding Property=CustomBackground}"
+                            BorderBrush="{TemplateBinding CustBorderBrush}"
+                            BorderThickness="2" CornerRadius="30">
+                        </Border>
+                        <Rectangle x:Name="PART_Transform" Grid.Row="1" Grid.Column="0"
+                                   IsHitTestVisible="True"
+                                   Visibility="{TemplateBinding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                   Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Rectangle.Style>
+                                <Style TargetType="Rectangle">
+                                    <Setter Property="Fill" Value="Transparent"/>
+                                    <Setter Property="StrokeThickness" Value="2"/>
+                                    <Setter Property="Stroke">
+                                        <Setter.Value>
+                                            <DrawingBrush Viewport="0,0,13,13" ViewportUnits="Absolute" TileMode="Tile">
+                                                <DrawingBrush.Drawing>
+                                                    <DrawingGroup>
+                                                        <GeometryDrawing Brush="Black">
+                                                            <GeometryDrawing.Geometry>
+                                                                <GeometryGroup>
+                                                                    <RectangleGeometry Rect="0,0,50,50" />
+                                                                    <RectangleGeometry Rect="50,50,50,50" />
+                                                                </GeometryGroup>
+                                                            </GeometryDrawing.Geometry>
+                                                        </GeometryDrawing>
+                                                    </DrawingGroup>
+                                                </DrawingBrush.Drawing>
+                                            </DrawingBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Rectangle.Style>
+                        </Rectangle>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

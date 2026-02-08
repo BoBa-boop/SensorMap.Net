@@ -17,6 +17,8 @@ namespace SensorMap.Model
         private byte[]? _image;
         private double _y;
         private double _x;
+        private double _height;
+        private double _width;
 
         [Key]
         public int Id { get; set; }
@@ -53,6 +55,30 @@ namespace SensorMap.Model
                 if (value != _y)
                 {
                     this.RaiseAndSetIfChanged(ref _y, value);
+                }
+            }
+        }
+        [Reactive]
+        public double Width
+        {
+            get => _width;
+            set
+            {
+                if (value != _width)
+                {
+                    this.RaiseAndSetIfChanged(ref _width, value);
+                }
+            }
+        }
+        [Reactive]
+        public double Height
+        {
+            get => _height;
+            set
+            {
+                if (value != _height)
+                {
+                    this.RaiseAndSetIfChanged(ref _height, value);
                 }
             }
         }

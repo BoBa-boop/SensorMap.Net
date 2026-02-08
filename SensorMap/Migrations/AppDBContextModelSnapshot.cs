@@ -56,7 +56,6 @@ namespace SensorMap.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IP")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("TEXT");
 
@@ -64,7 +63,6 @@ namespace SensorMap.Migrations
                         .HasColumnType("BLOB");
 
                     b.Property<string>("Manufacturer")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -133,9 +131,6 @@ namespace SensorMap.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<double>("Height")
-                        .HasColumnType("REAL");
-
                     b.Property<byte[]>("LocationImage")
                         .HasColumnType("BLOB");
 
@@ -144,9 +139,6 @@ namespace SensorMap.Migrations
 
                     b.Property<int>("SensorId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<double>("Width")
-                        .HasColumnType("REAL");
 
                     b.Property<double>("X")
                         .HasColumnType("REAL");

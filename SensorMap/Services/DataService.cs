@@ -72,10 +72,10 @@ namespace SensorMap.Services
                 _mechanisms = new (await _provider.GetAllMechanisms());
                 _sensorTypes = new (await _provider.GetSensorTypeAsync());
             });
-            foreach (var plc in _plc)
-            {
-                _manufacturers.Add(plc.Manufacturer);
-            }
+            //foreach (var plc in _plc)
+            //{
+            //    _manufacturers.Add(plc.Manufacturer);
+            //}
         }
     }
 }

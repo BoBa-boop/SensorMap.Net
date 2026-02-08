@@ -393,7 +393,8 @@
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" 
                                                   DisplayMemberPath="Name"
                                                   Cursor="Hand" 
-                                                  SelectedItem="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"/>
+                                                  SelectedItem="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"
+                                                  IsSynchronizedWithCurrentItem="True"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>

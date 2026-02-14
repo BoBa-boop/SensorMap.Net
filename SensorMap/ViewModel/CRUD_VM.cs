@@ -24,7 +24,9 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service; 
         private readonly ITempImage _tempImage;
+        private readonly UnitOfWork _unitOfWork;
         private bool isEditMode;
+        private ObservableCollection<Mechanism> _mech;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
@@ -35,19 +37,26 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
-        [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
+        [Reactive] public ObservableCollection<Mechanism> Mechanisms
+        {
+            get => _mech;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _mech, value);
+            }
+        }
 
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage, UnitOfWork unitOfWork) 
         {
             Navigation = nav;
             _tempImage = tempImage;
             _provider = provider;
             _service = service;
-
+            _unitOfWork = unitOfWork;
             Sectors = _service.Sectors;
             Mechanisms = _service.Mechanisms;
             PLCs = _service.PLCs;
-            //Manufacturers = _service.PLC_Manufacturers;
+            Manufacturers = _service.PLC_Manufacturers;
             Sensors = _service.Sensors;
             SensorTypes = _service.SensorTypes;
             
@@ -60,11 +69,12 @@ namespace SensorMap.ViewModel
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
+                var repository = GetRepositoryForType(arg);
 
-                PropertyInfo? idProperty = entityType.GetProperty("Id", BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                PropertyInfo? idProperty = entityType.GetProperty("Id");
                 if (idProperty != null && Convert.ToInt32(idProperty.GetValue(arg)) == 0)
                 {
-                    MethodInfo createMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Create))!.MakeGenericMethod(entityType);
+                    MethodInfo createMethod = repository.Create(arg as dynamic); неправильные команды
                     if (createMethod.Invoke(_provider, new object[] { arg }) != null)
                     {
                         entityType?.GetProperty("IsModified")?.SetValue(arg, false);
@@ -72,7 +82,7 @@ namespace SensorMap.ViewModel
                 }
                 else
                 {
-                    MethodInfo updateMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Update))!.MakeGenericMethod(entityType);
+                    MethodInfo updateMethod = repository.Update(arg as dynamic); неправильные команды
                     if (updateMethod.Invoke(_provider, new object[] { arg }) != null)
                         entityType?.GetProperty("IsModified")?.SetValue(arg, false);
                 }
@@ -81,11 +91,12 @@ namespace SensorMap.ViewModel
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
-                MethodInfo deleteMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Delete))!.MakeGenericMethod(entityType);
+                var repository = GetRepositoryForType(entityType);
+                MethodInfo deleteMethod = repository.Delete(arg as dynamic); неправильные команды
                 if (deleteMethod.Invoke(_provider, new object[] { arg }) != null)
                 {
                     PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
-                    if(prop!=null)
+                    if (prop != null)
                     {
                         var collection = prop.GetValue(this) as System.Collections.IList;
                         collection?.Remove(arg);
@@ -142,7 +153,7 @@ namespace SensorMap.ViewModel
                 if(!SensorTypes.Where(x=>x.Name==sType.Name).Any())
                 {
                     sType.IsNew = true;
-                    SensorTypes.Add(sType);
+                    _unitOfWork.SensorTypes.Create(sType);
                 }
             }, (param) => 
             {
@@ -157,7 +168,7 @@ namespace SensorMap.ViewModel
                 {
                     SensorTypes.Remove(sensorType);
                     if (_service.SensorTypes.Contains(sensorType))
-                        DeleteCommand.Execute(type); 
+                        _unitOfWork.SensorTypes.Delete(sensorType); 
                 }
             }, (type) => { return type != null; });
 
@@ -172,54 +183,9 @@ namespace SensorMap.ViewModel
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
-            
         }
 
-        private void OnEntityUpdated(DataBaseEvents.TEntityEvent @event)
-        {
-            switch (@event.EntityType.Name)
-            {
-                case nameof(Sector):
-                    var newSector = Sectors.FirstOrDefault(s => s.Id == @event.Id);
-                    foreach (var mech in _service.Mechanisms.Where(meh => meh.Id == @event.Id).ToList())
-                    {
-                        mech.Sector = newSector;
-                    }
-
-                    break;
-                case nameof(Mechanism):
-                    var CurrentSector = Sectors.FirstOrDefault(s => s.Id == @event.Id);
-                    if (CurrentSector != null) CurrentSector.Mechanisms = new(Mechanisms.Where(meh => meh.Id == @event.Id).ToList());
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void OnEntityDeleted(DataBaseEvents.TEntityEvent @event)
-        {
-            switch (@event.EntityType.Name)
-            {
-                case nameof(Sector):
-                    
-                    foreach (var mech in _service.Mechanisms.Where(sect => sect.Id == @event.Id).ToList())
-                    {
-                        mech.Sector = null;
-                    }
-
-                    break;
-                case nameof(Mechanism):
-                    // Обновляем коллекцию механизмов
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void OnEntityCreated(DataBaseEvents.TEntityEvent @event)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public ICommand DeleteCommand { get; set; }
         public ICommand SaveCommand { get; set; }
@@ -234,6 +200,24 @@ namespace SensorMap.ViewModel
         {
             var command = new Commands.DataGridCommands.EditCell<T>(_inputObject, propertyName, oldValue, newValue);
             _undoRedoManager.Do(command);
+        }
+        private IRepository<TEntity> GetRepositoryForType<TEntity>(TEntity entity) where TEntity : class
+        {
+            switch (entity.GetType())
+            {
+                case Type t when t == typeof(Sector):
+                    return _unitOfWork.Sectors as IRepository<TEntity>;
+                case Type t when t == typeof(Sensor):
+                    return _unitOfWork.Sensors as IRepository<TEntity>;
+                case Type t when t == typeof(Mechanism):
+                    return _unitOfWork.Mechanisms as IRepository<TEntity>;
+                case Type t when t == typeof(SensorType):
+                    return _unitOfWork.SensorTypes as IRepository<TEntity>;
+                case Type t when t == typeof(PLC):
+                    return _unitOfWork.PLCs as IRepository<TEntity>;
+                default:
+                    throw new InvalidOperationException($"No repository found for type '{typeof(TEntity)}'");
+            }
         }
     }
 }

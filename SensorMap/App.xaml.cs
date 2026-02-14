@@ -94,6 +94,7 @@ namespace SensorMap
             services.AddSingleton<ITempImage,TempImage>();
             services.AddTransient<IJsonSerialization, JsonSerializationService>();
             services.AddScoped<IPasswordHash,PasswordHashService>();
+            services.AddScoped<UnitOfWork>();
             services.AddTransient<IAuthorization, AuthorizationService>();
 
 

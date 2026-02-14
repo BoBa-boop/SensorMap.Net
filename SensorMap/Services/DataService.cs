@@ -27,6 +27,7 @@ namespace SensorMap.Services
         private ObservableCollection<Mechanism> _mechanisms= new();
         private ObservableCollection<string> _manufacturers = new();
         private IDataBaseProvider _provider;
+        private UnitOfWork _unitOfWork;
 
         
         private bool _isEdit;
@@ -57,21 +58,19 @@ namespace SensorMap.Services
             set => this.RaiseAndSetIfChanged(ref _curSector, value);
         }
 
-        public DataService(IDataBaseProvider provider)
+        public DataService(IDataBaseProvider provider, UnitOfWork unitOfWork)
         {
             _provider = provider;
+            _unitOfWork = unitOfWork;
         }
 
         public async void UpdateDataFromDB()
         {
-            await Task.Run(async () => 
-            {
-                _sectors = new(await _provider.GetAllSectorsAsync());
-                _plc = new (await _provider.GetAllPLCsAsync());
-                _sensors = new (await _provider.GetAllSensors());
-                _mechanisms = new (await _provider.GetAllMechanisms());
-                _sensorTypes = new (await _provider.GetSensorTypeAsync());
-            });
+           _sectors = new(await _unitOfWork.Sectors.GetAllData());
+           _plc = new (await _unitOfWork.PLCs.GetAllData());
+           _sensors = new (await _unitOfWork.Sensors.GetAllData());
+           _mechanisms = new (await _unitOfWork.Mechanisms.GetAllData());
+           _sensorTypes = new (await _unitOfWork.SensorTypes.GetAllData());
             foreach (var plc in _plc)
             {
                 _manufacturers.Add(plc.Manufacturer);

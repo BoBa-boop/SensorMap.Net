@@ -51,7 +51,7 @@ namespace SensorMap.Behaviors
             if (e.Row.Item != null)
             {
                 var prop = e.Row.Item!.GetType().GetProperty("IsModified");
-                foreach (var kvp in originalFieldValues)
+                foreach (var kvp in originalFieldValues) неправильный выбор
                 {
                     var currentValue = GetPropertyValue(e.Row.Item, kvp.Key);
                     hasChangesBeenMade = !Equals(currentValue, kvp.Value);
@@ -154,21 +154,7 @@ namespace SensorMap.Behaviors
                     [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0])
                 };
             }
-            //var column = e.Column;
-            //if (column is DataGridBoundColumn boundColumn)
-            //{
-            //    var binding = boundColumn.Binding as System.Windows.Data.Binding;
-            //    var propertyPath = binding?.Path.Path;
-
-            //    if (!string.IsNullOrEmpty(propertyPath))
-            //    {
-            //        // Сохраняем только значение этого поля
-            //        originalFieldValues = new Dictionary<string, object>
-            //        {
-            //            [propertyPath] = GetPropertyValue(e.Row.Item, propertyPath)
-            //        };
-            //    }
-            //}
+           
         }
 
         private object GetPropertyValue(object obj, string propertyPath)

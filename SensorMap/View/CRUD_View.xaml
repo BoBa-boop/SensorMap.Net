@@ -236,6 +236,9 @@
                     <TextBlock Text="Участки" FontSize="16"/>
                 </hc:TabItem.Header>
                 <Grid>
+                    <Grid.Resources>
+                        <cnv:testConverter x:Key="testConverter"/>
+                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -247,9 +250,9 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
-                        <!--<DataGrid.RowValidationRules>
+                        <DataGrid.RowValidationRules>
                             <valid:ValidationRuleSector ValidationStep="UpdatedValue"/>
-                        </DataGrid.RowValidationRules>-->
+                        </DataGrid.RowValidationRules>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Название" Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}"/>
                             
@@ -257,13 +260,19 @@
                             <DataGridTemplateColumn IsReadOnly="True">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <hc:ComboBox ItemsSource="{Binding Mechanisms}" DisplayMemberPath="Name" MinWidth="100" MaxWidth="250"
-                                                  hc:InfoElement.Placeholder="Механизмы" IsReadOnly="True">
+                                        <hc:ComboBox Name="cb"
+                                                     ItemsSource="{Binding Mechanisms}"
+                                            DisplayMemberPath="Name"
+                                                     MinWidth="100"
+                                                     MaxWidth="250"
+                                                     hc:InfoElement.Placeholder="Механизмы"
+                                                     IsReadOnly="True">
                                             <hc:ComboBox.ItemContainerStyle>
                                                 <Style TargetType="ComboBoxItem">
                                                     <Setter Property="IsEnabled" Value="False"/>
                                                 </Style>
                                             </hc:ComboBox.ItemContainerStyle>
+
                                             <hc:ComboBox.ItemTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="{Binding Name}">
@@ -281,17 +290,17 @@
                                             </hc:ComboBox.ItemTemplate>
                                         </hc:ComboBox>
                                         <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding Mechanisms.Count}" Value="0">
+                                            <DataTrigger Binding="{Binding ElementName=cb, Path=ItemsSource.Count}" Value="0">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                             </DataTrigger>
-                                            <DataTrigger Binding="{Binding Mechanisms}" Value="{x:Null}">
+                                            <DataTrigger Binding="{Binding ElementName=cb, Path=ItemsSource}" Value="{x:Null}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            
+
                             <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
                                                     Width="*" MaxWidth="1700">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -319,7 +328,7 @@
                 </hc:TabItem.Header>
                 <Grid>
                     <Grid.Resources>
-                        <CollectionViewSource x:Key="MechCollection" Source="{Binding Mechanisms}">
+                        <CollectionViewSource x:Key="MechCollection" Source="{Binding Path=Mechanisms,UpdateSourceTrigger=PropertyChanged}">
                             <CollectionViewSource.GroupDescriptions>
                                 <PropertyGroupDescription PropertyName="Sector.Name"/>
                             </CollectionViewSource.GroupDescriptions>
@@ -331,7 +340,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid Name="Mech" ItemsSource="{Binding Source={StaticResource MechCollection}}" Grid.Row="0"
+                    <DataGrid Name="Mech" ItemsSource="{Binding Source={StaticResource MechCollection}, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
                               AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                               ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                               RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"

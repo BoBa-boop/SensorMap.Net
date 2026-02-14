@@ -187,7 +187,7 @@ namespace SensorMap.ViewModel
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
          //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
          //разобраться с сохранением
-            _provider.AddSensorsAssignmentAsync(CurrentMech!.SensorsAssig!);
+            //_provider.AddSensorsAssignmentAsync(CurrentMech!.SensorsAssig!);
         }
         public ICommand SaveSensorPlace { get; }
         public ICommand NavigateToSectors { get; }

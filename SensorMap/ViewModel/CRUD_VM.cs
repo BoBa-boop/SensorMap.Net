@@ -10,6 +10,7 @@ using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
@@ -24,7 +25,8 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service; 
         private readonly ITempImage _tempImage;
-        private readonly UnitOfWork _unitOfWork;
+        private IAppDbContextFactory _appDbContextFactory;
+        private AppDBContext dBContext;
         private bool isEditMode;
         private ObservableCollection<Mechanism> _mech;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
@@ -46,19 +48,20 @@ namespace SensorMap.ViewModel
             }
         }
 
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage, UnitOfWork unitOfWork) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage) 
         {
             Navigation = nav;
             _tempImage = tempImage;
             _provider = provider;
+            _appDbContextFactory = cxFactory;
+            dBContext = _appDbContextFactory.CreateDbContext();
             _service = service;
-            _unitOfWork = unitOfWork;
-            Sectors = _service.Sectors;
-            Mechanisms = _service.Mechanisms;
-            PLCs = _service.PLCs;
-            Manufacturers = _service.PLC_Manufacturers;
-            Sensors = _service.Sensors;
-            SensorTypes = _service.SensorTypes;
+            Sectors = new (dBContext.Sectors.ToList());
+            Mechanisms = new (dBContext.Mechanisms.ToList());
+            PLCs = new(dBContext.PLCs.ToList());
+            Manufacturers = new(PLCs.Select(plc => plc.Manufacturer).Distinct().ToList());
+            Sensors = new(dBContext.Sensors.ToList());
+            SensorTypes = new(dBContext.SensorTypes.ToList());
             
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
@@ -68,39 +71,27 @@ namespace SensorMap.ViewModel
             SaveCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
-                var entityType = arg.GetType();
-                var repository = GetRepositoryForType(arg);
-
-                PropertyInfo? idProperty = entityType.GetProperty("Id");
-                if (idProperty != null && Convert.ToInt32(idProperty.GetValue(arg)) == 0)
-                {
-                    MethodInfo createMethod = repository.Create(arg as dynamic); неправильные команды
-                    if (createMethod.Invoke(_provider, new object[] { arg }) != null)
-                    {
-                        entityType?.GetProperty("IsModified")?.SetValue(arg, false);
-                    }
-                }
-                else
-                {
-                    MethodInfo updateMethod = repository.Update(arg as dynamic); неправильные команды
-                    if (updateMethod.Invoke(_provider, new object[] { arg }) != null)
-                        entityType?.GetProperty("IsModified")?.SetValue(arg, false);
-                }
+                
+                dBContext.Update(arg);
+                arg.GetType()?.GetProperty("IsModified")?.SetValue(arg, false);
+                dBContext.SaveChanges();
+                
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
-                var repository = GetRepositoryForType(entityType);
-                MethodInfo deleteMethod = repository.Delete(arg as dynamic); неправильные команды
-                if (deleteMethod.Invoke(_provider, new object[] { arg }) != null)
+                
+                PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
+                if (prop != null)
                 {
-                    PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
-                    if (prop != null)
-                    {
-                        var collection = prop.GetValue(this) as System.Collections.IList;
-                        collection?.Remove(arg);
-                    }
+                    var collection = prop.GetValue(this) as System.Collections.IList;
+                    collection?.Remove(arg);
+                }
+                if(dBContext.Entry(arg).State!=EntityState.Detached)
+                {
+                    dBContext.Remove(arg);
+                    dBContext.SaveChanges();
                 }
             });
             
@@ -153,7 +144,7 @@ namespace SensorMap.ViewModel
                 if(!SensorTypes.Where(x=>x.Name==sType.Name).Any())
                 {
                     sType.IsNew = true;
-                    _unitOfWork.SensorTypes.Create(sType);
+                    SensorTypes.Add(sType);
                 }
             }, (param) => 
             {
@@ -161,14 +152,16 @@ namespace SensorMap.ViewModel
                 var values = (object[])param;
                 return !string.IsNullOrWhiteSpace(values[0].ToString()); 
             });
-
             DeleteNodeTitleType = new RelayCommand<object>((type) => 
             {
                 if(type is SensorType sensorType&& sensorType!=null)
                 {
                     SensorTypes.Remove(sensorType);
-                    if (_service.SensorTypes.Contains(sensorType))
-                        _unitOfWork.SensorTypes.Delete(sensorType); 
+                    if (dBContext.SensorTypes.Contains(sensorType))
+                    {
+                        dBContext.SensorTypes.Remove(sensorType);
+                        dBContext.SaveChanges();
+                    }
                 }
             }, (type) => { return type != null; });
 
@@ -201,23 +194,6 @@ namespace SensorMap.ViewModel
             var command = new Commands.DataGridCommands.EditCell<T>(_inputObject, propertyName, oldValue, newValue);
             _undoRedoManager.Do(command);
         }
-        private IRepository<TEntity> GetRepositoryForType<TEntity>(TEntity entity) where TEntity : class
-        {
-            switch (entity.GetType())
-            {
-                case Type t when t == typeof(Sector):
-                    return _unitOfWork.Sectors as IRepository<TEntity>;
-                case Type t when t == typeof(Sensor):
-                    return _unitOfWork.Sensors as IRepository<TEntity>;
-                case Type t when t == typeof(Mechanism):
-                    return _unitOfWork.Mechanisms as IRepository<TEntity>;
-                case Type t when t == typeof(SensorType):
-                    return _unitOfWork.SensorTypes as IRepository<TEntity>;
-                case Type t when t == typeof(PLC):
-                    return _unitOfWork.PLCs as IRepository<TEntity>;
-                default:
-                    throw new InvalidOperationException($"No repository found for type '{typeof(TEntity)}'");
-            }
-        }
+        
     }
 }

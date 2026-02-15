@@ -19,7 +19,9 @@ namespace SensorMap.ViewModel
     {
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _data;
-        private INavigation navigation; 
+        private INavigation navigation;
+        private IAppDbContextFactory _appDbContextFactory;
+        private AppDBContext _dbContext;
         private ObservableCollection<Sector>? _coll;
         private string _searchText = string.Empty;
 
@@ -43,6 +45,8 @@ namespace SensorMap.ViewModel
         {            
             navigation = _nav;
             _data = data;
+            _appDbContextFactory = cxFactory;
+            _dbContext = _appDbContextFactory.CreateDbContext();
             GoToSector = new RelayCommand<Sector>((sector) => 
             {
                 if(sector != null) 
@@ -53,7 +57,7 @@ namespace SensorMap.ViewModel
             });
             _provider = provider;
 
-            Sectors = new(_dbContext.Sectors.Include(x=>x.Mechanisms).ToList());
+            Sectors = new(_dbContext.Sectors.ToList());
             var tempCollection = Sectors;
             this.WhenAnyValue(x => x.SearchText)
             .Throttle(TimeSpan.FromMilliseconds(300))
@@ -64,12 +68,12 @@ namespace SensorMap.ViewModel
                 if (!string.IsNullOrWhiteSpace(SearchText))
                 {
                     var result = from sector in tempCollection
-                                 where sector.Name.ToLower().Contains(SearchText) || 
-                                 sector.Mechanisms!=null && sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
+                                 where sector.Name.ToLower().Contains(SearchText) ||
+                                 sector.Mechanisms != null && sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
                                  select sector;
                     Sectors = new(result);
                 }
-                else Sectors = new ObservableCollection<Sector>(_data.Sectors);
+                else Sectors = new ObservableCollection<Sector>(_dbContext.Sectors.ToList());
             });
 
         }

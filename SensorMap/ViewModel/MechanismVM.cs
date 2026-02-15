@@ -38,6 +38,8 @@ namespace SensorMap.ViewModel
         private readonly IDataService _service;
         private Sector? currentSector; 
         private Mechanism? currentMech;
+        private AppDBContext _dbContext;
+        private IAppDbContextFactory _appDbContextFactory;
         private ObservableCollection<SensorType> sensorTypes { get; set; }
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
 
@@ -88,21 +90,23 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; } = new();
-        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav)
+        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,IAppDbContextFactory appDbContextFactory)
         {
             Navigation = _nav;
             _provider = provider;
             _service = service;
-            
-            sensorTypes = _service.SensorTypes;
+            _appDbContextFactory = appDbContextFactory;
+            _dbContext = _appDbContextFactory.CreateDbContext();
+
+            sensorTypes = new (_dbContext.SensorTypes.ToList());
             CurrentSector = _service.CurrentSector_Global;
             CurrentMech = _service.CurrentMechanism_Global;
-            PLCs = _service.PLCs;
-            Sectors = _service.Sectors;
+            PLCs = new(_dbContext.PLCs.ToList());
+            Sectors = new(_dbContext.Sectors.ToList());
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, _service.Sensors, filter);
+            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, new(_dbContext.Sensors.ToList()), filter);
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
-            Mechanisms = new(_dbContext.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector.Id)).Include(x => x.SensorsAssig).ToList());
+            Mechanisms = new(_dbContext.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector.Id)).ToList());
             AddSensorToMap = new RelayCommand<object>((obj) =>
             {
                 if (obj is Sensor sensor)
@@ -136,7 +140,7 @@ namespace SensorMap.ViewModel
                     SensorAssignments sensorAssignments = new SensorAssignments()
                     {
                         SensorId = node.Data.Id,
-                        Sensor = _service.Sensors.FirstOrDefault(x=>x.Id== node.Data.Id),
+                        Sensor = _dbContext.Sensors.FirstOrDefault(x=>x.Id== node.Data.Id),
                         MechanismId = CurrentMech.Id,
                         Mechanism = CurrentMech,
                         Width = 30,

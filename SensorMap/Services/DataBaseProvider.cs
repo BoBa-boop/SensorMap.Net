@@ -11,7 +11,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using static Azure.Core.HttpHeader;
 
 namespace SensorMap.Services
 {
@@ -54,7 +53,7 @@ namespace SensorMap.Services
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
                 using var transaction = await dBContext.Database.BeginTransactionAsync();
-                foreach (SensorAssignments sensor in sensors)
+                    foreach (SensorAssignments sensor in sensors)
                     {
                         if (sensor.Id == 0)
                         {
@@ -107,7 +106,6 @@ namespace SensorMap.Services
                             // Обновление существующей записи
                             var currentSensor = await dBContext.SensorAssignments
                                 .FirstOrDefaultAsync(a => a.Id == sensor.Id);
-
                             if (currentSensor == null)
                             {
                                 Growl.Error(new GrowlInfo
@@ -120,18 +118,18 @@ namespace SensorMap.Services
                                 });
                                 continue;
                             }
-                            dBContext.Entry<SensorAssignments>(sensor).State = EntityState.Modified;
+                            dBContext.Entry<SensorAssignments>(currentSensor).State = EntityState.Modified;
                         }
-                        await dBContext.SaveChangesAsync();                        
-                        await transaction.CommitAsync();
-                        Growl.Success(new GrowlInfo
-                        {
-                            Message = "Сохранено в Базу Данных!",
-                            CancelStr = "Ignore",
-                            ShowDateTime = false,
-                            WaitTime = 2
-                        });
                     }
+                await dBContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                Growl.Success(new GrowlInfo
+                {
+                    Message = "Сохранено в Базу Данных!",
+                    CancelStr = "Ignore",
+                    ShowDateTime = false,
+                    WaitTime = 2
+                });
             }
         }
         public async Task Delete<T>(T entity) where T : class
@@ -165,17 +163,20 @@ namespace SensorMap.Services
         {
             using (AppDBContext dBContext = _dbContextFactory.CreateDbContext())
             {
-                dBContext.Entry<T>(entity).State = EntityState.Modified;
-                dBContext.Mechanisms.Local.ToObservableCollection();
-                await dBContext.SaveChangesAsync();
-                Growl.Success(new GrowlInfo
+                try
                 {
-                    Message = "Обновление в Базе Данных!",
-                    CancelStr = "Ignore",
-                    ShowDateTime = false,
-                    WaitTime = 2
-                });
-                DataBaseEvents.RaiseEntityUpdated(entity);
+                    dBContext.Entry<T>(entity).State = EntityState.Modified;
+                    await dBContext.SaveChangesAsync();
+                    Growl.Success(new GrowlInfo
+                    {
+                        Message = "Обновление в Базе Данных!",
+                        CancelStr = "Ignore",
+                        ShowDateTime = false,
+                        WaitTime = 2
+                    });
+                    DataBaseEvents.RaiseEntityUpdated(entity);
+                }
+                catch (Exception ex) { System.Windows.MessageBox.Show(ex.Message); }
             }
         }
         public bool Exists<T>(T entity) where T:class

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using SensorMap.Commands.SensorCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -21,10 +22,12 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml.Linq;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Cursor = System.Windows.Input.Cursor;
 using Cursors = System.Windows.Input.Cursors;
+using MessageBox = System.Windows.MessageBox;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
 
@@ -41,7 +44,18 @@ namespace SensorMap.CustomControls
         }
 
         public static readonly DependencyProperty SensorProperty =
-            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor));
+            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor),new PropertyMetadata(null,SensorDataChanged));
+
+        private static void SensorDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (CustomSensor)d;
+            if (e.NewValue != null && e.NewValue is SensorAssignments value)
+            {
+                Rect rect = new Rect(value.X, value.Y, value.Width, value.Height);
+                control.CustomBounds = rect;
+            }
+        }
+
         public char? Letter
         {
             get { return (char)GetValue(LetterProperty); }
@@ -101,29 +115,43 @@ namespace SensorMap.CustomControls
                 control.IsEditMode = value;
             }
         }
-
-        public object ViewModel
-        {
-            get { return (object)GetValue(ViewModelProperty); }
-            set { SetValue(ViewModelProperty, value); }
-        }
-        public static readonly DependencyProperty ViewModelProperty =
-            DependencyProperty.Register("ViewModel", typeof(object), typeof(CustomSensor), new PropertyMetadata(null));
-
-
         public Rect CustomBounds
         {
             get => (Rect)GetValue(BoundsProperty);
             set => SetValue(BoundsProperty, value);
         }
         public static readonly DependencyProperty BoundsProperty = DependencyProperty.Register("CustomBounds", typeof(Rect),
-            typeof(CustomSensor),new PropertyMetadata(new Rect(0,0,30,30)));
+            typeof(CustomSensor), new FrameworkPropertyMetadata(
+                new Rect(0, 0, 30, 30),
+                FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+                OnCustomBoundsChanged));
+
+        private static void OnCustomBoundsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var sensor = (CustomSensor)d;
+            var newRect = (Rect)e.NewValue;
+            sensor.CustomBounds = newRect;
+            // Обновляем Width/Height если используете отдельные свойства
+            sensor.Width = newRect.Width;
+            sensor.Height = newRect.Height;
+        }
         
-        
+        public ICommand TransformSensorCommand
+        {
+            get { return (ICommand)GetValue(TransformSensorCommandProperty); }
+            set { SetValue(TransformSensorCommandProperty, value); }
+        }
+        public static readonly DependencyProperty TransformSensorCommandProperty =
+            DependencyProperty.Register("TransformSensorCommand", typeof(ICommand),
+                typeof(CustomSensor),
+                new PropertyMetadata(null));
+
+
         #endregion
 
         private readonly ITransformObject _transformService;
         HitType MouseHitType = HitType.None;
+        private UIElement _selectedSensor;
         private Point LastPoint;
         private bool DragInProgress = false;
         private  Canvas _canvas;
@@ -135,6 +163,7 @@ namespace SensorMap.CustomControls
         public CustomSensor()
         {
             _transformService = new TransformObjectService();
+            
         }
         
         public override void OnApplyTemplate()
@@ -142,26 +171,35 @@ namespace SensorMap.CustomControls
             base.OnApplyTemplate();
             if (SensorData!=null&& SensorData.Sensor != null && SensorData.Sensor.SensorType!=null)
                 Letter = SensorData.Sensor.SensorType.Name.ToUpper().First();
-
-            if (_canvas == null)
-            {
-                _canvas = _transformService.GetParentCanvas(this);
-            } 
+            
+            _canvas = _transformService.GetParentCanvas(this);
+ 
             if( _canvas != null ) 
             {
-                CustomBounds = new Rect(SensorData.X, SensorData.Y, 30, 30);
                 if (IsEditMode)
                 {
                     this.MouseDown += OnMouseDown;
-                    this.MouseMove += OnMouseMove;
-                    this.MouseUp += OnMouseUp;
+                    this.MouseMove += OnSensorMouseMove;
+                    _canvas.MouseMove += OnMouseMove;
+                    _canvas.MouseUp += OnMouseUp;
                 }
             }
             
         }
 
+        private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if(_selectedSensor!= null && !DragInProgress)
+            {
+                Rect rect = new Rect(Canvas.GetLeft(_selectedSensor), Canvas.GetTop(_selectedSensor), this.CustomBounds.Width, this.CustomBounds.Height);
+                MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
+                this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
+            }
+        }
+
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
+            if (DragInProgress == false) return;
             // 1. Получаем текущие экранные координаты
             double screenX = Canvas.GetLeft(this);
             double screenY = Canvas.GetTop(this);
@@ -170,8 +208,8 @@ namespace SensorMap.CustomControls
             Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
 
             // 5. Создаем команду с МИРОВЫМИ координатами
-            if (ViewModel != null && ViewModel is MechanismVM vm && worldPoint.X > 1 && worldPoint.Y > 1)
-                vm.MoveSensorCommand(this, worldPoint, SensorData, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
+            var command = new TransformationSensor(this, CustomBounds, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
+            TransformSensorCommand.Execute(command);
 
             e.Handled = true;
             DragInProgress = false;
@@ -179,14 +217,9 @@ namespace SensorMap.CustomControls
 
         private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (this != null&&this.IsSelected)
+            if(_selectedSensor!=null)
             {
-                if (!DragInProgress)
-                {
-                    MouseHitType = _transformService.GetHitType(CustomBounds,Mouse.GetPosition(_canvas));
-                    Mouse.OverrideCursor = _transformService.GetCursorForHitType(MouseHitType);
-                }
-                else
+                if (DragInProgress)                
                 {
                     // See how much the mouse has moved.
                     Point point = Mouse.GetPosition(_canvas);
@@ -194,8 +227,8 @@ namespace SensorMap.CustomControls
                     double offset_y = point.Y - LastPoint.Y;
 
                     // Get the rectangle's current position.
-                    double new_x = Canvas.GetLeft(this);
-                    double new_y = Canvas.GetTop(this);
+                    double new_x = Canvas.GetLeft(_selectedSensor);
+                    double new_y = Canvas.GetTop(_selectedSensor);
                     double new_width = this.CustomBounds.Width;
                     double new_height = this.CustomBounds.Height;
 
@@ -245,8 +278,8 @@ namespace SensorMap.CustomControls
                     // Don't use negative width or height.
                     if ((new_width > 18) && (new_height > 18))
                     {
-                        Canvas.SetLeft(this, new_x);
-                        Canvas.SetTop(this, new_y);
+                        Canvas.SetLeft(_selectedSensor, new_x);
+                        Canvas.SetTop(_selectedSensor, new_y);
                         this.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
 
                         // Save the mouse's new location.
@@ -258,10 +291,14 @@ namespace SensorMap.CustomControls
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (MouseHitType == HitType.None) return;
-
-            LastPoint = Mouse.GetPosition(_canvas);
-            DragInProgress = true;
+            if(MouseHitType!=HitType.None)
+            {
+                LastPoint = Mouse.GetPosition(_canvas);
+                DragInProgress = true;
+            }
+            this.CustBorderBrush = Brushes.ForestGreen;
+            this.IsSelected = true;
+            _selectedSensor = this;
         }
 
         

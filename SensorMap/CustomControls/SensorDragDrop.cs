@@ -2,6 +2,7 @@
 using HandyControl.Controls;
 using SensorMap.Behaviors;
 using SensorMap.Commands.SensorCommands;
+using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -14,6 +15,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Xml.Linq;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
@@ -39,10 +41,12 @@ namespace SensorMap.CustomControls
                 new FrameworkPropertyMetadata(typeof(SensorDragDrop)));
            
         }
+        
         private Canvas? _canvas;
         private Image? _image;
 
         #region Dependency Properties
+
         public bool IsEditMode
         {
             get { return (bool)GetValue(IsEditModeProperty); }
@@ -73,14 +77,15 @@ namespace SensorMap.CustomControls
             get { return (ICommand)GetValue(ShowAddressCommandProperty); }
             set { SetValue(ShowAddressCommandProperty, value); }
         }
-        public object ViewModel
-        {
-            get { return (object)GetValue(ViewModelProperty); }
-            set { SetValue(ViewModelProperty, value); SetValue(CustomSensor.ViewModelProperty, value); }
-        }
-        public static readonly DependencyProperty ViewModelProperty =
-            DependencyProperty.Register("ViewModel", typeof(object), typeof(SensorDragDrop), new PropertyMetadata(null));
+        public static readonly DependencyProperty AddSensorsCommandProperty =
+            DependencyProperty.Register("AddSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
 
+        public ICommand AddSensorsCommand
+        {
+            get { return (ICommand)GetValue(AddSensorsCommandProperty); }
+            set { SetValue(AddSensorsCommandProperty, value); }
+        }
+        
         public static readonly DependencyProperty CoordProperty = DependencyProperty.Register("Coord", typeof(Point), typeof(SensorDragDrop),
             new PropertyMetadata(default(Point)));
         public Point Coord
@@ -89,14 +94,16 @@ namespace SensorMap.CustomControls
             set { SetValue(CoordProperty, value); }
         }
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
-            typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop), new PropertyMetadata(new ObservableCollection<SensorAssignments>(), OnItemsSourceChanged));
+            typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop),
+            new PropertyMetadata(new ObservableCollection<SensorAssignments>(), OnItemsSourceChanged));
 
         public ObservableCollection<SensorAssignments> ItemsSource
         {
             get { return (ObservableCollection<SensorAssignments>)GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
-        public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource", typeof(BitmapFrame), typeof(SensorDragDrop),
+        public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource",
+            typeof(BitmapFrame), typeof(SensorDragDrop),
             new PropertyMetadata(default(BitmapFrame)));
         public BitmapFrame ImageSource
         {
@@ -115,10 +122,10 @@ namespace SensorMap.CustomControls
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
+            
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
             _image = GetTemplateChild("PART_Image") as Image;
             _transformObject = new TransformObjectService();
-
             if (_canvas != null)
             {
                 _viewMatrixTransform = new MatrixTransform(Matrix.Identity);
@@ -149,26 +156,7 @@ namespace SensorMap.CustomControls
         private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             _initialMousePosition = new Point();
-            //if (_selected_UI_Sensor != null && IsEditMode)
-            //{
-            //    if (IsUIElementSensor(_selected_UI_Sensor, out CustomSensor element))
-            //    {
-            //        // 1. Получаем текущие экранные координаты
-            //        double screenX = Canvas.GetLeft(_selected_UI_Sensor);
-            //        double screenY = Canvas.GetTop(_selected_UI_Sensor);
-
-            //        // 2. Конвертируем в мировые
-            //        Point worldPoint = ScreenToWorld(new Point(screenX, screenY));
-
-            //        // 5. Создаем команду с МИРОВЫМИ координатами
-            //        if (ViewModel != null && ViewModel is MechanismVM vm && worldPoint.X > 1 && worldPoint.Y > 1)
-            //            vm.MoveSensorCommand(_selected_UI_Sensor, worldPoint, _selectedSensor, (x) => WorldToScreen(worldPoint));
-
-            //        e.Handled = true;
-                    
-
-            //    }
-            //}
+            
         }
 
         private void ShowAddressChanged()
@@ -258,7 +246,8 @@ namespace SensorMap.CustomControls
                 double offsetX, offsetY;
                 GetLeftTopPoint(out offsetX, out offsetY);
                 CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
-                
+                var command = new AddSensor(sensor, element, _canvas, ItemsSource);
+                AddSensorsCommand.Execute(command);
                 element.Tag = ItemsSource.IndexOf(sensor);
             }
         }
@@ -278,9 +267,9 @@ namespace SensorMap.CustomControls
                 {
                     Point dropPosition = e.GetPosition(_canvas);
                     CustomSensor element = CreateSensorObject(sensorData,_transformObject.WorldToScreen(dropPosition, _viewMatrix));
-                    _isDropAdd = true; 
-                    
-
+                    _isDropAdd = true;
+                    var command = new AddSensor(sensorData, element, _canvas!, ItemsSource);
+                    AddSensorsCommand.Execute(command);
                     element.Tag = ItemsSource.IndexOf(sensorData);
 
                 }
@@ -337,7 +326,6 @@ namespace SensorMap.CustomControls
                 _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
 
             }
-            //TransformMouseMove();
             Coord = new Point(Math.Round(Mouse.GetPosition(_canvas).X,0), Math.Round(Mouse.GetPosition(_canvas).Y, 0));
 
         }
@@ -385,6 +373,7 @@ namespace SensorMap.CustomControls
                     }
                 }
             }
+            MapProperties.SetViewMatrix(this, _viewMatrix);
             
         }
         
@@ -443,18 +432,6 @@ namespace SensorMap.CustomControls
                 _initialMousePosition = e.GetPosition(_canvas);
                 movingObject = VisualTreeHelper.GetDescendantBounds(this);
             }
-            if (e.MiddleButton != MouseButtonState.Pressed && IsEditMode)
-            {
-                if (IsUIElementSensor((UIElement)e.Source, out CustomSensor element))
-                {
-                    element.IsSelected = true;
-                    element.CustBorderBrush = Brushes.ForestGreen;
-                    //if (MouseHitType == HitType.None) return;
-
-                    //LastPoint = Mouse.GetPosition(_canvas);
-                    //DragInProgress = true;
-                }
-            }
         }
 
         private bool IsUIElementSensor(object UIElement,out CustomSensor sensor)
@@ -505,7 +482,6 @@ namespace SensorMap.CustomControls
             
             Canvas.SetLeft(element, point.X);
             Canvas.SetTop(element, point.Y);
-            sensor.X = Math.Round(point.X,0); sensor.Y = Math.Round(point.Y,0);            
 
             element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             return element;
@@ -538,171 +514,8 @@ namespace SensorMap.CustomControls
                 offsetX = _viewMatrixTransform.Matrix.OffsetX;
             }
         }
-        //private enum HitType
-        //{
-        //    None, Body, UL, UR, LR, LL, L, R, T, B
-        //};
-
-        // True if a drag is in progress.
-        //private bool DragInProgress = false;
-
-        //// The drag's last point.
-        //private Point LastPoint;
-
-        //// The part of the rectangle under the mouse.
-        //HitType MouseHitType = HitType.None;
-
-        // Return a HitType value to indicate what is at the point.
-        //private HitType SetHitType(Point point)
-        //{
-        //    //if(_selected_UI_Sensor is CustomSensor customSens){
-        //    //double left = Canvas.GetLeft(customSens);
-        //    //double top =  Canvas.GetTop(customSens);
-        //    //double right = left + Convert.ToInt32(customSens.CustomBounds.Width);
-        //    //double bottom = top + Convert.ToInt32(customSens.CustomBounds.Height);
-        //    //if (point.X < left) return HitType.None;
-        //    //if (point.X > right) return HitType.None;
-        //    //if (point.Y < top) return HitType.None;
-        //    //if (point.Y > bottom) return HitType.None;
-
-        //    //const double GAP = 4;
-        //    //if (point.X - left < GAP)
-        //    //{
-        //    //    // Left edge.
-        //    //    if (point.Y - top < GAP) return HitType.UL;
-        //    //    if (bottom - point.Y < GAP) return HitType.LL;
-        //    //    return HitType.L;
-        //    //}
-        //    //if (right - point.X < GAP)
-        //    //{
-        //    //    // Right edge.
-        //    //    if (point.Y - top < GAP) return HitType.UR;
-        //    //    if (bottom - point.Y < GAP) return HitType.LR;
-        //    //    return HitType.R;
-        //    //}
-        //    //if (point.Y - top < GAP) return HitType.T;
-        //    //    if (bottom - point.Y < GAP) return HitType.B;
-        //    //}
-        //    //return HitType.Body;
-        //}
-
-        // Set a mouse cursor appropriate for the current hit type.
-        private void SetMouseCursor()
-        {
-            //// See what cursor we should display.
-            //Cursor desired_cursor = Cursors.Arrow;
-            //switch (MouseHitType)
-            //{
-            //    case HitType.None:
-            //        desired_cursor = Cursors.Arrow;
-            //        break;
-            //    case HitType.Body:
-            //        desired_cursor = Cursors.ScrollAll;
-            //        break;
-            //    case HitType.UL:
-            //    case HitType.LR:
-            //        desired_cursor = Cursors.SizeNWSE;
-            //        break;
-            //    case HitType.LL:
-            //    case HitType.UR:
-            //        desired_cursor = Cursors.SizeNESW;
-            //        break;
-            //    case HitType.T:
-            //    case HitType.B:
-            //        desired_cursor = Cursors.SizeNS;
-            //        break;
-            //    case HitType.L:
-            //    case HitType.R:
-            //        desired_cursor = Cursors.SizeWE;
-            //        break;
-            //}
-
-            //// Display the desired cursor.
-            //if (Cursor != desired_cursor) Cursor = desired_cursor;
-        }
-
-
-        // If a drag is in progress, continue the drag.
-        // Otherwise display the correct cursor.
-        private void TransformMouseMove()
-        {
-            //if(_selected_UI_Sensor!=null)
-            //{
-            //    var customSens = _selected_UI_Sensor as CustomSensor;
-            //    if (!DragInProgress)
-            //    {
-            //        MouseHitType = SetHitType(Mouse.GetPosition(_canvas));
-            //        SetMouseCursor();
-            //    }
-            //    else
-            //    {
-            //        // See how much the mouse has moved.
-            //        Point point = Mouse.GetPosition(_canvas);
-            //        double offset_x = point.X - LastPoint.X;
-            //        double offset_y = point.Y - LastPoint.Y;
-
-            //        // Get the rectangle's current position.
-            //        double new_x = Canvas.GetLeft(customSens);
-            //        double new_y = Canvas.GetTop(customSens);
-            //        double new_width = customSens.CustomBounds.Width;
-            //        double new_height = customSens.CustomBounds.Height;
-
-            //        // Update the rectangle.
-            //        switch (MouseHitType)
-            //        {
-            //            case HitType.Body:
-            //                new_x += offset_x;
-            //                new_y += offset_y;
-            //                break;
-            //            case HitType.UL:
-            //                new_x += offset_x;
-            //                new_y += offset_y;
-            //                new_width -= offset_x;
-            //                new_height -= offset_y;
-            //                break;
-            //            case HitType.UR:
-            //                new_y += offset_y;
-            //                new_width += offset_x;
-            //                new_height -= offset_y;
-            //                break;
-            //            case HitType.LR:
-            //                new_width += offset_x;
-            //                new_height += offset_y;
-            //                break;
-            //            case HitType.LL:
-            //                new_x += offset_x;
-            //                new_width -= offset_x;
-            //                new_height += offset_y;
-            //                break;
-            //            case HitType.L:
-            //                new_x += offset_x;
-            //                new_width -= offset_x;
-            //                break;
-            //            case HitType.R:
-            //                new_width += offset_x;
-            //                break;
-            //            case HitType.B:
-            //                new_height += offset_y;
-            //                break;
-            //            case HitType.T:
-            //                new_y += offset_y;
-            //                new_height -= offset_y;
-            //                break;
-            //        }
-
-            //        // Don't use negative width or height.
-            //        if ((new_width > 18) && (new_height > 18))
-            //        {
-            //                Canvas.SetLeft(customSens, new_x);
-            //                Canvas.SetTop(customSens, new_y);
-            //            customSens.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
-
-            //            // Save the mouse's new location.
-            //            LastPoint = point;
-            //        }
-            //    }
-            //}
-        }
+        
+       
 
     }
 }

@@ -22,7 +22,7 @@ namespace SensorMap.ViewModel
     public class CRUD_VM:ReactiveObject
     {
         private readonly IDataBaseProvider _provider;
-        private readonly IDataService _service;
+        private readonly IDataService _service; 
         private readonly ITempImage _tempImage;
         private bool isEditMode;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
@@ -37,7 +37,7 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
 
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
         {
             Navigation = nav;
             _tempImage = tempImage;
@@ -172,9 +172,7 @@ namespace SensorMap.ViewModel
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
-            //DataBaseEvents.EntityCreated.Subscribe(OnEntityCreated);
-            //DataBaseEvents.EntityDeleted.Subscribe(OnEntityDeleted);
-            //DataBaseEvents.EntityUpdated.Subscribe(OnEntityUpdated);
+            
         }
 
         private void OnEntityUpdated(DataBaseEvents.TEntityEvent @event)

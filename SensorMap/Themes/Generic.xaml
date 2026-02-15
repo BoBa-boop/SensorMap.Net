@@ -26,6 +26,7 @@
 
 
     <Style TargetType="{x:Type myCC:CustomSensor}">
+        <Setter Property="TransformSensorCommand" Value="{Binding DataContext.TransformSensorCommand,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
         <Setter Property="IsEditMode" Value="{Binding Path=IsEditMode, 
                 RelativeSource={RelativeSource Mode=FindAncestor, 
                 AncestorType={x:Type myCC:SensorDragDrop}}}"/>

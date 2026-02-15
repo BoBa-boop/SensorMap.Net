@@ -13,13 +13,5 @@ namespace SensorMap.Interfaces
         Mechanism CurrentMechanism_Global { get; set; }
         Sector CurrentSector_Global { get; set; }
         bool IsEditMode { get; set; }
-        ObservableCollection<SensorType> SensorTypes {  get; }
-        ObservableCollection<Sensor> Sensors { get; }
-        ObservableCollection<Sector> Sectors { get; }
-        ObservableCollection<Mechanism> Mechanisms { get; }
-        ObservableCollection<PLC> PLCs { get; }
-        ObservableCollection<string> PLC_Manufacturers { get; }
-
-        void UpdateDataFromDB();
     }
 }

@@ -51,7 +51,7 @@ namespace SensorMap.Behaviors
             if (e.Row.Item != null)
             {
                 var prop = e.Row.Item!.GetType().GetProperty("IsModified");
-                foreach (var kvp in originalFieldValues) неправильный выбор
+                foreach (var kvp in originalFieldValues)
                 {
                     var currentValue = GetPropertyValue(e.Row.Item, kvp.Key);
                     hasChangesBeenMade = !Equals(currentValue, kvp.Value);

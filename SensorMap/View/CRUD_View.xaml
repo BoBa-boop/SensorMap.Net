@@ -236,9 +236,6 @@
                     <TextBlock Text="Участки" FontSize="16"/>
                 </hc:TabItem.Header>
                 <Grid>
-                    <Grid.Resources>
-                        <cnv:testConverter x:Key="testConverter"/>
-                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>

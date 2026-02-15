@@ -5,10 +5,13 @@ using HandyControl.Data;
 using HandyControl.Expression.Shapes;
 using HandyControl.Tools;
 using HandyControl.Tools.Extension;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.Commands.SensorCommands;
 using SensorMap.CustomControls;
+using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -19,6 +22,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using DataFormats = System.Windows.DataFormats;
 using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
@@ -89,7 +93,7 @@ namespace SensorMap.ViewModel
             Navigation = _nav;
             _provider = provider;
             _service = service;
-
+            
             sensorTypes = _service.SensorTypes;
             CurrentSector = _service.CurrentSector_Global;
             CurrentMech = _service.CurrentMechanism_Global;
@@ -108,9 +112,15 @@ namespace SensorMap.ViewModel
                         SensorId = sensor.Id,
                         Sensor = sensor,
                         MechanismId = CurrentMech!.Id,
-                        Mechanism = CurrentMech
+                        Mechanism = CurrentMech,
+                        Width = 30,
+                        Height = 30
                     };
                     CurrentMech.SensorsAssig!.Add(sensorAssignments);
+                }
+                if(obj is AddSensor command)
+                {
+                    _undoRedoManager.Do(command);
                 }
             }, (obj) =>
             { 
@@ -129,6 +139,8 @@ namespace SensorMap.ViewModel
                         Sensor = _service.Sensors.FirstOrDefault(x=>x.Id== node.Data.Id),
                         MechanismId = CurrentMech.Id,
                         Mechanism = CurrentMech,
+                        Width = 30,
+                        Height = 30
                     };
 
                     DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
@@ -150,6 +162,7 @@ namespace SensorMap.ViewModel
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
             UndoCommand = new RelayCommand(()=> _undoRedoManager.Undo());
             RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
+            TransformSensorCommand = new RelayCommand<object>((obj) => { if (obj is TransformationSensor command) _undoRedoManager.Do(command); });
 
         }
 
@@ -192,20 +205,9 @@ namespace SensorMap.ViewModel
         public ICommand SaveSensorPlace { get; }
         public ICommand NavigateToSectors { get; }
         public ICommand AddSensorToMap { get; }
+        public ICommand TransformSensorCommand { get; }
         public ICommand DragSensorCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
-
-        public void AddSensorCommand(SensorAssignments sensor,CustomSensor UI_Sensor,Canvas canvas, ObservableCollection<SensorAssignments> sensors)
-        {
-            var command = new Commands.SensorCommands.AddSensor(sensor,UI_Sensor,canvas,sensors);
-            _undoRedoManager.Do(command);
-        }
-        public void MoveSensorCommand(UIElement UI_Sensor, System.Windows.Point newPoint, SensorAssignments sensor,
-            Func<System.Windows.Point, System.Windows.Point> func)
-        {
-            var command = new Commands.SensorCommands.MoveSensor(UI_Sensor, newPoint, sensor,func);
-            _undoRedoManager.Do(command);
-        }
     }
 }

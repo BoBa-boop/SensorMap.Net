@@ -128,16 +128,18 @@
                     </Expander>
                 </StackPanel>
         </Border>
-        <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" ClipToBounds="True">
+            <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="20"/>
             </Grid.RowDefinitions>
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
-                    <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}" ItemsSource="{Binding CurrentMech.SensorsAssig,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-                                      SaveSensorsCommand="{Binding ElementName=root,Path=DataContext.SaveSensorPlace}"
-                                      ViewModel="{Binding }" IsEditMode="{Binding IsEditMode}"/>
-            </Border>
+                    <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
+                                         ItemsSource="{Binding CurrentMech.SensorsAssig}"
+                                         SaveSensorsCommand="{Binding SaveSensorPlace}"
+                                         AddSensorsCommand ="{Binding ElementName=root,Path=DataContext.AddSensorToMap}"
+                                         IsEditMode="{Binding IsEditMode}"/>
+                </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>
             </Grid>
     </Grid>

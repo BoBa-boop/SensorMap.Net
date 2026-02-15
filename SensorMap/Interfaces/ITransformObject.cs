@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using Cursor = System.Windows.Input.Cursor;
 using Point = System.Windows.Point;
 using Size = System.Windows.Size;
 
@@ -33,7 +35,7 @@ namespace SensorMap.Interfaces
         /// </summary>
         /// <param name="hitType">Тип области</param>
         /// <returns>Соответствующий курсор</returns>
-        System.Windows.Input.Cursor GetCursorForHitType(HitType hitType);
+        Cursor GetCursorForHitType(HitType hitType);
 
         /// <summary>
         /// Выполняет трансформацию прямоугольника

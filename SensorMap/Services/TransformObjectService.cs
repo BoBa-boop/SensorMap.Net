@@ -1,33 +1,41 @@
-﻿using ReactiveUI;
-using SensorMap.Interfaces;
-using System.Drawing;
+﻿using SensorMap.Interfaces;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
-using System.Windows.Forms;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using Point = System.Windows.Point;
+using Cursor = System.Windows.Input;
+using Cursors = System.Windows.Input;
 namespace SensorMap.Services
 {
     public class TransformObjectService : ITransformObject
     {
         public System.Windows.Input.Cursor GetCursorForHitType(HitType hitType)
         {
-            return hitType switch
+            System.Windows.Input.Cursor desired_cursor = System.Windows.Input.Cursors.Arrow;
+            switch (hitType)
             {
-                HitType.None => System.Windows.Input.Cursors.Arrow,
-                HitType.Body => System.Windows.Input.Cursors.SizeAll,
-                HitType.UpLeft or HitType.BottomRight => System.Windows.Input.Cursors.SizeNWSE,
-                HitType.BottomLeft or HitType.UpRight => System.Windows.Input.Cursors.SizeNESW,
-                HitType.Top or HitType.Bottom => System.Windows.Input.Cursors.SizeNS,
-                HitType.Left or HitType.Right => System.Windows.Input.Cursors.SizeWE,
-                _ => System.Windows.Input.Cursors.Arrow
-            };
+                case HitType.None:
+                    return desired_cursor = System.Windows.Input.Cursors.Arrow;
+                case HitType.Body:
+                    return desired_cursor = System.Windows.Input.Cursors.ScrollAll;
+                case HitType.UpLeft:
+                case HitType.BottomRight:
+                    return desired_cursor = System.Windows.Input.Cursors.SizeNWSE;
+                case HitType.BottomLeft:
+                case HitType.UpRight:
+                    return desired_cursor = System.Windows.Input.Cursors.SizeNESW;
+                case HitType.Top:
+                case HitType.Bottom:
+                    return desired_cursor = System.Windows.Input.Cursors.SizeNS;
+                case HitType.Left:
+                case HitType.Right:
+                    return desired_cursor = System.Windows.Input.Cursors.SizeWE;
+            }
+            return desired_cursor;
         }
         
 
-        public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 3)
+        public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 0)
         {
             double leftBorder = customBounds.Left;
             double topBorder = customBounds.Top;

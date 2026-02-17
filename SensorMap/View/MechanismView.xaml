@@ -35,41 +35,36 @@
                         Command="{Binding RedoCommand}"/>
                 <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
                   >
-                <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}">
-                    <MenuItem.Style>
-                        <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
-                            <Setter Property="IsEnabled" Value="True"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding IsEditMode}" Value="False">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </MenuItem.Style>
-                </MenuItem>
-                               
-                <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
-                <MenuItem x:Name="mShowAddress" 
-                          Header="Показать адреса"
-                          Command="{Binding ElementName=ccSensorMap, Path=ShowAddressCommand}">
-                    <MenuItem.Icon>
-                        <CheckBox x:Name="chBox" IsChecked="{Binding ElementName=ccSensorMap, Path=IsShowAddresses,UpdateSourceTrigger=PropertyChanged}"/>
-                    </MenuItem.Icon>
-                    <MenuItem.Style>
-                        <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
-                            <Setter Property="Visibility" Value="Visible"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </MenuItem.Style>
-                </MenuItem>
-            </Menu>
+                    <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}">
+                        <MenuItem.Style>
+                            <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
+                                <Setter Property="IsEnabled" Value="True"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsEditMode}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </MenuItem.Style>
+                    </MenuItem>
+                    <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
+                </Menu>
+                <CheckBox x:Name="chBox" IsChecked="{Binding ElementName=ccSensorMap, Path=IsHideAddresses,UpdateSourceTrigger=PropertyChanged}">
+                    <CheckBox.Style>
+                    <Style TargetType="CheckBox" BasedOn="{StaticResource CheckBoxBaseStyle}">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Setter Property="Content" Value="Скрыть адреса датчиков"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                    </CheckBox.Style>
+                </CheckBox>
             </hc:SimpleStackPanel>
             <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
             <StackPanel Orientation="Vertical">

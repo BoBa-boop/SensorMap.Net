@@ -28,25 +28,19 @@ namespace SensorMap.ViewModel
         private IAppDbContextFactory _appDbContextFactory;
         private AppDBContext dBContext;
         private bool isEditMode;
-        private ObservableCollection<Mechanism> _mech;
+
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
         [Reactive] public bool CanRedo=>_undoRedoManager.CanRedo;
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
+        [Reactive] public ObservableCollection<SensorAssignments> SensorAssignments { get; set; }
         [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
-        [Reactive] public ObservableCollection<Mechanism> Mechanisms
-        {
-            get => _mech;
-            set
-            {
-                this.RaiseAndSetIfChanged(ref _mech, value);
-            }
-        }
+        [Reactive] public ObservableCollection<Mechanism> Mechanisms {  get; set; }
 
         public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage) 
         {
@@ -58,6 +52,7 @@ namespace SensorMap.ViewModel
             _service = service;
             Sectors = new (dBContext.Sectors.ToList());
             Mechanisms = new (dBContext.Mechanisms.ToList());
+            SensorAssignments = new (dBContext.SensorAssignments.ToList());
             PLCs = new(dBContext.PLCs.ToList());
             Manufacturers = new(PLCs.Select(plc => plc.Manufacturer).Distinct().ToList());
             Sensors = new(dBContext.Sensors.ToList());

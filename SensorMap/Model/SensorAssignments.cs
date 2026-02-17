@@ -3,6 +3,7 @@ using ReactiveUI.SourceGenerators;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,11 +20,12 @@ namespace SensorMap.Model
         private double _x;
         private double _height;
         private double _width;
+        private bool _isModified;
 
         [Key]
         public int Id { get; set; }
         [Reactive]
-        public byte[]? LocationImage
+        public byte[]? Image
         {
             get => _image;
             set
@@ -89,5 +91,13 @@ namespace SensorMap.Model
         public virtual Sensor? Sensor { get; set; }
         public virtual int MechanismId { get; set; }
         public virtual Mechanism? Mechanism { get; set; }
+
+
+        [NotMapped]
+        public bool IsModified
+        {
+            get => _isModified;
+            set => this.RaiseAndSetIfChanged(ref _isModified, value);
+        }
     }
 }

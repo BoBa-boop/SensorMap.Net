@@ -55,14 +55,6 @@ namespace SensorMap.CustomControls
                 control.CustomBounds = rect;
             }
         }
-
-        public char? Letter
-        {
-            get { return (char)GetValue(LetterProperty); }
-            set { SetValue(LetterProperty, value); }
-        }
-        public static readonly DependencyProperty LetterProperty =
-            DependencyProperty.Register("Letter", typeof(char), typeof(CustomSensor), new PropertyMetadata('-'));
         public SolidColorBrush CustomBackground
         {
             get { return (SolidColorBrush)GetValue(CustomBackgroundProperty); }
@@ -84,14 +76,7 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty CustBorderBrushProperty = DependencyProperty.Register("CustBorderBrush", typeof(SolidColorBrush), 
             typeof(CustomSensor), 
             new PropertyMetadata(Brushes.Black));
-        public bool ShowAddresses
-        {
-            get { return (bool)GetValue(ShowAddressesProperty); }
-            set { SetValue(ShowAddressesProperty, value);}
-        }
-        public static readonly DependencyProperty ShowAddressesProperty = DependencyProperty.Register("ShowAddresses", typeof(bool),
-            typeof(CustomSensor),
-            new PropertyMetadata(false));
+       
         public bool IsSelected
         {
             get { return (bool)GetValue(IsSelectedProperty); }
@@ -169,9 +154,6 @@ namespace SensorMap.CustomControls
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            if (SensorData!=null&& SensorData.Sensor != null && SensorData.Sensor.SensorType!=null)
-                Letter = SensorData.Sensor.SensorType.Name.ToUpper().First();
-            
             _canvas = _transformService.GetParentCanvas(this);
  
             if( _canvas != null ) 

@@ -103,10 +103,14 @@ namespace SensorMap.ViewModel
             CurrentMech = _service.CurrentMechanism_Global;
             PLCs = new(_dbContext.PLCs.ToList());
             Sectors = new(_dbContext.Sectors.ToList());
+            CurrentSector = _service.CurrentSector_Global??Sectors.FirstOrDefault();
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, new(_dbContext.Sensors.ToList()), filter);
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
-            Mechanisms = new(_dbContext.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector.Id)).ToList());
+            Mechanisms = new(_dbContext.Mechanisms
+                .Where(x=> x.Sector != null && CurrentSector!=null && x.Sector.Id == (CurrentSector.Id))
+                .Include(x=>x.SensorsAssig)
+                .ToList());
             AddSensorToMap = new RelayCommand<object>((obj) =>
             {
                 if (obj is Sensor sensor)
@@ -204,7 +208,12 @@ namespace SensorMap.ViewModel
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
          //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
          //разобраться с сохранением
-            //_provider.AddSensorsAssignmentAsync(CurrentMech!.SensorsAssig!);
+            using (var dbContext = _appDbContextFactory.CreateDbContext())
+            {
+                var q = dbContext.Mechanisms.Where(x=>x.Id == CurrentMech.Id);
+                dbContext.Update(q);
+                dbContext.SaveChanges();
+            }
         }
         public ICommand SaveSensorPlace { get; }
         public ICommand NavigateToSectors { get; }

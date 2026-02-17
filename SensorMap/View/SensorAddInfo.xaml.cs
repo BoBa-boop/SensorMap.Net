@@ -26,7 +26,7 @@ namespace SensorMap.View
             if(sender is Button button)
             {
             var sensor = button.DataContext as SensorAssignments;
-            var image = sensor.Sensor.Image;//sensor.LocationImage должно быть, текущее значение это тест
+            var image = sensor.Image;
             var browser = new CustomImageBrowser(CreateImageFromBytes(image)) { Title = "Реальное расположение" };
                 browser.ShowDialog();
             }

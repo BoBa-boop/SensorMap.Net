@@ -12,6 +12,7 @@ using System.Collections.Specialized;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -54,14 +55,14 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsEditModeProperty =
             DependencyProperty.Register("IsEditMode", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
-        public bool IsShowAddresses
+        public bool IsHideAddresses
         {
-            get { return (bool)GetValue(IsShowAddressesProperty); }
-            set { SetValue(IsShowAddressesProperty, value); }
+            get { return (bool)GetValue(IsHideAddressesProperty); }
+            set { SetValue(IsHideAddressesProperty, value); }
         }
-        public static readonly DependencyProperty IsShowAddressesProperty =
-            DependencyProperty.Register("IsShowAddresses", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
-
+        public static readonly DependencyProperty IsHideAddressesProperty =
+            DependencyProperty.Register("IsHideAddresses", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(true));
+        
         public static readonly DependencyProperty SaveSensorsCommandProperty =
             DependencyProperty.Register("SaveSensorsCommand", typeof(ICommand), typeof(SensorDragDrop));
         public ICommand SaveSensorsCommand
@@ -69,14 +70,7 @@ namespace SensorMap.CustomControls
             get { return (ICommand)GetValue(SaveSensorsCommandProperty); }
             set { SetValue(SaveSensorsCommandProperty, value); }
         }
-        public static readonly DependencyProperty ShowAddressCommandProperty =
-            DependencyProperty.Register("ShowAddress", typeof(ICommand), typeof(SensorDragDrop),new PropertyMetadata(null));
-
-        public ICommand ShowAddressCommand
-        {
-            get { return (ICommand)GetValue(ShowAddressCommandProperty); }
-            set { SetValue(ShowAddressCommandProperty, value); }
-        }
+        
         public static readonly DependencyProperty AddSensorsCommandProperty =
             DependencyProperty.Register("AddSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
 
@@ -148,7 +142,6 @@ namespace SensorMap.CustomControls
                         uiElement.IsSelected = false;
                     }
                 }
-                ShowAddressCommand = new RelayCommand(ShowAddressChanged);
             }
             
         }
@@ -156,16 +149,6 @@ namespace SensorMap.CustomControls
         private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             _initialMousePosition = new Point();
-            
-        }
-
-        private void ShowAddressChanged()
-        {
-            IsShowAddresses = !IsShowAddresses;
-            foreach (var uiElement in _canvas!.Children.OfType<CustomSensor>())
-            {
-                uiElement.ShowAddresses = IsShowAddresses;
-            }
             
         }
         #region ItemsSource events
@@ -482,13 +465,10 @@ namespace SensorMap.CustomControls
             
             Canvas.SetLeft(element, point.X);
             Canvas.SetTop(element, point.Y);
-
             element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             return element;
         }
 
-
-       
         /// <summary>
         /// Получение точки верхнего левого угла
         /// </summary>

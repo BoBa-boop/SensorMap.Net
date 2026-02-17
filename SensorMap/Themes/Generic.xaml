@@ -35,14 +35,33 @@
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
                     <Grid>
                         <Border x:Name="PART_Sensor"
-                            Grid.Row="1" Grid.Column="0"
+                            Grid.Row="1"
                             Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
                             Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}"
                             Background="{TemplateBinding Property=CustomBackground}"
                             BorderBrush="{TemplateBinding CustBorderBrush}"
                             BorderThickness="2" CornerRadius="30">
                         </Border>
-                        <Rectangle x:Name="PART_Transform" Grid.Row="1" Grid.Column="0"
+                        <Viewbox VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1">
+                            <TextBlock Background="Transparent" FontSize="11">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Text" Value="{Binding SensorData.Sensor.SensorType.Name[0],
+                                                        RelativeSource={RelativeSource TemplatedParent},UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsHideAddresses,RelativeSource={RelativeSource Mode=FindAncestor,
+                                                        AncestorType={x:Type myCC:SensorDragDrop}}}" Value="false">
+                                                <Setter Property="Text" Value="{Binding SensorData.Address,
+                                                        RelativeSource={RelativeSource TemplatedParent},UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Viewbox>
+                        
+                        <Rectangle x:Name="PART_Transform" Grid.Row="1"
                                    IsHitTestVisible="True"
                                    Visibility="{TemplateBinding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
                                    Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"

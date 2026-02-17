@@ -23,7 +23,7 @@
                 <TextBlock Text="{Binding Sensor.SensorType.Name}" FontSize="14"/>
                 <TextBlock Text="{Binding Address}" FontSize="14"/>
                 <Button Content="Реальное расположение" Click="Button_Click"
-                        IsEnabled="{Binding Sensor.Image,Converter={StaticResource Object2BooleanConverter}}"/>
+                        IsEnabled="{Binding LocationImage,Converter={StaticResource Object2BooleanConverter}}"/>
             </StackPanel>
     </Grid>
     </hc:TransitioningContentControl>

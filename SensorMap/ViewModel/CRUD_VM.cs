@@ -48,7 +48,7 @@ namespace SensorMap.ViewModel
             }
         }
 
-        public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
+        public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage) 
         {
             Navigation = nav;
             _tempImage = tempImage;

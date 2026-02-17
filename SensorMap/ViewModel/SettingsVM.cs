@@ -20,7 +20,8 @@ namespace SensorMap.ViewModel
     public class SettingsVM:ReactiveObject
     {
         private IAuthorization _auth;
-        private IDataService _dataService;
+        private IAppDbContextFactory _appDbContextFactory;
+        private AppDBContext _dbContext;
         private IDataBaseProvider _dbProvider;
         private string _dbName = string.Empty;
 
@@ -30,10 +31,11 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _dbName, value); }
         }
 
-        public SettingsVM(IAuthorization authorization, IDataService dataService, IDataBaseProvider dbProvider)
+        public SettingsVM(IAuthorization authorization, IAppDbContextFactory appDbContextFactory, IDataBaseProvider dbProvider)
         {
             _dbProvider = dbProvider;
-            _dataService = dataService;
+            _appDbContextFactory = appDbContextFactory;
+            _dbContext = appDbContextFactory.CreateDbContext();
             _auth = authorization;
             DbName = Path.GetFileName(Settings.Default.ConnectionString);
             ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
@@ -45,9 +47,9 @@ namespace SensorMap.ViewModel
                 fileBrowser.ShowDialog();
                 if (!string.IsNullOrEmpty(fileBrowser.FileName))
                 {
-                    _dbProvider.ChangeDataBase(fileBrowser.FileName);
-                    DbName = Path.GetFileName(Settings.Default.ConnectionString);
-                    dataService.UpdateDataFromDB();
+                    throw new Exception("Неправильная работа бэкап. Не отключает прошлое соединение и уничтожает данные");
+                    //_dbProvider.ChangeDataBase(fileBrowser.FileName);
+                    //DbName = Path.GetFileName(Settings.Default.ConnectionString);
                 }
 
             });

@@ -44,10 +44,8 @@ namespace SensorMap
             AnalyzeDataBase();
             if (IsStartOneApp(e))
             {
-                var data = _serviceProvider.GetRequiredService<IDataService>();
                 var menuApp = _serviceProvider.GetRequiredService<MainWindow>();
                 var navigation = _serviceProvider.GetRequiredService<INavigation>();
-                data.UpdateDataFromDB();
                 navigation.SetMainWindow(menuApp);
                 menuApp.Show();
             }

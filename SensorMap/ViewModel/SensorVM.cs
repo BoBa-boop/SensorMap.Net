@@ -6,6 +6,7 @@ using HandyControl.Tools;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -25,6 +26,8 @@ namespace SensorMap.ViewModel
         private readonly INavigation _navigation;
         private readonly IDataService _service;
         private readonly IJsonSerialization _json;
+        private IAppDbContextFactory _appDbContextFactory;
+        private AppDBContext _dbContext;
         private Sensor _sensorsTreeNode;
         private List<AdditionalData> _additionalData;
         private ObservableCollection<Mechanism> _FilteredMechanisms;
@@ -46,15 +49,17 @@ namespace SensorMap.ViewModel
         private ObservableCollection<SensorType> sensorTypes {  get; set; }
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
 
-        public SensorVM(IDataService service,IJsonSerialization json,INavigation navigation,Sensor sensor=null)
+        public SensorVM(IDataService service,IJsonSerialization json,INavigation navigation,IAppDbContextFactory appDbContextFactory,Sensor sensor=null)
         {
             SelectedNode = sensor;
             _navigation = navigation;
             _json = json;
             _service = service;
-            sensorTypes = _service.SensorTypes;
-            Sensors = _service.Sensors;
-            Mechanisms = _service.Mechanisms;
+            _appDbContextFactory = appDbContextFactory;
+            _dbContext = _appDbContextFactory.CreateDbContext();
+            sensorTypes = new(_dbContext.SensorTypes.ToList());
+            Sensors = new(_dbContext.Sensors.ToList());
+            Mechanisms = new(_dbContext.Mechanisms.ToList());
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
             _additionalData = LoadMoreData();

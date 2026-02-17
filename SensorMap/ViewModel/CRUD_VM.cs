@@ -10,6 +10,7 @@ using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
@@ -24,7 +25,10 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service; 
         private readonly ITempImage _tempImage;
+        private IAppDbContextFactory _appDbContextFactory;
+        private AppDBContext dBContext;
         private bool isEditMode;
+        private ObservableCollection<Mechanism> _mech;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
@@ -35,21 +39,29 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
-        [Reactive] public ObservableCollection<Mechanism> Mechanisms { get; set; }
+        [Reactive] public ObservableCollection<Mechanism> Mechanisms
+        {
+            get => _mech;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _mech, value);
+            }
+        }
 
         public CRUD_VM(IDataBaseProvider provider,IDataService service,INavigation nav,ITempImage tempImage) 
         {
             Navigation = nav;
             _tempImage = tempImage;
             _provider = provider;
+            _appDbContextFactory = cxFactory;
+            dBContext = _appDbContextFactory.CreateDbContext();
             _service = service;
-
-            Sectors = _service.Sectors;
-            Mechanisms = _service.Mechanisms;
-            PLCs = _service.PLCs;
-            //Manufacturers = _service.PLC_Manufacturers;
-            Sensors = _service.Sensors;
-            SensorTypes = _service.SensorTypes;
+            Sectors = new (dBContext.Sectors.ToList());
+            Mechanisms = new (dBContext.Mechanisms.ToList());
+            PLCs = new(dBContext.PLCs.ToList());
+            Manufacturers = new(PLCs.Select(plc => plc.Manufacturer).Distinct().ToList());
+            Sensors = new(dBContext.Sensors.ToList());
+            SensorTypes = new(dBContext.SensorTypes.ToList());
             
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
@@ -59,37 +71,27 @@ namespace SensorMap.ViewModel
             SaveCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
-                var entityType = arg.GetType();
-
-                PropertyInfo? idProperty = entityType.GetProperty("Id", BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                if (idProperty != null && Convert.ToInt32(idProperty.GetValue(arg)) == 0)
-                {
-                    MethodInfo createMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Create))!.MakeGenericMethod(entityType);
-                    if (createMethod.Invoke(_provider, new object[] { arg }) != null)
-                    {
-                        entityType?.GetProperty("IsModified")?.SetValue(arg, false);
-                    }
-                }
-                else
-                {
-                    MethodInfo updateMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Update))!.MakeGenericMethod(entityType);
-                    if (updateMethod.Invoke(_provider, new object[] { arg }) != null)
-                        entityType?.GetProperty("IsModified")?.SetValue(arg, false);
-                }
+                
+                dBContext.Update(arg);
+                arg.GetType()?.GetProperty("IsModified")?.SetValue(arg, false);
+                dBContext.SaveChanges();
+                
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
-                MethodInfo deleteMethod = typeof(IDataBaseProvider).GetMethod(nameof(_provider.Delete))!.MakeGenericMethod(entityType);
-                if (deleteMethod.Invoke(_provider, new object[] { arg }) != null)
+                
+                PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
+                if (prop != null)
                 {
-                    PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
-                    if(prop!=null)
-                    {
-                        var collection = prop.GetValue(this) as System.Collections.IList;
-                        collection?.Remove(arg);
-                    }
+                    var collection = prop.GetValue(this) as System.Collections.IList;
+                    collection?.Remove(arg);
+                }
+                if(dBContext.Entry(arg).State!=EntityState.Detached)
+                {
+                    dBContext.Remove(arg);
+                    dBContext.SaveChanges();
                 }
             });
             
@@ -150,14 +152,16 @@ namespace SensorMap.ViewModel
                 var values = (object[])param;
                 return !string.IsNullOrWhiteSpace(values[0].ToString()); 
             });
-
             DeleteNodeTitleType = new RelayCommand<object>((type) => 
             {
                 if(type is SensorType sensorType&& sensorType!=null)
                 {
                     SensorTypes.Remove(sensorType);
-                    if (_service.SensorTypes.Contains(sensorType))
-                        DeleteCommand.Execute(type); 
+                    if (dBContext.SensorTypes.Contains(sensorType))
+                    {
+                        dBContext.SensorTypes.Remove(sensorType);
+                        dBContext.SaveChanges();
+                    }
                 }
             }, (type) => { return type != null; });
 
@@ -172,54 +176,9 @@ namespace SensorMap.ViewModel
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
-            
         }
 
-        private void OnEntityUpdated(DataBaseEvents.TEntityEvent @event)
-        {
-            switch (@event.EntityType.Name)
-            {
-                case nameof(Sector):
-                    var newSector = Sectors.FirstOrDefault(s => s.Id == @event.Id);
-                    foreach (var mech in _service.Mechanisms.Where(meh => meh.Id == @event.Id).ToList())
-                    {
-                        mech.Sector = newSector;
-                    }
-
-                    break;
-                case nameof(Mechanism):
-                    var CurrentSector = Sectors.FirstOrDefault(s => s.Id == @event.Id);
-                    if (CurrentSector != null) CurrentSector.Mechanisms = new(Mechanisms.Where(meh => meh.Id == @event.Id).ToList());
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void OnEntityDeleted(DataBaseEvents.TEntityEvent @event)
-        {
-            switch (@event.EntityType.Name)
-            {
-                case nameof(Sector):
-                    
-                    foreach (var mech in _service.Mechanisms.Where(sect => sect.Id == @event.Id).ToList())
-                    {
-                        mech.Sector = null;
-                    }
-
-                    break;
-                case nameof(Mechanism):
-                    // Обновляем коллекцию механизмов
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private void OnEntityCreated(DataBaseEvents.TEntityEvent @event)
-        {
-            throw new NotImplementedException();
-        }
+        
 
         public ICommand DeleteCommand { get; set; }
         public ICommand SaveCommand { get; set; }
@@ -235,5 +194,6 @@ namespace SensorMap.ViewModel
             var command = new Commands.DataGridCommands.EditCell<T>(_inputObject, propertyName, oldValue, newValue);
             _undoRedoManager.Do(command);
         }
+        
     }
 }

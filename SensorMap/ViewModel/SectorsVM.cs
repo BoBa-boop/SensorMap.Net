@@ -53,7 +53,7 @@ namespace SensorMap.ViewModel
             });
             _provider = provider;
 
-            Sectors = _data.Sectors;
+            Sectors = new(_dbContext.Sectors.Include(x=>x.Mechanisms).ToList());
             var tempCollection = Sectors;
             this.WhenAnyValue(x => x.SearchText)
             .Throttle(TimeSpan.FromMilliseconds(300))

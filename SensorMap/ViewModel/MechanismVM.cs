@@ -102,7 +102,7 @@ namespace SensorMap.ViewModel
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, _service.Sensors, filter);
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
-            Mechanisms = new(_service.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector?.Id ?? 0)).ToList());
+            Mechanisms = new(_dbContext.Mechanisms.Where(x => x.Sector != null && x.Sector.Id == (CurrentSector.Id)).Include(x => x.SensorsAssig).ToList());
             AddSensorToMap = new RelayCommand<object>((obj) =>
             {
                 if (obj is Sensor sensor)

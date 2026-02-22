@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace SensorMap.Services
 {
-    public class DBContextFactory:IAppDbContextFactory
+    public class DBContextFactory : IAppDbContextFactory
     {
         private string _connectionString;
         public DBContextFactory(string connectionString)

@@ -54,9 +54,21 @@ namespace SensorMap
         private void AnalyzeDataBase()
         {
             IAppDbContextFactory dbContextFactory = _serviceProvider.GetRequiredService<IAppDbContextFactory>();
+            var data = _serviceProvider.GetRequiredService<IDataService>();
             using (AppDBContext dBContext = dbContextFactory.CreateDbContext())
             {
-                dBContext.Database.MigrateAsync();
+                try
+                {
+                    dBContext.Database.OpenConnection();
+                    dBContext.Database.CloseConnection();
+                    dBContext.Database.MigrateAsync();
+                    data.IsDataBaseConnect = true;
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                    data.IsDataBaseConnect = false;
+                }
             }
 
 

@@ -96,21 +96,25 @@ namespace SensorMap.ViewModel
             _provider = provider;
             _service = service;
             _appDbContextFactory = appDbContextFactory;
-            _dbContext = _appDbContextFactory.CreateDbContext();
-
-            sensorTypes = new (_dbContext.SensorTypes.ToList());
-            CurrentSector = _service.CurrentSector_Global;
-            CurrentMech = _service.CurrentMechanism_Global;
-            PLCs = new(_dbContext.PLCs.ToList());
-            Sectors = new(_dbContext.Sectors.ToList());
-            CurrentSector = _service.CurrentSector_Global??Sectors.FirstOrDefault();
-            Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, new(_dbContext.Sensors.ToList()), filter);
-            NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
-            Mechanisms = new(_dbContext.Mechanisms
-                .Where(x=> x.Sector != null && CurrentSector!=null && x.Sector.Id == (CurrentSector.Id))
-                .Include(x=>x.SensorsAssig)
+            using (var _dbContext = _appDbContextFactory.CreateDbContext())
+            {
+                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().ToList());
+                CurrentSector = _service.CurrentSector_Global;
+                CurrentMech = _service.CurrentMechanism_Global;
+                PLCs = new(_dbContext.PLCs.AsNoTracking().ToList());
+                Sectors = new(_dbContext.Sectors.AsNoTracking().ToList());
+                CurrentSector = _service.CurrentSector_Global ?? Sectors.FirstOrDefault();
+                Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
+                Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, new(_dbContext.Sensors.AsNoTracking().ToList()), filter);
+                Mechanisms = new(_dbContext.Mechanisms
+                .Where(x => x.Sector != null && CurrentSector != null && x.Sector.Id == (CurrentSector.Id))
+                .Include(x => x.SensorsAssig)
                 .ToList());
+            }
+
+                
+            NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
+            
             AddSensorToMap = new RelayCommand<object>((obj) =>
             {
                 if (obj is Sensor sensor)
@@ -144,7 +148,7 @@ namespace SensorMap.ViewModel
                     SensorAssignments sensorAssignments = new SensorAssignments()
                     {
                         SensorId = node.Data.Id,
-                        Sensor = _dbContext.Sensors.FirstOrDefault(x=>x.Id== node.Data.Id),
+                        Sensor = node.Data,
                         MechanismId = CurrentMech.Id,
                         Mechanism = CurrentMech,
                         Width = 30,
@@ -189,7 +193,7 @@ namespace SensorMap.ViewModel
                 });
                 return false;
             }
-            else if (CurrentMech.PLC == null)
+            else if (CurrentMech.PLCID == 0)
             {
                 Growl.Error(new GrowlInfo
                 {

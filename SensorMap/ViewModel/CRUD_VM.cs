@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
+using HandyControl.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using ReactiveUI;
@@ -26,7 +28,7 @@ namespace SensorMap.ViewModel
         private readonly IDataService _service; 
         private readonly ITempImage _tempImage;
         private IAppDbContextFactory _appDbContextFactory;
-        private AppDBContext dBContext;
+        private AppDBContext _dBContext;
         private bool isEditMode;
 
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
@@ -48,15 +50,17 @@ namespace SensorMap.ViewModel
             _tempImage = tempImage;
             _provider = provider;
             _appDbContextFactory = cxFactory;
-            dBContext = _appDbContextFactory.CreateDbContext();
             _service = service;
-            Sectors = new (dBContext.Sectors.ToList());
-            Mechanisms = new (dBContext.Mechanisms.ToList());
-            SensorAssignments = new (dBContext.SensorAssignments.ToList());
-            PLCs = new(dBContext.PLCs.ToList());
-            Manufacturers = new(PLCs.Select(plc => plc.Manufacturer).Distinct().ToList());
-            Sensors = new(dBContext.Sensors.ToList());
-            SensorTypes = new(dBContext.SensorTypes.ToList());
+            using (var dBContext = _appDbContextFactory.CreateDbContext())
+            {
+                Sectors = new(dBContext.Sectors.ToList());
+                Mechanisms = new(dBContext.Mechanisms.ToList());
+                SensorAssignments = new(dBContext.SensorAssignments.ToList());
+                PLCs = new(dBContext.PLCs.ToList());
+                Manufacturers = new(PLCs.Select(plc => plc.Manufacturer).Distinct().ToList());
+                Sensors = new(dBContext.Sensors.ToList());
+                SensorTypes = new(dBContext.SensorTypes.ToList());
+            }
             
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
@@ -66,28 +70,76 @@ namespace SensorMap.ViewModel
             SaveCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
-                
-                dBContext.Update(arg);
-                arg.GetType()?.GetProperty("IsModified")?.SetValue(arg, false);
-                dBContext.SaveChanges();
+                using(var dBContext = _appDbContextFactory.CreateDbContext())
+                {
+                    try
+                    {
+                        dBContext.Update(arg);
+                        dBContext.SaveChanges();
+                        arg.GetType()?.GetProperty("IsModified")?.SetValue(arg, false);
+                        Growl.Success(new GrowlInfo
+                        {
+                            Message = "Данные в БД изменены",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            WaitTime = 2
+                        });
+                    }
+                    catch
+                    {
+                        Growl.Error("Ошибка при изменение БД");
+                    }
+                }
                 
             });
             DeleteCommand = new RelayCommand<object>((arg) => 
             {
                 if (arg is null) return;
                 var entityType = arg.GetType();
+                try
+                {
+                    using (var dBContext = _appDbContextFactory.CreateDbContext())
+                    {
+                        var result = System.Windows.MessageBox.Show("Вы действительно хотите удалить строчку?", "Подтверждение",
+                                MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            if (dBContext.Entry(arg).State != EntityState.Detached)
+                            {
+                                if (result == MessageBoxResult.Yes)
+                                {
+                                    dBContext.Remove(arg);
+                                    dBContext.SaveChanges();
+                                    Growl.Success(new GrowlInfo
+                                    {
+                                        Message = "Данные удалены!",
+                                        CancelStr = "Ignore",
+                                        ShowDateTime = false,
+                                        WaitTime = 2
+                                    });
+                                }
+                            }
+                            PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
+                            if (prop != null)
+                            {
+                                var collection = prop.GetValue(this) as System.Collections.IList;
+                                collection?.Remove(arg);
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    Growl.Success(new GrowlInfo
+                    {
+                        Message = "Ошибка при удаление!",
+                        CancelStr = "Ignore",
+                        ShowDateTime = false,
+                        WaitTime = 2
+                    });
+                }
                 
-                PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
-                if (prop != null)
-                {
-                    var collection = prop.GetValue(this) as System.Collections.IList;
-                    collection?.Remove(arg);
-                }
-                if(dBContext.Entry(arg).State!=EntityState.Detached)
-                {
-                    dBContext.Remove(arg);
-                    dBContext.SaveChanges();
-                }
+               
             });
             
             AddImage = new RelayCommand<object>((arg) =>
@@ -152,10 +204,13 @@ namespace SensorMap.ViewModel
                 if(type is SensorType sensorType&& sensorType!=null)
                 {
                     SensorTypes.Remove(sensorType);
-                    if (dBContext.SensorTypes.Contains(sensorType))
+                    using (var dBContext = _appDbContextFactory.CreateDbContext())
                     {
-                        dBContext.SensorTypes.Remove(sensorType);
-                        dBContext.SaveChanges();
+                        if (dBContext.SensorTypes.Contains(sensorType))
+                        {
+                            dBContext.SensorTypes.Remove(sensorType);
+                            dBContext.SaveChanges();
+                        }
                     }
                 }
             }, (type) => { return type != null; });

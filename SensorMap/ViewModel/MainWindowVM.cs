@@ -19,12 +19,19 @@ namespace SensorMap.ViewModel
         [Reactive] public INavigation Navigation { get; set; }
         private bool _isEdit = false;
         private bool _activeWindow=true;
+        private bool _isConnected = false;
 
         [Reactive]
         public bool IsEditMode
         {
             get => _isEdit;
             set => this.RaiseAndSetIfChanged(ref _isEdit, value);
+        }
+        [Reactive]
+        public bool IsConnectedDB
+        {
+            get => _isConnected;
+            set => this.RaiseAndSetIfChanged(ref _isConnected, value);
         }
         [Reactive]
         public bool ActiveWindow
@@ -64,6 +71,9 @@ namespace SensorMap.ViewModel
 
             _dataService.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(this, x => x.IsEditMode);
+
+            _dataService.WhenAnyValue(x => x.IsDataBaseConnect)
+               .BindTo(this, x => x.IsConnectedDB);
         }
 
         private void OpenAuthWindow()

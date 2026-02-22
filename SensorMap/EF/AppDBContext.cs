@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using System.Data.Common;
 using System.IO;
 
 namespace SensorMap.EF

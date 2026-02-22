@@ -175,7 +175,10 @@ namespace SensorMap.ViewModel
             UndoCommand = new RelayCommand(()=> _undoRedoManager.Undo());
             RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
             TransformSensorCommand = new RelayCommand<object>((obj) => { if (obj is TransformationSensor command) _undoRedoManager.Do(command); });
-
+            
+            
+            _dbContext.Database.CloseConnection();
+            _dbContext.Dispose();
         }
 
         private bool CanExecuteAddSensor(object selectedSensor)
@@ -217,6 +220,9 @@ namespace SensorMap.ViewModel
                 var q = dbContext.Mechanisms.Where(x=>x.Id == CurrentMech.Id);
                 dbContext.Update(q);
                 dbContext.SaveChanges();
+
+                dbContext.Database.CloseConnection();
+                dbContext.Dispose();
             }
         }
         public ICommand SaveSensorPlace { get; }

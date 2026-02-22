@@ -1,35 +1,14 @@
-﻿using CommunityToolkit.Mvvm.Input;
-using SensorMap.Commands.SensorCommands;
+﻿using SensorMap.Commands.SensorCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
-using SensorMap.ViewModel;
-using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Xml.Linq;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
-using Cursor = System.Windows.Input.Cursor;
-using Cursors = System.Windows.Input.Cursors;
-using MessageBox = System.Windows.MessageBox;
 using Point = System.Windows.Point;
-using Size = System.Windows.Size;
 
 namespace SensorMap.CustomControls
 {

@@ -86,6 +86,9 @@ namespace SensorMap.ViewModel
                 });
             _service.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(this, x => x.IsEditMode);
+
+            _dbContext.Database.CloseConnection();
+            _dbContext.Dispose();
         }
 
         private List<AdditionalData> LoadMoreData()

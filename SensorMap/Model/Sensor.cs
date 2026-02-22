@@ -30,7 +30,6 @@ namespace SensorMap.Model
                 if (_name != value)
                 {
                     this.RaiseAndSetIfChanged(ref _name, value);
-                    IsModified = true;
                 }
             }
         }
@@ -44,7 +43,6 @@ namespace SensorMap.Model
                 if (value != _image)
                 {
                     this.RaiseAndSetIfChanged(ref _image, value);
-                    IsModified = true;
                 }
             }
         }
@@ -56,7 +54,6 @@ namespace SensorMap.Model
                 if (value != null)
                 {
                     this.RaiseAndSetIfChanged(ref _sensorType, value);
-                    IsModified = true;
                 }
             }
         }

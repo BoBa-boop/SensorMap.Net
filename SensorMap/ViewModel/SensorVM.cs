@@ -3,6 +3,7 @@ using DynamicData;
 using HandyControl.Controls;
 using HandyControl.Data;
 using HandyControl.Tools;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -27,7 +28,6 @@ namespace SensorMap.ViewModel
         private readonly IDataService _service;
         private readonly IJsonSerialization _json;
         private IAppDbContextFactory _appDbContextFactory;
-        private AppDBContext _dbContext;
         private Sensor _sensorsTreeNode;
         private List<AdditionalData> _additionalData;
         private ObservableCollection<Mechanism> _FilteredMechanisms;
@@ -56,12 +56,14 @@ namespace SensorMap.ViewModel
             _json = json;
             _service = service;
             _appDbContextFactory = appDbContextFactory;
-            _dbContext = _appDbContextFactory.CreateDbContext();
-            sensorTypes = new(_dbContext.SensorTypes.ToList());
-            Sensors = new(_dbContext.Sensors.ToList());
-            Mechanisms = new(_dbContext.Mechanisms.ToList());
-            Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-            SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
+            using (var _dbContext = _appDbContextFactory.CreateDbContext())
+            {
+                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().ToList());
+                Sensors = new(_dbContext.Sensors.AsNoTracking().ToList());
+                Mechanisms = new(_dbContext.Mechanisms.AsNoTracking().ToList());
+                Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
+                SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
+            }
             _additionalData = LoadMoreData();
 
             SaveMoreData = new RelayCommand(SaveDataFileds);

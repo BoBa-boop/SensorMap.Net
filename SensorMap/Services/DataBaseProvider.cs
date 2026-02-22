@@ -2,6 +2,7 @@
 using HandyControl.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using SensorMap.EF;
@@ -259,20 +260,14 @@ namespace SensorMap.Services
 
         public bool ChangeDataBase(string path)
         {
-            string connection_string = Properties.Settings.Default.ConnectionString;
             string newDB_connectionString = "DataSource=" + path;
 
-            using (SqliteConnection sourceConnection = new SqliteConnection(connection_string))
-            {
-                sourceConnection.Close();
-                File.Copy(path,sourceConnection.DataSource,true);
-                //File.Move(path, sourceConnection.DataSource,true);
-            }
             _dbContextFactory.UpdateConnectionString(newDB_connectionString);
-            using (SqliteConnection sourceConnection = new SqliteConnection(newDB_connectionString))
+            using (var dbContext = _dbContextFactory.CreateDbContext())
             {
-                sourceConnection.Open();
-                sourceConnection.Close();
+                
+                if (!dbContext.Database.CanConnect())
+                    throw new Exception("База Данных не имеет таблиц для сохранения данных");
             }
             Properties.Settings.Default.ConnectionString = newDB_connectionString;
             Properties.Settings.Default.Save();

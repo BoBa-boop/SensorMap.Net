@@ -31,10 +31,10 @@
                 </Button.Style>
             </Button>
             <Menu Background="Transparent">
-                <MenuItem Header="Данные" Command="{Binding NavigateToDB}"/>
+                <MenuItem Header="Данные" Command="{Binding NavigateToDB}" IsEnabled="{Binding IsConnectedDB}"/>
             </Menu>
             <Menu Background="Transparent">
-                <MenuItem Header="Окна">
+                <MenuItem Header="Окна" IsEnabled="{Binding IsConnectedDB}">
                     <MenuItem Header="Главное меню" Command="{Binding NavigateToMenu}">
                         <MenuItem.Icon>
                             <Image Source="{StaticResource MenuImage}"/>
@@ -64,7 +64,7 @@
             </Menu>
             <Menu Background="Transparent" Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <MenuItem Header="Настройки" Command="{Binding NavigateToSettings}"/>
-                <MenuItem Header="Резервная копия БД" Command="{Binding CreateBackupDB}"/>
+                <MenuItem Header="Резервная копия БД" Command="{Binding CreateBackupDB}" IsEnabled="{Binding IsConnectedDB}"/>
             </Menu>
             <Menu Background="Transparent">
                 <MenuItem Header="Режим работы">

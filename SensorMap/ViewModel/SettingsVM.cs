@@ -20,9 +20,8 @@ namespace SensorMap.ViewModel
     public class SettingsVM:ReactiveObject
     {
         private IAuthorization _auth;
-        private IAppDbContextFactory _appDbContextFactory;
-        private AppDBContext _dbContext;
         private IDataBaseProvider _dbProvider;
+        private IDataService _data;
         private string _dbName = string.Empty;
 
         [Reactive]public string DbName
@@ -31,11 +30,10 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _dbName, value); }
         }
 
-        public SettingsVM(IAuthorization authorization, IAppDbContextFactory appDbContextFactory, IDataBaseProvider dbProvider)
+        public SettingsVM(IAuthorization authorization, IDataService data, IDataBaseProvider dbProvider)
         {
             _dbProvider = dbProvider;
-            _appDbContextFactory = appDbContextFactory;
-            _dbContext = appDbContextFactory.CreateDbContext();
+            _data = data;
             _auth = authorization;
             DbName = Path.GetFileName(Settings.Default.ConnectionString);
             ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
@@ -47,9 +45,18 @@ namespace SensorMap.ViewModel
                 fileBrowser.ShowDialog();
                 if (!string.IsNullOrEmpty(fileBrowser.FileName))
                 {
-                    throw new Exception("Неправильная работа бэкап. Не отключает прошлое соединение и уничтожает данные");
-                    //_dbProvider.ChangeDataBase(fileBrowser.FileName);
-                    //DbName = Path.GetFileName(Settings.Default.ConnectionString);
+                    try
+                    {
+                        _dbProvider.ChangeDataBase(fileBrowser.FileName);
+                        DbName = Path.GetFileName(Settings.Default.ConnectionString);
+                        Growl.Success("Выбрана новая База Данных");
+                        _data.IsDataBaseConnect = true;
+                    }
+                    catch(Exception ex)
+                    {
+                        System.Windows.MessageBox.Show(ex.Message, "Ошибка при изменение БД", System.Windows.MessageBoxButton.OK);
+                        _data.IsDataBaseConnect = false;
+                    }
                 }
 
             });
@@ -57,5 +64,6 @@ namespace SensorMap.ViewModel
 
         public ICommand ChangeEditorPassword { get;private set; }
         public ICommand ChangeDataBase { get; private set; }
+        
     }
 }

@@ -23,6 +23,7 @@ namespace SensorMap.Services
         private bool _isEdit;
         private Mechanism _curMech;
         private Sector _curSector;
+        private bool _isConnect;
 
         [Reactive]
         public bool IsEditMode
@@ -30,7 +31,12 @@ namespace SensorMap.Services
             get => _isEdit;
             set => this.RaiseAndSetIfChanged(ref _isEdit, value);
         }
-
+        [Reactive]
+        public bool IsDataBaseConnect
+        {
+            get => _isConnect;
+            set => this.RaiseAndSetIfChanged(ref _isConnect, value);
+        }
         public Mechanism CurrentMechanism_Global 
         {
             get => _curMech;

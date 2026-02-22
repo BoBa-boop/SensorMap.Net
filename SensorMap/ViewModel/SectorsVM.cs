@@ -46,36 +46,36 @@ namespace SensorMap.ViewModel
             navigation = _nav;
             _data = data;
             _appDbContextFactory = cxFactory;
-            _dbContext = _appDbContextFactory.CreateDbContext();
-            GoToSector = new RelayCommand<Sector>((sector) => 
+            GoToSector = new RelayCommand<Sector>((sector) =>
             {
-                if(sector != null) 
+                if (sector != null)
                 {
                     _data.CurrentSector_Global = sector;
                     navigation.NavigateTo<MechanismVM>();
-                } 
+                }
             });
             _provider = provider;
-
-            Sectors = new(_dbContext.Sectors.Include(x=>x.Mechanisms).ToList());
-            var tempCollection = Sectors;
-            this.WhenAnyValue(x => x.SearchText)
-            .Throttle(TimeSpan.FromMilliseconds(300))
-            .DistinctUntilChanged()
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(_ =>
+            using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
-                if (!string.IsNullOrWhiteSpace(SearchText))
+                Sectors = new(_dbContext.Sectors.Include(x => x.Mechanisms).AsNoTracking().ToList());
+                var tempCollection = Sectors;
+                this.WhenAnyValue(x => x.SearchText)
+                .Throttle(TimeSpan.FromMilliseconds(300))
+                .DistinctUntilChanged()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(_ =>
                 {
-                    var result = from sector in tempCollection
-                                 where sector.Name.ToLower().Contains(SearchText) ||
-                                 sector.Mechanisms != null && sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
-                                 select sector;
-                    Sectors = new(result);
-                }
-                else Sectors = new ObservableCollection<Sector>(_dbContext.Sectors.ToList());
-            });
-
+                    if (!string.IsNullOrWhiteSpace(SearchText))
+                    {
+                        var result = from sector in tempCollection
+                                     where sector.Name.ToLower().Contains(SearchText) ||
+                                     sector.Mechanisms != null && sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
+                                     select sector;
+                        Sectors = new(result);
+                    }
+                    else Sectors = new ObservableCollection<Sector>(_dbContext.Sectors.Include(x=>x.Mechanisms).AsNoTracking().ToList());
+                });
+            }
         }
         public ICommand GoToSector { get; set; }
     }

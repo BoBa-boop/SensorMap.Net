@@ -226,6 +226,10 @@ namespace SensorMap.ViewModel
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
+            
+            
+            dBContext.Database.CloseConnection();
+            dBContext.Dispose();
         }
 
         

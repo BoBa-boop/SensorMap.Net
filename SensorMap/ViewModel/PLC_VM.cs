@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using Microsoft.EntityFrameworkCore;
+using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.EF;
 using SensorMap.Interfaces;
@@ -35,6 +36,10 @@ namespace SensorMap.ViewModel
             _manufacturers = new (PLC.Select(plc => plc.Manufacturer).Distinct().ToList());
             Func<string, PLC, bool> filter = (m, p) => p.Manufacturer == m;
             PLCTree = new TreeViewCollection<string, PLC>("Manufacturer", _manufacturers, PLC, filter);
+            
+            
+            _dbContext.Database.CloseConnection();
+            _dbContext.Dispose();
         }
 
     }

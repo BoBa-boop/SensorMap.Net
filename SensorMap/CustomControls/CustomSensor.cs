@@ -1,4 +1,6 @@
-﻿using SensorMap.Commands.SensorCommands;
+﻿using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
+using SensorMap.Commands.SensorCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -8,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
+using MessageBox = System.Windows.MessageBox;
 using Point = System.Windows.Point;
 
 namespace SensorMap.CustomControls
@@ -100,16 +103,27 @@ namespace SensorMap.CustomControls
             sensor.Height = newRect.Height;
         }
         
-        public ICommand TransformSensorCommand
+        public ICommand TransformCommand
         {
-            get { return (ICommand)GetValue(TransformSensorCommandProperty); }
-            set { SetValue(TransformSensorCommandProperty, value); }
+            get { return (ICommand)GetValue(TransformCommandProperty); }
+            set { SetValue(TransformCommandProperty, value); }
         }
-        public static readonly DependencyProperty TransformSensorCommandProperty =
-            DependencyProperty.Register("TransformSensorCommand", typeof(ICommand),
+        public static readonly DependencyProperty TransformCommandProperty =
+            DependencyProperty.Register("TransformCommand", typeof(ICommand),
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
-
+        /// <summary>
+        /// Команда от CustomSensor
+        /// </summary>
+        public ICommand SensorCommand
+        {
+            get { return (ICommand)GetValue(SensorCommandProperty); }
+            set { SetValue(SensorCommandProperty, value); }
+        }
+        public static readonly DependencyProperty SensorCommandProperty =
+            DependencyProperty.Register("SensorCommand", typeof(ICommand),
+                typeof(CustomSensor),
+                new PropertyMetadata(null));
 
         #endregion
 
@@ -127,7 +141,6 @@ namespace SensorMap.CustomControls
         public CustomSensor()
         {
             _transformService = new TransformObjectService();
-            
         }
         
         public override void OnApplyTemplate()
@@ -143,9 +156,17 @@ namespace SensorMap.CustomControls
                     this.MouseMove += OnSensorMouseMove;
                     _canvas.MouseMove += OnMouseMove;
                     _canvas.MouseUp += OnMouseUp;
+                    this.PreviewKeyDown += OnPreviewKeyDown;
+                    
                 }
             }
             
+        }
+
+        private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Delete)
+                SensorCommand.Execute(this.SensorData);
         }
 
         private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -170,7 +191,7 @@ namespace SensorMap.CustomControls
 
             // 5. Создаем команду с МИРОВЫМИ координатами
             var command = new TransformationSensor(this, CustomBounds, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
-            TransformSensorCommand.Execute(command);
+            TransformCommand.Execute(command);
 
             e.Handled = true;
             DragInProgress = false;
@@ -259,6 +280,7 @@ namespace SensorMap.CustomControls
             }
             this.CustBorderBrush = Brushes.ForestGreen;
             this.IsSelected = true;
+            this.Focus();
             _selectedSensor = this;
         }
 

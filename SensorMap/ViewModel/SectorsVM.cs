@@ -21,7 +21,6 @@ namespace SensorMap.ViewModel
         private readonly IDataService _data;
         private INavigation navigation;
         private IAppDbContextFactory _appDbContextFactory;
-        private AppDBContext _dbContext;
         private ObservableCollection<Sector>? _coll;
         private string _searchText = string.Empty;
 
@@ -73,7 +72,7 @@ namespace SensorMap.ViewModel
                                      select sector;
                         Sectors = new(result);
                     }
-                    else Sectors = new ObservableCollection<Sector>(_dbContext.Sectors.Include(x=>x.Mechanisms).AsNoTracking().ToList());
+                    else Sectors = tempCollection;
                 });
             }
         }

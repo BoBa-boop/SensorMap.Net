@@ -104,8 +104,6 @@ namespace SensorMap.ViewModel
                                 MessageBoxButton.YesNo, MessageBoxImage.Question);
                         if (result == MessageBoxResult.Yes)
                         {
-                            if (dBContext.Entry(arg).State != EntityState.Detached)
-                            {
                                 if (result == MessageBoxResult.Yes)
                                 {
                                     dBContext.Remove(arg);
@@ -118,7 +116,8 @@ namespace SensorMap.ViewModel
                                         WaitTime = 2
                                     });
                                 }
-                            }
+                            
+
                             PropertyInfo? prop = typeof(CRUD_VM).GetProperty(entityType.Name + "s");
                             if (prop != null)
                             {
@@ -226,10 +225,6 @@ namespace SensorMap.ViewModel
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
-            
-            
-            dBContext.Database.CloseConnection();
-            dBContext.Dispose();
         }
 
         

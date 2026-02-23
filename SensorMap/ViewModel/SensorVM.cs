@@ -59,8 +59,8 @@ namespace SensorMap.ViewModel
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
                 sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().ToList());
-                Sensors = new(_dbContext.Sensors.AsNoTracking().ToList());
-                Mechanisms = new(_dbContext.Mechanisms.AsNoTracking().ToList());
+                Sensors = new(_dbContext.Sensors.Include(x=>x.SensorType).AsNoTracking().ToList());
+                Mechanisms = new(_dbContext.Mechanisms.Include(x=>x.SensorsAssig).AsNoTracking().ToList());
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
                 SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
             }
@@ -86,9 +86,6 @@ namespace SensorMap.ViewModel
                 });
             _service.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(this, x => x.IsEditMode);
-
-            _dbContext.Database.CloseConnection();
-            _dbContext.Dispose();
         }
 
         private List<AdditionalData> LoadMoreData()

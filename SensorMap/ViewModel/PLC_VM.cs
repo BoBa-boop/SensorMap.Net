@@ -14,7 +14,6 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private IAppDbContextFactory _appDbContextFactory;
-        private AppDBContext _dbContext;
         private PLC _plcSelected;
         [Reactive]
         public PLC SelectedPLC
@@ -30,16 +29,16 @@ namespace SensorMap.ViewModel
             _service = service;
             _provider = provider;
             _appDbContextFactory = appDbContextFactory;
-            _dbContext = _appDbContextFactory.CreateDbContext();
+            using (var _dbContext = _appDbContextFactory.CreateDbContext())
+            {
+                PLC = new(_dbContext.PLCs.ToList());
+                _manufacturers = new (PLC.Select(plc => plc.Manufacturer).Distinct().ToList());
+            }
             SelectedPLC = plc;            
-            PLC = new(_dbContext.PLCs.ToList());
-            _manufacturers = new (PLC.Select(plc => plc.Manufacturer).Distinct().ToList());
+            
+            
             Func<string, PLC, bool> filter = (m, p) => p.Manufacturer == m;
             PLCTree = new TreeViewCollection<string, PLC>("Manufacturer", _manufacturers, PLC, filter);
-            
-            
-            _dbContext.Database.CloseConnection();
-            _dbContext.Dispose();
         }
 
     }

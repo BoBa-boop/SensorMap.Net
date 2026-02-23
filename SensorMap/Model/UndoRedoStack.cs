@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using DynamicData;
+using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using System.Windows;
@@ -9,6 +10,7 @@ namespace SensorMap.Model
     {
         private Stack<IUndoRedoCommand> _undo = new Stack<IUndoRedoCommand>();
         private Stack<IUndoRedoCommand> _redo = new Stack<IUndoRedoCommand>();
+        private readonly int _maxUndoSteps = 3;
         private bool _canUndo;
         private bool _canRedo;
 
@@ -47,7 +49,12 @@ namespace SensorMap.Model
             command.Do();
             _undo.Push(command);
             _redo.Clear();
-
+            //while (_undo.Count > _maxUndoSteps)
+            //{
+            //    var s = _undo.ToList();
+            //    s.Remove(s.Last());
+            //    _undo = new Stack<IUndoRedoCommand>(s);
+            //}
             this.RaisePropertyChanged(nameof(CanUndo));
             this.RaisePropertyChanged(nameof(CanRedo));
         }

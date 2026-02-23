@@ -22,11 +22,17 @@
             </Setter.Value>
         </Setter>
     </Style>
-    
+
 
 
     <Style TargetType="{x:Type myCC:CustomSensor}">
-        <Setter Property="TransformSensorCommand" Value="{Binding DataContext.TransformSensorCommand,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        <Setter Property="TransformCommand" 
+                Value="{Binding DataContext.TransformSensorCommand,
+                RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        <Setter Property="SensorCommand" 
+                Value="{Binding RemoveSensorEvent,
+                RelativeSource={RelativeSource Mode=FindAncestor, 
+                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
         <Setter Property="IsEditMode" Value="{Binding Path=IsEditMode, 
                 RelativeSource={RelativeSource Mode=FindAncestor, 
                 AncestorType={x:Type myCC:SensorDragDrop}}}"/>
@@ -40,7 +46,7 @@
                             Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}"
                             Background="{TemplateBinding Property=CustomBackground}"
                             BorderBrush="{TemplateBinding CustBorderBrush}"
-                            BorderThickness="2" CornerRadius="30">
+                            BorderThickness="2" CornerRadius="30">                            
                         </Border>
                         <Viewbox VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1">
                             <TextBlock Background="Transparent" FontSize="11">
@@ -60,7 +66,7 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </Viewbox>
-                        
+
                         <Rectangle x:Name="PART_Transform" Grid.Row="1"
                                    IsHitTestVisible="True"
                                    Visibility="{TemplateBinding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
@@ -90,7 +96,7 @@
                                     </Setter>
                                 </Style>
                             </Rectangle.Style>
-                        </Rectangle>
+                        </Rectangle>                        
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

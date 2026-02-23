@@ -17,13 +17,22 @@
                 <RowDefinition Height="2*"/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-            <Image Grid.Row="0" Source="{Binding Sensor.Image}" Margin="5"/>
-            <StackPanel Grid.Row="1" Margin="5,0">
-                <TextBlock Text="{Binding Sensor.Name}" FontSize="16"/>
-                <TextBlock Text="{Binding Sensor.SensorType.Name}" FontSize="14"/>
-                <TextBlock Text="{Binding Address}" FontSize="14"/>
+            <StackPanel Orientation="Vertical" Grid.Row="0">
+            <Image Source="{Binding Sensor.Image}" 
+                   Height="180" Width="180"
+                   Margin="5"/>
+                <TextBlock Text="{Binding Sensor.Name}"
+                           HorizontalAlignment="Center"
+                           FontSize="18" FontWeight="Heavy"/>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Margin="5,0" Width="auto">
+                <TextBlock Text="{Binding Sensor.SensorType.Name}"
+                               FontSize="14"/>
+                <hc:TextBox Text="{Binding Address}"
+                               hc:IconElement.Geometry="{StaticResource BubbleTailGeometry}"
+                               FontSize="14" />
                 <Button Content="Реальное расположение" Click="Button_Click"
-                        IsEnabled="{Binding LocationImage,Converter={StaticResource Object2BooleanConverter}}"/>
+                        IsEnabled="{Binding Image,Converter={StaticResource Object2BooleanConverter}}"/>
             </StackPanel>
     </Grid>
     </hc:TransitioningContentControl>

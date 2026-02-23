@@ -21,7 +21,7 @@
             <RowDefinition Height="*" MinHeight="300"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" MaxWidth="200" MinWidth="50"/>
+            <ColumnDefinition Width="*" MaxWidth="220" MinWidth="50"/>
             <ColumnDefinition Width="*" MinWidth="400"/>
         </Grid.ColumnDefinitions>
             <hc:SimpleStackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="{StaticResource BorderBrush}">
@@ -66,28 +66,43 @@
                     </CheckBox.Style>
                 </CheckBox>
             </hc:SimpleStackPanel>
-            <Border Grid.Row="1" Background="{StaticResource BorderBrush}">
-            <StackPanel Orientation="Vertical">
-                <Expander Header="{Binding CurrentSector.Name,FallbackValue='Не выбран участок'}" IsExpanded="True">
-                        <ListBox ItemsSource="{Binding ElementName=root, Path=DataContext.Mechanisms}"
-                                 SelectedItem="{Binding CurrentMech,UpdateSourceTrigger=PropertyChanged}">
+            <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
+                <StackPanel Orientation="Vertical" Margin="7">
+                    <Expander Background="PaleTurquoise"
+                              IsExpanded="True" Margin="0,5">
+                        <Expander.Header>
+                            <TextBlock Text="Список Участков" FontSize="14" FontWeight="Medium"/>
+                        </Expander.Header>
+                        <ListBox ItemsSource="{Binding Sectors}" SelectedItem="{Binding CurrentSector}">
                             <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                        <Expander.Style>
-                            <Style TargetType="Expander" BasedOn="{StaticResource ExpanderBaseStyle}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentSector.Name}" Value="{x:Null}">
-                                        <Setter Property="Background" Value="{StaticResource WarningBrush}"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Expander.Style>
-                </Expander>
-                    <Expander Header="Датчики" IsExpanded="True">
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Expander>
+                    <Expander Background="PaleTurquoise"
+                              Margin="0,5"
+                              IsExpanded="True"
+                              Visibility="{Binding CurrentSector,Converter={StaticResource Object2VisibilityConverter}}">
+                        <Expander.Header>
+                            <TextBlock Text="{Binding CurrentMech.Name}" FontSize="14" FontWeight="Medium"/>
+                        </Expander.Header>
+                        <ListBox ItemsSource="{Binding CurrentSector.Mechanisms,UpdateSourceTrigger=PropertyChanged}"
+                                 SelectedItem="{Binding CurrentMech}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Expander>
+                    <Expander IsExpanded="True"
+                              Margin="0,5"
+                              Background="PaleGoldenrod">
+                        <Expander.Header>
+                            <TextBlock Text="Датчики" FontSize="16" FontWeight="Medium"/>
+                        </Expander.Header>
                         <TreeView Name="twSensors" IsEnabled="{Binding IsEditMode,UpdateSourceTrigger=PropertyChanged}"
                                       ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}">
                             <i:Interaction.Behaviors>
@@ -132,7 +147,8 @@
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}"
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
-                                         AddSensorsCommand ="{Binding ElementName=root,Path=DataContext.AddSensorToMap}"
+                                         AddSensorsCommand ="{Binding AddSensorToMap}"
+                                         RemoveSensorCommand="{Binding RemoveSensorCommand}"
                                          IsEditMode="{Binding IsEditMode}"/>
                 </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>

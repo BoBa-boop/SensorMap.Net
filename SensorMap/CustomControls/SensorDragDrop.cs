@@ -62,6 +62,10 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsHideAddressesProperty =
             DependencyProperty.Register("IsHideAddresses", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(true));
+
+
+
+        #region add-remove sensor
         
         public static readonly DependencyProperty SaveSensorsCommandProperty =
             DependencyProperty.Register("SaveSensorsCommand", typeof(ICommand), typeof(SensorDragDrop));
@@ -70,7 +74,7 @@ namespace SensorMap.CustomControls
             get { return (ICommand)GetValue(SaveSensorsCommandProperty); }
             set { SetValue(SaveSensorsCommandProperty, value); }
         }
-        
+
         public static readonly DependencyProperty AddSensorsCommandProperty =
             DependencyProperty.Register("AddSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
 
@@ -79,7 +83,32 @@ namespace SensorMap.CustomControls
             get { return (ICommand)GetValue(AddSensorsCommandProperty); }
             set { SetValue(AddSensorsCommandProperty, value); }
         }
-        
+
+        public static readonly DependencyProperty RemoveSensorEventProperty =
+           DependencyProperty.Register("RemoveSensorEvent", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
+
+        /// <summary>
+        /// Event срабатывает от CustomSensor события PreviewKeyDown
+        /// </summary>
+        public ICommand RemoveSensorEvent
+        {
+            get { return (ICommand)GetValue(RemoveSensorEventProperty); }
+            set { SetValue(RemoveSensorEventProperty, value); }
+        }
+
+        public static readonly DependencyProperty RemoveSensorCommandProperty =
+           DependencyProperty.Register("RemoveSensorCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
+        /// <summary>
+        /// Команда выполняет команду из MechanismVM
+        /// </summary>
+        public ICommand RemoveSensorCommand
+        {
+            get { return (ICommand)GetValue(RemoveSensorCommandProperty); }
+            set { SetValue(RemoveSensorCommandProperty, value); }
+        }
+        #endregion
+
+        #region coordOutput
         public static readonly DependencyProperty CoordProperty = DependencyProperty.Register("Coord", typeof(Point), typeof(SensorDragDrop),
             new PropertyMetadata(default(Point)));
         public Point Coord
@@ -87,6 +116,9 @@ namespace SensorMap.CustomControls
             get { return (Point)GetValue(CoordProperty); }
             set { SetValue(CoordProperty, value); }
         }
+        #endregion
+
+        #region Source Props
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
             typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop),
             new PropertyMetadata(new ObservableCollection<SensorAssignments>(), OnItemsSourceChanged));
@@ -105,6 +137,9 @@ namespace SensorMap.CustomControls
             set { SetValue(ImageSourceProperty, value); }
         }
         #endregion
+
+        #endregion
+
         private ITransformObject _transformObject;
         private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
@@ -120,6 +155,7 @@ namespace SensorMap.CustomControls
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
             _image = GetTemplateChild("PART_Image") as Image;
             _transformObject = new TransformObjectService();
+            RemoveSensorEvent = new RelayCommand<SensorAssignments>((s)=>RemoveSensor(s));
             if (_canvas != null)
             {
                 _viewMatrixTransform = new MatrixTransform(Matrix.Identity);
@@ -192,31 +228,18 @@ namespace SensorMap.CustomControls
                         AddSensorToCanvas(newItem);
                     }
                     break;
-
-                case NotifyCollectionChangedAction.Remove:
-                    if (e.OldItems == null) return;
-                    foreach (SensorAssignments oldItem in e.OldItems)
-                    {
-                        RemoveEllipseFromCanvas(oldItem);
-                    }
-                    break;
             }
             _isDropAdd = false;
         }
         #endregion
 
         #region SensorActionsLogic
-        private void RemoveEllipseFromCanvas(SensorAssignments oldItem)
+        public void RemoveSensor(SensorAssignments sensor)
         {
-            //if (_canvas == null) return;
-
-            //var ellipseToRemove = _canvas.Children.
-
-            //if (ellipseToRemove != null)
-            //{
-            //    _canvas.Children.Remove(ellipseToRemove);
-            //}
-            //отписаться от событий клика
+            if (sensor == null) return;
+            var UI_Sensor = _canvas!.Children.OfType<CustomSensor>().FirstOrDefault(x=>x.SensorData==sensor);
+            var command = new RemoveSensor(sensor, UI_Sensor,_canvas,ItemsSource);
+            RemoveSensorCommand.Execute(command);
         }
 
         private void AddSensorToCanvas(SensorAssignments sensor)

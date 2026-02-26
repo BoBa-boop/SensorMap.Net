@@ -59,8 +59,6 @@ namespace SensorMap
             {
                 try
                 {
-                    dBContext.Database.OpenConnection();
-                    dBContext.Database.CloseConnection();
                     dBContext.Database.MigrateAsync();
                     data.IsDataBaseConnect = true;
                 }

@@ -9,6 +9,7 @@ using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
+using System.Net.WebSockets;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -58,6 +59,7 @@ namespace SensorMap.ViewModel
                 {
                     this.RaiseAndSetIfChanged(ref currentMech, value);
                     currentMech = value;
+                    
                 }
             }
         }
@@ -78,6 +80,7 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
+        [Reactive] public ObservableCollection<Sensor> SensorList { get; set; }
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,IAppDbContextFactory appDbContextFactory)
         {
             Navigation = _nav;
@@ -88,14 +91,9 @@ namespace SensorMap.ViewModel
             CurrentMech = _service.CurrentMechanism_Global;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
-                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().ToList());
-                
-                PLCs = new(_dbContext.PLCs.AsNoTracking().ToList());
-                Sectors = new(_dbContext.Sectors.Include(x=>x.Mechanisms)
-                    .ThenInclude(x=>x.SensorsAssig).ThenInclude(x=>x.Sensor).ThenInclude(x=>x.SensorType).ToList());
+                GetDataFromDB(_dbContext);
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-                Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, new(_dbContext.Sensors.Include(x => x.SensorType).AsNoTracking().ToList()), filter);
-                
+                Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorList, filter);
             }
 
 
@@ -117,6 +115,7 @@ namespace SensorMap.ViewModel
                     };
                     //Добавление в коллекцию. Далее обработка события и добавления визуального элемента
                     CurrentMech.SensorsAssig!.Add(sensorAssignments);
+                    
                 }
                 if(obj is AddSensor command)
                 {
@@ -129,28 +128,38 @@ namespace SensorMap.ViewModel
                     return CanExecuteAddSensor(sensor);
                 return false; 
             });
-            RemoveSensorCommand = new RelayCommand<object>((obj) => 
+            RemoveSensorCommand = new RelayCommand<object[]>((obj) => 
             {
-                if (obj is RemoveSensor command)
+                if (obj[0] is RemoveSensor command && obj[1] is SensorAssignments sensor)
+                {
+                    using (var dbContext = _appDbContextFactory.CreateDbContext())
+                    {
+                        var element = dbContext.SensorAssignments.Find(sensor.Id);
+                        if (element != null)
+                            dbContext.SensorAssignments.Entry(element).State = EntityState.Deleted;
+                        dbContext.SaveChangesAsync();
+                    }
                     _undoRedoManager.Do(command);
+                }
             });
             DragSensorCommand = new RelayCommand<object>((obj) =>
             {
                 if(obj is TextBlock tb)
-                if (tb.DataContext is TreeNode<Sensor> node)
-                {
-                    SensorAssignments sensorAssignments = new SensorAssignments()
+                    if (tb.DataContext is TreeNode<Sensor> node)
                     {
-                        SensorId = node.Data.Id,
-                        Sensor = node.Data,
-                        MechanismId = CurrentMech.Id,
-                        Mechanism = CurrentMech,
-                        Width = 30,
-                        Height = 30
-                    };
+                            SensorAssignments sensorAssignments = new SensorAssignments()
+                            {
+                                SensorId = node.Data.Id,
+                                Sensor = node.Data,
+                                MechanismId = CurrentMech.Id,
+                                Mechanism = CurrentMech,
+                                Width = 30,
+                                Height = 30
+                            };
 
-                    DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
-                }
+                            DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
+                        
+                    }
             }, (obj) => 
             {
                 if (obj is TextBlock tb)
@@ -159,6 +168,8 @@ namespace SensorMap.ViewModel
                 return false;
             });
             SaveSensorPlace = new RelayCommand(SaveCoordinates);
+
+
             _service.WhenAnyValue(x => x.IsEditMode)
                .BindTo(this, x => x.IsEditMode);
             _undoRedoManager.WhenAnyValue(x => x.CanUndo)
@@ -166,10 +177,28 @@ namespace SensorMap.ViewModel
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
+
             UndoCommand = new RelayCommand(()=> _undoRedoManager.Undo());
             RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
             TransformSensorCommand = new RelayCommand<object>((obj) => { if (obj is TransformationSensor command) _undoRedoManager.Do(command); });
         }
+
+        private async void GetDataFromDB(EF.AppDBContext _dbContext)
+        {
+            var querySector = await _dbContext.Sectors.AsNoTracking().Include(x => x.Mechanisms)
+                                                      .ThenInclude(x => x.SensorsAssig)
+                                                      .ThenInclude(x => x.Sensor).ThenInclude(x => x.SensorType).ToListAsync();
+            var queryTypes = await _dbContext.SensorTypes.AsNoTracking().ToListAsync();
+            var queryPLC = await _dbContext.PLCs.AsNoTracking().ToListAsync();
+            var querySensors = await _dbContext.Sensors.AsNoTracking().Include(x=>x.SensorType).ToListAsync();
+            
+            
+            sensorTypes = new ObservableCollection<SensorType>(queryTypes);
+            Sectors = new ObservableCollection<Sector>(querySector);
+            SensorList = new ObservableCollection<Sensor>(querySensors);
+            PLCs = new ObservableCollection<PLC>(queryPLC);
+        }
+
         private bool CanExecuteAddSensor(object selectedSensor)
         {
             if (selectedSensor == null) return false;
@@ -206,9 +235,16 @@ namespace SensorMap.ViewModel
          //разобраться с сохранением
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
-                var s = dbContext.Entry<Mechanism>(CurrentMech);//не сохроняет
-                dbContext.Update(s);
-                dbContext.SaveChanges();
+                foreach (var sa in CurrentMech.SensorsAssig)
+                {
+                    if(sa.Id == 0)
+                        dbContext.Entry(sa).State = EntityState.Added;
+                    else
+                    {
+                        dbContext.Entry(sa).State = EntityState.Modified;
+                    }
+                }
+                dbContext.SaveChangesAsync();
 
                 Growl.Success("Данные сохранены");
             }

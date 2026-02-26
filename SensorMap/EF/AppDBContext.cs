@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -18,6 +19,7 @@ namespace SensorMap.EF
         public DbSet<SensorType> SensorTypes { get; set; }
         public DbSet<PLC> PLCs { get; set; }
         public DbSet<SensorAssignments> SensorAssignments { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

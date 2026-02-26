@@ -141,6 +141,7 @@ namespace SensorMap.CustomControls
         #endregion
 
         private ITransformObject _transformObject;
+        private IAppDbContextFactory _appDbContextFactory;
         private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
@@ -237,9 +238,10 @@ namespace SensorMap.CustomControls
         public void RemoveSensor(SensorAssignments sensor)
         {
             if (sensor == null) return;
-            var UI_Sensor = _canvas!.Children.OfType<CustomSensor>().FirstOrDefault(x=>x.SensorData==sensor);
-            var command = new RemoveSensor(sensor, UI_Sensor,_canvas,ItemsSource);
-            RemoveSensorCommand.Execute(command);
+            var UI_Sensor = _canvas!.Children.OfType<CustomSensor>().FirstOrDefault(x => x.SensorData == sensor);
+            var command = new RemoveSensor(sensor, UI_Sensor, _canvas, ItemsSource);
+            var param = new object[] {command, sensor };
+            RemoveSensorCommand.Execute(param);
         }
 
         private void AddSensorToCanvas(SensorAssignments sensor)
@@ -463,8 +465,8 @@ namespace SensorMap.CustomControls
             {
                 if (IsUIElementSensor(sender,out CustomSensor element))
                 {
-                    var pop = new View.SensorAddInfo();
-                    var window = new PopupWindow()
+                        var pop = new View.SensorAddInfo();
+                        var window = new PopupWindow()
                     {
                         PopupElement = pop,
                         DataContext = element.SensorData
@@ -476,18 +478,22 @@ namespace SensorMap.CustomControls
                         window.Close();
                         Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
                     }
-                    window.Show(element, false);
+                        window.Show(element, false);
+                    }
                 }
                 e.Handled = true;
-            }
+            
         }
         private CustomSensor CreateSensorObject(SensorAssignments sensor, Point point)
         {           
             var element = new CustomSensor();
             element.SensorData = sensor;
+            element.Focus();
             
             Canvas.SetLeft(element, point.X);
             Canvas.SetTop(element, point.Y);
+            element.SensorData.X = point.X;
+            element.SensorData.Y = point.Y;
             element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             return element;
         }

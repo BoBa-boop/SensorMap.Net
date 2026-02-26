@@ -33,8 +33,7 @@
                         ToolTip="Вернуть"
                         IsEnabled="{Binding CanRedo,UpdateSourceTrigger=PropertyChanged}"
                         Command="{Binding RedoCommand}"/>
-                <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}" 
-                  >
+                <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}">
                     <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}">
                         <MenuItem.Style>
                             <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
@@ -68,10 +67,11 @@
             </hc:SimpleStackPanel>
             <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
                 <StackPanel Orientation="Vertical" Margin="7">
-                    <Expander Background="PaleTurquoise"
+                    <Expander Background="{StaticResource TitleBrush}"
+                              Foreground="WhiteSmoke"
                               IsExpanded="True" Margin="0,5">
                         <Expander.Header>
-                            <TextBlock Text="Список Участков" FontSize="14" FontWeight="Medium"/>
+                            <TextBlock Text="Список Участков" FontSize="16" FontWeight="Medium"/>
                         </Expander.Header>
                         <ListBox ItemsSource="{Binding Sectors}" SelectedItem="{Binding CurrentSector}">
                             <ListBox.ItemTemplate>
@@ -81,12 +81,13 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </Expander>
-                    <Expander Background="PaleTurquoise"
+                    <Expander Background="{StaticResource TitleBrush}"
+                              Foreground="WhiteSmoke"
                               Margin="0,5"
                               IsExpanded="True"
                               Visibility="{Binding CurrentSector,Converter={StaticResource Object2VisibilityConverter}}">
                         <Expander.Header>
-                            <TextBlock Text="{Binding CurrentMech.Name}" FontSize="14" FontWeight="Medium"/>
+                            <TextBlock Text="Механизмы" FontSize="16" FontWeight="Medium"/>
                         </Expander.Header>
                         <ListBox ItemsSource="{Binding CurrentSector.Mechanisms,UpdateSourceTrigger=PropertyChanged}"
                                  SelectedItem="{Binding CurrentMech}">
@@ -99,7 +100,8 @@
                     </Expander>
                     <Expander IsExpanded="True"
                               Margin="0,5"
-                              Background="PaleGoldenrod">
+                              Foreground="WhiteSmoke"
+                              Background="{StaticResource DarkInfoBrush}">
                         <Expander.Header>
                             <TextBlock Text="Датчики" FontSize="16" FontWeight="Medium"/>
                         </Expander.Header>

@@ -53,7 +53,7 @@ namespace SensorMap.ViewModel
             _service = service;
             using (var dBContext = _appDbContextFactory.CreateDbContext())
             {
-                Sectors = new(dBContext.Sectors.ToList());
+                Sectors = new(dBContext.Sectors.AsNoTracking().ToList());
                 Mechanisms = new(dBContext.Mechanisms.ToList());
                 SensorAssignments = new(dBContext.SensorAssignments.ToList());
                 PLCs = new(dBContext.PLCs.ToList());

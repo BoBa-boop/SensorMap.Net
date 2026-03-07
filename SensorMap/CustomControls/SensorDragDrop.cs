@@ -141,7 +141,6 @@ namespace SensorMap.CustomControls
         #endregion
 
         private ITransformObject _transformObject;
-        private IAppDbContextFactory _appDbContextFactory;
         private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
@@ -164,11 +163,12 @@ namespace SensorMap.CustomControls
                 _viewMatrix = _viewMatrixTransform.Matrix;
                 MapProperties.SetViewMatrix(this, _viewMatrix);
 
-                _canvas.MouseMove += _canvas_MouseMove;
+                _canvas.PreviewMouseMove += _canvas_MouseMove;
                 _canvas.MouseDown += _canvas_MouseDown;
                 _canvas.MouseUp += _canvas_MouseUp;
                 _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
+
 
                 Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
 
@@ -194,7 +194,7 @@ namespace SensorMap.CustomControls
         {
             var control = (SensorDragDrop)d;
             if (control._canvas == null) return;
-            control._viewMatrixTransform!.Matrix = Matrix.Identity;
+            control._viewMatrixTransform!.Matrix = Matrix.Identity;            
             if (e.NewValue != null)
             {
                 if (e.NewValue is INotifyCollectionChanged notify) notify.CollectionChanged += control.OnCollectionChanged;
@@ -283,60 +283,66 @@ namespace SensorMap.CustomControls
                 }
             }
         }
+        
         private void _canvas_MouseMove(object sender, MouseEventArgs e)
         {
-            parentSize = RenderSize;
-            if (e.RightButton == MouseButtonState.Pressed&&_initialMousePosition.X>0)
+            Point mousePosition = e.GetPosition(_canvas);
+            if (e.RightButton == MouseButtonState.Pressed && _initialMousePosition.X > 0)
             {
+                parentSize = RenderSize;
+
                 //запрет на перемещение
-                if (movingObject.Width <= parentSize.Width || movingObject.Height <= parentSize.Height)
-                {
-                    return;
-                }
-                Point mousePosition = e.GetPosition(_canvas);
-                mousePosition = new Point(Math.Round(mousePosition.X, 0), Math.Round(mousePosition.Y, 0));
-                Point initMouseRounded = new Point(Math.Round(_initialMousePosition.X, 0), Math.Round(_initialMousePosition.Y, 0));
-                Vector delta = Point.Subtract(mousePosition, initMouseRounded);
+                if (_viewMatrixTransform == null) return;
+                //if (_image.ActualWidth * _viewMatrixTransform.Matrix.M11 <= parentSize.Width || _image.ActualHeight * _viewMatrixTransform.Matrix.M11 <= parentSize.Height)
+                //{
+                //    return;
+                //}
+
+                movingObject = VisualTreeHelper.GetDescendantBounds(this);
+                //Bounds = movingObject;
+                double DeltaX = mousePosition.X - _initialMousePosition.X;
+                double DeltaY = mousePosition.Y - _initialMousePosition.Y;
+                double leftMargin = _viewMatrixTransform.Matrix.OffsetX;
+                double topMargin = _viewMatrixTransform.Matrix.OffsetY;
+                //Vector delta = Point.Subtract(mousePosition, _initialMousePosition);
+
                 //задание границ
+                //левая граница
                 if (movingObject.Width > parentSize.Width)
                 {
-                    //левая граница
-                    if (delta.X + _viewMatrixTransform!.Matrix.OffsetX >= 0.0)
+                    leftMargin += DeltaX;
+                    if (leftMargin >= 0.0)
                     {
-                        delta.X = 0.0;
-                        _initialMousePosition = mousePosition;
+                        DeltaX = 0.0;
                     }
                     //правая граница
-                    else if (delta.X + _viewMatrixTransform.Matrix.OffsetX < parentSize.Width - movingObject.Width)
+                    else if (0.0 - leftMargin + parentSize.Width >= movingObject.Width)
                     {
-                        delta.X = parentSize.Width - movingObject.Width - _viewMatrixTransform.Matrix.OffsetX;
-                        _initialMousePosition = mousePosition;
+                        DeltaX = 0.0;
                     }
                 }
-                if (movingObject.Height > parentSize.Height)
+
+                if(movingObject.Height > parentSize.Height)
                 {
+                    topMargin+= DeltaY;
                     //верхняя граница
-                    if (delta.Y + _viewMatrixTransform!.Matrix.OffsetY >= 0.0)
+                    if (topMargin >= 0.0)
                     {
-                        delta.Y = 0.0;
-                        _initialMousePosition = mousePosition;
+                        DeltaY = 0.0;
                     }
-                    //нижняя граница
-                    else if (delta.Y + _viewMatrixTransform.Matrix.OffsetY < parentSize.Height - movingObject.Height)
+                    //нижняя граница 
+                    else if (0.0 - topMargin + parentSize.Height >= movingObject.Height)
                     {
-                        delta.Y = parentSize.Height - movingObject.Height - _viewMatrixTransform.Matrix.OffsetY;
-                        _initialMousePosition = mousePosition;
+                        DeltaY = 0.0;
                     }
-
                 }
-
-                var translate = new TranslateTransform(delta.X, delta.Y);
+                var translate = new TranslateTransform(DeltaX, DeltaY);
                 _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
-
             }
-            Coord = new Point(Math.Round(Mouse.GetPosition(_canvas).X,0), Math.Round(Mouse.GetPosition(_canvas).Y, 0));
-
         }
+            //Coord = new Point(Math.Round(Mouse.GetPosition(_canvas).X,0), Math.Round(Mouse.GetPosition(_canvas).Y, 0));
+
+        
         #region Zoom
         private void _canvas_MouseWheel(object sender, MouseWheelEventArgs e)
         {            
@@ -438,7 +444,8 @@ namespace SensorMap.CustomControls
             if (e.ChangedButton == MouseButton.Right)
             {
                 _initialMousePosition = e.GetPosition(_canvas);
-                movingObject = VisualTreeHelper.GetDescendantBounds(this);
+                //movingObject = new Rect(_image.RenderSize);
+                //var bounds = _image.TransformToAncestor(_canvas).TransformBounds(movingObject);
             }
         }
 

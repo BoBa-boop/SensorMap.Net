@@ -54,20 +54,7 @@ namespace SensorMap.EF
         {
             builder
                 .HasKey(mech => mech.Id);
-            //// Навигационное свойство к сектору
-            //builder
-            //    .HasOne(mechanism => mechanism.Sector)
-            //    .WithMany(sector => sector.Mechanisms)
-            //    .HasForeignKey(mechanism => mechanism.SectorID)
-            //    .OnDelete(DeleteBehavior.Restrict); // Механизмы остаются при удалении сектора
-
-            //// Навигационное свойство к устройству PLC
-            //builder
-            //    .HasOne(mechanism => mechanism.PLC)
-            //    .WithMany(plc => plc.Mechanisms)
-            //    .HasForeignKey(mechanism => mechanism.PLCID)
-            //    .OnDelete(DeleteBehavior.Restrict); // Механизмы остаются, если устройство удалено
-            
+           
             builder
                 .HasMany(x => x.SensorsAssig)
                 .WithOne(sens => sens.Mechanism)
@@ -97,18 +84,6 @@ namespace SensorMap.EF
         public void Configure(EntityTypeBuilder<SensorAssignments> builder)
         {
             builder.HasKey(x => x.Id);
-            //builder.HasOne(se => se.PLC)
-            //   .WithMany(p => p.Inputs)
-            //   .HasForeignKey(se => se.PLCId);
-
-            builder.HasOne(se => se.Sensor)
-               .WithMany(s=>s.Sensors)
-               .HasForeignKey(se => se.SensorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            //builder.HasOne(se=>se.Mechanism)
-            //    .WithMany(m=>m.SensorsAssig)
-            //    .HasForeignKey(se=>se.MechanismId);
         }
     }
     public class PLCConfiguration : IEntityTypeConfiguration<PLC>

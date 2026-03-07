@@ -51,12 +51,16 @@ namespace SensorMap.Behaviors
         {
             if(e.NewValue!=null)
             {
-            var type = e.NewValue.GetType();
-
-            var valueProperty = type.GetProperty("Data");
+                var type = e.NewValue.GetType();
+                
+                var valueProperty = type.GetProperty("Data");
                 if (valueProperty != null && valueProperty.GetValue(e.NewValue) != null)
                 {
                     this.SelectedItem = valueProperty.GetValue(e.NewValue)!;
+                }
+                if(type.Name == SelectedItemType)
+                {
+                    this.SelectedItem = e.NewValue;
                 }
             }
         }

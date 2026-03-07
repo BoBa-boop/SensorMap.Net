@@ -6,17 +6,20 @@ using Microsoft.Win32;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Behaviors;
+using SensorMap.Converters;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
@@ -42,7 +45,7 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
-        [Reactive] public ObservableCollection<Mechanism> Mechanisms {  get; set; }
+        [Reactive] public ICollectionView Mechanisms {  get; set; }
 
         public CRUD_VM(IDataBaseProvider provider,IDataService service,IAppDbContextFactory cxFactory,INavigation nav,ITempImage tempImage) 
         {
@@ -53,15 +56,22 @@ namespace SensorMap.ViewModel
             _service = service;
             using (var dBContext = _appDbContextFactory.CreateDbContext())
             {
-                Sectors = new(dBContext.Sectors.AsNoTracking().ToList());
-                Mechanisms = new(dBContext.Mechanisms.ToList());
+                Sectors = new(dBContext.Sectors.ToList());
+                Mechanisms = CollectionViewSource.GetDefaultView(dBContext.Mechanisms.ToList());
                 SensorAssignments = new(dBContext.SensorAssignments.ToList());
                 PLCs = new(dBContext.PLCs.ToList());
                 Manufacturers = new(PLCs.Select(plc => plc.Manufacturer).Distinct().ToList());
                 Sensors = new(dBContext.Sensors.ToList());
                 SensorTypes = new(dBContext.SensorTypes.ToList());
             }
-            
+            using (Mechanisms.DeferRefresh())
+            {
+                Mechanisms.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
+                Mechanisms.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
+                var groupDescription = new PropertyGroupDescription("Name",new EqualMechGroup());
+                Mechanisms.GroupDescriptions.Add(groupDescription);
+            }
+
             ShowCommand =new RelayCommand<object>((Sensor)=> 
             {
                 if(Sensor is Sensor) 

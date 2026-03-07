@@ -57,7 +57,6 @@ namespace SensorMap.Model
                 }
             }
         }
-        public ObservableCollection<SensorAssignments> Sensors { get; set; }
         [NotMapped]
         public bool IsModified
         {

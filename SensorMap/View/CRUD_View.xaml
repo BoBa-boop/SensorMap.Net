@@ -339,7 +339,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid Name="Mech" ItemsSource="{Binding Source={StaticResource MechCollection}, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                    <DataGrid Name="Mech" ItemsSource="{Binding Mechanisms, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -349,48 +349,47 @@
                         </i:Interaction.Behaviors>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
+                                <!-- Используем HeaderTemplate для создания Expander -->
                                 <GroupStyle.ContainerStyle>
-                                    <Style TargetType="{x:Type GroupItem}">
-                                        <Setter Property="Margin" Value="0,0,0,5"/>
+                                    <Style TargetType="GroupItem">
                                         <Setter Property="Template">
                                             <Setter.Value>
-                                                <ControlTemplate TargetType="{x:Type GroupItem}">
+                                                <ControlTemplate>
                                                     <Expander IsExpanded="True">
                                                         <Expander.Header>
                                                             <DockPanel>
-                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="10,0"/>
-                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=ItemCount}" Foreground="LightGray"/>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
+                                                                <TextBlock Text="{Binding ItemCount}" Margin="10,0,0,0"
+                                                                           Foreground="Gray" FontWeight="Normal"/>
                                                             </DockPanel>
                                                         </Expander.Header>
-                                                        <Expander.Content>
-                                                            <ItemsPresenter />
-                                                        </Expander.Content>
+                                                        <ItemsPresenter />
                                                     </Expander>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
                                     </Style>
                                 </GroupStyle.ContainerStyle>
+
+                                <!-- Панель для расположения подгрупп внутри Expander -->
+                                <GroupStyle.Panel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
+                                    </ItemsPanelTemplate>
+                                </GroupStyle.Panel>
                             </GroupStyle>
-                            <!-- Style for groups under the top level. -->
-                            <GroupStyle>
-                                <GroupStyle.HeaderTemplate>
-                                    <DataTemplate>
-                                        <DockPanel>
-                                            <TextBlock Text="{Binding Path=Name}" />
-                                            <TextBlock Text="{Binding Path=ItemCount}"/>
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </GroupStyle.HeaderTemplate>
-                            </GroupStyle>
+
+                            <!-- СТИЛЬ ДЛЯ ВТОРОГО УРОВНЯ (ПОДГРУППЫ) - просто цветной заголовок -->
+                            
+
                         </DataGrid.GroupStyle>
                         <!--<DataGrid.RowValidationRules>
                     <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
                 </DataGrid.RowValidationRules>-->
                         <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" Header="Название"/>
+                            <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MinWidth="100" Header="Название"/>
 
-                            <DataGridTemplateColumn Header="Участок">
+                            <DataGridTemplateColumn Header="Участок" MinWidth="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Path=Sector.Name}" Cursor="Hand" />
@@ -407,7 +406,7 @@
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
 
-                            <DataGridTemplateColumn Header="Контроллер">
+                            <DataGridTemplateColumn Header="Контроллер" MinWidth="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Path=PLC.Name}" HorizontalAlignment="Center" Cursor="Hand" />
@@ -536,7 +535,7 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
-                            <DataGridTemplateColumn Header="Тип">
+                            <DataGridTemplateColumn Header="Тип" Width="auto" MinWidth="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Path=SensorType.Name,UpdateSourceTrigger=PropertyChanged}" Cursor="Hand"/>

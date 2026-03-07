@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Logging;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using System;
@@ -21,7 +22,9 @@ namespace SensorMap.Services
 
         public AppDBContext CreateDbContext()
         {
-            DbContextOptions options = new DbContextOptionsBuilder().UseSqlite(_connectionString).Options;
+            DbContextOptions options = new DbContextOptionsBuilder()
+                .UseSqlite(_connectionString)
+                .Options;
             return new AppDBContext(options);
         }
 

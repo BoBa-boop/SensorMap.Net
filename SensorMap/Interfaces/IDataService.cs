@@ -12,6 +12,8 @@ namespace SensorMap.Interfaces
     {
         Mechanism CurrentMechanism_Global { get; set; }
         Sector CurrentSector_Global { get; set; }
+        ObservableCollection<Sensor> SensorDTO { get; set; }
+        ObservableCollection<SensorType> SensorTypeDTO { get; set; }
         bool IsEditMode { get; set; }
         bool IsDataBaseConnect {  get; set; }
     }

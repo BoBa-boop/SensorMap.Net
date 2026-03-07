@@ -14,6 +14,7 @@ using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Xml;
 using DataFormats = System.Windows.DataFormats;
 using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
@@ -25,16 +26,19 @@ namespace SensorMap.ViewModel
     /// </summary>
     public class MechanismVM : ReactiveObject
     {
+        private IAppDbContextFactory _appDbContextFactory;
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private Sector? currentSector; 
         private Mechanism? currentMech;
-        private IAppDbContextFactory _appDbContextFactory;
-        private ObservableCollection<SensorType> sensorTypes { get; set; }
+        private Sensor? _curSensor;
+        private bool isEditMode;
+        
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation? Navigation { get; set; }
+        
         [Reactive] public Sector? CurrentSector
         {
             get => currentSector;
@@ -46,10 +50,8 @@ namespace SensorMap.ViewModel
                     currentSector = value;
                 }
             }
-        }
-        [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
-        [Reactive] public bool CanRedo => _undoRedoManager.CanRedo;
 
+        }
         [Reactive] public Mechanism? CurrentMech
         {
             get => currentMech;
@@ -63,8 +65,6 @@ namespace SensorMap.ViewModel
                 }
             }
         }
-        private Sensor? _curSensor;
-        private bool isEditMode;
         [Reactive] public Sensor? CurrentSensor
         {
             get => _curSensor;
@@ -77,6 +77,8 @@ namespace SensorMap.ViewModel
                 }
             }
         }
+        [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
+        [Reactive] public bool CanRedo => _undoRedoManager.CanRedo;
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
@@ -202,7 +204,7 @@ namespace SensorMap.ViewModel
         private bool CanExecuteAddSensor(object selectedSensor)
         {
             if (selectedSensor == null) return false;
-            if (CurrentMech == null)
+            if (CurrentMech == null||CurrentMech.Image==null)
             {
                 Growl.Error(new GrowlInfo
                 {

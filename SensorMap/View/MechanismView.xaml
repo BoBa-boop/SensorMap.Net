@@ -1,21 +1,27 @@
 ﻿<UserControl x:Class="SensorMap.View.MechanismView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:myCC="clr-namespace:SensorMap.CustomControls"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SensorMap.View"
-        xmlns:hc="https://handyorg.github.io/handycontrol"
-        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:beh="clr-namespace:SensorMap.Behaviors"
-        xmlns:Converter="clr-namespace:SensorMap.Converters"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:myCC="clr-namespace:SensorMap.CustomControls"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SensorMap.View"
+             xmlns:model="clr-namespace:SensorMap.Model"
+             xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:beh="clr-namespace:SensorMap.Behaviors"
+             xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+             xmlns:Converter="clr-namespace:SensorMap.Converters"
              xmlns:viewmodel="clr-namespace:SensorMap.ViewModel"
-        mc:Ignorable="d"
+            
+             mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewmodel:MechanismVM}"
         Height="auto" Width="auto" x:Name="root">
 
     <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
     <Grid>
+            <Grid.Resources>
+                <Converter:EqualMechGroup x:Key="mechGroup"/>
+            </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="*" MinHeight="300"/>
@@ -73,12 +79,8 @@
                         <Expander.Header>
                             <TextBlock Text="Список Участков" FontSize="16" FontWeight="Medium"/>
                         </Expander.Header>
-                        <ListBox ItemsSource="{Binding Sectors}" SelectedItem="{Binding CurrentSector}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
+                        <ListBox ItemsSource="{Binding Sectors,UpdateSourceTrigger=PropertyChanged}"
+                                 SelectedValue="{Binding CurrentSector}"  DisplayMemberPath="Name">
                         </ListBox>
                     </Expander>
                     <Expander Background="{StaticResource TitleBrush}"
@@ -89,14 +91,36 @@
                         <Expander.Header>
                             <TextBlock Text="Механизмы" FontSize="16" FontWeight="Medium"/>
                         </Expander.Header>
-                        <ListBox ItemsSource="{Binding CurrentSector.Mechanisms,UpdateSourceTrigger=PropertyChanged}"
-                                 SelectedItem="{Binding CurrentMech}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
+                        <Expander.Resources>
+                            <CollectionViewSource x:Key="MechCollection" Source="{Binding Path=CurrentSector.Mechanisms,UpdateSourceTrigger=PropertyChanged}">
+                                <CollectionViewSource.GroupDescriptions>
+                                    <PropertyGroupDescription PropertyName="Name" Converter="{StaticResource mechGroup}"/>
+                                </CollectionViewSource.GroupDescriptions>
+
+                                <CollectionViewSource.SortDescriptions>
+                                    <scm:SortDescription PropertyName="Name"/>
+                                </CollectionViewSource.SortDescriptions>
+                            </CollectionViewSource>
+
+                            <CollectionViewSource x:Key="SimpleMechCollection" Source="{Binding CurrentSector.Mechanisms}"/>
+                        </Expander.Resources>
+                        <TreeView ItemsSource="{Binding Source={StaticResource MechCollection},Path=Groups}">
+                            <i:Interaction.Behaviors>
+                                <beh:TreeViewBehavior SelectedItem="{Binding CurrentMech,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
+                                                      SelectedItemType="Mechanism"/>
+                            </i:Interaction.Behaviors>
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate DataType="{x:Type CollectionViewGroup}"
+                                                          ItemsSource="{Binding Items}">
                                     <TextBlock Text="{Binding Name}"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                                    <HierarchicalDataTemplate.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type CollectionViewGroup}">
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </DataTemplate>
+                                    </HierarchicalDataTemplate.ItemTemplate>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
                     </Expander>
                     <Expander IsExpanded="True"
                               Margin="0,5"
@@ -137,6 +161,7 @@
 
                             </TreeView.ItemTemplate>
                         </TreeView>
+                        
                     </Expander>
                 </StackPanel>
         </Border>

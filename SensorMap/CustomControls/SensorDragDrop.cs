@@ -289,22 +289,16 @@ namespace SensorMap.CustomControls
             Point mousePosition = e.GetPosition(_canvas);
             if (e.RightButton == MouseButtonState.Pressed && _initialMousePosition.X > 0)
             {
-                parentSize = RenderSize;
-
-                //запрет на перемещение
+                
                 if (_viewMatrixTransform == null) return;
-                //if (_image.ActualWidth * _viewMatrixTransform.Matrix.M11 <= parentSize.Width || _image.ActualHeight * _viewMatrixTransform.Matrix.M11 <= parentSize.Height)
-                //{
-                //    return;
-                //}
 
                 movingObject = VisualTreeHelper.GetDescendantBounds(this);
-                //Bounds = movingObject;
+                bool CanMoveX = false;
+                bool CanMoveY = false;
                 double DeltaX = mousePosition.X - _initialMousePosition.X;
                 double DeltaY = mousePosition.Y - _initialMousePosition.Y;
                 double leftMargin = _viewMatrixTransform.Matrix.OffsetX;
                 double topMargin = _viewMatrixTransform.Matrix.OffsetY;
-                //Vector delta = Point.Subtract(mousePosition, _initialMousePosition);
 
                 //задание границ
                 //левая граница
@@ -320,6 +314,7 @@ namespace SensorMap.CustomControls
                     {
                         DeltaX = 0.0;
                     }
+                    CanMoveX = true;
                 }
 
                 if(movingObject.Height > parentSize.Height)
@@ -335,9 +330,22 @@ namespace SensorMap.CustomControls
                     {
                         DeltaY = 0.0;
                     }
+                    CanMoveY = true;
                 }
-                var translate = new TranslateTransform(DeltaX, DeltaY);
-                _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
+                
+                if(CanMoveX || CanMoveY)
+                {
+                    if ((CanMoveX == false))
+                    {
+                        DeltaX = 0;
+                    }
+                    if (CanMoveY == false) 
+                    {
+                        DeltaY = 0;
+                    }
+                    var translate = new TranslateTransform(DeltaX, DeltaY);
+                    _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
+                }
             }
         }
             //Coord = new Point(Math.Round(Mouse.GetPosition(_canvas).X,0), Math.Round(Mouse.GetPosition(_canvas).Y, 0));
@@ -444,8 +452,7 @@ namespace SensorMap.CustomControls
             if (e.ChangedButton == MouseButton.Right)
             {
                 _initialMousePosition = e.GetPosition(_canvas);
-                //movingObject = new Rect(_image.RenderSize);
-                //var bounds = _image.TransformToAncestor(_canvas).TransformBounds(movingObject);
+                parentSize = RenderSize;
             }
         }
 

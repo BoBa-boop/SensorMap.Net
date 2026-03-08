@@ -18,18 +18,17 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
             <StackPanel Orientation="Vertical" Grid.Row="0">
-            <Image Source="{Binding Sensor.Image}" 
+            <Image Source="{Binding Sensor.Image,FallbackValue={StaticResource ImageDefault}}" 
                    Height="180" Width="180"
                    Margin="5"/>
-                <TextBlock Text="{Binding Sensor.Name}"
+                <TextBlock Text="{Binding Sensor.Name,FallbackValue=Пусто}"
                            HorizontalAlignment="Center"
                            FontSize="18" FontWeight="Heavy"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Margin="5,0" Width="auto">
-                <TextBlock Text="{Binding Sensor.SensorType.Name}"
+                <TextBlock Text="{Binding Sensor.SensorType.Name, FallbackValue=Пусто}"
                                FontSize="14"/>
-                <hc:TextBox Text="{Binding Address}"
-                               hc:IconElement.Geometry="{StaticResource BubbleTailGeometry}"
+                <TextBlock Text="{Binding Address,FallbackValue=Пусто}"
                                FontSize="14" />
                 <Button Content="Реальное расположение" Click="Button_Click"
                         IsEnabled="{Binding Image,Converter={StaticResource Object2BooleanConverter}}"/>

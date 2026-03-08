@@ -45,9 +45,6 @@
                             <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
                                 <Setter Property="IsEnabled" Value="True"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding IsEditMode}" Value="False">
                                         <Setter Property="IsEnabled" Value="False"/>
                                     </DataTrigger>
@@ -70,6 +67,7 @@
                     </Style>
                     </CheckBox.Style>
                 </CheckBox>
+                <Button Content="Покаать список датчиков" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
             </hc:SimpleStackPanel>
             <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
                 <StackPanel Orientation="Vertical" Margin="7">

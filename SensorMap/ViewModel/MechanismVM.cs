@@ -8,6 +8,7 @@ using SensorMap.Commands.SensorCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
+using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.Net.WebSockets;
 using System.Reactive.Linq;
@@ -18,6 +19,7 @@ using System.Xml;
 using DataFormats = System.Windows.DataFormats;
 using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
+using MessageBox = System.Windows.MessageBox;
 
 namespace SensorMap.ViewModel
 {
@@ -33,7 +35,7 @@ namespace SensorMap.ViewModel
         private Mechanism? currentMech;
         private Sensor? _curSensor;
         private bool isEditMode;
-        
+        private bool _isShowSensors;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
@@ -79,6 +81,14 @@ namespace SensorMap.ViewModel
         }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
         [Reactive] public bool CanRedo => _undoRedoManager.CanRedo;
+        [Reactive] public bool IsShowSensors
+        {
+            get => _isShowSensors;
+            set
+            {
+                _isShowSensors = value; this.RaiseAndSetIfChanged(ref _isShowSensors, value);
+            }
+        }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
@@ -170,6 +180,23 @@ namespace SensorMap.ViewModel
                 return false;
             });
             SaveSensorPlace = new RelayCommand(SaveCoordinates);
+            ShowSensorMechanism = new RelayCommand<Mechanism>((obj) =>
+            {
+                if (obj is Mechanism mechanism)
+                {
+                    MechanismSensorsWindow window = new MechanismSensorsWindow();
+                    MechSensorsVM mechSensorsVM = new MechSensorsVM(_appDbContextFactory, mechanism);
+                    window.DataContext = mechSensorsVM;
+                    window.Show();
+                    window.Loaded += (s,e) => IsShowSensors = true;
+                    window.Closed += (s, e) => IsShowSensors = false;
+                    
+                }
+            }, (obj) => 
+            { 
+                if (obj==null || obj is Mechanism mech && mech.SensorsAssig.Count() == 0) return false; 
+                return true;
+            });
 
 
             _service.WhenAnyValue(x => x.IsEditMode)
@@ -252,6 +279,7 @@ namespace SensorMap.ViewModel
             }
         }
         public ICommand SaveSensorPlace { get; }
+        public ICommand ShowSensorMechanism { get; }
         public ICommand NavigateToSectors { get; }
 
         /// <summary>
@@ -261,13 +289,14 @@ namespace SensorMap.ViewModel
         public ICommand AddSensorToMap { get; }
 
         /// <summary>
-        /// Команда удаления датчика. Команда приходит от CustomSensor и удаляет элемент из коллекции.
-        /// SensorDragDrop реагирует на удаление и удаляет виузальный элемент
+        /// Команда удаления датчика. Команда приходит от CustomSensor в SensorDragDrop.
+        /// Происходит удаление из коллекции и Canvas
         /// </summary>
         public ICommand RemoveSensorCommand { get; }
         public ICommand TransformSensorCommand { get; }
         public ICommand DragSensorCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
+        public ObservableCollection<SensorType> sensorTypes { get; private set; }
     }
 }

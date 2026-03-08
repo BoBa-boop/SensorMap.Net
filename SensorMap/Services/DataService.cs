@@ -25,8 +25,6 @@ namespace SensorMap.Services
         private Sector _curSector;
         private bool _isConnect;
         private IAppDbContextFactory _appDbContextFactory;
-        private ObservableCollection<Sensor> _sensorDTO;
-        private ObservableCollection<SensorType> _sensorTypeDTO;
 
         [Reactive]
         public bool IsEditMode

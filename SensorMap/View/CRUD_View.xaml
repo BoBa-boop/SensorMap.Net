@@ -349,7 +349,6 @@
                         </i:Interaction.Behaviors>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
-                                <!-- Используем HeaderTemplate для создания Expander -->
                                 <GroupStyle.ContainerStyle>
                                     <Style TargetType="GroupItem">
                                         <Setter Property="Template">
@@ -370,18 +369,12 @@
                                         </Setter>
                                     </Style>
                                 </GroupStyle.ContainerStyle>
-
-                                <!-- Панель для расположения подгрупп внутри Expander -->
                                 <GroupStyle.Panel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
                                     </ItemsPanelTemplate>
                                 </GroupStyle.Panel>
                             </GroupStyle>
-
-                            <!-- СТИЛЬ ДЛЯ ВТОРОГО УРОВНЯ (ПОДГРУППЫ) - просто цветной заголовок -->
-                            
-
                         </DataGrid.GroupStyle>
                         <!--<DataGrid.RowValidationRules>
                     <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>

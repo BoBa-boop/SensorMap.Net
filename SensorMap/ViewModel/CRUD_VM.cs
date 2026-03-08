@@ -11,6 +11,7 @@ using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
+using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -223,6 +224,7 @@ namespace SensorMap.ViewModel
                     }
                 }
             }, (type) => { return type != null; });
+            
 
             UndoCommand = new RelayCommand(_undoRedoManager!.Undo);
             RedoCommand = new RelayCommand(_undoRedoManager.Redo);

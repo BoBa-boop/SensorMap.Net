@@ -1,9 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
+using ReactiveUI;
 using SensorMap.Commands.SensorCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
+using SensorMap.ViewModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -133,7 +135,6 @@ namespace SensorMap.CustomControls
         private Point LastPoint;
         private bool DragInProgress = false;
         private  Canvas _canvas;
-
         static CustomSensor()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomSensor), new FrameworkPropertyMetadata(typeof(CustomSensor)));

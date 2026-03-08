@@ -1,0 +1,34 @@
+﻿<hc:Window x:Class="SensorMap.View.MechanismSensorsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SensorMap.View"
+        mc:Ignorable="d"
+        Title="{Binding StringFormat=Датчики {0},Path=Mechanism.Name}" Height="450" Width="600" WindowStartupLocation="CenterScreen">
+   
+        <StackPanel>
+        <Menu Background="{StaticResource BorderBrush}">
+            <MenuItem Command="{Binding SaveCommand}" Header="Сохранить всё">
+                <MenuItem.Icon>
+                    <Image Source="{StaticResource SaveImage}"/>
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Command="{Binding DeleteCommand}" Header="Удалить выбранное">
+                <MenuItem.Icon>
+                    <Image Source="{StaticResource DeleteImage}"/>
+                </MenuItem.Icon>
+            </MenuItem>
+        </Menu>
+        <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Mechanism.SensorsAssig.Count}"/>
+        <DataGrid ItemsSource="{Binding Mechanism.SensorsAssig}" AutoGenerateColumns="False" CanUserAddRows="False"
+                  SelectedItem="{Binding SelectedSensor}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding Id}" MinWidth="100" Header="Id" IsReadOnly="True"/>
+                <DataGridTextColumn Binding="{Binding Address}" MinWidth="100" Header="Адрес"/>
+                <DataGridTextColumn Binding="{Binding Discription}"  Header="Описание"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </StackPanel>
+</hc:Window>

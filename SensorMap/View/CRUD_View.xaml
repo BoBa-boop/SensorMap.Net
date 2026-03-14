@@ -18,8 +18,6 @@
         mc:Ignorable="d"
         x:Name="root">
     <UserControl.Resources>
-        <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
-        <cnv:ContainsConverter x:Key="ContainInCollection"/>
         <cnv:MultiParams x:Key="CreateMultiParams"/>
         <SolidColorBrush x:Key="NewSensorType" Color="#fae6e6"/>
     </UserControl.Resources>

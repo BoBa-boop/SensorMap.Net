@@ -17,7 +17,6 @@ namespace SensorMap.ViewModel
     {
         private Mechanism _mechanism;
         private SensorAssignments _sensor;
-        private readonly IAppDbContextFactory _appDbContextFactory;
 
        
         [Reactive]public Mechanism Mechanism
@@ -38,7 +37,6 @@ namespace SensorMap.ViewModel
 
         public MechSensorsVM(IAppDbContextFactory appDbContextFactory,Mechanism currentMech)
         {
-            _appDbContextFactory = appDbContextFactory;
             Mechanism = currentMech;
         }
     }

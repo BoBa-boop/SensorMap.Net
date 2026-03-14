@@ -12,9 +12,6 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:SensorVM}"
         Height="auto" Width="auto" x:Name="root">
-    <UserControl.Resources>
-        <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
-    </UserControl.Resources>
     <hc:TransitioningContentControl TransitionMode="Bottom2Top">
     <Grid>
         <Grid.ColumnDefinitions>

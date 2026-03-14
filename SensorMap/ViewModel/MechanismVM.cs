@@ -190,7 +190,7 @@ namespace SensorMap.ViewModel
                     window.Show();
                     window.Loaded += (s,e) => IsShowSensors = true;
                     window.Closed += (s, e) => IsShowSensors = false;
-                    
+
                 }
             }, (obj) => 
             { 

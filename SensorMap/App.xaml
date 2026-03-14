@@ -6,6 +6,7 @@
              xmlns:view="clr-namespace:SensorMap.View">
     <Application.Resources>
         <ResourceDictionary>
+            
             <DataTemplate DataType="{x:Type menuView:SectorsVM}">
                 <view:SectorView/>
             </DataTemplate>
@@ -28,11 +29,14 @@
                 <view:PLC_View/>
             </DataTemplate>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/style/AppConverters.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
                 <ResourceDictionary Source="/Resources/Style/StyleDictionary.xaml"/>
                 <ResourceDictionary Source="/Resources/style/ImageSVG.xaml"/>
+                
             </ResourceDictionary.MergedDictionaries>
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>

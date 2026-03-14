@@ -21,15 +21,17 @@
             <Image Source="{Binding Sensor.Image,FallbackValue={StaticResource ImageDefault}}" 
                    Height="180" Width="180"
                    Margin="5"/>
-                <TextBlock Text="{Binding Sensor.Name,FallbackValue=Пусто}"
+                <TextBlock Text="{Binding Sensor.Name,FallbackValue=---}"
                            HorizontalAlignment="Center"
                            FontSize="18" FontWeight="Heavy"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Margin="5,0" Width="auto">
-                <TextBlock Text="{Binding Sensor.SensorType.Name, FallbackValue=Пусто}"
+                <TextBlock Text="{Binding Sensor.SensorType.Name, FallbackValue=---}"
                                FontSize="14"/>
-                <TextBlock Text="{Binding Address,FallbackValue=Пусто}"
+                <TextBlock Text="{Binding Address,FallbackValue=---}"
                                FontSize="14" />
+                <TextBlock Text="{Binding Description,FallbackValue=---}"
+               FontSize="14" />
                 <Button Content="Реальное расположение" Click="Button_Click"
                         IsEnabled="{Binding Image,Converter={StaticResource Object2BooleanConverter}}"/>
             </StackPanel>

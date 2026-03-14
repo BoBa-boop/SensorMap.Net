@@ -300,46 +300,49 @@ namespace SensorMap.CustomControls
                 double leftMargin = _viewMatrixTransform.Matrix.OffsetX;
                 double topMargin = _viewMatrixTransform.Matrix.OffsetY;
 
+              
+                double scaledWidth = _image!.ActualWidth * _viewMatrixTransform.Matrix.M11;
+                double scaledHeight = _image.ActualHeight * _viewMatrixTransform.Matrix.M11;
+
                 //задание границ
                 //левая граница
                 if (movingObject.Width > parentSize.Width)
                 {
                     leftMargin += DeltaX;
-                    if (leftMargin >= 0.0)
+                    if (leftMargin > 0.0)
                     {
                         DeltaX = 0.0;
                     }
                     //правая граница
-                    else if (0.0 - leftMargin + parentSize.Width >= movingObject.Width)
-                    {
+                    double minOffsetX = parentSize.Width - scaledWidth;
+                    if (leftMargin < minOffsetX)
                         DeltaX = 0.0;
-                    }
                     CanMoveX = true;
                 }
 
-                if(movingObject.Height > parentSize.Height)
+                if (movingObject.Height > parentSize.Height)
                 {
-                    topMargin+= DeltaY;
+                    topMargin += DeltaY;
                     //верхняя граница
-                    if (topMargin >= 0.0)
+                    if (topMargin > 0.0)
                     {
                         DeltaY = 0.0;
                     }
-                    //нижняя граница 
-                    else if (0.0 - topMargin + parentSize.Height >= movingObject.Height)
-                    {
+                    //нижняя граница
+                    double minOffsetY = parentSize.Height - scaledHeight;
+                    if (topMargin < minOffsetY)
                         DeltaY = 0.0;
-                    }
+                    
                     CanMoveY = true;
                 }
-                
-                if(CanMoveX || CanMoveY)
+
+                if (CanMoveX || CanMoveY)
                 {
                     if ((CanMoveX == false))
                     {
                         DeltaX = 0;
                     }
-                    if (CanMoveY == false) 
+                    if (CanMoveY == false)
                     {
                         DeltaY = 0;
                     }
@@ -365,13 +368,7 @@ namespace SensorMap.CustomControls
             if (newZoom < 0.2 || newZoom > 10.0) return;
 
             Point mouseScreen = e.GetPosition(_canvas);
-            Point mouseWorldBefore = _transformObject.ScreenToWorld(mouseScreen, _viewMatrix);
 
-            
-            double currentOffsetX = scaleMatrix.OffsetX;
-            double currentOffsetY = scaleMatrix.OffsetY;
-
-            //// Применяем масштабирование
             scaleMatrix.ScaleAt(delta, delta, mousePosition.X, mousePosition.Y);
             
             //// Вычисляем новые размеры изображения
@@ -379,7 +376,7 @@ namespace SensorMap.CustomControls
             double scaledHeight = _image.ActualHeight * newZoom;
 
 
-            ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize, currentOffsetX, currentOffsetY, scaleLevel);
+            ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize);
             _viewMatrixTransform.Matrix = scaleMatrix;
             foreach (UIElement wo in _canvas!.Children)
             {
@@ -402,8 +399,7 @@ namespace SensorMap.CustomControls
         /// <summary>
         /// Коррекция пустоты у границы
         /// </summary>
-        private void ApplyBounds(ref Matrix matrix, double scaledWidth, double scaledHeight, Size parentSize,
-                                double prevOffsetX, double prevOffsetY, double scaleFactor)
+        private void ApplyBounds(ref Matrix matrix, double scaledWidth, double scaledHeight, Size parentSize)
         {
             double offsetX = matrix.OffsetX;
             double offsetY = matrix.OffsetY;

@@ -5,11 +5,13 @@
     xmlns:interactivity="clr-namespace:HandyControl.Interactivity;assembly=HandyControl" 
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:cnv="clr-namespace:SensorMap.Converters"
-    xmlns:local="clr-namespace:SensorMap">
+    xmlns:local="clr-namespace:SensorMap"
+    xmlns:valid="clr-namespace:SensorMap.Model.Validation">
 
     <ResourceDictionary.MergedDictionaries>
         <hc:Theme/>
         <hc:SharedResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
+        <ResourceDictionary Source="pack://application:,,,/Resources/style/AppConverters.xaml"/>        
     </ResourceDictionary.MergedDictionaries>
     <Style TargetType="{x:Type myCC:SensorDragDrop}">
         <Setter Property="Template">
@@ -39,69 +41,86 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
-                    <Grid>
-                        <Border x:Name="PART_Sensor"
-                            Grid.Row="1"
+                    <StackPanel Orientation="Horizontal">
+                        <Grid x:Name="Sensor">
+                            <Border x:Name="PART_Sensor"
                             Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
                             Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}"
                             Background="{TemplateBinding Property=CustomBackground}"
                             BorderBrush="{TemplateBinding CustBorderBrush}"
-                            BorderThickness="2" CornerRadius="30">                            
-                        </Border>
-                        <Viewbox VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="1">
-                            <TextBlock Background="Transparent" FontSize="11">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Text" Value="{Binding SensorData.Sensor.SensorType.Name[0],
-                                                        RelativeSource={RelativeSource TemplatedParent},UpdateSourceTrigger=PropertyChanged}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsHideAddresses,RelativeSource={RelativeSource Mode=FindAncestor,
-                                                        AncestorType={x:Type myCC:SensorDragDrop}}}" Value="false">
-                                                <Setter Property="Text" Value="{Binding SensorData.Address,
-                                                        RelativeSource={RelativeSource TemplatedParent},UpdateSourceTrigger=PropertyChanged}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding DataContext.IsShowSensors,RelativeSource={RelativeSource Mode=FindAncestor,
-                                                        AncestorType={x:Type UserControl}}}" Value="True">
-                                                <Setter Property="Text" Value="asdasd"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Viewbox>
+                            BorderThickness="2" CornerRadius="30">
+                            </Border>
+                            <Viewbox VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <TextBlock Background="Transparent" FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Text" Value="{Binding SensorData.Sensor.SensorType.Name[0],
+                                                        RelativeSource={RelativeSource TemplatedParent}}"/>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Viewbox>
 
-                        <Rectangle x:Name="PART_Transform" Grid.Row="1"
+                            <Rectangle x:Name="PART_Transform"
                                    IsHitTestVisible="True"
                                    Visibility="{TemplateBinding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
                                    Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
                                    Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}">
-                            <Rectangle.Style>
-                                <Style TargetType="Rectangle">
-                                    <Setter Property="Fill" Value="Transparent"/>
-                                    <Setter Property="StrokeThickness" Value="2"/>
-                                    <Setter Property="Stroke">
-                                        <Setter.Value>
-                                            <DrawingBrush Viewport="0,0,13,13" ViewportUnits="Absolute" TileMode="Tile">
-                                                <DrawingBrush.Drawing>
-                                                    <DrawingGroup>
-                                                        <GeometryDrawing Brush="Black">
-                                                            <GeometryDrawing.Geometry>
-                                                                <GeometryGroup>
-                                                                    <RectangleGeometry Rect="0,0,50,50" />
-                                                                    <RectangleGeometry Rect="50,50,50,50" />
-                                                                </GeometryGroup>
-                                                            </GeometryDrawing.Geometry>
-                                                        </GeometryDrawing>
-                                                    </DrawingGroup>
-                                                </DrawingBrush.Drawing>
-                                            </DrawingBrush>
-                                        </Setter.Value>
-                                    </Setter>
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Fill" Value="Transparent"/>
+                                        <Setter Property="StrokeThickness" Value="2"/>
+                                        <Setter Property="Stroke">
+                                            <Setter.Value>
+                                                <DrawingBrush Viewport="0,0,13,13" ViewportUnits="Absolute" TileMode="Tile">
+                                                    <DrawingBrush.Drawing>
+                                                        <DrawingGroup>
+                                                            <GeometryDrawing Brush="Black">
+                                                                <GeometryDrawing.Geometry>
+                                                                    <GeometryGroup>
+                                                                        <RectangleGeometry Rect="0,0,50,50" />
+                                                                        <RectangleGeometry Rect="50,50,50,50" />
+                                                                    </GeometryGroup>
+                                                                </GeometryDrawing.Geometry>
+                                                            </GeometryDrawing>
+                                                        </DrawingGroup>
+                                                    </DrawingBrush.Drawing>
+                                                </DrawingBrush>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                        </Grid>
+                        <hc:TextBox x:Name="PART_Address"
+                                  MaxLength="7" TextAlignment="Left" VerticalContentAlignment="Center" 
+                                 Background="WhiteSmoke"
+                                 Visibility="{Binding IsHideAddresses,
+                                                      RelativeSource={RelativeSource Mode=FindAncestor,
+                                                      AncestorType={x:Type myCC:SensorDragDrop}},
+                                                      Converter={StaticResource Bool2ReVisOrHidden}}"
+                                    ToolTip="{Binding RelativeSource={x:Static RelativeSource.Self},
+                                        Path=(Validation.Errors)[0].ErrorContent}">
+                            <hc:TextBox.Text>
+                                <Binding Path="SensorData.Address" Mode="TwoWay" RelativeSource="{RelativeSource TemplatedParent}">
+                                    <Binding.ValidationRules>
+                                        <valid:InputDigitOnly IsIncludeSpecSymbols="True"/>
+                                    </Binding.ValidationRules>
+                                </Binding>
+                            </hc:TextBox.Text>
+                            <hc:TextBox.Style>
+                                <Style TargetType="hc:TextBox">
+                                    <Setter Property="Height" Value="15"/>
+                                    <Setter Property="Width" Value="40"/>
+                                    <Setter Property="BorderBrush" Value="Black"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="FontFamily" Value="Arial"/>
+                                    <Setter Property="FontSize" Value="9"/>
                                 </Style>
-                            </Rectangle.Style>
-                        </Rectangle>                        
-                    </Grid>
+                            </hc:TextBox.Style>
+                        </hc:TextBox>
+                    </StackPanel>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

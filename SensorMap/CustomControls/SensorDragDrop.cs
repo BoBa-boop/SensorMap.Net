@@ -170,7 +170,7 @@ namespace SensorMap.CustomControls
                 _canvas.Drop += _canvas_Drop;
 
 
-                Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
+                _image.PreviewMouseDown += OnMainWindowClick;
 
                 void OnMainWindowClick(object sender, MouseButtonEventArgs e)
                 {

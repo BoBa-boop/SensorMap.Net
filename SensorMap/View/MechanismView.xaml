@@ -54,7 +54,8 @@
                     </MenuItem>
                     <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
                 </Menu>
-                <CheckBox x:Name="chBox" IsChecked="{Binding ElementName=ccSensorMap, Path=IsHideAddresses,UpdateSourceTrigger=PropertyChanged}">
+                <CheckBox x:Name="chBox" IsChecked="{Binding ElementName=ccSensorMap, Path=IsHideAddresses,UpdateSourceTrigger=PropertyChanged}"
+                          Margin="5,0">
                     <CheckBox.Style>
                     <Style TargetType="CheckBox" BasedOn="{StaticResource CheckBoxBaseStyle}">
                         <Setter Property="Visibility" Value="Visible"/>
@@ -66,8 +67,8 @@
                         </Style.Triggers>
                     </Style>
                     </CheckBox.Style>
-                </CheckBox>
-                <Button Content="Покаать список датчиков" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
+                </CheckBox>                
+                <Button Content="Показать список датчиков" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
             </hc:SimpleStackPanel>
             <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
                 <StackPanel Orientation="Vertical" Margin="7">

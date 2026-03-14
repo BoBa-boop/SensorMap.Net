@@ -12,9 +12,6 @@
              d:DataContext="{d:DesignInstance vm:PLC_VM}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <UserControl.Resources>
-        <cnv:KeyToDrawingImage x:Key="keyToSVG"/>
-    </UserControl.Resources>
     <hc:TransitioningContentControl TransitionMode="Bottom2Top">
         <Grid>
             <Grid.ColumnDefinitions>

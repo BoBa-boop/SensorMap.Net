@@ -7,28 +7,22 @@
         xmlns:local="clr-namespace:SensorMap.View"
         mc:Ignorable="d"
         Title="{Binding StringFormat=Датчики {0},Path=Mechanism.Name}" Height="450" Width="600" WindowStartupLocation="CenterScreen">
-   
-        <StackPanel>
-        <Menu Background="{StaticResource BorderBrush}">
-            <MenuItem Command="{Binding SaveCommand}" Header="Сохранить всё">
-                <MenuItem.Icon>
-                    <Image Source="{StaticResource SaveImage}"/>
-                </MenuItem.Icon>
-            </MenuItem>
-            <MenuItem Command="{Binding DeleteCommand}" Header="Удалить выбранное">
-                <MenuItem.Icon>
-                    <Image Source="{StaticResource DeleteImage}"/>
-                </MenuItem.Icon>
-            </MenuItem>
-        </Menu>
-        <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Mechanism.SensorsAssig.Count}"/>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Mechanism.SensorsAssig.Count}"
+                   Margin="5,0"
+                   Grid.Row="0"/>
         <DataGrid ItemsSource="{Binding Mechanism.SensorsAssig}" AutoGenerateColumns="False" CanUserAddRows="False"
-                  SelectedItem="{Binding SelectedSensor}">
+                  SelectedItem="{Binding SelectedSensor}" Grid.Row="1">
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Id}" MinWidth="100" Header="Id" IsReadOnly="True"/>
+                <DataGridTextColumn Binding="{Binding Sensor.Name}" MinWidth="100" Header="Название" IsReadOnly="True"/>
                 <DataGridTextColumn Binding="{Binding Address}" MinWidth="100" Header="Адрес"/>
-                <DataGridTextColumn Binding="{Binding Discription}"  Header="Описание"/>
+                <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
             </DataGrid.Columns>
         </DataGrid>
-    </StackPanel>
+    </Grid>
 </hc:Window>

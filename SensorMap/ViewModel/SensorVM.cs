@@ -1,24 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using DynamicData;
 using HandyControl.Controls;
 using HandyControl.Data;
-using HandyControl.Tools;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
-using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
-using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Reactive.Linq;
-using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Shapes;
 
 namespace SensorMap.ViewModel
 {
@@ -30,7 +22,10 @@ namespace SensorMap.ViewModel
         private IAppDbContextFactory _appDbContextFactory;
         private Sensor _sensorsTreeNode;
         private List<AdditionalData> _additionalData;
+        private ObservableCollection<Mechanism> Mechanisms { get; set; }
         private ObservableCollection<Mechanism> _FilteredMechanisms;
+        private ObservableCollection<SensorCharacteristic> _sensorCharacteristics;
+
         private bool isEditMode;
 
         [Reactive]public Sensor SelectedNode
@@ -39,7 +34,7 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value); }
         }
         [Reactive]public ObservableCollection<Sensor> Sensors {  get; set; }
-        private ObservableCollection<Mechanism> Mechanisms { get; set; }
+        
         [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms 
         {
             get => _FilteredMechanisms;
@@ -47,6 +42,7 @@ namespace SensorMap.ViewModel
         }
         [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree { get; set; }
         private ObservableCollection<SensorType> sensorTypes {  get; set; }
+        
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
 
         public SensorVM(IDataService service,IJsonSerialization json,INavigation navigation,IAppDbContextFactory appDbContextFactory,Sensor sensor=null)
@@ -58,7 +54,7 @@ namespace SensorMap.ViewModel
             _appDbContextFactory = appDbContextFactory;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
-                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().ToList());
+                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().Include(x=>x.Characteristics).ToList());
                 Sensors = new(_dbContext.Sensors.Include(x=>x.SensorType).AsNoTracking().ToList());
                 Mechanisms = new(_dbContext.Mechanisms.Include(x=>x.SensorsAssig).AsNoTracking().ToList());
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
@@ -70,9 +66,7 @@ namespace SensorMap.ViewModel
             NavigateToMech = new RelayCommand<Mechanism>((mech) => 
             {
                 if (mech == null) return;
-                _service.CurrentMechanism_Global = mech;
-                _service.CurrentSector_Global = mech.Sector!;
-                _navigation.NavigateTo<MechanismVM>(); 
+                _navigation.NavigateTo<MechanismVM>(mech); 
             });
 
             this.WhenAnyValue(x => x.SelectedNode)
@@ -84,6 +78,7 @@ namespace SensorMap.ViewModel
                 { 
                     FilteredMechanisms = new(filteredMechanisms); 
                 });
+            
             _service.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(this, x => x.IsEditMode);
         }
@@ -96,27 +91,45 @@ namespace SensorMap.ViewModel
                 //заполнение данными из файла
                 foreach (var item in _json.ReadFromJsonFile<List<AdditionalData>>("SensorMoreData.json"))
                 {
-                    var sensor = Sensors.FirstOrDefault(x => x.Name == item.NameSensor);
+                    var sensor = Sensors.FirstOrDefault(x => x.Name == item.Name);
                     if (sensor != null)
                     {
                         if (item.HasData())
                         {
                             sensor.AdditionalData = item;
-
-                        }
-                        else
-                        {
-                            sensor.AdditionalData = AdditionalData.CreateDefault(sensor.Name);
                         }
                         tempList.Add(sensor.AdditionalData);
                     }
                 }
             }
-            //заполение доп. данных у датчиков которые не были в файле
-            foreach (var sensor in Sensors.Where(s => s.AdditionalData == null || !s.AdditionalData.HasData()))
+
+            foreach (var sensorType in sensorTypes.Where(s => s.Characteristics.Any()))
             {
-                sensor.AdditionalData = AdditionalData.CreateDefault(sensor.Name);
-                tempList.Add(sensor.AdditionalData);
+                var SensorsOneType = Sensors.Where(x => x.SensorTypeID == sensorType.Id);
+                foreach (var sensor in SensorsOneType)
+                {
+                    if (sensor != null && !tempList.Contains(sensor.AdditionalData))
+                    {
+                        sensor.AdditionalData = AdditionalData.CreateRecord(sensor.Name, sensorType.Characteristics!);
+                        tempList.Add(sensor.AdditionalData);
+                    }
+                    if (tempList.Contains(sensor.AdditionalData))
+                    {
+                        if(sensor.AdditionalData == null)
+                        {
+                            sensor.AdditionalData = AdditionalData.CreateRecord(sensor.Name, sensorType.Characteristics!);
+                            break;
+                        }
+                        sensor.AdditionalData.Data = new (sensorType.Characteristics!
+                            .Select(c => new MoreData
+                            {
+                                Parameter = c.Title, 
+                                Value = sensor.AdditionalData.Data
+                                .FirstOrDefault(d => d.Parameter == c.Title)?.Value ?? string.Empty 
+                            }).ToList());
+                    }
+                }
+               
             }
             return tempList;
         }
@@ -126,24 +139,37 @@ namespace SensorMap.ViewModel
         private void SaveDataFileds()
         {
             string FILE_PATH = "SensorMoreData.json";
-            SelectedNode.AdditionalData.NameSensor = SelectedNode.Name;
-            var editableObject = _additionalData.Where(x => x.NameSensor == SelectedNode.Name).FirstOrDefault();
-            if (editableObject != null)
+            try
             {
-                editableObject.Data = SelectedNode.AdditionalData.Data;
+                SelectedNode.AdditionalData.Name = SelectedNode.Name;
+                var editableObject = _additionalData.Where(x => x.Name == SelectedNode.Name).FirstOrDefault();
+                if (editableObject != null)
+                {
+                    editableObject.Data = SelectedNode.AdditionalData.Data;
+                }
+                else
+                {
+                    _additionalData.Add(SelectedNode.AdditionalData);
+                }
+                _json.WriteToJsonFile<List<AdditionalData>>(FILE_PATH, _additionalData);
+                Growl.Success(new GrowlInfo
+                {
+                    Message = "Дополнительные данные сохранены!",
+                    CancelStr = "Ignore",
+                    ShowDateTime = false,
+                    WaitTime = 2
+                });
             }
-            else
+            catch
             {
-                _additionalData.Add(SelectedNode.AdditionalData);
+                Growl.Error(new GrowlInfo
+                {
+                    Message = "Не удалось сохранить данные!",
+                    CancelStr = "Ignore",
+                    ShowDateTime = false,
+                    WaitTime = 2
+                });
             }
-            _json.WriteToJsonFile<List<AdditionalData>>(FILE_PATH, _additionalData);
-            Growl.Success(new GrowlInfo
-            {
-                Message = "Дополнительные данные сохранены!",
-                CancelStr = "Ignore",
-                ShowDateTime = false,
-                WaitTime = 2
-            });
         }
     }
 }

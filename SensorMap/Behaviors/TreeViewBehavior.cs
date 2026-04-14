@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using TreeView = System.Windows.Controls.TreeView;
 
 namespace SensorMap.Behaviors
@@ -52,7 +53,6 @@ namespace SensorMap.Behaviors
             if(e.NewValue!=null)
             {
                 var type = e.NewValue.GetType();
-                
                 var valueProperty = type.GetProperty("Data");
                 if (valueProperty != null && valueProperty.GetValue(e.NewValue) != null)
                 {
@@ -62,6 +62,7 @@ namespace SensorMap.Behaviors
                 {
                     this.SelectedItem = e.NewValue;
                 }
+                
             }
         }
     }

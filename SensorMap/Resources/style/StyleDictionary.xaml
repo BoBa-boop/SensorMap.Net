@@ -2,6 +2,32 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:beh="clr-namespace:SensorMap.Behaviors"
                     xmlns:hc="https://handyorg.github.io/handycontrol">
+    <Style TargetType="{x:Type MenuItem}" x:Key="IconOnlyMenuItem">
+        <Setter Property="Header" Value=""/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type MenuItem}">
+                    <Border x:Name="Border" 
+                            Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <Grid>
+                            <ContentPresenter x:Name="Icon" 
+                                              ContentSource="Icon" 
+                                              VerticalAlignment="Center" 
+                                              HorizontalAlignment="Center"
+                                              Margin="4"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border"  Property="Background" Value="AliceBlue"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
     <Style TargetType="{x:Type beh:CustomImageBrowser}">
         <Setter Property="Template">
             <Setter.Value>

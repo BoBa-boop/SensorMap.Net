@@ -90,7 +90,7 @@ namespace SensorMap
             services.AddTransient<SensorVM>();
             services.AddTransient<SectorsVM>();
             services.AddTransient<CRUD_VM>();
-            services.AddTransient<PLC_VM>();
+            services.AddTransient<Devices_VM>();
             services.AddTransient<SettingsVM>();
             services.AddTransient<AuthVM>();
 

@@ -55,7 +55,7 @@
                         <Image Source="{StaticResource SensImage}"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="Контроллеры" Command="{Binding NavigateToPLC}">
+                    <MenuItem Header="Устройства" Command="{Binding NavigateToDevices}">
                         <MenuItem.Icon>
                         <Image Source="{StaticResource ControllerImage}"/>
                         </MenuItem.Icon>

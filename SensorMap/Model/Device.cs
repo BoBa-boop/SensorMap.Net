@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using Newtonsoft.Json.Linq;
+using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using System;
 using System.Collections.Generic;
@@ -12,19 +13,18 @@ using System.Threading.Tasks;
 namespace SensorMap.Model
 {
     /// <summary>
-    /// Описывает контроллер
+    /// Описывает устройство
     /// </summary>
-    public class PLC:ReactiveObject
+    public class Device:ReactiveObject
     {
         private bool _isModified;
         private byte[]? _image;
         private string _name = string.Empty;
-        private string _ip = string.Empty;
         private string _manufacturer = string.Empty;
+        private DeviceType? _type;
 
-        public int Id { get; set; }
-        [Reactive]
-        public byte[]? Image
+        [Key]public int Id { get; set; }
+        [Reactive] public byte[]? Image
         {
             get => _image;
             set
@@ -35,20 +35,8 @@ namespace SensorMap.Model
                 }
             }
         }
-        [MaxLength(15)]
-        public string IP
-        {
-            get => _ip;
-            set
-            {
-                if (_ip != value && value!=null)
-                {
-                    this.RaiseAndSetIfChanged(ref _ip!, value);
-                }
-            }
-        }
-        [Reactive]
-        public string Name
+        
+        [Reactive] public string Name
         {
             get => _name;
             set
@@ -59,8 +47,7 @@ namespace SensorMap.Model
                 }
             }
         }
-        [Reactive]
-        public string Manufacturer
+        [Reactive] public string? Manufacturer
         {
             get => _manufacturer;
             set
@@ -71,12 +58,28 @@ namespace SensorMap.Model
                 }
             }
         }
+        [Reactive] public ObservableCollection<Device>? ChildrenDevices { get; set; }
+        public Device? MasterDevice { get; set; }
+        public int? MasterDeviceID { get; set; }
         public virtual ObservableCollection<Mechanism>? Mechanisms { get; set; }
-        [NotMapped]
-        public bool IsModified
+        public int DeviceTypeID {  get; set; }
+        public DeviceType? DeviceType
+        { 
+            get => _type;
+            set
+            {
+                if (value != null)
+                {
+                    this.RaiseAndSetIfChanged(ref _type, value);
+                    DeviceTypeID = _type!.Id;
+                }
+            }
+        }
+[NotMapped] public bool IsModified
         {
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
+        [NotMapped] public AdditionalData? AdditionalData { get; set; }
     }
 }

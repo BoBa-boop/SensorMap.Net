@@ -16,14 +16,12 @@ namespace SensorMap.Model
         private bool _isModified;
         private string _name = string.Empty;
         private byte[]? _image;
-        private PLC? _plc;
+        private Device? _device;
         private Sector? sector;
 
-        [Key]
-        public int Id { get; set; }
+        [Key] public int Id { get; set; }
         [MaxLength(250)]
-        [Reactive]
-        public string Name
+        [Reactive] public string Name
         {
             get => _name;
             set
@@ -34,10 +32,7 @@ namespace SensorMap.Model
                 }
             }
         }
-        public string Path { get; set; } = string.Empty;//путь до папки с данными
-        
-        [Reactive]
-        public byte[]? Image
+        [Reactive] public byte[]? Image
         {
             get => _image;
             set
@@ -48,11 +43,7 @@ namespace SensorMap.Model
                 }
             }
         }
-        public virtual int SectorID { get; set; }
-        public virtual int? PLCID { get; set; }
-
-        [Reactive]
-        public virtual Sector? Sector 
+        [Reactive] public virtual Sector? Sector 
         {
             get => sector;
             set
@@ -64,25 +55,25 @@ namespace SensorMap.Model
                 }
             }
         }
-        [Reactive]
-        public virtual PLC? PLC 
+        [Reactive] public virtual Device? Device 
         {
-            get => _plc;
+            get => _device;
             set
             {
                 if(value!=null)
                 {
-                    this.RaiseAndSetIfChanged(ref _plc, value);
-                    PLCID = _plc!.Id;
+                    this.RaiseAndSetIfChanged(ref _device, value);
+                    DeviceID = _device!.Id;
                 }
             }
         }
+
         public virtual ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
+        public virtual int SectorID { get; set; }
+        public virtual int? DeviceID { get; set; }
 
-        
 
-        [NotMapped]
-        public bool IsModified
+        [NotMapped] public bool IsModified
         {
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);

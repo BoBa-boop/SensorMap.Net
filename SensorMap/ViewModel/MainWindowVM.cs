@@ -55,7 +55,7 @@ namespace SensorMap.ViewModel
             NavigateToDB = new RelayCommand(() => Navigation.NavigateTo<CRUD_VM>());
             NavigateToMenu = new RelayCommand(() => Navigation.NavigateTo<MainMenuVM>());
             NavigateToMechanisms = new RelayCommand(() => Navigation.NavigateTo<MechanismVM>());
-            NavigateToPLC = new RelayCommand(()=>Navigation.NavigateTo<PLC_VM>());
+            NavigateToDevices = new RelayCommand(()=>Navigation.NavigateTo<Devices_VM>());
             TurnOnEditMode = new RelayCommand(() => OpenAuthWindow());
             CreateBackupDB = new RelayCommand(() => 
             {
@@ -89,7 +89,7 @@ namespace SensorMap.ViewModel
         public ICommand NavigateToSensors { get; set; }
         public ICommand NavigateToSettings { get; set; }
         public ICommand NavigateToMenu { get; set; }
-        public ICommand NavigateToPLC { get; set; }
+        public ICommand NavigateToDevices { get; set; }
         public ICommand NavigateToMechanisms { get; set; }
         public ICommand CreateBackupDB { get; set; }
     }

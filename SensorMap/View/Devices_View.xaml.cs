@@ -19,9 +19,9 @@ namespace SensorMap.View
     /// <summary>
     /// Логика взаимодействия для PLC_View.xaml
     /// </summary>
-    public partial class PLC_View : UserControl
+    public partial class Devices_View : UserControl
     {
-        public PLC_View()
+        public Devices_View()
         {
             InitializeComponent();
         }

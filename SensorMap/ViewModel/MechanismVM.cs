@@ -89,25 +89,28 @@ namespace SensorMap.ViewModel
                 _isShowSensors = value; this.RaiseAndSetIfChanged(ref _isShowSensors, value);
             }
         }
-        [Reactive] public ObservableCollection<Sector> Sectors { get; set; } = new();
-        [Reactive] public ObservableCollection<PLC> PLCs { get; set; } = new();
-        [Reactive] public TreeViewCollection<SensorType, Sensor> Sensors { get; set; }
-        [Reactive] public ObservableCollection<Sensor> SensorList { get; set; }
-        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,IAppDbContextFactory appDbContextFactory)
+        [Reactive] public ObservableCollection<Sector>? Sectors { get; set; } = new();
+        [Reactive] public ObservableCollection<SensorType>? sensorTypes { get; private set; }
+        [Reactive] public ObservableCollection<Device> Devices { get; set; } = new();
+        [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors { get; set; }
+        [Reactive] public ObservableCollection<Sensor>? SensorList { get; set; }
+        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav, IAppDbContextFactory appDbContextFactory,
+            Mechanism curMechanism = null )
         {
             Navigation = _nav;
             _provider = provider;
             _service = service;
-            _appDbContextFactory = appDbContextFactory; 
-            CurrentSector = _service.CurrentSector_Global;
-            CurrentMech = _service.CurrentMechanism_Global;
+            _appDbContextFactory = appDbContextFactory;
+            
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
                 GetDataFromDB(_dbContext);
-                Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-                Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorList, filter);
             }
-
+            if(curMechanism!=null)
+            {
+                CurrentSector = Sectors.Where(x=>x.Id== curMechanism.SectorID).FirstOrDefault();
+                CurrentMech = CurrentSector?.Mechanisms?.Where(x => x.Id == curMechanism.Id).FirstOrDefault();
+            }
 
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
             
@@ -127,9 +130,9 @@ namespace SensorMap.ViewModel
                     };
                     //Добавление в коллекцию. Далее обработка события и добавления визуального элемента
                     CurrentMech.SensorsAssig!.Add(sensorAssignments);
-                    
+
                 }
-                if(obj is AddSensor command)
+                if (obj is AddSensor command)
                 {
                     //Выполнение команды "Добавить"
                     _undoRedoManager.Do(command);
@@ -194,7 +197,7 @@ namespace SensorMap.ViewModel
                 }
             }, (obj) => 
             { 
-                if (obj==null || obj is Mechanism mech && mech.SensorsAssig.Count() == 0) return false; 
+                if (obj==null || obj is Mechanism mech && mech.SensorsAssig!=null && mech.SensorsAssig.Count() == 0) return false; 
                 return true;
             });
 
@@ -218,14 +221,16 @@ namespace SensorMap.ViewModel
                                                       .ThenInclude(x => x.SensorsAssig)
                                                       .ThenInclude(x => x.Sensor).ThenInclude(x => x.SensorType).ToListAsync();
             var queryTypes = await _dbContext.SensorTypes.AsNoTracking().ToListAsync();
-            var queryPLC = await _dbContext.PLCs.AsNoTracking().ToListAsync();
+            var queryDevice = await _dbContext.Devices.AsNoTracking().ToListAsync();
             var querySensors = await _dbContext.Sensors.AsNoTracking().Include(x=>x.SensorType).ToListAsync();
             
             
             sensorTypes = new ObservableCollection<SensorType>(queryTypes);
             Sectors = new ObservableCollection<Sector>(querySector);
             SensorList = new ObservableCollection<Sensor>(querySensors);
-            PLCs = new ObservableCollection<PLC>(queryPLC);
+            Devices = new ObservableCollection<Device>(queryDevice);
+            Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
+            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorList, filter);
         }
 
         private bool CanExecuteAddSensor(object selectedSensor)
@@ -243,7 +248,7 @@ namespace SensorMap.ViewModel
                 });
                 return false;
             }
-            else if (CurrentMech.PLCID == 0)
+            else if (CurrentMech.DeviceID == 0)
             {
                 Growl.Error(new GrowlInfo
                 {
@@ -266,6 +271,7 @@ namespace SensorMap.ViewModel
             {
                 foreach (var sa in CurrentMech.SensorsAssig)
                 {
+                    if (!IsValidData(sa)) break;
                     if(sa.Id == 0)
                         dbContext.Entry(sa).State = EntityState.Added;
                     else
@@ -277,6 +283,13 @@ namespace SensorMap.ViewModel
 
                 Growl.Success("Данные сохранены");
             }
+        }
+
+        private bool IsValidData(SensorAssignments sensor)
+        {
+            if(sensor.Width <=10 || sensor.Height <=10) return false;
+            if(sensor.X <=0 || sensor.Y <=0) return false;
+            return true;
         }
         public ICommand SaveSensorPlace { get; }
         public ICommand ShowSensorMechanism { get; }
@@ -297,6 +310,6 @@ namespace SensorMap.ViewModel
         public ICommand DragSensorCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
-        public ObservableCollection<SensorType> sensorTypes { get; private set; }
+        
     }
 }

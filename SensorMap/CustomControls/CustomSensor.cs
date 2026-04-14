@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
+using Image = System.Windows.Controls.Image;
 using MessageBox = System.Windows.MessageBox;
 using Point = System.Windows.Point;
 
@@ -137,6 +138,7 @@ namespace SensorMap.CustomControls
         private Point LastPoint;
         private bool DragInProgress = false;
         private  Canvas _canvas;
+        private System.Windows.Controls.Image _image;
         private HandyControl.Controls.TextBox _textBoxAddress;
         static CustomSensor()
         {
@@ -151,8 +153,8 @@ namespace SensorMap.CustomControls
         {
             base.OnApplyTemplate();
             _canvas = _transformService.GetParentCanvas(this);
-
-            if( _canvas != null ) 
+            _image = _canvas.Children.OfType<Image>().First();
+            if ( _canvas != null ) 
             {
                 _textBoxAddress = GetTemplateChild("PART_Address") as HandyControl.Controls.TextBox;
                 if (IsEditMode)
@@ -258,17 +260,19 @@ namespace SensorMap.CustomControls
                             new_height -= offset_y;
                             break;
                     }
-
-                    // Don't use negative width or height.
-                    if ((new_width > 18) && (new_height > 18))
+                    if((new_x > 1 && new_x < _image.ActualWidth-new_width) && (new_y>1 && new_y < _image.ActualHeight-new_height))
                     {
-                        Canvas.SetLeft(_selectedSensor, new_x);
-                        Canvas.SetTop(_selectedSensor, new_y);
-                        
-                        this.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                        // Don't use negative width or height.
+                        if ((new_width > 18) && (new_height > 18))
+                        {
+                            Canvas.SetLeft(_selectedSensor, new_x);
+                            Canvas.SetTop(_selectedSensor, new_y);
 
-                        // Save the mouse's new location.
-                        LastPoint = point;
+                            this.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+
+                            // Save the mouse's new location.
+                            LastPoint = point;
+                        }
                     }
                 }
             }

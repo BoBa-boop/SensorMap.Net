@@ -120,6 +120,7 @@
                                 </HierarchicalDataTemplate>
                             </TreeView.ItemTemplate>
                         </TreeView>
+                       
                     </Expander>
                     <Expander IsExpanded="True"
                               Margin="0,5"
@@ -171,11 +172,11 @@
             </Grid.RowDefinitions>
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
-                                         ItemsSource="{Binding CurrentMech.SensorsAssig}"
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorCommand="{Binding RemoveSensorCommand}"
-                                         IsEditMode="{Binding IsEditMode}"/>
+                                         IsEditMode="{Binding IsEditMode}"
+                                         ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
                 </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>
             </Grid>

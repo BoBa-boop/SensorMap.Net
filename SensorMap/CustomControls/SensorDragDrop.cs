@@ -5,6 +5,7 @@ using SensorMap.Commands.SensorCommands;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using SensorMap.Properties;
 using SensorMap.Services;
 using SensorMap.ViewModel;
 using System.Collections.ObjectModel;
@@ -13,6 +14,7 @@ using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -36,6 +38,8 @@ namespace SensorMap.CustomControls
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control
     {
+        static Cursor Grab = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grab.cur")).Stream);
+        static Cursor Grabbing = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grabbing.cur")).Stream);
         static SensorDragDrop()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SensorDragDrop),
@@ -158,11 +162,11 @@ namespace SensorMap.CustomControls
             RemoveSensorEvent = new RelayCommand<SensorAssignments>((s)=>RemoveSensor(s));
             if (_canvas != null)
             {
+                Cursor = Grab;
                 _viewMatrixTransform = new MatrixTransform(Matrix.Identity);
                 _canvas.RenderTransform = _viewMatrixTransform;
                 _viewMatrix = _viewMatrixTransform.Matrix;
                 MapProperties.SetViewMatrix(this, _viewMatrix);
-
                 _canvas.PreviewMouseMove += _canvas_MouseMove;
                 _canvas.MouseDown += _canvas_MouseDown;
                 _canvas.MouseUp += _canvas_MouseUp;
@@ -186,6 +190,7 @@ namespace SensorMap.CustomControls
         private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
             _initialMousePosition = new Point();
+            Cursor = Grab;
             
         }
         #region ItemsSource events
@@ -346,6 +351,7 @@ namespace SensorMap.CustomControls
                     {
                         DeltaY = 0;
                     }
+                    Cursor = Grabbing;
                     var translate = new TranslateTransform(DeltaX, DeltaY);
                     _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
                 }
@@ -393,7 +399,6 @@ namespace SensorMap.CustomControls
                 }
             }
             MapProperties.SetViewMatrix(this, _viewMatrix);
-            
         }
         
         /// <summary>
@@ -403,7 +408,8 @@ namespace SensorMap.CustomControls
         {
             double offsetX = matrix.OffsetX;
             double offsetY = matrix.OffsetY;
-
+            double minOffsetY = parentSize.Height;
+            double minOffsetX = parentSize.Width;
             // Если изображение меньше контейнера по ширине - центрируем по горизонтали
             if (scaledWidth <= parentSize.Width)
             {
@@ -416,7 +422,7 @@ namespace SensorMap.CustomControls
                     offsetX = 0;
 
                 // Проверяем правую границу
-                double minOffsetX = parentSize.Width - scaledWidth;
+                minOffsetX = parentSize.Width - scaledWidth;
                 if (offsetX < minOffsetX)
                     offsetX = minOffsetX;
             }
@@ -433,7 +439,7 @@ namespace SensorMap.CustomControls
                     offsetY = 0;
 
                 // Проверяем нижнюю границу
-                double minOffsetY = parentSize.Height - scaledHeight;
+                minOffsetY = parentSize.Height - scaledHeight;
                 if (offsetY < minOffsetY)
                     offsetY = minOffsetY;
             }

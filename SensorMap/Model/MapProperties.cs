@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using Size = System.Windows.Size;
 
 namespace SensorMap.Model
 {
@@ -18,7 +19,7 @@ namespace SensorMap.Model
             new FrameworkPropertyMetadata(
                 Matrix.Identity,
                 FrameworkPropertyMetadataOptions.Inherits));
-
+        
         public static Matrix GetViewMatrix(DependencyObject obj)
         {
             return (Matrix)obj.GetValue(ViewMatrixProperty);

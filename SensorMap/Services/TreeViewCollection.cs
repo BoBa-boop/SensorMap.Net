@@ -21,7 +21,7 @@ namespace SensorMap.Services
         private readonly string _titleProp;
         private readonly Func<TParent, TChild, bool> _filter;
 
-        public ICollection<TreeNode<TChild>> Nodes { get; private set; }
+        public ICollection<TreeNode<TChild>>? Nodes { get; private set; }
 
         public TreeViewCollection(string TitleProp,ObservableCollection<TParent> parentCollection, ObservableCollection<TChild> childCollection, Func<TParent,TChild,bool> filter)
         {

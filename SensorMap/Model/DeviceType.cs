@@ -1,26 +1,22 @@
 ﻿using ReactiveUI;
-using ReactiveUI.SourceGenerators;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using ReactiveUI.SourceGenerators;
 
 namespace SensorMap.Model
 {
-    public class SensorType:ReactiveObject
+    public class DeviceType:ReactiveObject
     {
-        private string _name = string.Empty;
+        private string _name;
         private byte[]? _image;
         private bool _isNew;
 
         [Key]
         [Reactive] public int Id { get; set; }
         [MaxLength(30)]
-        [Reactive] public string Name
+        [Reactive]
+        public string Name
         {
             get => _name;
             set
@@ -30,9 +26,10 @@ namespace SensorMap.Model
                     this.RaiseAndSetIfChanged(ref _name, value);
                     IsNew = true;
                 }
-            } 
+            }
         }
-        [Reactive] public byte[]? Image
+        [Reactive]
+        public byte[]? Image
         {
             get => _image;
             set
@@ -55,9 +52,8 @@ namespace SensorMap.Model
                 this.RaiseAndSetIfChanged(ref _isNew, value);
             }
         }
-        
-        public virtual ObservableCollection<Sensor>? Sensors { get; set; }
-        public virtual ObservableCollection<SensorCharacteristic>? Characteristics { get; set; } = new ObservableCollection<SensorCharacteristic>();
 
+        public virtual ObservableCollection<Device>? Devices { get; set; }
+        public virtual ObservableCollection<DeviceCharacteristic>? Characteristics { get; set; } = new ObservableCollection<DeviceCharacteristic>();
     }
 }

@@ -17,8 +17,11 @@ namespace SensorMap.EF
         public DbSet<Mechanism> Mechanisms { get; set; }
         public DbSet<Sensor> Sensors { get; set; }
         public DbSet<SensorType> SensorTypes { get; set; }
-        public DbSet<PLC> PLCs { get; set; }
+        public DbSet<SensorCharacteristic> SensorCharacteristic { get; set; }
+        public DbSet<Device> Devices { get; set; }
+        public DbSet<DeviceType> DeviceTypes { get; set; }
         public DbSet<SensorAssignments> SensorAssignments { get; set; }
+        public DbSet<DeviceCharacteristic> DeviceCharacteristic { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,14 +30,23 @@ namespace SensorMap.EF
             modelBuilder.ApplyConfiguration(new MechanismConfiguration());
             modelBuilder.ApplyConfiguration(new SensorConfiguration());
             modelBuilder.ApplyConfiguration(new SensorTypeConfiguration());
-            modelBuilder.ApplyConfiguration(new PLCConfiguration());
+            modelBuilder.ApplyConfiguration(new DeviceConfiguration());
+            modelBuilder.ApplyConfiguration(new DeviceTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new DeviceCharacteristicConfiguration());
             modelBuilder.ApplyConfiguration(new SensorAssignmentConfiguration());
+            modelBuilder.ApplyConfiguration(new SensorCharacteristicConfiguration());
             base.OnModelCreating(modelBuilder);
         }
     }
 
-
-
+    public class DeviceTypeConfiguration : IEntityTypeConfiguration<DeviceType>
+    {
+        public void Configure(EntityTypeBuilder<DeviceType> builder)
+        {
+            builder.HasKey(x => x.Id);
+            builder.HasMany(x => x.Characteristics).WithOne(c => c.DeviceType).HasForeignKey(k => k.DeviceTypeId).OnDelete(DeleteBehavior.Cascade);
+        }
+    }
 
     public class SectorConfiguration : IEntityTypeConfiguration<Sector>
     {
@@ -69,7 +81,7 @@ namespace SensorMap.EF
             builder.HasKey(x => x.Id);
             builder.HasOne(t => t.SensorType).WithMany(s => s.Sensors)
                 .HasForeignKey(s=>s.SensorTypeID)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Cascade); 
         }
     }
     public class SensorTypeConfiguration : IEntityTypeConfiguration<SensorType>
@@ -77,6 +89,7 @@ namespace SensorMap.EF
         public void Configure(EntityTypeBuilder<SensorType> builder)
         {
             builder.HasKey(x => x.Id);
+            builder.HasMany(x=>x.Characteristics).WithOne(c=>c.SensorType).HasForeignKey(k=>k.SensorTypeId).OnDelete(DeleteBehavior.Cascade);
         }
     }
     public class SensorAssignmentConfiguration : IEntityTypeConfiguration<SensorAssignments>
@@ -86,17 +99,37 @@ namespace SensorMap.EF
             builder.HasKey(x => x.Id);
         }
     }
-    public class PLCConfiguration : IEntityTypeConfiguration<PLC>
+    public class DeviceConfiguration : IEntityTypeConfiguration<Device>
     {
-        public void Configure(EntityTypeBuilder<PLC> builder)
+        public void Configure(EntityTypeBuilder<Device> builder)
         {
             builder.HasKey(x => x.Id);
+
+            builder.HasOne(x => x.MasterDevice)
+            .WithMany(x => x.ChildrenDevices)
+            .HasForeignKey(x => x.MasterDeviceID)
+            .OnDelete(DeleteBehavior.Restrict);
+
             builder
-                .HasMany(plc => plc.Mechanisms)
-                .WithOne(mech => mech.PLC)
-                .HasForeignKey(p => p.PLCID)
+                .HasMany(device => device.Mechanisms)
+                .WithOne(mech => mech.Device)
+                .HasForeignKey(p => p.DeviceID)
                 .OnDelete(DeleteBehavior.Restrict);
 
+        }
+    }
+    public class SensorCharacteristicConfiguration : IEntityTypeConfiguration<SensorCharacteristic>
+    {
+        public void Configure(EntityTypeBuilder<SensorCharacteristic> builder)
+        {
+            builder.HasKey(x => x.Id);
+        }
+    }
+    public class DeviceCharacteristicConfiguration : IEntityTypeConfiguration<DeviceCharacteristic>
+    {
+        public void Configure(EntityTypeBuilder<DeviceCharacteristic> builder)
+        {
+            builder.HasKey(x => x.Id);
         }
     }
 }

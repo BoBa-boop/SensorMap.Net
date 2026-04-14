@@ -323,17 +323,6 @@
                     <TextBlock Text="Механизмы" FontSize="16"/>
                 </hc:TabItem.Header>
                 <Grid>
-                    <Grid.Resources>
-                        <CollectionViewSource x:Key="MechCollection" Source="{Binding Path=Mechanisms,UpdateSourceTrigger=PropertyChanged}">
-                            <CollectionViewSource.GroupDescriptions>
-                                <PropertyGroupDescription PropertyName="Sector.Name"/>
-                            </CollectionViewSource.GroupDescriptions>
-                            
-                            <CollectionViewSource.SortDescriptions>
-                                <scm:SortDescription PropertyName="Sector.Name"/>
-                            </CollectionViewSource.SortDescriptions>
-                        </CollectionViewSource>
-                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
@@ -400,15 +389,15 @@
                             <DataGridTemplateColumn Header="Контроллер" MinWidth="100">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Path=PLC.Name}" HorizontalAlignment="Center" Cursor="Hand" />
+                                        <TextBlock Text="{Binding Path=Device.Name}" HorizontalAlignment="Center" Cursor="Hand" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.PLCs}" 
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Devices}" 
                                           DisplayMemberPath="Name"
                                           Cursor="Hand" 
-                                          SelectedItem="{Binding PLC}"/>
+                                          SelectedItem="{Binding Device}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
@@ -535,7 +524,7 @@
                                 <DataGridTemplateColumn.CellEditingTemplate>
                                     <DataTemplate>
                                         <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes}"
-                                          SelectedItem="{Binding SensorType}"                                                  
+                                          SelectedItem="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"                                                  
                                           DisplayMemberPath="Name"                                                  
                                           Cursor="Hand"/>
                                     </DataTemplate>
@@ -585,16 +574,16 @@
                 </Grid>
             </hc:TabItem>
             
-            <!--SECTION FOR PLC-->
-            <hc:TabItem  Tag="Контроллеры">
+            <!--SECTION FOR Devices-->
+            <hc:TabItem  Tag="Устройства">
                 <hc:TabItem.Header>
-                    <TextBlock Text="Контроллеры" FontSize="16"/>
+                    <TextBlock Text="Устройства" FontSize="16"/>
                 </hc:TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding PLCs}" Grid.Row="0"
+                    <DataGrid ItemsSource="{Binding Devices}" Grid.Row="0"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -605,6 +594,35 @@
                         <!--<DataGrid.RowValidationRules>
         <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
     </DataGrid.RowValidationRules>-->
+                        <DataGrid.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.ContainerStyle>
+                                    <Style TargetType="GroupItem">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate>
+                                                    <Expander IsExpanded="True">
+                                                        <Expander.Header>
+                                                            <DockPanel>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
+                                                                <TextBlock Text="{Binding ItemCount}" Margin="10,0,0,0"
+                                                   Foreground="Gray" FontWeight="Normal"/>
+                                                            </DockPanel>
+                                                        </Expander.Header>
+                                                        <ItemsPresenter />
+                                                    </Expander>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </GroupStyle.ContainerStyle>
+                                <GroupStyle.Panel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
+                                    </ItemsPanelTemplate>
+                                </GroupStyle.Panel>
+                            </GroupStyle>
+                        </DataGrid.GroupStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
                                         Header="Название">
@@ -632,6 +650,21 @@
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
 
+                            <DataGridTemplateColumn Header="Тип" Width="auto" MinWidth="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Path=DeviceType.Name,UpdateSourceTrigger=PropertyChanged}" Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.DeviceTypes}"
+                                                  SelectedItem="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}" 
+                                                  DisplayMemberPath="Name"  
+                                                  Cursor="Hand"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
                             <DataGridTemplateColumn IsReadOnly="True">
@@ -724,8 +757,9 @@
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
+                    <!--Датчики-->
                     <GroupBox Header="Типы датчиков" Grid.Column="0" Style="{StaticResource BaseStyle}" 
-                      Margin="8">
+                              Margin="8">
                         <Grid Margin="5,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -735,14 +769,16 @@
                                 <RowDefinition Height="auto"/>
                                 <RowDefinition Height="150"/>
                             </Grid.RowDefinitions>
-                            <ListBox Effect="{StaticResource EffectShadow2}" Name="twSensors" Margin="0,0,0,20"
-                             ItemsSource="{Binding SensorTypes,UpdateSourceTrigger=PropertyChanged}"
-                             MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
+                            <ListBox Effect="{StaticResource EffectShadow2}"
+                                     Name="lbSensors"
+                                     Margin="0,0,0,20"
+                                     ItemsSource="{Binding SensorTypes,UpdateSourceTrigger=PropertyChanged}"
+                                     MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Width="90">
                                             <Image Source="{Binding Image, UpdateSourceTrigger=PropertyChanged,TargetNullValue={StaticResource NoImage}}"
-                                           Width="60" Height="60">
+                       Width="60" Height="60">
                                                 <Image.Clip>
                                                     <EllipseGeometry RadiusX="30" RadiusY="30" Center="30,30"/>
                                                 </Image.Clip>
@@ -761,7 +797,7 @@
                                                         <ControlTemplate TargetType="ListBox">
                                                             <Grid Background="{StaticResource DarkDefaultBrush}">
                                                                 <TextBlock Text="Нет данных" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                                                   FontSize="20"/>
+                                               FontSize="20"/>
                                                             </Grid>
                                                         </ControlTemplate>
                                                     </Setter.Value>
@@ -779,12 +815,12 @@
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="ListBoxItem">
                                                     <hc:Badge x:Name="badge" Background="{StaticResource InfoBrush}" Text="Новый"
-                                                      ShowBadge="{Binding IsNew}">
+                                  ShowBadge="{Binding IsNew}">
                                                         <Border x:Name="brd" BorderBrush="{TemplateBinding BorderBrush}"
-                                                    BorderThickness="1" CornerRadius="5" Cursor="Hand"
-                                                    Background="{TemplateBinding Background}">
+                                BorderThickness="1" CornerRadius="5" Cursor="Hand"
+                                Background="{TemplateBinding Background}">
                                                             <ContentPresenter VerticalAlignment="Center"
-                                                                      ToolTip="{Binding Name}"/>
+                                                  ToolTip="{Binding Name}"/>
                                                         </Border>
                                                     </hc:Badge>
                                                     <ControlTemplate.Triggers>
@@ -820,28 +856,45 @@
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                             </ListBox>
-                            <StackPanel Orientation="Horizontal"  Grid.ColumnSpan="2" Grid.Row="1"
-                                VerticalAlignment="Top" HorizontalAlignment="Center"
-                                Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
-                                <hc:ImageSelector Name="imgIconSensor" Width="70" Height="70" Background="LightBlue"
-                                          Effect="{StaticResource EffectShadow3}" StrokeDashArray="3"
-                                          Stretch="UniformToFill" Margin="0,0,0,15">
+                            <Grid Grid.ColumnSpan="2" Grid.Row="1"
+                                  VerticalAlignment="Top" 
+                                  Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <hc:ImageSelector Name="imgIconSensor"
+                                                  Width="70" Height="70"
+                                                  Background="LightBlue"
+                                                  Grid.Column="0"
+                                                  HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                  Effect="{StaticResource EffectShadow3}"
+                                                  StrokeDashArray="3"
+                                                  Stretch="UniformToFill" Margin="0,0,0,15">
                                     <i:Interaction.Triggers>
                                         <i:EventTrigger EventName="ImageSelected">
-                                            <i:ChangePropertyAction TargetObject="{Binding ElementName=twSensors, Path=SelectedItem}"
-                                                            PropertyName="IsNew" Value="True"/>
+                                            <i:ChangePropertyAction TargetObject="{Binding ElementName=lbSensors, Path=SelectedItem}"
+                                        PropertyName="IsNew" Value="True"/>
                                         </i:EventTrigger>
                                     </i:Interaction.Triggers>
                                 </hc:ImageSelector>
-                                <StackPanel Margin="10,0">
-                                    <hc:TextBox Name="tbSensorType" hc:InfoElement.Placeholder="Тип датчика" Width="150" Height="30"
-                                        Text="{Binding ElementName=twSensors,Path=SelectedItem.Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
-
-                                    <WrapPanel Orientation="Horizontal" Grid.Row="1" Margin="0,15" HorizontalAlignment="Center"
-                                       ItemWidth="55">
-                                        <Button Style="{StaticResource ButtonSuccess}"
-                                         hc:IconElement.Geometry="{StaticResource AddGeometry}"
-                                        Command="{Binding AddSensorType}">
+                                <StackPanel Margin="10,0" Grid.Column="1" HorizontalAlignment="Left">
+                                    <hc:TextBox Name="tbSensorType"
+                                                hc:InfoElement.Placeholder="Тип датчика"
+                                                Width="150" Height="30"
+                                                Text="{Binding ElementName=lbSensors,Path=SelectedItem.Name,
+                                        Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                    <WrapPanel Name="sButtons" 
+                                               Orientation="Horizontal" Grid.Row="1"
+                                               Margin="0,15" HorizontalAlignment="Center"
+                                               ItemWidth="55">
+                                        <Button Name="sAdd" Style="{StaticResource ButtonSuccess}"
+                                                hc:IconElement.Geometry="{StaticResource AddGeometry}"
+                                                Command="{Binding AddSensorType}">
                                             <Button.CommandParameter>
                                                 <MultiBinding Converter="{StaticResource CreateMultiParams}">
                                                     <Binding Path="Text" ElementName="tbSensorType"/>
@@ -849,24 +902,26 @@
                                                 </MultiBinding>
                                             </Button.CommandParameter>
                                         </Button>
-                                        <Button Style="{StaticResource ButtonDanger}" 
-                                        hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
-                                        Command="{Binding DeleteNodeTitleType}" CommandParameter="{Binding ElementName=twSensors,Path=SelectedItem}"/>
-                                        <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}"
-                                        Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=twSensors,Path=SelectedItem}">
+                                        <Button Name="sDelete" Style="{StaticResource ButtonDanger}"
+                                                hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
+                                                Command="{Binding DeleteNodeTitleType}"
+                                                CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}"/>
+                                        <Button Name="sSave" hc:IconElement.Geometry="{StaticResource SaveGeometry}"
+                                                Command="{Binding SaveCommand}"
+                                                CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}">
                                             <i:Interaction.Triggers>
                                                 <i:EventTrigger EventName="Click">
-                                                    <i:ChangePropertyAction TargetObject="{Binding ElementName=twSensors, Path=SelectedItem}"
-                                                                    PropertyName="IsNew" Value="False"/>
+                                                    <i:ChangePropertyAction TargetObject="{Binding ElementName=lbSensors, Path=SelectedItem}"
+                                                PropertyName="IsNew" Value="False"/>
                                                 </i:EventTrigger>
                                             </i:Interaction.Triggers>
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding ElementName=twSensors,Path=SelectedItem.IsNew}" Value="false">
+                                                        <DataTrigger Binding="{Binding ElementName=lbSensors,Path=SelectedItem.IsNew}" Value="false">
                                                             <Setter Property="IsEnabled" Value="False"/>
                                                         </DataTrigger>
-                                                        <DataTrigger Binding="{Binding ElementName=twSensors,Path=SelectedItem}" Value="{x:Null}">
+                                                        <DataTrigger Binding="{Binding ElementName=lbSensors,Path=SelectedItem}" Value="{x:Null}">
                                                             <Setter Property="IsEnabled" Value="False"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
@@ -875,12 +930,267 @@
                                         </Button>
                                     </WrapPanel>
                                 </StackPanel>
-                            </StackPanel>
+                                <Grid Grid.Column="2"
+                                      MinWidth="200" MinHeight="60"
+                                      Background="White">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30"/>
+                                        <RowDefinition Height="2*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="Характеристики датчика" Margin="10,0" Grid.Row="0"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource TextBlockDefaultSecLight}"/>
+                                    <Menu Grid.Row="0" Width="70" HorizontalAlignment="Left">
+                                        <MenuItem Style="{StaticResource IconOnlyMenuItem}" 
+                                                  ToolTip="Добавить строку"
+                                                  Command="{Binding AddCharacteristic}"
+                                                  CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}">
+                                            <MenuItem.Icon>
+                                                <Image Source="{StaticResource ChangeDataImage}" Width="20" Height="20"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Style="{StaticResource IconOnlyMenuItem}" 
+                                                  ToolTip="Удалить строку"
+                                                  Command="{Binding DeleteCharacteristic}"
+                                                  CommandParameter="{Binding ElementName=sCharacteristics,Path=SelectedItem}">
+                                            <MenuItem.Icon>
+                                                <Image Source="{StaticResource DeleteImage}" Width="20" Height="20"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </Menu>
+                                    <ListBox Name="sCharacteristics" Grid.Row="1" Margin="5"
+                                             ItemsSource="{Binding ElementName=lbSensors,Path=SelectedItem.Characteristics}">
+                                        <i:Interaction.Behaviors>
+                                            <beh:CollectionChangeBehavior TargetButton="{Binding ElementName=sSave}"/>
+                                        </i:Interaction.Behaviors>
+
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBox Name="ActualText" Text="{Binding Title}"/>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+                            </Grid>
                         </Grid>
                     </GroupBox>
-                    <GroupBox Header="Другое" Grid.Column="1"  Margin="8" Style="{StaticResource BaseStyle}">
-                        <Grid>
+                    <!--Устройства-->
+                    <GroupBox Header="Типы Устройств" Grid.Column="1" Style="{StaticResource BaseStyle}" 
+                              Margin="8">
+                        <Grid Margin="5,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="150"/>
+                            </Grid.RowDefinitions>
+                            <ListBox Effect="{StaticResource EffectShadow2}" Name="lbDevices" Margin="0,0,0,20"
+                                     ItemsSource="{Binding DeviceTypes,UpdateSourceTrigger=PropertyChanged}"
+                                     MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Width="90">
+                                            <Image Source="{Binding Image, UpdateSourceTrigger=PropertyChanged,TargetNullValue={StaticResource NoImage}}"
+                                                   Width="60" Height="60">
+                                                <Image.Clip>
+                                                    <EllipseGeometry RadiusX="30" RadiusY="30" Center="30,30"/>
+                                                </Image.Clip>
+                                            </Image>
+                                            <TextBlock Text="{Binding Name}" TextAlignment="Center" Width="65" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <ListBox.Style>
+                                    <Style TargetType="ListBox" BasedOn="{StaticResource ListBoxBaseStyle}">
+                                        <Setter Property="Background" Value="{StaticResource DefaultBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SensorTypes.Count}" Value="0">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBox">
+                                                            <Grid Background="{StaticResource DarkDefaultBrush}">
+                                                                <TextBlock Text="Нет данных" 
+                                                                           VerticalAlignment="Center"
+                                                                           HorizontalAlignment="Center"
+                                                                           FontSize="20"/>
+                                                            </Grid>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.Style>
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                        <Setter Property="Margin" Value="3"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <hc:Badge x:Name="badge"
+                                                              Background="{StaticResource InfoBrush}"
+                                                              Text="Новый"
+                                                              ShowBadge="{Binding IsNew}">
+                                                        <Border x:Name="brd"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="1" CornerRadius="5" Cursor="Hand"
+                                                                Background="{TemplateBinding Background}">
+                                                            <ContentPresenter VerticalAlignment="Center"
+                                                  ToolTip="{Binding Name}"/>
+                                                        </Border>
+                                                    </hc:Badge>
+                                                    <ControlTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding IsNew}"  Value="True">
+                                                            <Setter Property="BorderBrush" TargetName="brd"  Value="{StaticResource WarningBrush}"/>
+                                                            <Setter Property="Background" TargetName="brd" Value="{StaticResource NewSensorType}"/>
+                                                            <Setter Property="ShowBadge" TargetName="badge" Value="True"/>
+                                                        </DataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsNew,UpdateSourceTrigger=PropertyChanged}" Value="True"/>
+                                                                <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="BorderBrush" TargetName="brd"  Value="{StaticResource DangerBrush}"/>
+                                                            <Setter Property="Background" TargetName="brd" Value="#c5e0eb"/>
+                                                        </MultiDataTrigger>
 
+                                                        <DataTrigger Binding="{Binding IsMouseOver,RelativeSource={RelativeSource Self}}" Value="True">
+                                                            <Setter Property="Background" Value="#e3e3e3"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}" Value="True">
+                                                            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
+                                                        </DataTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel ItemWidth="80" ItemHeight="90" Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                            </ListBox>
+                            <Grid Grid.ColumnSpan="2" Grid.Row="1"
+                                  VerticalAlignment="Top" 
+                                  Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <hc:ImageSelector Name="imgIconDevice" Width="70" Height="70"
+                                                  Background="LightBlue"
+                                                  Grid.Column="0" HorizontalAlignment="Left"
+                                                  VerticalAlignment="Top"
+                                                  Effect="{StaticResource EffectShadow3}"
+                                                  StrokeDashArray="3"
+                                                  Stretch="UniformToFill" Margin="0,0,0,15">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="ImageSelected">
+                                            <i:ChangePropertyAction TargetObject="{Binding ElementName=lbDevices, Path=SelectedItem}"
+                                        PropertyName="IsNew" Value="True"/>
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </hc:ImageSelector>
+                                <StackPanel Margin="10,0" Grid.Column="1" HorizontalAlignment="Left">
+                                    <hc:TextBox Name="tbDeviceType"
+                                                hc:InfoElement.Placeholder="Тип устройства"
+                                                Width="150" Height="30"
+                                                Text="{Binding ElementName=lbDevices,
+                                        Path=SelectedItem.Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+
+                                    <WrapPanel Name="dButtons" Orientation="Horizontal"
+                                               Grid.Row="1" Margin="0,15"
+                                               HorizontalAlignment="Center"
+                                               ItemWidth="55">
+                                        <Button Name="dAdd" Style="{StaticResource ButtonSuccess}"
+                                                hc:IconElement.Geometry="{StaticResource AddGeometry}"
+                                                Command="{Binding AddDeviceType}">
+                                            <Button.CommandParameter>
+                                                <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                                    <Binding Path="Text" ElementName="tbDeviceType"/>
+                                                    <Binding Path="Uri" ElementName="imgIconDevice"/>
+                                                </MultiBinding>
+                                            </Button.CommandParameter>
+                                        </Button>
+                                        <Button Name="dDelete" Style="{StaticResource ButtonDanger}"
+                                                hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
+                                                Command="{Binding DeleteNodeTitleType}"
+                                                CommandParameter="{Binding ElementName=lbDevices,Path=SelectedItem}"/>
+                                        <Button Name="dSave" hc:IconElement.Geometry="{StaticResource SaveGeometry}"
+                                                Command="{Binding SaveCommand}"
+                                                CommandParameter="{Binding ElementName=lbDevices,Path=SelectedItem}">
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="Click">
+                                                    <i:ChangePropertyAction TargetObject="{Binding ElementName=lbDevices, Path=SelectedItem}"
+                                                                            PropertyName="IsNew" Value="False"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding ElementName=lbDevices,Path=SelectedItem.IsNew}" Value="false">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding ElementName=lbDevices,Path=SelectedItem}" Value="{x:Null}">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </WrapPanel>
+                                </StackPanel>
+                                <Grid Grid.Column="2" MinWidth="200" MinHeight="60"
+                                      Background="White">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="30"/>
+                                        <RowDefinition Height="2*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="Характеристики устройства" Margin="10,0"
+                                               Grid.Row="0"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               Style="{StaticResource TextBlockDefaultSecLight}"/>
+                                    <Menu Grid.Row="0" Width="70" 
+                                          HorizontalAlignment="Left">
+                                        <MenuItem Style="{StaticResource IconOnlyMenuItem}"
+                                                  ToolTip="Добавить строку"
+                                                  Command="{Binding AddCharacteristic}"
+                                                  CommandParameter="{Binding ElementName=lbDevices,Path=SelectedItem}">
+                                            <MenuItem.Icon>
+                                                <Image Source="{StaticResource ChangeDataImage}" Width="20" Height="20"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Style="{StaticResource IconOnlyMenuItem}" ToolTip="Удалить строку"
+                                                  Command="{Binding DeleteCharacteristic}"
+                                                  CommandParameter="{Binding ElementName=dCharacteristics,Path=SelectedItem}">
+                                            <MenuItem.Icon>
+                                                <Image Source="{StaticResource DeleteImage}" Width="20" Height="20"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </Menu>
+                                    <ListBox Name="dCharacteristics" Grid.Row="1" Margin="5"
+                                             ItemsSource="{Binding ElementName=lbDevices,Path=SelectedItem.Characteristics}">
+                                        <i:Interaction.Behaviors>
+                                            <beh:CollectionChangeBehavior TargetButton="{Binding ElementName=dSave}"/>
+                                        </i:Interaction.Behaviors>
+
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBox Name="ActualText" Text="{Binding Title}"/>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Grid>
+                            </Grid>
                         </Grid>
                     </GroupBox>
                 </Grid>

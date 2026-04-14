@@ -13,12 +13,12 @@ namespace SensorMap.Model
 {
     public class AdditionalData : ReactiveObject
     {
-        private string _nameSensor = string.Empty;
+        private string _name = string.Empty;
         private ObservableCollection<MoreData> _data = new();
 
         [Reactive]
-        [JsonProperty("Название датчика")]
-        public string NameSensor { get => _nameSensor; set => this.RaiseAndSetIfChanged(ref _nameSensor, value); }
+        [JsonProperty("Название")]
+        public string Name { get => _name; set => this.RaiseAndSetIfChanged(ref _name, value); }
         [Reactive]
         [JsonProperty("Данные")]
         public ObservableCollection<MoreData> Data {
@@ -26,21 +26,27 @@ namespace SensorMap.Model
             set => this.RaiseAndSetIfChanged(ref _data, value); 
         }
         public bool HasData() => Data?.Any() == true;
-        public static AdditionalData CreateDefault(string sensorName)
+        public static AdditionalData CreateRecord(string name, IEnumerable<SensorCharacteristic> characteristics)
         {
-            return new AdditionalData
+            var record = new AdditionalData() { Name = name };
+            var data = new ObservableCollection<MoreData>();
+            foreach (var param in characteristics)
             {
-                NameSensor = sensorName,
-                Data = new ObservableCollection<MoreData>
-                {
-                    new MoreData { Parameter = "Вид Корпуса" },
-                    new MoreData { Parameter = "Способ Подключения" },
-                    new MoreData { Parameter = "Зона Чувствительности" },
-                    new MoreData { Parameter = "Рабочие Напряжения" },
-                    new MoreData { Parameter = "Схема Подключения" },
-                    new MoreData { Parameter = "Функция Коммутации" },
-                }
-            };
+                data.Add(new MoreData() { Parameter = param.Title });
+            }
+            record.Data = data;
+            return record;
+        }
+        public static AdditionalData CreateRecord(string name, IEnumerable<DeviceCharacteristic> characteristics)
+        {
+            var record = new AdditionalData() { Name = name };
+            var data = new ObservableCollection<MoreData>();
+            foreach (var param in characteristics)
+            {
+                data.Add(new MoreData() { Parameter = param.Title });
+            }
+            record.Data = data;
+            return record;
         }
     }
     public class MoreData:ReactiveObject

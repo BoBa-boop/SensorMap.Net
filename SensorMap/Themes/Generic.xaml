@@ -37,9 +37,7 @@
                 Value="{Binding RemoveSensorEvent,
                 RelativeSource={RelativeSource Mode=FindAncestor, 
                 AncestorType={x:Type myCC:SensorDragDrop}}}"/>
-        <Setter Property="IsEditMode" Value="{Binding Path=IsEditMode, 
-                RelativeSource={RelativeSource Mode=FindAncestor, 
-                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
+        
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
@@ -52,7 +50,7 @@
                             BorderBrush="{TemplateBinding CustBorderBrush}"
                             BorderThickness="2" CornerRadius="30">
                             </Border>
-                            <Viewbox VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Viewbox>
                                 <TextBlock Background="Transparent" FontSize="11">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
@@ -126,5 +124,17 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Path=DataContext.IsEditMode, 
+                    RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                    Value="True">
+                <Setter Property="IsEditMode" Value="True"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=DataContext.IsEditMode, 
+                RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                         Value="False">
+                <Setter Property="IsEditMode" Value="False"/>
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 </ResourceDictionary>

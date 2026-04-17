@@ -1,4 +1,6 @@
-﻿using SensorMap.Interfaces;
+﻿using HandyControl.Controls;
+using HandyControl.Data;
+using SensorMap.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -70,6 +72,44 @@ namespace SensorMap.Services
                 bitmap.Freeze();
                 return bitmap;
             }
+        }
+
+        public bool IsImage(byte[] imageData)
+        {
+            try
+            {
+                using (var ms = new MemoryStream(imageData))
+                {
+                    var img = System.Drawing.Image.FromStream(ms);
+                    if (img != null)
+                        return true;
+                    else throw new Exception();
+                }
+            }
+            catch
+            {
+                Growl.Error(
+                    new GrowlInfo
+                    {
+                        Message = "Файл не является изображением",
+                        CancelStr = "Ignore",
+                        ShowDateTime = false,
+                        WaitTime = 2
+                    });
+                return false;
+            }
+        
+        }
+
+        public byte[] OpenImageDialog()
+        {
+            OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Filter = "Файлы рисунков (*.bmp, *.jpg, *.png, *.jpeg)|*.bmp;*.jpg;*.png;*.jpeg|Все файлы (*.*)|*.*";
+            fileDialog.ShowDialog();
+            if (string.IsNullOrEmpty(fileDialog.FileName)) return Array.Empty<byte>();
+            byte[] file = File.ReadAllBytes(fileDialog.FileName);
+            if(!IsImage(file)) return Array.Empty<byte>();
+            return file;
         }
     }
 }

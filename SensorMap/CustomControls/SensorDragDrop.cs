@@ -481,8 +481,8 @@ namespace SensorMap.CustomControls
             {
                 if (IsUIElementSensor(sender,out CustomSensor element))
                 {
-                        var pop = new View.SensorAddInfo();
-                        var window = new PopupWindow()
+                    var pop = new View.SensorAddInfo();
+                    var window = new PopupWindow()
                     {
                         PopupElement = pop,
                         DataContext = element.SensorData

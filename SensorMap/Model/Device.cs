@@ -62,7 +62,7 @@ namespace SensorMap.Model
         public Device? MasterDevice { get; set; }
         public int? MasterDeviceID { get; set; }
         public virtual ObservableCollection<Mechanism>? Mechanisms { get; set; }
-        public int DeviceTypeID {  get; set; }
+        public int? DeviceTypeId {  get; set; }
         public DeviceType? DeviceType
         { 
             get => _type;
@@ -71,7 +71,7 @@ namespace SensorMap.Model
                 if (value != null)
                 {
                     this.RaiseAndSetIfChanged(ref _type, value);
-                    DeviceTypeID = _type!.Id;
+                    DeviceTypeId = _type!.Id;
                 }
             }
         }

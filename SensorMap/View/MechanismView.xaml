@@ -48,6 +48,9 @@
                                     <DataTrigger Binding="{Binding IsEditMode}" Value="False">
                                         <Setter Property="IsEnabled" Value="False"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasChanges}" Value="True">
+                                        <Setter Property="Background" Value="Yellow"/>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </MenuItem.Style>
@@ -175,7 +178,7 @@
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorCommand="{Binding RemoveSensorCommand}"
-                                         IsEditMode="{Binding IsEditMode}"
+                                         IsEditMode="{Binding IsEditMode,UpdateSourceTrigger=PropertyChanged}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
                 </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>

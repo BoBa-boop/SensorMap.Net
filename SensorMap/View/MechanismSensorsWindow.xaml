@@ -5,8 +5,12 @@
         xmlns:hc="https://handyorg.github.io/handycontrol"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SensorMap.View"
+           xmlns:mv="clr-namespace:SensorMap.ViewModel"
         mc:Ignorable="d"
-        Title="{Binding StringFormat=Датчики {0},Path=Mechanism.Name}" Height="450" Width="600" WindowStartupLocation="CenterScreen">
+           d:DataContext="{d:DesignInstance mv:MechSensorsVM}"
+        Title="{Binding StringFormat=Датчики {0},Path=Mechanism.Name}"
+           Height="450" Width="600" WindowStartupLocation="CenterScreen"
+           Name="root">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -22,6 +26,16 @@
                 <DataGridTextColumn Binding="{Binding Sensor.Name}" MinWidth="100" Header="Название" IsReadOnly="True"/>
                 <DataGridTextColumn Binding="{Binding Address}" MinWidth="100" Header="Адрес"/>
                 <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
+                <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
+                <DataGridTemplateColumn Header="Действие">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Name="AddImage" Style="{StaticResource LoadImageButtonStyle}"
+                                    Command="{Binding Path=DataContext.AddImage,ElementName=root}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

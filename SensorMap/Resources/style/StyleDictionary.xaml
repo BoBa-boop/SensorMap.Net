@@ -104,4 +104,54 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>
+    <!-- Стиль кнопки "Загрузить изображение" -->
+    <Style x:Key="LoadImageButtonStyle" BasedOn="{StaticResource ButtonDefault}" TargetType="Button">
+        <Setter Property="ToolTip" Value="Загрузить изображение"/>
+        <Setter Property="Width" Value="auto"/>
+        <Setter Property="hc:IconElement.Geometry" Value="{StaticResource DownloadGeometry}"/>
+        <Setter Property="hc:IconElement.Width" Value="16"/>
+        <Setter Property="hc:IconElement.Height" Value="16"/>
+        <Setter Property="Visibility" Value="{Binding ElementName=root, Path=DataContext.IsEditMode, Converter={StaticResource Boolean2VisibilityConverter}}"/>
+    </Style>
+    <!--Шаблон кнопки просмотра картинки-->
+    <DataTemplate x:Key="imgView_Button">
+        <Grid x:Name="imgGrid"  Cursor="Hand" HorizontalAlignment="Center">
+            <Button Name="view" Panel.ZIndex="1" Width="45" Height="33" Opacity="0"
+     hc:IconElement.Geometry="{StaticResource FullScreenGeometry}" ToolTip="Просмотр"
+     Command="{Binding ElementName=root,Path=DataContext.ShowPreviewImage}"
+     CommandParameter="{Binding Image}"/>
+            <Image x:Name="imgPreview"  Source="{DynamicResource ImageDefault}" Stretch="Uniform"/>
+            <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="view"
+                              To="1" Duration="0:0:0.3"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="view" 
+                              To="0" Duration="0:0:0.3"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
+        </Grid>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Text, ElementName=mark}" Value="{}{DataGrid.NewItemPlaceholder}">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Setter Property="Visibility" TargetName="view" Value="Collapsed"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
+                <Setter Property="Visibility" Value="Collapsed"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Image}" Value="{x:Null}">
+                <Setter TargetName="imgGrid" Property="Visibility" Value="Collapsed"/>
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
 </ResourceDictionary>

@@ -1,11 +1,12 @@
-﻿using SensorMap.Behaviors;
+﻿using HandyControl.Controls;
+using HandyControl.Data;
+using SensorMap.Behaviors;
+using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using System.IO;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using static System.Net.Mime.MediaTypeNames;
 using Button = System.Windows.Controls.Button;
 using UserControl = System.Windows.Controls.UserControl;
 
@@ -25,26 +26,33 @@ namespace SensorMap.View
         {
             if(sender is Button button)
             {
-            var sensor = button.DataContext as SensorAssignments;
-            var image = sensor.Image;
-            var browser = new CustomImageBrowser(CreateImageFromBytes(image)) { Title = "Реальное расположение" };
+                var sensor = button.DataContext as SensorAssignments;
+                var image = sensor.Image;
+                var browser = new CustomImageBrowser(CreateImageFromBytes(image)) { Title = "Реальное расположение" };
                 browser.ShowDialog();
             }
         }
         private ImageSource CreateImageFromBytes(byte[] imageData)
         {
             if (imageData == null || imageData.Length == 0) return null;
-
-            using (var stream = new MemoryStream(imageData))
+            try
             {
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.StreamSource = stream;
-                bitmap.EndInit();
-                bitmap.Freeze();
-                return bitmap;
+                using (var stream = new MemoryStream(imageData))
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.StreamSource = stream;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
+                }
             }
+            catch
+            {
+                return new BitmapImage();
+            }
+            
         }
     }
 }

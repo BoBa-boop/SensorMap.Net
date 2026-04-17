@@ -10,6 +10,8 @@ namespace SensorMap.Interfaces
     public interface ITempImage
     {
         ImageSource CreateImageFromBytes(byte[] imageData);
+        bool IsImage(byte[] imageData);
+        byte[] OpenImageDialog();
         Uri GetUriFromBytes(byte[] imageData, string fileName = "image");
         public void Cleanup();
     }

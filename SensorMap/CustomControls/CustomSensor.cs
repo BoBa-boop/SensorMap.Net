@@ -77,7 +77,8 @@ namespace SensorMap.CustomControls
             set { SetValue(IsEditModeProperty, value); }
         }
         public static readonly DependencyProperty IsEditModeProperty =
-            DependencyProperty.Register("IsEditMode", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false,OnIsEditPropertyChanged));
+            DependencyProperty.Register("IsEditMode", typeof(bool), typeof(CustomSensor),
+                new PropertyMetadata(false,OnIsEditPropertyChanged));
 
         private static void OnIsEditPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -85,6 +86,7 @@ namespace SensorMap.CustomControls
             if (e.NewValue != null && e.NewValue is bool value)
             {
                 control.IsEditMode = value;
+                if(control._canvas!=null) control.ChangeStateActions();
             }
         }
         public Rect CustomBounds
@@ -154,19 +156,32 @@ namespace SensorMap.CustomControls
             base.OnApplyTemplate();
             _canvas = _transformService.GetParentCanvas(this);
             _image = _canvas.Children.OfType<Image>().First();
-            if ( _canvas != null ) 
+            if ( _canvas != null )
             {
                 _textBoxAddress = GetTemplateChild("PART_Address") as HandyControl.Controls.TextBox;
-                if (IsEditMode)
-                {
-                    this.MouseDown += OnMouseDown;
-                    this.MouseMove += OnSensorMouseMove;
-                    _canvas.MouseMove += OnMouseMove;
-                    _canvas.MouseUp += OnMouseUp;
-                    this.PreviewKeyDown += OnPreviewKeyDown;
-                }
+                ChangeStateActions();
             }
-            
+
+        }
+
+        private void ChangeStateActions()
+        {
+            if (IsEditMode)
+            {
+                this.MouseDown += OnMouseDown;
+                this.MouseMove += OnSensorMouseMove;
+                _canvas.MouseMove += OnMouseMove;
+                _canvas.MouseUp += OnMouseUp;
+                this.PreviewKeyDown += OnPreviewKeyDown;
+            }
+            else
+            {
+                this.MouseDown -= OnMouseDown;
+                this.MouseMove -= OnSensorMouseMove;
+                _canvas.MouseMove -= OnMouseMove;
+                _canvas.MouseUp -= OnMouseUp;
+                this.PreviewKeyDown -= OnPreviewKeyDown;
+            }
         }
 
         private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)

@@ -98,7 +98,7 @@ namespace SensorMap.ViewModel
 
             foreach (var deviceType in _deviceType.Where(d => d.Characteristics.Any()))
             {
-                var currentDevices = Device.Where(x => x.DeviceTypeID == deviceType.Id);
+                var currentDevices = Device.Where(x => x.DeviceTypeId == deviceType.Id);
                 foreach (var device in currentDevices)
                 {
                     if (device != null && !addDataList.Contains(device.AdditionalData))

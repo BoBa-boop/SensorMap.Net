@@ -31,11 +31,13 @@ namespace SensorMap.ViewModel
         private IAppDbContextFactory _appDbContextFactory;
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
+        private ITempImage _imgControl;
         private Sector? currentSector; 
         private Mechanism? currentMech;
         private Sensor? _curSensor;
         private bool isEditMode;
         private bool _isShowSensors;
+        private bool _hasChanges;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
@@ -89,17 +91,28 @@ namespace SensorMap.ViewModel
                 _isShowSensors = value; this.RaiseAndSetIfChanged(ref _isShowSensors, value);
             }
         }
+        [Reactive] public bool HasChanges
+        {
+            get { return _hasChanges; }
+            set
+            {
+                _hasChanges = value;
+                this.RaiseAndSetIfChanged(ref _hasChanges, value);
+            }
+        }
         [Reactive] public ObservableCollection<Sector>? Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<SensorType>? sensorTypes { get; private set; }
         [Reactive] public ObservableCollection<Device> Devices { get; set; } = new();
         [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors { get; set; }
         [Reactive] public ObservableCollection<Sensor>? SensorList { get; set; }
-        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav, IAppDbContextFactory appDbContextFactory,
+        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
+            IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
             Mechanism curMechanism = null )
         {
             Navigation = _nav;
             _provider = provider;
             _service = service;
+            _imgControl = imageControl;
             _appDbContextFactory = appDbContextFactory;
             
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
@@ -130,7 +143,7 @@ namespace SensorMap.ViewModel
                     };
                     //Добавление в коллекцию. Далее обработка события и добавления визуального элемента
                     CurrentMech.SensorsAssig!.Add(sensorAssignments);
-
+                    HasChanges = true;
                 }
                 if (obj is AddSensor command)
                 {
@@ -173,7 +186,7 @@ namespace SensorMap.ViewModel
                             };
 
                             DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
-                        
+                        HasChanges = true;
                     }
             }, (obj) => 
             {
@@ -188,11 +201,11 @@ namespace SensorMap.ViewModel
                 if (obj is Mechanism mechanism)
                 {
                     MechanismSensorsWindow window = new MechanismSensorsWindow();
-                    MechSensorsVM mechSensorsVM = new MechSensorsVM(_appDbContextFactory, mechanism);
+                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, mechanism);
                     window.DataContext = mechSensorsVM;
-                    window.Show();
-                    window.Loaded += (s,e) => IsShowSensors = true;
-                    window.Closed += (s, e) => IsShowSensors = false;
+                    mechSensorsVM.IsEditMode = IsEditMode;
+                    window.ShowDialog();
+                    if(mechSensorsVM.HasChanges) HasChanges=true;
 
                 }
             }, (obj) => 
@@ -213,11 +226,12 @@ namespace SensorMap.ViewModel
             UndoCommand = new RelayCommand(()=> _undoRedoManager.Undo());
             RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
             TransformSensorCommand = new RelayCommand<object>((obj) => { if (obj is TransformationSensor command) _undoRedoManager.Do(command); });
+
         }
 
         private async void GetDataFromDB(EF.AppDBContext _dbContext)
         {
-            var querySector = await _dbContext.Sectors.AsNoTracking().Include(x => x.Mechanisms)
+            var querySector = await _dbContext.Sectors.Include(x => x.Mechanisms)
                                                       .ThenInclude(x => x.SensorsAssig)
                                                       .ThenInclude(x => x.Sensor).ThenInclude(x => x.SensorType).ToListAsync();
             var queryTypes = await _dbContext.SensorTypes.AsNoTracking().ToListAsync();
@@ -278,9 +292,10 @@ namespace SensorMap.ViewModel
                     {
                         dbContext.Entry(sa).State = EntityState.Modified;
                     }
+                    sa.IsModified = false;
                 }
                 dbContext.SaveChangesAsync();
-
+                HasChanges = false;
                 Growl.Success("Данные сохранены");
             }
         }

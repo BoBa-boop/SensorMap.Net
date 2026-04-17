@@ -66,6 +66,17 @@ namespace SensorMap.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.AddColumn<int>(
+                name: "MasterDeviceID",
+                type:"INTEGER",
+                nullable: true,
+                table: "Devices");
+
+            migrationBuilder.AddColumn<int>(
+                name: "DeviceTypeID",
+                type: "INTEGER",
+                nullable: true,
+                table: "Devices");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeviceCharacteristic_DeviceTypeId",
@@ -123,6 +134,13 @@ namespace SensorMap.Migrations
                 nullable: false,
                 defaultValue: "");
 
+            migrationBuilder.DropColumn(
+                name: "MasterDeviceID",
+                table: "Devices");
+
+            migrationBuilder.DropColumn(
+                name: "DeviceTypeID",
+                table: "Devices");
             migrationBuilder.RenameTable(
                 name: "Devices",
                 newName: "PLCs");

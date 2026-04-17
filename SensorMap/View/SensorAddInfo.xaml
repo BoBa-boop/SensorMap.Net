@@ -32,7 +32,7 @@
                                FontSize="14" />
                 <TextBlock Text="{Binding Description,FallbackValue=---}"
                FontSize="14" />
-                <Button Content="Реальное расположение" Click="Button_Click"
+                <Button Content="Реальное расположение" Click="Button_Click" Visibility="{Binding Image,Converter={StaticResource Object2VisibilityConverter}}"
                         IsEnabled="{Binding Image,Converter={StaticResource Object2BooleanConverter}}"/>
             </StackPanel>
     </Grid>

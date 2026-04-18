@@ -1,6 +1,7 @@
 ﻿
 using SensorMap.ViewModel;
 using System.Windows;
+using System.Windows.Input;
 
 namespace SensorMap.View
 {
@@ -12,6 +13,7 @@ namespace SensorMap.View
         public AuthorizationWindow()
         {
             InitializeComponent();
+            pinBox.Focus();
         }
 
     }

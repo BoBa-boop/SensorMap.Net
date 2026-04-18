@@ -490,8 +490,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
-                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"
-                                                      Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                             <Button x:Name="Show" Style="{StaticResource ShowCardButtonStyle}"
                                             Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
                                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor,
@@ -663,9 +662,7 @@
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
-                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"
-                                                      Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,
-                                        Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                             <Button x:Name="Show" Style="{StaticResource ShowCardButtonStyle}"
                                             Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
                                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor,

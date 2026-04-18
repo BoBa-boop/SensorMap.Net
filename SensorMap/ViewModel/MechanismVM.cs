@@ -96,7 +96,6 @@ namespace SensorMap.ViewModel
             get { return _hasChanges; }
             set
             {
-                _hasChanges = value;
                 this.RaiseAndSetIfChanged(ref _hasChanges, value);
             }
         }
@@ -119,9 +118,11 @@ namespace SensorMap.ViewModel
             {
                 GetDataFromDB(_dbContext);
             }
-            if(curMechanism!=null)
+            var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;
+            CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
+            if (curMechanism!=null && CurrentSector!=null)
             {
-                CurrentSector = Sectors.Where(x=>x.Id== curMechanism.SectorID).FirstOrDefault();
+                
                 CurrentMech = CurrentSector?.Mechanisms?.Where(x => x.Id == curMechanism.Id).FirstOrDefault();
             }
 
@@ -143,7 +144,6 @@ namespace SensorMap.ViewModel
                     };
                     //Добавление в коллекцию. Далее обработка события и добавления визуального элемента
                     CurrentMech.SensorsAssig!.Add(sensorAssignments);
-                    HasChanges = true;
                 }
                 if (obj is AddSensor command)
                 {
@@ -186,7 +186,6 @@ namespace SensorMap.ViewModel
                             };
 
                             DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
-                        HasChanges = true;
                     }
             }, (obj) => 
             {
@@ -218,14 +217,24 @@ namespace SensorMap.ViewModel
             _service.WhenAnyValue(x => x.IsEditMode)
                .BindTo(this, x => x.IsEditMode);
             _undoRedoManager.WhenAnyValue(x => x.CanUndo)
-            .Subscribe(_ => this.RaisePropertyChanged(nameof(CanUndo)));
+            .Subscribe(_ => 
+            {
+                this.RaisePropertyChanged(nameof(CanUndo));
+                HasChanges = CanUndo; 
+            });
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
 
-            UndoCommand = new RelayCommand(()=> _undoRedoManager.Undo());
+            UndoCommand = new RelayCommand(() => _undoRedoManager.Undo());
             RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
-            TransformSensorCommand = new RelayCommand<object>((obj) => { if (obj is TransformationSensor command) _undoRedoManager.Do(command); });
+            TransformSensorCommand = new RelayCommand<object>((obj) => 
+            {
+                if (obj is TransformationSensor command)
+                {
+                    _undoRedoManager.Do(command);
+                }
+            });
 
         }
 

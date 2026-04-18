@@ -25,7 +25,7 @@ namespace SensorMap.ViewModel
         private IAppDbContextFactory _appDbContextFactory;
         private Device _selectedDevice;
         private ObservableCollection<Mechanism> _FilteredMechanisms;
-
+        private bool isEditMode;
         [Reactive] public Device SelectedDevice
         {
             get => _selectedDevice;
@@ -39,8 +39,10 @@ namespace SensorMap.ViewModel
             get => _FilteredMechanisms;
             set { this.RaiseAndSetIfChanged(ref _FilteredMechanisms, value); }
         }
+        [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         private ObservableCollection<Mechanism> _mechs = new ObservableCollection<Mechanism>();
         private List<AdditionalData> addDataList = new List<AdditionalData>();
+        
         public Devices_VM(IDataBaseProvider provider,INavigation nav, IJsonSerialization json,
             IDataService service,IAppDbContextFactory appDbContextFactory, Device device = null)
         {
@@ -74,6 +76,8 @@ namespace SensorMap.ViewModel
             SaveMoreData = new RelayCommand(SaveDataFileds);
             Func<string, Device, bool> filter = (m, p) => p.DeviceType.Name == m;
             DeviceTree = new TreeViewCollection<string, Device>("DeviceType.Name", new(_deviceType.Select(x=>x.Name).ToList()), Device, filter);
+            _service.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode);
         }
 
         private void LoadAddData()

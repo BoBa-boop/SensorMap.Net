@@ -61,7 +61,7 @@
                         <StackPanel Grid.Row="1">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Тип:" Margin="5,0" FontSize="14"/>
-                                <TextBlock Text="{Binding SelectedDevice.Manufacturer}"
+                                <TextBlock Text="{Binding SelectedDevice.DeviceType.Name}"
                                        FontSize="14"
                                        Style="{StaticResource TextBlockBoldBaseStyle}"/>
                             </StackPanel>

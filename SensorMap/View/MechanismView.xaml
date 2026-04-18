@@ -12,7 +12,6 @@
              xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
              xmlns:Converter="clr-namespace:SensorMap.Converters"
              xmlns:viewmodel="clr-namespace:SensorMap.ViewModel"
-            
              mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewmodel:MechanismVM}"
         Height="auto" Width="auto" x:Name="root">
@@ -39,24 +38,17 @@
                         ToolTip="Вернуть"
                         IsEnabled="{Binding CanRedo,UpdateSourceTrigger=PropertyChanged}"
                         Command="{Binding RedoCommand}"/>
-                <Menu IsMainMenu="True" Background="{StaticResource BorderBrush}">
-                    <MenuItem Header="Сохранить" Command="{Binding SaveSensorPlace}">
-                        <MenuItem.Style>
-                            <Style TargetType="MenuItem" BasedOn="{StaticResource MenuItemBaseStyle}">
-                                <Setter Property="IsEnabled" Value="True"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsEditMode}" Value="False">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding HasChanges}" Value="True">
-                                        <Setter Property="Background" Value="Yellow"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </MenuItem.Style>
-                    </MenuItem>
-                    <MenuItem Header="Участки" Command="{Binding NavigateToSectors}"/>
-                </Menu>
+                <hc:SimpleStackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                    <hc:Badge Status="Processing"
+                              BadgeMargin="0,2"
+                              HorizontalContentAlignment="Right"
+                              Style="{StaticResource BadgeDanger}"
+                              ShowBadge="{Binding HasChanges,UpdateSourceTrigger=PropertyChanged}">
+                        <Button Content="Сохранить" Command="{Binding SaveSensorPlace}"
+                                IsEnabled="{Binding IsEditMode}"/>
+                    </hc:Badge>
+                    <Button Content="Участки" Margin="5,0" Command="{Binding NavigateToSectors}"/>
+                </hc:SimpleStackPanel>
                 <CheckBox x:Name="chBox" IsChecked="{Binding ElementName=ccSensorMap, Path=IsHideAddresses,UpdateSourceTrigger=PropertyChanged}"
                           Margin="5,0">
                     <CheckBox.Style>
@@ -178,7 +170,7 @@
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorCommand="{Binding RemoveSensorCommand}"
-                                         IsEditMode="{Binding IsEditMode,UpdateSourceTrigger=PropertyChanged}"
+                                         IsEditMode="{Binding IsEditMode}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
                 </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>

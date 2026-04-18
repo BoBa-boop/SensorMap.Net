@@ -59,7 +59,7 @@
                 </Image>
 
                 <Grid Width="200" FocusManager.FocusedElement="{Binding ElementName=pinBox}">
-                    <hc:TextBox x:Name="pinBox" Width="200">
+                    <hc:TextBox x:Name="pinBox" Width="200" Focusable="True">
                         <hc:TextBox.Style>
                             <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource TextBoxBaseStyle}">
                                 <Setter Property="Template">

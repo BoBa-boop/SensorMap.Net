@@ -21,7 +21,7 @@ namespace SensorMap.ViewModel
         private readonly IJsonSerialization _json;
         private IAppDbContextFactory _appDbContextFactory;
         private Sensor _sensorsTreeNode;
-        private List<AdditionalData> _additionalData;
+        public ObservableCollection<AdditionalData> _additionalData;
         private ObservableCollection<Mechanism> Mechanisms { get; set; }
         private ObservableCollection<Mechanism> _FilteredMechanisms;
         private ObservableCollection<SensorCharacteristic> _sensorCharacteristics;
@@ -60,7 +60,7 @@ namespace SensorMap.ViewModel
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
                 SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
             }
-            _additionalData = LoadMoreData();
+            _additionalData = new(LoadMoreData());
 
             SaveMoreData = new RelayCommand(SaveDataFileds);
             NavigateToMech = new RelayCommand<Mechanism>((mech) => 
@@ -151,7 +151,7 @@ namespace SensorMap.ViewModel
                 {
                     _additionalData.Add(SelectedNode.AdditionalData);
                 }
-                _json.WriteToJsonFile<List<AdditionalData>>(FILE_PATH, _additionalData);
+                _json.WriteToJsonFile<ObservableCollection<AdditionalData>>(FILE_PATH, _additionalData);
                 Growl.Success(new GrowlInfo
                 {
                     Message = "Дополнительные данные сохранены!",

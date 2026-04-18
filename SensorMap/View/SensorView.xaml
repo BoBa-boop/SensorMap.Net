@@ -45,7 +45,8 @@
                        VerticalAlignment="Center" HorizontalAlignment="Center"
                        Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityReConverter},UpdateSourceTrigger=PropertyChanged}"/>
             <hc:ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
-                <hc:TransitioningContentControl TransitionMode="Right2Left"  Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityConverter},UpdateSourceTrigger=PropertyChanged}">
+                <hc:TransitioningContentControl TransitionMode="Right2Left"
+                                                Visibility="{Binding SelectedNode,Converter={StaticResource Object2VisibilityConverter},UpdateSourceTrigger=PropertyChanged}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>

@@ -206,7 +206,9 @@ namespace SensorMap.CustomControls
                 if (!e.NewValue.Equals(e.OldValue)) control.SourceCollectionChanged();
             }
         }
-
+        /// <summary>
+        /// Изменение всей коллекции. Не сохраняется в Do/Undo
+        /// </summary>
         private void SourceCollectionChanged()
         {
             if (_canvas == null) return;
@@ -219,10 +221,23 @@ namespace SensorMap.CustomControls
             }
             foreach (var sensor in ItemsSource)
             {
-                AddSensorToCanvas(sensor);
+                int sensorsInMap = _canvas!.Children.OfType<CustomSensor>().Count();
+                if (sensor != null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
+                {
+                    sensor.X = sensor.X < 0 ? 50 : sensor.X;
+                    sensor.Y = sensor.Y < 0 ? 50 : sensor.Y;
+                    
+                    CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X,sensor.Y));
+                    _canvas.Children.Add(element);
+                    element.Tag = ItemsSource.IndexOf(sensor);
+                }
             }
         }
-
+        /// <summary>
+        /// Изменение коллекции при Добавление нового объекта.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             switch (e.Action)

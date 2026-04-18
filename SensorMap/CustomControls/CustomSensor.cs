@@ -84,8 +84,7 @@ namespace SensorMap.CustomControls
         {
             var control = (CustomSensor)d;
             if (e.NewValue != null && e.NewValue is bool value)
-            {
-                control.IsEditMode = value;
+            {               
                 if(control._canvas!=null) control.ChangeStateActions();
             }
         }
@@ -166,6 +165,7 @@ namespace SensorMap.CustomControls
 
         private void ChangeStateActions()
         {
+            this.IsSelected = false;
             if (IsEditMode)
             {
                 this.MouseDown += OnMouseDown;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -12,7 +13,11 @@ namespace SensorMap.EF
 {
     public class AppDBContext : DbContext
     {
-        public AppDBContext(DbContextOptions options) : base(options) { }
+        private readonly StreamWriter logStream = new StreamWriter("LogDb.txt", true);
+        public AppDBContext(DbContextOptions options) : base(options) 
+        {
+            
+        }
         public DbSet<Sector> Sectors { get; set; }
         public DbSet<Mechanism> Mechanisms { get; set; }
         public DbSet<Sensor> Sensors { get; set; }
@@ -22,8 +27,16 @@ namespace SensorMap.EF
         public DbSet<DeviceType> DeviceTypes { get; set; }
         public DbSet<SensorAssignments> SensorAssignments { get; set; }
         public DbSet<DeviceCharacteristic> DeviceCharacteristic { get; set; }
-
-
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.LogTo(logStream.WriteLine, new[] { DbLoggerCategory.Database.Command.Name },
+                Microsoft.Extensions.Logging.LogLevel.Information).EnableSensitiveDataLogging();
+        }
+        public override void Dispose()
+        {
+            base.Dispose();
+            logStream.Dispose();
+        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new SectorConfiguration());
@@ -47,7 +60,6 @@ namespace SensorMap.EF
             builder.HasMany(x => x.Characteristics).WithOne(c => c.DeviceType).HasForeignKey(k => k.DeviceTypeId).OnDelete(DeleteBehavior.Cascade);
         }
     }
-
     public class SectorConfiguration : IEntityTypeConfiguration<Sector>
     {
         public void Configure(EntityTypeBuilder<Sector> builder)

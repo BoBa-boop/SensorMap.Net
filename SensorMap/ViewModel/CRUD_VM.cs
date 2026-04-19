@@ -39,7 +39,7 @@ namespace SensorMap.ViewModel
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ObservableCollection<SensorAssignments> SensorAssignments { get; set; }
-        [Reactive] public ObservableCollection<Sensor> Sensors { get; set; }
+        [Reactive] public ICollectionView Sensors { get; set; }
         [Reactive] public ICollectionView Devices { get; set; }
         [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
         [Reactive] public ObservableCollection<DeviceType> DeviceTypes { get; set; }
@@ -60,9 +60,8 @@ namespace SensorMap.ViewModel
                 Sectors = new(dBContext.Sectors.ToList());
                 Mechanisms = CollectionViewSource.GetDefaultView(dBContext.Mechanisms.ToList());
                 SensorAssignments = new(dBContext.SensorAssignments.ToList());
-                Devices = CollectionViewSource.GetDefaultView(dBContext.Devices.ToList());
-                Manufacturers = new(Devices.OfType<Device>().Where(x=>!string.IsNullOrEmpty(x.Manufacturer)).Select(device => device.Manufacturer).Distinct().ToList());
-                Sensors = new(dBContext.Sensors.ToList());
+                Devices = CollectionViewSource.GetDefaultView(dBContext.Devices.ToList());                
+                Sensors = CollectionViewSource.GetDefaultView(dBContext.Sensors.ToList());
                 SensorTypes = new(dBContext.SensorTypes.Include(x => x.Characteristics).ToList());
                 DeviceTypes = new(dBContext.DeviceTypes.Include(x => x.Characteristics).ToList());
             }
@@ -77,6 +76,11 @@ namespace SensorMap.ViewModel
             {
                 Devices.SortDescriptions.Add(new SortDescription("DeviceType.Name", ListSortDirection.Ascending));
                 Devices.GroupDescriptions.Add(new PropertyGroupDescription("DeviceType.Name"));
+            }
+            using (Sensors.DeferRefresh())
+            {
+                Sensors.SortDescriptions.Add(new SortDescription("SensorType.Name", ListSortDirection.Ascending));
+                Sensors.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
             }
 
             ShowCommand = new RelayCommand<object>((Sensor) =>
@@ -171,6 +175,7 @@ namespace SensorMap.ViewModel
                         byte[] photoBytes = new byte[fs.Length];
                         fs.ReadExactly(photoBytes);
                         entityType.GetProperty("Image")?.SetValue(arg, photoBytes);
+                        entityType.GetProperty("IsModified")?.SetValue(arg, true);
                     }
                 }
             });
@@ -318,9 +323,12 @@ namespace SensorMap.ViewModel
                     {
                         using (var dBContext = _appDbContextFactory.CreateDbContext())
                         {
-
+                            if(deviceCharacteristic.Id != 0)
+                            {
                             dBContext.DeviceCharacteristic.Remove(deviceCharacteristic);
-                            dBContext.SaveChanges();
+                                dBContext.SaveChanges();
+                            }
+                            
                         }
                         DeleteFromFile(deviceCharacteristic);
                     }

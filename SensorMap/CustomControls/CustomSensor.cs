@@ -137,6 +137,7 @@ namespace SensorMap.CustomControls
         HitType MouseHitType = HitType.None;
         private UIElement _selectedSensor;
         private Point LastPoint;
+        private bool IsTransformed = false;
         private bool DragInProgress = false;
         private  Canvas _canvas;
         private System.Windows.Controls.Image _image;
@@ -208,12 +209,15 @@ namespace SensorMap.CustomControls
 
             Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
 
-            
-            var command = new TransformationSensor(this, CustomBounds, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
-            TransformCommand.Execute(command);
+            if(IsTransformed)
+            {
+                var command = new TransformationSensor(this, CustomBounds, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
+                TransformCommand.Execute(command);
+            }
 
             e.Handled = true;
             DragInProgress = false;
+            IsTransformed = false;
         }
 
         private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -278,7 +282,7 @@ namespace SensorMap.CustomControls
                     if((new_x > 1 && new_x < _image.ActualWidth-new_width) && (new_y>1 && new_y < _image.ActualHeight-new_height))
                     {
                         // Don't use negative width or height.
-                        if ((new_width > 18) && (new_height > 18))
+                        if ((new_width > 17) && (new_height > 17))
                         {
                             Canvas.SetLeft(_selectedSensor, new_x);
                             Canvas.SetTop(_selectedSensor, new_y);
@@ -287,6 +291,7 @@ namespace SensorMap.CustomControls
 
                             // Save the mouse's new location.
                             LastPoint = point;
+                            IsTransformed = true;
                         }
                     }
                 }

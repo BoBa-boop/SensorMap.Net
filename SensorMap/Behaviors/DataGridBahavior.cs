@@ -51,21 +51,24 @@ namespace SensorMap.Behaviors
             if (e.Row.Item != null)
             {
                 var prop = e.Row.Item!.GetType().GetProperty("IsModified");
-                foreach (var kvp in originalFieldValues)
+                if (originalFieldValues != null)
                 {
-                    var currentValue = GetPropertyValue(e.Row.Item, kvp.Key);
-                    hasChangesBeenMade = !Equals(currentValue, kvp.Value);
-                    if (hasChangesBeenMade)
+                    foreach (var kvp in originalFieldValues)
                     {
-                        prop!.SetValue(e.Row.Item, true);
+                        var currentValue = GetPropertyValue(e.Row.Item, kvp.Key);
+                        hasChangesBeenMade = !Equals(currentValue, kvp.Value);
+                        if (hasChangesBeenMade)
+                        {
+                            prop!.SetValue(e.Row.Item, true);
 
-                        if (ViewModel is CRUD_VM vm)
-                            vm.RecordEdit(e.Row.Item, kvp.Key, kvp.Value, currentValue);
+                            if (ViewModel is CRUD_VM vm)
+                                vm.RecordEdit(e.Row.Item, kvp.Key, kvp.Value, currentValue);
+                        }
+                        break;
                     }
-                    break;
-                }
 
-                ResetStates();
+                    ResetStates();
+                }
             }
         }
 
@@ -143,18 +146,16 @@ namespace SensorMap.Behaviors
         #region Helpers
         private void GetEditColumnValue(DataGridBeginningEditEventArgs e)
         {
-            if (e.EditingEventArgs.OriginalSource is TextBlock textBlock)
+            var binding = e.Column.ClipboardContentBinding as System.Windows.Data.Binding;
+            var propertyPath = binding?.Path?.Path.Split('.');
+
+            if(propertyPath!=null)
             {
-                // Получаем свойство из Binding TextBlock
-                var binding = textBlock.GetBindingExpression(TextBlock.TextProperty)?.ParentBinding as System.Windows.Data.Binding;
-                //Так как некоторые свойства являются объектами, необходимо использовать первую часть привязки
-                var propertyPath = binding?.Path.Path.Split('.');
                 originalFieldValues = new Dictionary<string, object>
                 {
                     [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0])
                 };
             }
-           
         }
 
         private object GetPropertyValue(object obj, string propertyPath)

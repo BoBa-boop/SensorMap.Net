@@ -46,18 +46,7 @@ namespace SensorMap.Model
                     this.RaiseAndSetIfChanged(ref _name, value);
                 }
             }
-        }
-        [Reactive] public string? Manufacturer
-        {
-            get => _manufacturer;
-            set
-            {
-                if (_manufacturer != value)
-                {
-                    this.RaiseAndSetIfChanged(ref _manufacturer, value);
-                }
-            }
-        }
+        }        
         [Reactive] public ObservableCollection<Device>? ChildrenDevices { get; set; }
         public Device? MasterDevice { get; set; }
         public int? MasterDeviceID { get; set; }

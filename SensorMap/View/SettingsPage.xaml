@@ -4,13 +4,19 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SensorMap.View"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
              xmlns:vm="clr-namespace:SensorMap.ViewModel"
              xmlns:hc="https://handyorg.github.io/handycontrol"
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance vm:SettingsVM}">
     <hc:TransitioningContentControl TransitionMode="Bottom2Top" Margin="10">
-        <StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <StackPanel HorizontalAlignment="Left">
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
                 <TextBlock Text="Вход в 'Редактор'" HorizontalAlignment="Left"  Margin="0,5" 
                Style="{StaticResource TextBlockSubTitle}"/>
@@ -19,6 +25,7 @@
                                 Width="200"
                                 hc:InfoElement.Placeholder="Новый пароль"/>
                     <Button Width="35" Style="{StaticResource ButtonInfo}"
+                            Cursor="Hand"
                             hc:IconElement.Geometry="{StaticResource ChangeData}"
                             Command="{Binding ChangeEditorPassword}" 
                             CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
@@ -26,16 +33,41 @@
             </StackPanel>
 
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
-                <TextBlock Text="Загрузить новую БД" HorizontalAlignment="Left" Margin="0,5" Style="{StaticResource TextBlockSubTitle}"/>
+                <TextBlock Text="Загрузить новую БД"
+                           HorizontalAlignment="Left"
+                           Margin="0,5"
+                           Style="{StaticResource TextBlockSubTitle}"/>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Name="txtDB_Name"
                                Text="{Binding DbName}"
-                               Width="200" 
+                               Width="200"
+                               Padding="7,5"
                                Background="WhiteSmoke"/>
                     <Button Width="35" Style="{StaticResource ButtonInfo}"
+                            Cursor="Hand"
                             hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
                             Command="{Binding ChangeDataBase}"/>
                 </StackPanel>
+                <TextBlock Text="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
+                           TextTrimming="WordEllipsis"
+                           Cursor="Hand"
+                           ToolTip="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
+                           Padding="7,5"
+                           MaxWidth="240"                           
+                           Background="Transparent">
+                    <TextBlock.InputBindings>
+                        <MouseBinding Gesture="LeftClick" Command="{Binding NavigateToPathDB}"/>
+                    </TextBlock.InputBindings>
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <Trigger Property="TextBlock.IsMouseOver" Value="True">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </StackPanel>
 
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
@@ -47,5 +79,16 @@
                 </hc:FlexPanel>
             </StackPanel>
         </StackPanel>
+            <DataGrid Grid.Column="1" Name="SQL_Journal"
+                      CanUserAddRows="False" CanUserDeleteRows="False"
+                      CanUserReorderColumns="False" AutoGenerateColumns="False"
+                      Style="{StaticResource DataGrid.Small}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Дата" />
+                    <DataGridTextColumn Header="Действие"/>
+                    <DataGridTextColumn Header="SQL-запрос"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

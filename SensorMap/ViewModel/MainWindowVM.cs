@@ -74,6 +74,9 @@ namespace SensorMap.ViewModel
 
             _dataService.WhenAnyValue(x => x.IsDataBaseConnect)
                .BindTo(this, x => x.IsConnectedDB);
+
+            this.WhenAnyValue(x => x.IsEditMode).Subscribe((mode) => {
+                if (mode == false) NavigateToMenu.Execute(null); });
         }
 
         private void OpenAuthWindow()

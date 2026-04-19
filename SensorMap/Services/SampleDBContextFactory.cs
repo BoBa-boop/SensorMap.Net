@@ -12,6 +12,7 @@ namespace SensorMap.Services
 {
     public class SampleDBContextFactory : IDesignTimeDbContextFactory<AppDBContext>
     {
+        
         public AppDBContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<AppDBContext>();
@@ -19,5 +20,6 @@ namespace SensorMap.Services
             optionsBuilder.UseSqlite(connectionString);
             return new AppDBContext(optionsBuilder.Options);
         }
+
     }
 }

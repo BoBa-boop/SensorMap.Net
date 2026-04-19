@@ -318,41 +318,37 @@
                         <!--<DataGrid.RowValidationRules>
                     <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
                 </DataGrid.RowValidationRules>-->
-                        <DataGrid.Columns>
+                        <DataGrid.Columns>                            
                             <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MinWidth="100" Header="Название"/>
 
-                            <DataGridTemplateColumn Header="Участок" MinWidth="100">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Sector.Name}" Cursor="Hand" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                                <DataGridTemplateColumn.CellEditingTemplate>
-                                    <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Sectors}" 
-                                          DisplayMemberPath="Name"
-                                          Cursor="Hand" 
-                                          SelectedItem="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"
-                                          IsSynchronizedWithCurrentItem="True"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellEditingTemplate>
-                            </DataGridTemplateColumn>
+                            <DataGridComboBoxColumn Header="Участок" Width="auto"
+                                                    DisplayMemberPath="Name"
+                                                    TextBinding="{Binding Sector.Name}">
+                                <DataGridComboBoxColumn.EditingElementStyle>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
+                                        <Setter Property="SelectedItem" Value="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="SelectedValue" Value="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.Sectors}"/>
+                                    </Style>
+                                </DataGridComboBoxColumn.EditingElementStyle>
+                            </DataGridComboBoxColumn>
 
-                            <DataGridTemplateColumn Header="Контроллер" MinWidth="100">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=Device.Name}" HorizontalAlignment="Center" Cursor="Hand" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                                <DataGridTemplateColumn.CellEditingTemplate>
-                                    <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.Devices}" 
-                                          DisplayMemberPath="Name"
-                                          Cursor="Hand" 
-                                          SelectedItem="{Binding Device}"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellEditingTemplate>
-                            </DataGridTemplateColumn>
+                            <DataGridComboBoxColumn Header="Контроллер"
+                                                    Width="auto"
+                                                    DisplayMemberPath="Name"
+                                                    TextBinding="{Binding Device.Name}">
+                                <DataGridComboBoxColumn.EditingElementStyle>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
+                                        <Setter Property="SelectedItem" Value="{Binding Device,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="SelectedValue" Value="{Binding Device,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.Devices}"/>
+                                    </Style>
+                                </DataGridComboBoxColumn.EditingElementStyle>
+                            </DataGridComboBoxColumn>
 
                             <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
@@ -392,23 +388,10 @@
                     <TextBlock Text="Датчики" FontSize="16"/>
                 </hc:TabItem.Header>
                 <Grid>
-                    <Grid.Resources>
-                        <Style x:Key="NewOrChangedItemStyle" TargetType="ListBoxItem">
-                            <Setter Property="Background" Value="LightYellow"/>
-                        </Style>
-                        <CollectionViewSource x:Key="SensorCollection" Source="{Binding Sensors}">
-                            <CollectionViewSource.GroupDescriptions>
-                                <PropertyGroupDescription PropertyName="SensorType.Name"/>
-                            </CollectionViewSource.GroupDescriptions>
-                            <CollectionViewSource.SortDescriptions>
-                                <scm:SortDescription PropertyName="SensorType.Name"/>
-                            </CollectionViewSource.SortDescriptions>
-                        </CollectionViewSource>
-                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Source={StaticResource SensorCollection}}" Grid.Row="0"
+                    <DataGrid ItemsSource="{Binding Sensors}" Grid.Row="0"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -467,21 +450,21 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
 
-                            <DataGridTemplateColumn Header="Тип" Width="auto" MinWidth="100">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=SensorType.Name,UpdateSourceTrigger=PropertyChanged}" Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                                <DataGridTemplateColumn.CellEditingTemplate>
-                                    <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.SensorTypes}"
-                                          SelectedItem="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"                                                  
-                                          DisplayMemberPath="Name"                                                  
-                                          Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellEditingTemplate>
-                            </DataGridTemplateColumn>
+                            <DataGridComboBoxColumn Header="Тип" 
+                                                    Width="auto"
+                                                    DisplayMemberPath="Name"
+                                                    TextBinding="{Binding SensorType.Name}">
+                                <DataGridComboBoxColumn.EditingElementStyle>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
+                                        <Setter Property="SelectedItem" Value="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="SelectedValue" Value="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.SensorTypes}"/>
+                                    </Style>
+                                </DataGridComboBoxColumn.EditingElementStyle>
+                            </DataGridComboBoxColumn>
+                            
 
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True"  CellTemplate="{StaticResource imgView_Button}"/>
 
@@ -582,40 +565,23 @@
                                         <Setter Property="Cursor" Value="Hand"/>
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-
-                            <DataGridTemplateColumn Header="Производитель">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Manufacturer}"
-                                           HorizontalAlignment="Center"
-                                           Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                                <DataGridTemplateColumn.CellEditingTemplate>
-                                    <DataTemplate>
-                                        <ComboBox IsEditable="True"
-                                          Text="{Binding Path=Manufacturer,Mode=OneWayToSource}"
-                                          ItemsSource="{Binding ElementName=root,Path=DataContext.Manufacturers}"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellEditingTemplate>
-                            </DataGridTemplateColumn>
-
-                            <DataGridTemplateColumn Header="Тип" Width="auto" MinWidth="100">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Path=DeviceType.Name,UpdateSourceTrigger=PropertyChanged}" Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                                <DataGridTemplateColumn.CellEditingTemplate>
-                                    <DataTemplate>
-                                        <ComboBox ItemsSource="{Binding ElementName=root,Path=DataContext.DeviceTypes}"
-                                                  SelectedItem="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}" 
-                                                  DisplayMemberPath="Name"  
-                                                  Cursor="Hand"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellEditingTemplate>
-                            </DataGridTemplateColumn>
+                            </DataGridTextColumn>                           
+                            
+                            <DataGridComboBoxColumn Header="Тип" 
+                                                    Width="auto"
+                                                    DisplayMemberPath="Name"
+                                                    TextBinding="{Binding DeviceType.Name}">
+                                <DataGridComboBoxColumn.EditingElementStyle>
+                                    <Style TargetType="ComboBox">
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
+                                        <Setter Property="SelectedItem" Value="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="SelectedValue" Value="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.DeviceTypes}"/>
+                                    </Style>
+                                </DataGridComboBoxColumn.EditingElementStyle>
+                            </DataGridComboBoxColumn>
+                            
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
                             <DataGridTemplateColumn IsReadOnly="True">

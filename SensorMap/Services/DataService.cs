@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using HandyControl.Expression.Shapes;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using ReactiveUI;
@@ -48,31 +49,15 @@ namespace SensorMap.Services
             get => _curSector;
             set => this.RaiseAndSetIfChanged(ref _curSector, value);
         }
-        public ObservableCollection<Sensor> SensorDTO => GetSensorDTO();
-        public ObservableCollection<SensorType> SensorTypeDTO => GetSensorTypeDTO();
-
-        ObservableCollection<Sensor> IDataService.SensorDTO { get => SensorDTO; set => throw new NotImplementedException(); }
-        ObservableCollection<SensorType> IDataService.SensorTypeDTO { get => SensorTypeDTO; set => throw new NotImplementedException(); }
-
         public DataService(IAppDbContextFactory appDbContextFactory)
         {
             _appDbContextFactory = appDbContextFactory;
         }
-
-        private ObservableCollection<Sensor> GetSensorDTO()
+        public object? GetOriginalEntry(DbContext dbContext,object entity)
         {
-            using(var dbContext = _appDbContextFactory.CreateDbContext())
-            {
-                return new(dbContext.Sensors.AsNoTracking().Include(x=>x.SensorType).ToList());
-            }
-        }
-
-        private ObservableCollection<SensorType> GetSensorTypeDTO()
-        {
-            using (var dbContext = _appDbContextFactory.CreateDbContext())
-            {
-                return new(dbContext.SensorTypes.AsNoTracking().ToList());
-            }
+            var id = (int)entity.GetType()?.GetProperty("Id")?.GetValue(entity);
+            var entityType = entity.GetType();            
+            return dbContext.Find(entityType, id);
         }
     }
 }

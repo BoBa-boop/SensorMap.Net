@@ -27,7 +27,6 @@ namespace SensorMap.ViewModel
         private IDataService _data;
         private string _dbName = string.Empty;
         private string _dbPath;
-        private ObservableCollection<DbActionLogs> _logs;
 
         [Reactive]public string DbName
         {
@@ -39,11 +38,7 @@ namespace SensorMap.ViewModel
             get { return _dbPath; }
             set { this.RaiseAndSetIfChanged(ref _dbPath, value); }
         }
-        [Reactive] public ObservableCollection<DbActionLogs> Logs
-        {
-            get { return _logs; }
-            set { this.RaiseAndSetIfChanged(ref _logs, value); }
-        }
+        
         public SettingsVM(IAuthorization authorization, IDataService data, IDataBaseProvider dbProvider)
         {
             _dbProvider = dbProvider;

@@ -11,15 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\2 нар линия механизация.jpg" />
     <None Remove="Resources\cursors\Grab.cur" />
     <None Remove="Resources\cursors\Grabbing.cur" />
     <None Remove="Resources\MenuImages\menuImage1jpg.jpg" />
     <None Remove="Resources\MenuImages\menuImage2.jpg" />
     <None Remove="Resources\MenuImages\menuImage3.jpg" />
     <None Remove="Resources\style\password.ttf" />
-    <None Remove="Resources\Схема МДМ.jpg" />
-    <None Remove="Resources\Шаблон.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +42,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="NLog" Version="6.1.2" />
     <PackageReference Include="ReactiveUI" Version="21.0.1" />
     <PackageReference Include="ReactiveUI.SourceGenerators" Version="2.4.1">
       <PrivateAssets>all</PrivateAssets>
@@ -53,9 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\2 нар линия механизация.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Resources\cursors\Grab.cur" />
     <Resource Include="Resources\cursors\Grabbing.cur" />
     <Resource Include="Resources\MenuImages\menuImage1jpg.jpg">
@@ -69,12 +64,6 @@
     </Resource>
     <Resource Include="Resources\style\password.ttf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Схема МДМ.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Шаблон.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
 

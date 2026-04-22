@@ -1,4 +1,5 @@
-﻿using SensorMap.Model;
+﻿using Microsoft.EntityFrameworkCore;
+using SensorMap.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,8 +13,7 @@ namespace SensorMap.Interfaces
     {
         Mechanism CurrentMechanism_Global { get; set; }
         Sector CurrentSector_Global { get; set; }
-        ObservableCollection<Sensor> SensorDTO { get; set; }
-        ObservableCollection<SensorType> SensorTypeDTO { get; set; }
+        object? GetOriginalEntry(DbContext dbContext,object entity);
         bool IsEditMode { get; set; }
         bool IsDataBaseConnect {  get; set; }
     }

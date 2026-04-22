@@ -24,6 +24,7 @@ namespace SensorMap.ViewModel
 {
     public class CRUD_VM:ReactiveObject
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IDataBaseProvider _provider;
         private readonly IJsonSerialization _json;
         private readonly IDataService _service; 
@@ -91,11 +92,16 @@ namespace SensorMap.ViewModel
             SaveCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
+                var name = arg.GetType()?.GetProperty("Name")?.GetValue(arg);
                 using (var dBContext = _appDbContextFactory.CreateDbContext())
                 {
                     try
                     {
-                        dBContext.Update(arg);
+                        var original = _service.GetOriginalEntry(dBContext,arg);
+                        if (original != null)
+                            dBContext.Entry(original).CurrentValues.SetValues(arg);
+                        else
+                            dBContext.Update(arg);
                         dBContext.SaveChanges();
                         arg.GetType()?.GetProperty("IsModified")?.SetValue(arg, false);
                         Growl.Success(new GrowlInfo
@@ -109,6 +115,7 @@ namespace SensorMap.ViewModel
                     catch
                     {
                         Growl.Error("Ошибка при изменение БД");
+                        Logger.Error("Ошибка при изменение {0} в БД,",name);
                     }
                 }
 

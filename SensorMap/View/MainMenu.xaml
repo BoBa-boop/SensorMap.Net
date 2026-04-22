@@ -8,11 +8,9 @@
              mc:Ignorable="d" >
     <hc:TransitioningContentControl TransitionMode="Fade">
         <Grid>
-
-            <hc:Carousel AutoRun="True" IsCenter="True" HorizontalAlignment="Center" Width="900" Height="450">
-                <Image Source="/Resources/MenuImages/menuImage2.jpg" Stretch="UniformToFill" Width="900" Height="450"/>
-                <Image Source="/Resources/MenuImages/menuImage1jpg.jpg" Stretch="UniformToFill" Width="900" Height="450"/>
-                <Image Source="/Resources/MenuImages/menuImage3.jpg" Stretch="UniformToFill" Width="900" Height="450"/>
+            <hc:Carousel AutoRun="True" IsCenter="True" HorizontalAlignment="Center" Width="1200" Height="650">
+                <Image Source="/Resources/MenuImages/menuImage2.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
+                <Image Source="/Resources/MenuImages/menuImage3.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
             </hc:Carousel>
         </Grid>
     </hc:TransitioningContentControl>

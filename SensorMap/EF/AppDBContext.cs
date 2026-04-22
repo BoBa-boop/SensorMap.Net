@@ -13,7 +13,7 @@ namespace SensorMap.EF
 {
     public class AppDBContext : DbContext
     {
-        private readonly StreamWriter logStream = new StreamWriter("LogDb.txt", true);
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         public AppDBContext(DbContextOptions options) : base(options) 
         {
             
@@ -27,16 +27,7 @@ namespace SensorMap.EF
         public DbSet<DeviceType> DeviceTypes { get; set; }
         public DbSet<SensorAssignments> SensorAssignments { get; set; }
         public DbSet<DeviceCharacteristic> DeviceCharacteristic { get; set; }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.LogTo(logStream.WriteLine, new[] { DbLoggerCategory.Database.Command.Name },
-                Microsoft.Extensions.Logging.LogLevel.Information).EnableSensitiveDataLogging();
-        }
-        public override void Dispose()
-        {
-            base.Dispose();
-            logStream.Dispose();
-        }
+       
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new SectorConfiguration());
@@ -50,7 +41,34 @@ namespace SensorMap.EF
             modelBuilder.ApplyConfiguration(new SensorCharacteristicConfiguration());
             base.OnModelCreating(modelBuilder);
         }
+
+        public override int SaveChanges()
+        {
+            var changesEntities = ChangeTracker.Entries().
+                Where(x=>x.State == EntityState.Modified ||
+                        x.State == EntityState.Added||
+                        x.State == EntityState.Deleted)
+                .ToList();
+
+            foreach (var entity in changesEntities)
+            {
+                foreach (var prop in entity.Properties.Where(p=>p.IsModified))
+                {
+                    Logger.Info(prop.Metadata.DeclaringType.ClrType.Name + $" |{entity.State.ToString()}| "+ "Id:" + entity.CurrentValues.GetValue<int>("Id") + prop.OriginalValue + "->" + prop.CurrentValue);                    
+                }
+                if(entity.State == EntityState.Deleted)
+                {
+                    Logger.Info(entity.Metadata.DisplayName()+$" |{entity.State.ToString()}| " + "Id:"+ entity.CurrentValues.GetValue<int>("Id"));
+                }
+                if (entity.State == EntityState.Added)
+                {
+                    Logger.Info(entity.Metadata.DisplayName() + $" |{entity.State.ToString()}| " + "Name:" + entity.CurrentValues.GetValue<string>("Name"));
+                }
+            }
+            return base.SaveChanges();
+        }
     }
+    
 
     public class DeviceTypeConfiguration : IEntityTypeConfiguration<DeviceType>
     {

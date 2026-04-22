@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NLog;
 using ReactiveUI;
 using SensorMap.EF;
 using SensorMap.Interfaces;
@@ -105,7 +106,6 @@ namespace SensorMap
             services.AddTransient<IAuthorization, AuthorizationService>();
 
 
-
             // Регистрация для создания VM без параметров
             services.AddSingleton<Func<Type, ReactiveObject>>(serviceProvider => viewModelType =>
             (ReactiveObject)serviceProvider.GetRequiredService(viewModelType));
@@ -134,7 +134,9 @@ namespace SensorMap
                 }
                 throw new InvalidOperationException("Конструктор не найден");
             });
-
+            NLog.LogManager.Setup().LoadConfiguration(builder => {
+                builder.ForLogger().FilterMinLevel(LogLevel.Info).WriteToFile(fileName: "LogDb.txt");
+            });
         }
 
         private static void ConfigurationDataBase(IServiceCollection services)

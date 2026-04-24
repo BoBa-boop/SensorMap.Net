@@ -111,5 +111,22 @@ namespace SensorMap.Services
             if(!IsImage(file)) return Array.Empty<byte>();
             return file;
         }
+
+        public byte[] ConvertToByte(ImageSource image)
+        {
+            if(image is BitmapSource source)
+            {                 
+                PngBitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(source));
+                using(var stream = new MemoryStream())
+                {
+                    encoder.Save(stream);
+                    return stream.ToArray();
+                }
+                
+            }
+            return Array.Empty<byte>();
+            
+        }
     }
 }

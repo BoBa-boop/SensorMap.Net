@@ -4,22 +4,27 @@ using HandyControl.Data;
 using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Reactive.Linq;
 using System.Windows.Input;
 
 namespace SensorMap.ViewModel
 {
-    public class SensorVM:ReactiveObject
+    public class SensorVM:ReactiveObject,IDisposable
     {
         private readonly INavigation _navigation;
         private readonly IDataService _service;
         private readonly IJsonSerialization _json;
+        private readonly ITempImage imgManag;
         private IAppDbContextFactory _appDbContextFactory;
+        private readonly IFileManagment _fileManagment;
+        private readonly AppDBContext _dbContext;
         private Sensor _sensorsTreeNode;
         public ObservableCollection<AdditionalData> _additionalData;
         private ObservableCollection<Mechanism> Mechanisms { get; set; }
@@ -45,28 +50,59 @@ namespace SensorMap.ViewModel
         
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
 
-        public SensorVM(IDataService service,IJsonSerialization json,INavigation navigation,IAppDbContextFactory appDbContextFactory,Sensor sensor=null)
+        public SensorVM(IDataService service, IJsonSerialization json,
+            ITempImage imgManag,
+            INavigation navigation, IAppDbContextFactory appDbContextFactory,
+            IFileManagment fileManagment, Sensor sensor = null)
         {
             SelectedNode = sensor;
             _navigation = navigation;
             _json = json;
+            this.imgManag = imgManag;
             _service = service;
             _appDbContextFactory = appDbContextFactory;
-            using (var _dbContext = _appDbContextFactory.CreateDbContext())
-            {
-                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().Include(x=>x.Characteristics).ToList());
-                Sensors = new(_dbContext.Sensors.Include(x=>x.SensorType).AsNoTracking().ToList());
-                Mechanisms = new(_dbContext.Mechanisms.Include(x=>x.SensorsAssig).AsNoTracking().ToList());
+            _fileManagment = fileManagment;
+            _dbContext = _appDbContextFactory.CreateDbContext();
+            
+                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().Include(x => x.Characteristics).ToList());
+                Sensors = new(_dbContext.Sensors.ToList());
+                Mechanisms = new(_dbContext.Mechanisms.Include(x => x.SensorsAssig).AsNoTracking().ToList());
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
                 SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
-            }
+            
             _additionalData = new(LoadMoreData());
 
             SaveMoreData = new RelayCommand(SaveDataFileds);
-            NavigateToMech = new RelayCommand<Mechanism>((mech) => 
+            NavigateToMech = new RelayCommand<Mechanism>((mech) =>
             {
                 if (mech == null) return;
-                _navigation.NavigateTo<MechanismVM>(mech); 
+                _navigation.NavigateTo<MechanismVM>(mech);
+            });
+            AddFiles = new RelayCommand<Sensor>((s) =>
+            {
+                string[] paths = _fileManagment.OpenFileDialog();
+                foreach (var path in paths)
+                {
+                    s.Files.Add(new HelpfulFile()
+                    {
+                        NameFile = path,
+                        ImageFile = this.imgManag.ConvertToByte(_fileManagment.GetIconFile(path))
+                    });
+                }
+            });
+            DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
+            {
+                SelectedNode.Files.Remove(file);
+            });
+            OpenFile = new RelayCommand<HelpfulFile>((file) =>
+            {
+                Process.Start("explorer.exe", Path.GetDirectoryName(file.NameFile));
+            });
+            SaveFiles = new RelayCommand(() =>
+            {
+                    if(_dbContext.ChangeTracker.HasChanges())
+                    _dbContext.SaveChanges();
+                
             });
 
             this.WhenAnyValue(x => x.SelectedNode)
@@ -135,6 +171,10 @@ namespace SensorMap.ViewModel
         }
 
         public ICommand SaveMoreData { get; }
+        public ICommand AddFiles { get; }
+        public ICommand DeletePathFiles { get; }
+        public ICommand SaveFiles { get; }
+        public ICommand OpenFile { get; }
         public ICommand NavigateToMech {  get; }
         private void SaveDataFileds()
         {
@@ -171,5 +211,7 @@ namespace SensorMap.ViewModel
                 });
             }
         }
+
+       dispose db
     }
 }

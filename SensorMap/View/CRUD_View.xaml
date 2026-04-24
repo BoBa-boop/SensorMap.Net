@@ -685,21 +685,29 @@
                                 <RowDefinition Height="150"/>
                             </Grid.RowDefinitions>
                             <ListBox Effect="{StaticResource EffectShadow2}"
-                                     Name="lbSensors"
+                                     Name="lbSensors"                                    
                                      Margin="0,0,0,20"
+                                     SelectionMode="Single"
                                      ItemsSource="{Binding SensorTypes,UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
+                                <i:Interaction.Behaviors>
+                                    <beh:ListBoxBehavior CanUnselectItem="True"/>
+                                </i:Interaction.Behaviors>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Width="90">
-                                            <Image Source="{Binding Image, UpdateSourceTrigger=PropertyChanged,TargetNullValue={StaticResource NoImage}}"
-                       Width="60" Height="60">
-                                                <Image.Clip>
-                                                    <EllipseGeometry RadiusX="30" RadiusY="30" Center="30,30"/>
-                                                </Image.Clip>
-                                            </Image>
-                                            <TextBlock Text="{Binding Name}" TextAlignment="Center" Width="65" TextTrimming="CharacterEllipsis"/>
-                                        </StackPanel>
+                                        <Grid>
+                                            <TextBlock Text="{Binding Name}"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center" 
+                                                       Margin="25,5"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                            <Ellipse 
+                                                HorizontalAlignment="Left"
+                                                Margin="5,0"
+                                                Width="15" 
+                                                Height="15"
+                                                Fill="{Binding Color}"/>
+                                        </Grid>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                                 <ListBox.Style>
@@ -729,13 +737,17 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="ListBoxItem">
-                                                    <hc:Badge x:Name="badge" Background="{StaticResource InfoBrush}" Text="Новый"
-                                  ShowBadge="{Binding IsNew}">
-                                                        <Border x:Name="brd" BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="1" CornerRadius="5" Cursor="Hand"
-                                Background="{TemplateBinding Background}">
-                                                            <ContentPresenter VerticalAlignment="Center"
-                                                  ToolTip="{Binding Name}"/>
+                                                    <hc:Badge x:Name="badge"
+                                                              Background="{StaticResource InfoBrush}"
+                                                              Text="Новый"
+                                                              ShowBadge="{Binding IsNew}">
+                                                        <Border x:Name="brd"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="5"
+                                                                Cursor="Hand"
+                                                                Background="{TemplateBinding Background}">
+                                                            <ContentPresenter ToolTip="{Binding Name}"/>
                                                         </Border>
                                                     </hc:Badge>
                                                     <ControlTemplate.Triggers>
@@ -767,7 +779,7 @@
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <WrapPanel ItemWidth="80" ItemHeight="90" Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
+                                        <WrapPanel Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                             </ListBox>
@@ -782,38 +794,30 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition/>
                                 </Grid.RowDefinitions>
-                                <hc:ImageSelector Name="imgIconSensor"
-                                                  Width="70" Height="70"
-                                                  Background="LightBlue"
-                                                  Grid.Column="0"
-                                                  HorizontalAlignment="Left" VerticalAlignment="Top"
-                                                  Effect="{StaticResource EffectShadow3}"
-                                                  StrokeDashArray="3"
-                                                  Stretch="UniformToFill" Margin="0,0,0,15">
-                                    <i:Interaction.Triggers>
-                                        <i:EventTrigger EventName="ImageSelected">
-                                            <i:ChangePropertyAction TargetObject="{Binding ElementName=lbSensors, Path=SelectedItem}"
-                                        PropertyName="IsNew" Value="True"/>
-                                        </i:EventTrigger>
-                                    </i:Interaction.Triggers>
-                                </hc:ImageSelector>
+                                
                                 <StackPanel Margin="10,0" Grid.Column="1" HorizontalAlignment="Left">
                                     <hc:TextBox Name="tbSensorType"
                                                 hc:InfoElement.Placeholder="Тип датчика"
-                                                Width="150" Height="30"
+                                                Height="30"
                                                 Text="{Binding ElementName=lbSensors,Path=SelectedItem.Name,
                                         Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
                                     <WrapPanel Name="sButtons" 
                                                Orientation="Horizontal" Grid.Row="1"
                                                Margin="0,15" HorizontalAlignment="Center"
                                                ItemWidth="55">
+                                        <Button hc:IconElement.Geometry="{StaticResource DropperGeometry}"
+                                                ToolTip="Выбрать цвет" 
+                                                Cursor="Hand"
+                                                Background="{Binding ElementName=lbSensors,Path=SelectedItem.Color,TargetNullValue={StaticResource BackgroundBrush}}"                                        
+                                                Command="{Binding ShowColorPicker}" 
+                                                CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}"/>
                                         <Button Name="sAdd" Style="{StaticResource ButtonSuccess}"
                                                 hc:IconElement.Geometry="{StaticResource AddGeometry}"
                                                 Command="{Binding AddSensorType}">
                                             <Button.CommandParameter>
                                                 <MultiBinding Converter="{StaticResource CreateMultiParams}">
                                                     <Binding Path="Text" ElementName="tbSensorType"/>
-                                                    <Binding Path="Uri" ElementName="imgIconSensor"/>
+                                                    <Binding Path="SelectedBrush" ElementName="colorPicker"/>
                                                 </MultiBinding>
                                             </Button.CommandParameter>
                                         </Button>
@@ -903,17 +907,15 @@
                             <ListBox Effect="{StaticResource EffectShadow2}" Name="lbDevices" Margin="0,0,0,20"
                                      ItemsSource="{Binding DeviceTypes,UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
+                                <i:Interaction.Behaviors>
+                                    <beh:ListBoxBehavior CanUnselectItem="True"/>
+                                </i:Interaction.Behaviors>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Width="90">
-                                            <Image Source="{Binding Image, UpdateSourceTrigger=PropertyChanged,TargetNullValue={StaticResource NoImage}}"
-                                                   Width="60" Height="60">
-                                                <Image.Clip>
-                                                    <EllipseGeometry RadiusX="30" RadiusY="30" Center="30,30"/>
-                                                </Image.Clip>
-                                            </Image>
-                                            <TextBlock Text="{Binding Name}" TextAlignment="Center" Width="65" TextTrimming="CharacterEllipsis"/>
-                                        </StackPanel>
+                                        <TextBlock Text="{Binding Name}"
+                                                   TextAlignment="Center"
+                                                   Margin="25,5"
+                                                   TextTrimming="CharacterEllipsis"/>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                                 <ListBox.Style>
@@ -951,10 +953,11 @@
                                                               ShowBadge="{Binding IsNew}">
                                                         <Border x:Name="brd"
                                                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="1" CornerRadius="5" Cursor="Hand"
+                                                                BorderThickness="1"
+                                                                CornerRadius="5"
+                                                                Cursor="Hand"
                                                                 Background="{TemplateBinding Background}">
-                                                            <ContentPresenter VerticalAlignment="Center"
-                                                  ToolTip="{Binding Name}"/>
+                                                            <ContentPresenter ToolTip="{Binding Name}"/>
                                                         </Border>
                                                     </hc:Badge>
                                                     <ControlTemplate.Triggers>
@@ -986,7 +989,7 @@
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <WrapPanel ItemWidth="80" ItemHeight="90" Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
+                                        <WrapPanel Margin="0,5" VirtualizingPanel.IsVirtualizing="True"/>
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                             </ListBox>
@@ -1001,20 +1004,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition/>
                                 </Grid.RowDefinitions>
-                                <hc:ImageSelector Name="imgIconDevice" Width="70" Height="70"
-                                                  Background="LightBlue"
-                                                  Grid.Column="0" HorizontalAlignment="Left"
-                                                  VerticalAlignment="Top"
-                                                  Effect="{StaticResource EffectShadow3}"
-                                                  StrokeDashArray="3"
-                                                  Stretch="UniformToFill" Margin="0,0,0,15">
-                                    <i:Interaction.Triggers>
-                                        <i:EventTrigger EventName="ImageSelected">
-                                            <i:ChangePropertyAction TargetObject="{Binding ElementName=lbDevices, Path=SelectedItem}"
-                                        PropertyName="IsNew" Value="True"/>
-                                        </i:EventTrigger>
-                                    </i:Interaction.Triggers>
-                                </hc:ImageSelector>
+                                
                                 <StackPanel Margin="10,0" Grid.Column="1" HorizontalAlignment="Left">
                                     <hc:TextBox Name="tbDeviceType"
                                                 hc:InfoElement.Placeholder="Тип устройства"
@@ -1028,13 +1018,7 @@
                                                ItemWidth="55">
                                         <Button Name="dAdd" Style="{StaticResource ButtonSuccess}"
                                                 hc:IconElement.Geometry="{StaticResource AddGeometry}"
-                                                Command="{Binding AddDeviceType}">
-                                            <Button.CommandParameter>
-                                                <MultiBinding Converter="{StaticResource CreateMultiParams}">
-                                                    <Binding Path="Text" ElementName="tbDeviceType"/>
-                                                    <Binding Path="Uri" ElementName="imgIconDevice"/>
-                                                </MultiBinding>
-                                            </Button.CommandParameter>
+                                                Command="{Binding AddDeviceType}" CommandParameter="{Binding ElementName=tbDeviceType,Path=Text }">
                                         </Button>
                                         <Button Name="dDelete" Style="{StaticResource ButtonDanger}"
                                                 hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"

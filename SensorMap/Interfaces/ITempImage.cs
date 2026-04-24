@@ -14,5 +14,6 @@ namespace SensorMap.Interfaces
         byte[] OpenImageDialog();
         Uri GetUriFromBytes(byte[] imageData, string fileName = "image");
         public void Cleanup();
+        public byte[] ConvertToByte(ImageSource image);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using HandyControl.Tools;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -45,6 +46,7 @@ namespace SensorMap
             AnalyzeDataBase();
             if (IsStartOneApp(e))
             {
+                ConfigHelper.Instance.SetLang("ru");
                 var menuApp = _serviceProvider.GetRequiredService<MainWindow>();
                 var navigation = _serviceProvider.GetRequiredService<INavigation>();
                 navigation.SetMainWindow(menuApp);
@@ -104,7 +106,7 @@ namespace SensorMap
             services.AddTransient<IJsonSerialization, JsonSerializationService>();
             services.AddScoped<IPasswordHash,PasswordHashService>();
             services.AddTransient<IAuthorization, AuthorizationService>();
-
+            services.AddSingleton<IFileManagment, FileManagmentService>();
 
             // Регистрация для создания VM без параметров
             services.AddSingleton<Func<Type, ReactiveObject>>(serviceProvider => viewModelType =>

@@ -9,7 +9,6 @@ namespace SensorMap.Model
     public class DeviceType:ReactiveObject
     {
         private string _name;
-        private byte[]? _image;
         private bool _isNew;
 
         [Key]
@@ -28,20 +27,7 @@ namespace SensorMap.Model
                 }
             }
         }
-        [Reactive]
-        public byte[]? Image
-        {
-            get => _image;
-            set
-            {
-                if (value != _image)
-                {
-                    this.RaiseAndSetIfChanged(ref _image, value);
-                    IsNew = true;
-                }
-            }
-        }
-
+        
         [NotMapped]
         [Reactive]
         public bool IsNew

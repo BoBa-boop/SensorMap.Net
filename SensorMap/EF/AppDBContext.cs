@@ -22,6 +22,7 @@ namespace SensorMap.EF
         public DbSet<Mechanism> Mechanisms { get; set; }
         public DbSet<Sensor> Sensors { get; set; }
         public DbSet<SensorType> SensorTypes { get; set; }
+        public DbSet<HelpfulFile> HelpfulFiles { get; set; }
         public DbSet<SensorCharacteristic> SensorCharacteristic { get; set; }
         public DbSet<Device> Devices { get; set; }
         public DbSet<DeviceType> DeviceTypes { get; set; }
@@ -39,6 +40,7 @@ namespace SensorMap.EF
             modelBuilder.ApplyConfiguration(new DeviceCharacteristicConfiguration());
             modelBuilder.ApplyConfiguration(new SensorAssignmentConfiguration());
             modelBuilder.ApplyConfiguration(new SensorCharacteristicConfiguration());
+            modelBuilder.ApplyConfiguration(new HelpfulFilesConfiguration());
             base.OnModelCreating(modelBuilder);
         }
 
@@ -68,13 +70,22 @@ namespace SensorMap.EF
             return base.SaveChanges();
         }
     }
-    
+
+    public class HelpfulFilesConfiguration : IEntityTypeConfiguration<HelpfulFile>
+    {
+        public void Configure(EntityTypeBuilder<HelpfulFile> builder)
+        {
+            builder.HasKey(x => x.Id);
+            builder.HasOne(x => x.Device).WithMany(d => d.Files).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(x => x.Sensor).WithMany(d => d.Files).OnDelete(DeleteBehavior.Cascade);
+        }
+    }
 
     public class DeviceTypeConfiguration : IEntityTypeConfiguration<DeviceType>
     {
         public void Configure(EntityTypeBuilder<DeviceType> builder)
         {
-            builder.HasKey(x => x.Id);
+            builder.HasKey(x => x.Id);           
             builder.HasMany(x => x.Characteristics).WithOne(c => c.DeviceType).HasForeignKey(k => k.DeviceTypeId).OnDelete(DeleteBehavior.Cascade);
         }
     }

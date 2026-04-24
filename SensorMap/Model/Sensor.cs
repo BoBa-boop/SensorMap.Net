@@ -18,6 +18,7 @@ namespace SensorMap.Model
         private bool _isModified;
         private SensorType? _sensorType;
         private byte[]? _image;
+        private ObservableCollection<HelpfulFile> files = new ObservableCollection<HelpfulFile>();
 
         [Key]
         [Reactive] public int Id { get; set; }
@@ -57,6 +58,7 @@ namespace SensorMap.Model
                 }
             }
         }
+        [Reactive]public virtual ObservableCollection<HelpfulFile> Files { get => files; set => this.RaiseAndSetIfChanged(ref files, value); }
         [NotMapped]
         public bool IsModified
         {

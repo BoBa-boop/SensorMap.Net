@@ -2,6 +2,8 @@
 using DynamicData;
 using HandyControl.Controls;
 using HandyControl.Data;
+using HandyControl.Properties.Langs;
+using HandyControl.Tools;
 using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -18,6 +20,8 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Markup;
+using System.Windows.Media;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace SensorMap.ViewModel
@@ -200,20 +204,11 @@ namespace SensorMap.ViewModel
 
                 var values = (object[])param;
                 var name = (string)values[0];
-                var image = (Uri)values[1];
-                byte[] photoBytes;
+                var color = (string)values[1];
                 SensorType sType = new SensorType();
                 sType.Name = name;
-
-                if (image != null)
-                {
-                    using (FileStream fs = new FileStream(image.LocalPath, FileMode.Open, FileAccess.Read))
-                    {
-                        photoBytes = new byte[fs.Length];
-                        fs.ReadExactly(photoBytes);
-                    }
-                    sType.Image = photoBytes;
-                }
+                sType.Color = color;
+                
                 if (!SensorTypes.Where(x => x.Name == sType.Name).Any())
                 {
                     sType.IsNew = true;
@@ -229,22 +224,9 @@ namespace SensorMap.ViewModel
             {
                 if (param is null) return;
 
-                var values = (object[])param;
-                var name = (string)values[0];
-                var image = (Uri)values[1];
-                byte[] photoBytes;
+                var name = (string)param;
                 DeviceType sType = new DeviceType();
                 sType.Name = name;
-
-                if (image != null)
-                {
-                    using (FileStream fs = new FileStream(image.LocalPath, FileMode.Open, FileAccess.Read))
-                    {
-                        photoBytes = new byte[fs.Length];
-                        fs.ReadExactly(photoBytes);
-                    }
-                    sType.Image = photoBytes;
-                }
                 if (!DeviceTypes.Where(x => x.Name == sType.Name).Any())
                 {
                     sType.IsNew = true;
@@ -253,8 +235,8 @@ namespace SensorMap.ViewModel
             }, (param) =>
             {
                 if (param == null) return false;
-                var values = (object[])param;
-                return !string.IsNullOrWhiteSpace(values[0].ToString());
+                var value = (string)param;
+                return !string.IsNullOrWhiteSpace(value.ToString());
             });
             DeleteNodeTitleType = new RelayCommand<object>((type) =>
             {
@@ -343,6 +325,27 @@ namespace SensorMap.ViewModel
                 }
             },(type) => { return type != null; });
 
+            ShowColorPicker = new RelayCommand<object>((s) =>
+            {
+                if (s is SensorType sensorType)
+                {
+                    var picker = new HandyControl.Controls.ColorPicker();
+                    var window = new PopupWindow
+                    {
+                        PopupElement = picker,
+                        ShowBorder = false,
+                        ShowTitle = false,
+                        AllowsTransparency = true,
+                        WindowStyle = WindowStyle.None
+                        
+                    };
+                    picker.SelectedColorChanged += delegate { sensorType.Color = picker.SelectedBrush.ToString(); };
+                    picker.Confirmed += delegate { sensorType.Color = picker.SelectedBrush.ToString(); window.Close(); };
+                    picker.Canceled += delegate { window.Close(); };
+                    window.Show();
+                }
+            },(s)=> { return s != null; });
+
             UndoCommand = new RelayCommand(_undoRedoManager!.Undo);
             RedoCommand = new RelayCommand(_undoRedoManager.Redo);
 
@@ -389,6 +392,7 @@ namespace SensorMap.ViewModel
         public ICommand ShowCommand { get; set; }
         public ICommand AddImage {  get; set; }
         public ICommand ShowPreviewImage { get; set; }
+        public ICommand ShowColorPicker { get; }
         public ICommand AddSensorType { get; }
         public ICommand AddDeviceType { get; }
         public ICommand DeleteNodeTitleType { get; }

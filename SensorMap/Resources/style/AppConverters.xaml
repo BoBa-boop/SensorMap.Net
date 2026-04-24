@@ -4,4 +4,5 @@
     <local:Bool2Vis x:Key="Bool2VisOrHidden"/>
     <local:Bool2ReVis x:Key="Bool2ReVisOrHidden"/>
     <local:EqualStrings x:Key="StringEqualString"/>
+    <local:PathConverter x:Key="PathConverter"/>
 </ResourceDictionary>

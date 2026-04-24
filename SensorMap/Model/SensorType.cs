@@ -14,7 +14,7 @@ namespace SensorMap.Model
     public class SensorType:ReactiveObject
     {
         private string _name = string.Empty;
-        private byte[]? _image;
+        private string? _color;
         private bool _isNew;
 
         [Key]
@@ -32,14 +32,14 @@ namespace SensorMap.Model
                 }
             } 
         }
-        [Reactive] public byte[]? Image
+        [Reactive] public string? Color
         {
-            get => _image;
+            get => _color;
             set
             {
-                if (value != _image)
+                if (value != _color)
                 {
-                    this.RaiseAndSetIfChanged(ref _image, value);
+                    this.RaiseAndSetIfChanged(ref _color, value);
                     IsNew = true;
                 }
             }

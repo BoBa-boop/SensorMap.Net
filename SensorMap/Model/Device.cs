@@ -51,6 +51,7 @@ namespace SensorMap.Model
         public Device? MasterDevice { get; set; }
         public int? MasterDeviceID { get; set; }
         public virtual ObservableCollection<Mechanism>? Mechanisms { get; set; }
+        public virtual ObservableCollection<HelpfulFile> Files { get; set; }
         public int? DeviceTypeId {  get; set; }
         public DeviceType? DeviceType
         { 

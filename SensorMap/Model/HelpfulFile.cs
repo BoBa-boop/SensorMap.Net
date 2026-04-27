@@ -17,6 +17,8 @@ namespace SensorMap.Model
         public Sensor Sensor { get; set; }
         public int? DeviceId { get; set; }
         public Device Device { get; set; }
+        public Mechanism Mechanism { get; set; }
+        public int? MechanismId { get; set; }
 
     }
 }

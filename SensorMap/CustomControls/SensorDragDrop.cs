@@ -519,6 +519,7 @@ namespace SensorMap.CustomControls
         {           
             var element = new CustomSensor();
             element.SensorData = sensor;
+            element.CustomBackground = (SolidColorBrush)(new BrushConverter().ConvertFrom(sensor.Sensor.SensorType.Color))??Brushes.PaleVioletRed;
             element.Focus();
             
             Canvas.SetLeft(element, point.X);

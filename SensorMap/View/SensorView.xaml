@@ -108,7 +108,8 @@
                             </Grid>
                             <GroupBox Header="Файлы" Style="{StaticResource BaseStyle}">
                                 <StackPanel Orientation="Vertical">
-                                    <ListBox ItemsSource="{Binding SelectedNode.Files,UpdateSourceTrigger=PropertyChanged}"
+                                    <ListBox Name="sFiles"
+                                             ItemsSource="{Binding SelectedNode.Files,UpdateSourceTrigger=PropertyChanged}"
                                              Background="Transparent">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
@@ -134,13 +135,20 @@
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                            <Border Background="{StaticResource BorderBrush}">
+                                                            <Border x:Name="brd" Background="{StaticResource BorderBrush}" 
+                                                                    BorderBrush="Transparent"
+                                                                    BorderThickness="1.5">
                                                                 <ContentPresenter/>
                                                                 <Border.InputBindings>
-                                                                    <MouseBinding Gesture="LeftClick" Command="{Binding ElementName=root,Path=DataContext.OpenFile}"
+                                                                    <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ElementName=root,Path=DataContext.OpenFile}"
                                                                                   CommandParameter="{Binding }"/>
                                                                 </Border.InputBindings>
                                                             </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}"  Value="True">
+                                                                    <Setter Property="Border.BorderBrush" TargetName="brd" Value="{StaticResource AccentBrush}"/>
+                                                                </DataTrigger>
+                                                            </ControlTemplate.Triggers>
                                                         </ControlTemplate>
                                                     </Setter.Value>
                                                 </Setter>
@@ -157,7 +165,7 @@
                                         
                                         <Button Style="{StaticResource ButtonDanger}"
                                                 hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
-                                                Command="{Binding DeletePathFiles}"/>
+                                                Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=sFiles,Path=SelectedItem}"/>
 
                                         <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}"
                                                 Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary}">                                            

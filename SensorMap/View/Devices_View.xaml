@@ -101,6 +101,76 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                             </Grid>
+                            <GroupBox Header="Файлы" Style="{StaticResource BaseStyle}">
+                                <StackPanel Orientation="Vertical">
+                                    <ListBox Name="dFiles"
+                                             ItemsSource="{Binding SelectedDevice.Files,UpdateSourceTrigger=PropertyChanged}"
+                                             Background="Transparent">
+                                        <i:Interaction.Behaviors>
+                                            <beh:ListBoxBehavior CanUnselectItem="True"/>
+                                        </i:Interaction.Behaviors>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Vertical" Width="50">
+                                                    <Image Source="{Binding ImageFile}"
+                               Stretch="Uniform"
+                               Width="25"/>
+                                                    <TextBlock Text="{Binding NameFile,Converter={StaticResource PathConverter}}"
+                                   ToolTip="{Binding NameFile}" TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" VirtualizingPanel.IsVirtualizing="True"/>
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource InputElementBaseStyle}">
+                                                <Setter Property="Margin" Value="5"/>
+                                                <Setter Property="FontSize" Value="12"/>
+                                                <Setter Property="Cursor" Value="Hand"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                            <Border x:Name="brd" Background="{StaticResource BorderBrush}" 
+                                        BorderBrush="Transparent"
+                                        BorderThickness="1.5">
+                                                                <ContentPresenter/>
+                                                                <Border.InputBindings>
+                                                                    <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ElementName=root,Path=DataContext.OpenFile}"
+                                                      CommandParameter="{Binding }"/>
+                                                                </Border.InputBindings>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}"  Value="True">
+                                                                    <Setter Property="Border.BorderBrush" TargetName="brd" Value="{StaticResource AccentBrush}"/>
+                                                                </DataTrigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                    <WrapPanel Name="fButtons" Orientation="Horizontal"
+                                               Grid.Row="1" Margin="0,15"
+                                               HorizontalAlignment="Center"
+                                               ItemWidth="55">
+                                        <Button Style="{StaticResource ButtonSuccess}"
+                                                hc:IconElement.Geometry="{StaticResource AddGeometry}"
+                                                Command="{Binding AddFiles}" CommandParameter="{Binding SelectedDevice}"/>
+                                        
+                                        <Button Style="{StaticResource ButtonDanger}"
+                                                hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
+                                                Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=dFiles,Path=SelectedItem}"/>
+                                        
+                                        <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}"
+                                                Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary}">
+                                        </Button>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </GroupBox>
                             <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">
                                 <StackPanel Orientation="Vertical">
                                     <ListBox ItemsSource="{Binding SelectedDevice.AdditionalData.Data}"

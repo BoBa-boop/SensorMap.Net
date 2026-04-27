@@ -298,7 +298,8 @@
                                                             <DockPanel>
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
                                                                 <TextBlock Text="{Binding ItemCount}" Margin="10,0,0,0"
-                                                                           Foreground="Gray" FontWeight="Normal"/>
+                                           Foreground="Gray" FontWeight="Normal"/>
+                                                                
                                                             </DockPanel>
                                                         </Expander.Header>
                                                         <ItemsPresenter />
@@ -313,6 +314,54 @@
                                         <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
                                     </ItemsPanelTemplate>
                                 </GroupStyle.Panel>
+                                
+                            </GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.ContainerStyle>
+                                    <Style TargetType="GroupItem">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate>
+                                                    <Expander IsExpanded="True">
+                                                        <Expander.Header>
+                                                            <DockPanel>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
+                                                                <TextBlock Text="{Binding ItemCount}" Margin="10,0,0,0"
+                                                                           Foreground="Gray" FontWeight="Normal"/>
+                                                                <hc:ButtonGroup Margin="10,0" x:Name="bGroup">
+                                                                    <Button x:Name="showScheme"
+                                                                            Visibility="Collapsed"
+                                                                            Width="40" Height="20"
+                                                                            hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"
+                                                                            hc:IconElement.Width="20" hc:IconElement.Height="13"
+                                                                            ToolTip="Показать электросхему"
+                                                                            />
+                                                                    <Button x:Name="loadScheme"
+                                                                            Width="40" Height="20"
+                                                                            hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
+                                                                            hc:IconElement.Width="20" hc:IconElement.Height="13"
+                                                                            ToolTip="Добавить электросхему"/>
+                                                                </hc:ButtonGroup>                                                                
+                                                            </DockPanel>
+                                                        </Expander.Header>
+                                                        <ItemsPresenter />
+                                                    </Expander>
+                                                    <ControlTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=Files.Count}" Value="0">
+                                                            <Setter Property="Visibility" TargetName="showScheme" Value="Visible"/>
+                                                        </DataTrigger> 
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </GroupStyle.ContainerStyle>
+                                <GroupStyle.Panel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
+                                    </ItemsPanelTemplate>
+                                </GroupStyle.Panel>
+
                             </GroupStyle>
                         </DataGrid.GroupStyle>
                         <!--<DataGrid.RowValidationRules>

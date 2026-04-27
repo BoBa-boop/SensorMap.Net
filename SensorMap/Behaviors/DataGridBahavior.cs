@@ -35,15 +35,20 @@ namespace SensorMap.Behaviors
         {
             base.OnAttached();
             #region -UnSel
-            var window = Window.GetWindow(AssociatedObject);
+           
+            #endregion
+            AssociatedObject.Loaded += OnLoaded;
+            AssociatedObject.BeginningEdit += OnBeginningEdit;
+            AssociatedObject.CellEditEnding += OnCellEditEnding;
+        }
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            var window = HandyControl.Controls.Window.GetWindow(AssociatedObject);
             if (window != null)
             {
                 window.PreviewMouseDown += OnWindowPreviewMouseDown;
             }
-            #endregion
-            
-            AssociatedObject.BeginningEdit += OnBeginningEdit;
-            AssociatedObject.CellEditEnding += OnCellEditEnding;
         }
 
         private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
@@ -103,6 +108,7 @@ namespace SensorMap.Behaviors
             {
                 AssociatedObject.UnselectAllCells();
                 AssociatedObject.SelectedItem = null;
+                AssociatedObject.CancelEdit();
             }
             else
             {

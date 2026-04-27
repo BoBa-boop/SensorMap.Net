@@ -22,7 +22,7 @@
                    Height="180" Width="180"
                    Margin="5"/>
                 <TextBlock Text="{Binding Sensor.Name,FallbackValue=---}"
-                           HorizontalAlignment="Center"
+                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
                            FontSize="18" FontWeight="Heavy"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Margin="5,0" Width="auto">

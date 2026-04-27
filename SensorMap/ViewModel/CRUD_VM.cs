@@ -63,7 +63,7 @@ namespace SensorMap.ViewModel
             using (var dBContext = _appDbContextFactory.CreateDbContext())
             {
                 Sectors = new(dBContext.Sectors.ToList());
-                Mechanisms = CollectionViewSource.GetDefaultView(dBContext.Mechanisms.ToList());
+                Mechanisms = CollectionViewSource.GetDefaultView(dBContext.Mechanisms.Include(m=>m.Files).ToList());
                 SensorAssignments = new(dBContext.SensorAssignments.ToList());
                 Devices = CollectionViewSource.GetDefaultView(dBContext.Devices.ToList());                
                 Sensors = CollectionViewSource.GetDefaultView(dBContext.Sensors.ToList());
@@ -88,10 +88,12 @@ namespace SensorMap.ViewModel
                 Sensors.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
             }
 
-            ShowCommand = new RelayCommand<object>((Sensor) =>
+            ShowCommand = new RelayCommand<object>((obj) =>
             {
-                if (Sensor is Sensor)
-                    Navigation.NavigateTo<SensorVM>(Sensor);
+                if (obj is Sensor)
+                    Navigation.NavigateTo<SensorVM>(obj);
+                if (obj is Device)
+                    Navigation.NavigateTo<Devices_VM>(obj);
             });
             SaveCommand = new RelayCommand<object>((arg) =>
             {

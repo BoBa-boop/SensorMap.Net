@@ -2,6 +2,7 @@
 using HandyControl.Controls;
 using HandyControl.Data;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.EF;
@@ -16,8 +17,9 @@ using System.Windows.Input;
 
 namespace SensorMap.ViewModel
 {
-    public class SensorVM:ReactiveObject,IDisposable
+    public class SensorVM:ReactiveObject
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly INavigation _navigation;
         private readonly IDataService _service;
         private readonly IJsonSerialization _json;
@@ -65,7 +67,7 @@ namespace SensorMap.ViewModel
             _dbContext = _appDbContextFactory.CreateDbContext();
             
                 sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().Include(x => x.Characteristics).ToList());
-                Sensors = new(_dbContext.Sensors.ToList());
+                Sensors = new(_dbContext.Sensors.Include(s=>s.Files).ToList());
                 Mechanisms = new(_dbContext.Mechanisms.Include(x => x.SensorsAssig).AsNoTracking().ToList());
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
                 SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
@@ -93,15 +95,51 @@ namespace SensorMap.ViewModel
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
                 SelectedNode.Files.Remove(file);
+                try
+                {
+                   
+                        //_dbContext.Remove(SelectedNode);
+                        _dbContext.SaveChanges();
+                        Growl.Success(new GrowlInfo
+                        {
+                            Message = "Путь к файлам удален.",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            WaitTime = 2
+                        });
+                }
+                catch (Exception ex)
+                {
+                    Growl.Error("Ошибка при удаление путей!");
+                    Logger.Error(ex.Message);
+                }
             });
             OpenFile = new RelayCommand<HelpfulFile>((file) =>
             {
-                Process.Start("explorer.exe", Path.GetDirectoryName(file.NameFile));
+                Process.Start("explorer.exe", "/select,\"" + Path.GetFullPath(file.NameFile) + "\"");
             });
             SaveFiles = new RelayCommand(() =>
             {
-                    if(_dbContext.ChangeTracker.HasChanges())
-                    _dbContext.SaveChanges();
+                try
+                {
+                    if (_dbContext.ChangeTracker.HasChanges())
+                    {
+                        //_dbContext.Update(SelectedNode);
+                        _dbContext.SaveChanges();
+                        Growl.Success(new GrowlInfo
+                        {
+                            Message = "Путь к файлам сохранен.",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            WaitTime = 2
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Growl.Error("Ошибка при сохранение путей!");
+                    Logger.Error(ex.Message);
+                }
                 
             });
 
@@ -212,6 +250,5 @@ namespace SensorMap.ViewModel
             }
         }
 
-       dispose db
     }
 }

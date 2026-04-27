@@ -64,6 +64,7 @@
                     </CheckBox.Style>
                 </CheckBox>                
                 <Button Content="Показать список датчиков" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
+                <Button Content="Открыть электросхему" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
             </hc:SimpleStackPanel>
             <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
                 <StackPanel Orientation="Vertical" Margin="7">

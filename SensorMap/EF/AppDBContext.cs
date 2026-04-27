@@ -46,6 +46,7 @@ namespace SensorMap.EF
 
         public override int SaveChanges()
         {
+            var s = base.SaveChanges();
             var changesEntities = ChangeTracker.Entries().
                 Where(x=>x.State == EntityState.Modified ||
                         x.State == EntityState.Added||
@@ -64,10 +65,10 @@ namespace SensorMap.EF
                 }
                 if (entity.State == EntityState.Added)
                 {
-                    Logger.Info(entity.Metadata.DisplayName() + $" |{entity.State.ToString()}| " + "Name:" + entity.CurrentValues.GetValue<string>("Name"));
+                    Logger.Info(entity.Metadata.DisplayName() + $" |{entity.State.ToString()}| " + "Id:" + entity.CurrentValues.GetValue<int>("Id"));
                 }
             }
-            return base.SaveChanges();
+            return s;
         }
     }
 
@@ -78,6 +79,7 @@ namespace SensorMap.EF
             builder.HasKey(x => x.Id);
             builder.HasOne(x => x.Device).WithMany(d => d.Files).OnDelete(DeleteBehavior.Cascade);
             builder.HasOne(x => x.Sensor).WithMany(d => d.Files).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(x => x.Mechanism).WithMany(m => m.Files).OnDelete(DeleteBehavior.Cascade);
         }
     }
 

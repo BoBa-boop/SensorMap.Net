@@ -69,6 +69,7 @@ namespace SensorMap.Model
         }
 
         public virtual ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
+        public virtual ObservableCollection<HelpfulFile>? Files { get; set; }
         public virtual int SectorID { get; set; }
         public virtual int? DeviceID { get; set; }
 

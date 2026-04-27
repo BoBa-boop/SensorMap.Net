@@ -9,6 +9,7 @@ using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Reactive.Linq;
 using System.Windows.Input;
@@ -16,12 +17,16 @@ using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace SensorMap.ViewModel
 {
-    public class Devices_VM:ReactiveObject
+    public class Devices_VM : ReactiveObject
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IDataBaseProvider _provider;
         private readonly INavigation _nav;
         private readonly IJsonSerialization _json;
         private readonly IDataService _service;
+        private readonly ITempImage _imgManag;
+        private readonly AppDBContext _dbContext;
+        private readonly IFileManagment _fileManagment;
         private IAppDbContextFactory _appDbContextFactory;
         private Device _selectedDevice;
         private ObservableCollection<Mechanism> _FilteredMechanisms;
@@ -42,21 +47,24 @@ namespace SensorMap.ViewModel
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         private ObservableCollection<Mechanism> _mechs = new ObservableCollection<Mechanism>();
         private List<AdditionalData> addDataList = new List<AdditionalData>();
-        
-        public Devices_VM(IDataBaseProvider provider,INavigation nav, IJsonSerialization json,
-            IDataService service,IAppDbContextFactory appDbContextFactory, Device device = null)
+
+        public Devices_VM(IDataBaseProvider provider, INavigation nav, IJsonSerialization json,
+            IDataService service, IAppDbContextFactory appDbContextFactory,
+            IFileManagment fileManagment, ITempImage imgMang, Device device = null)
         {
             _service = service;
             _nav = nav;
+            _imgManag = imgMang;
             _provider = provider;
+            _fileManagment = fileManagment;
             _json = json;
             _appDbContextFactory = appDbContextFactory;
-            using (var _dbContext = _appDbContextFactory.CreateDbContext())
-            {
-                Device = new(_dbContext.Devices.Include(x=>x.DeviceType).ThenInclude(k=>k.Characteristics).ToList());
-                _mechs = new(_dbContext.Mechanisms.ToList());
-                _deviceType = new (_dbContext.DeviceTypes.ToList());
-            }
+            _dbContext = _appDbContextFactory.CreateDbContext();
+            Device = new(_dbContext.Devices.Include(x => x.DeviceType).ThenInclude(k => k.Characteristics)
+                                           .Include(k=>k.Files).AsSplitQuery().ToList());
+            _mechs = new(_dbContext.Mechanisms.ToList());
+            _deviceType = new(_dbContext.DeviceTypes.ToList());
+            
             SelectedDevice = device;
             LoadAddData();
             this.WhenAnyValue(x => x.SelectedDevice)
@@ -75,14 +83,76 @@ namespace SensorMap.ViewModel
             });
             SaveMoreData = new RelayCommand(SaveDataFileds);
             Func<string, Device, bool> filter = (m, p) => p.DeviceType.Name == m;
-            DeviceTree = new TreeViewCollection<string, Device>("DeviceType.Name", new(_deviceType.Select(x=>x.Name).ToList()), Device, filter);
+            DeviceTree = new TreeViewCollection<string, Device>("DeviceType.Name", new(_deviceType.Select(x => x.Name).ToList()), Device, filter);
             _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode);
+            AddFiles = new RelayCommand<Device>((d) =>
+            {
+                string[] paths = _fileManagment.OpenFileDialog();
+                foreach (var path in paths)
+                {
+                    d.Files.Add(new HelpfulFile()
+                    {
+                        NameFile = path,
+                        ImageFile = _imgManag.ConvertToByte(_fileManagment.GetIconFile(path))
+                    });
+                }
+            });
+            DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
+            {
+                SelectedDevice.Files.Remove(file);
+                try
+                {
+
+                    //_dbContext.Remove(SelectedNode);
+                    _dbContext.SaveChanges();
+                    Growl.Success(new GrowlInfo
+                    {
+                        Message = "Путь к файлам удален.",
+                        CancelStr = "Ignore",
+                        ShowDateTime = false,
+                        WaitTime = 2
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Growl.Error("Ошибка при удаление путей!");
+                    Logger.Error(ex.Message);
+                }
+            });
+            OpenFile = new RelayCommand<HelpfulFile>((file) =>
+            {
+                Process.Start("explorer.exe", "/select,\""+Path.GetFullPath(file.NameFile) + "\"");
+            });
+            SaveFiles = new RelayCommand(() =>
+            {
+                try
+                {
+                    if (_dbContext.ChangeTracker.HasChanges())
+                    {
+                        //_dbContext.Update(SelectedNode);
+                        _dbContext.SaveChanges();
+                        Growl.Success(new GrowlInfo
+                        {
+                            Message = "Путь к файлам сохранен.",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            WaitTime = 2
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Growl.Error("Ошибка при сохранение путей!");
+                    Logger.Error(ex.Message);
+                }
+
+            });
         }
 
         private void LoadAddData()
         {
-            
+
             if (File.Exists("DevicesMoreData.json"))
             {
                 //заполнение данными из файла
@@ -166,5 +236,10 @@ namespace SensorMap.ViewModel
         }
         public ICommand NavigateToMech { get; }
         public ICommand SaveMoreData { get; }
+        public ICommand SaveFiles { get; }
+        public ICommand OpenFile { get; }
+        public ICommand DeletePathFiles { get; }
+        public ICommand AddFiles {get;}
+
     }
 }

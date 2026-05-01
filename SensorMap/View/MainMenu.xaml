@@ -9,7 +9,7 @@
     <hc:TransitioningContentControl TransitionMode="Fade">
         <Grid>
             <hc:Carousel AutoRun="True" IsCenter="True" HorizontalAlignment="Center" Width="1200" Height="650">
-                <Image Source="/Resources/MenuImages/menuImage2.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
+                <Image Name="ds" Source="/Resources/MenuImages/menuImage2.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
                 <Image Source="/Resources/MenuImages/menuImage3.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
             </hc:Carousel>
         </Grid>

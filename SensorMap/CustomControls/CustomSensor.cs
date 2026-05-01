@@ -23,13 +23,22 @@ namespace SensorMap.CustomControls
     public class CustomSensor : Control
     {
         #region Dependency Properties
+
+
+        public int Id
+        {
+            get { return (int)GetValue(IdProperty); }
+            set { SetValue(IdProperty, value); }
+        }
+        public static readonly DependencyProperty IdProperty =
+            DependencyProperty.Register("Id", typeof(int), typeof(CustomSensor), new PropertyMetadata(0));
+
+
         public SensorAssignments SensorData
         {
             get { return (SensorAssignments)GetValue(SensorProperty); }
             set { SetValue(SensorProperty, value);}
         }
-
-
         public static readonly DependencyProperty SensorProperty =
             DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor),new PropertyMetadata(null,SensorDataChanged));
 
@@ -131,11 +140,14 @@ namespace SensorMap.CustomControls
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
 
+
+
+        public static CustomSensor SelectedSensor;
+
         #endregion
 
         private readonly ITransformObject _transformService;
         HitType MouseHitType = HitType.None;
-        private UIElement _selectedSensor;
         private Point LastPoint;
         private bool IsTransformed = false;
         private bool DragInProgress = false;
@@ -195,7 +207,7 @@ namespace SensorMap.CustomControls
         {
             if(this.IsSelected && !DragInProgress)
             {
-                Rect rect = new Rect(Canvas.GetLeft(_selectedSensor), Canvas.GetTop(_selectedSensor), this.CustomBounds.Width, this.CustomBounds.Height);
+                Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
                 MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
                 this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
             }
@@ -222,7 +234,7 @@ namespace SensorMap.CustomControls
 
         private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if(_selectedSensor!=null)
+            if(SelectedSensor!=null)
             {
                 if (DragInProgress)                
                 {
@@ -232,8 +244,8 @@ namespace SensorMap.CustomControls
                     double offset_y = point.Y - LastPoint.Y;
 
                     // Get the rectangle's current position.
-                    double new_x = Canvas.GetLeft(_selectedSensor);
-                    double new_y = Canvas.GetTop(_selectedSensor);
+                    double new_x = Canvas.GetLeft(this);
+                    double new_y = Canvas.GetTop(this);
                     double new_width = this.CustomBounds.Width;
                     double new_height = this.CustomBounds.Height;
 
@@ -284,8 +296,8 @@ namespace SensorMap.CustomControls
                         // Don't use negative width or height.
                         if ((new_width > 17) && (new_height > 17))
                         {
-                            Canvas.SetLeft(_selectedSensor, new_x);
-                            Canvas.SetTop(_selectedSensor, new_y);
+                            Canvas.SetLeft(this, new_x);
+                            Canvas.SetTop(this, new_y);
 
                             this.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
 
@@ -300,15 +312,20 @@ namespace SensorMap.CustomControls
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(MouseHitType!=HitType.None)
+            if (SelectedSensor != null && SelectedSensor != this)
+            {
+                SelectedSensor.IsSelected = false;
+                SelectedSensor.CustBorderBrush = Brushes.Black;
+            }
+            if (MouseHitType!=HitType.None)
             {
                 LastPoint = Mouse.GetPosition(_canvas);
                 DragInProgress = true;
             }
+            SelectedSensor = this;
             this.CustBorderBrush = Brushes.ForestGreen;
-            this.IsSelected = true;
+            SelectedSensor.IsSelected = true;
             this.Focus();
-            _selectedSensor = this;
         }
 
         
@@ -316,7 +333,6 @@ namespace SensorMap.CustomControls
         private void SelectedChanged()
         {
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
-            _selectedSensor = IsSelected ? this : null;
             MouseHitType = IsSelected ? MouseHitType : HitType.None;
             this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
         }

@@ -69,8 +69,9 @@ namespace SensorMap.CustomControls
 
 
 
+
         #region add-remove sensor
-        
+
         public static readonly DependencyProperty SaveSensorsCommandProperty =
             DependencyProperty.Register("SaveSensorsCommand", typeof(ICommand), typeof(SensorDragDrop));
         public ICommand SaveSensorsCommand
@@ -229,7 +230,8 @@ namespace SensorMap.CustomControls
                     
                     CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X,sensor.Y));
                     _canvas.Children.Add(element);
-                    element.Tag = ItemsSource.IndexOf(sensor);
+                    
+                    element.Tag = sensor.Id;
                 }
             }
         }
@@ -276,7 +278,8 @@ namespace SensorMap.CustomControls
                 CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
                 var command = new AddSensor(sensor, element, _canvas, ItemsSource);
                 AddSensorsCommand.Execute(command);
-                element.Tag = ItemsSource.IndexOf(sensor);
+                
+                element.Tag = sensor.Id;
             }
         }
         
@@ -298,8 +301,8 @@ namespace SensorMap.CustomControls
                     _isDropAdd = true;
                     var command = new AddSensor(sensorData, element, _canvas!, ItemsSource);
                     AddSensorsCommand.Execute(command);
-                    element.Tag = ItemsSource.IndexOf(sensorData);
-
+                    
+                    element.Tag = sensorData.Id;
                 }
             }
         }
@@ -399,17 +402,17 @@ namespace SensorMap.CustomControls
 
             ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize);
             _viewMatrixTransform.Matrix = scaleMatrix;
-            foreach (UIElement wo in _canvas!.Children)
+            foreach (UIElement element in _canvas!.Children)
             {
-                if (wo != null)
+                if (element != null)
                 {
-                    if (IsUIElementSensor(wo, out CustomSensor element))
+                    if (element is CustomSensor sensor1)
                     {
-                        var sensor = ItemsSource.ElementAt((Int32)element.Tag);
-
+                        var sensor = ItemsSource.Where(x=>x == sensor1.SensorData).FirstOrDefault();
+                        if (sensor == null) continue;
                         Point screen = _transformObject.WorldToScreen(new Point(sensor.X, sensor.Y), _viewMatrix);
-                        Canvas.SetLeft(wo, screen.X);
-                        Canvas.SetTop(wo, screen.Y);
+                        Canvas.SetLeft(sensor1, screen.X);
+                        Canvas.SetTop(sensor1, screen.Y);
                     }
                 }
             }
@@ -473,34 +476,18 @@ namespace SensorMap.CustomControls
             }
         }
 
-        private bool IsUIElementSensor(object UIElement,out CustomSensor sensor)
-        {
-            if (UIElement is CustomSensor brd && brd.Tag is int tagIndex && tagIndex >= 0 && tagIndex < ItemsSource.Count)
-            {
-                // Получаем соответствующий объект SensorAssignments по индексу
-                var assignment = ItemsSource[(int)tagIndex];
-                sensor = brd;
-                return true;
-            }
-            else
-            {
-                sensor = default(CustomSensor)!;
-                return false;
-            }
-
-        }
         #endregion
         private void UIElementSensor_ShowMoreInfo(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Right)
             {
-                if (IsUIElementSensor(sender,out CustomSensor element))
+                if (sender is CustomSensor sensor)
                 {
                     var pop = new View.SensorAddInfo();
                     var window = new PopupWindow()
                     {
                         PopupElement = pop,
-                        DataContext = element.SensorData
+                        DataContext = sensor.SensorData
                     };
                     Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
 
@@ -509,7 +496,7 @@ namespace SensorMap.CustomControls
                         window.Close();
                         Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
                     }
-                        window.Show(element, false);
+                        window.Show(sensor, false);
                     }
                 }
                 e.Handled = true;
@@ -519,7 +506,7 @@ namespace SensorMap.CustomControls
         {           
             var element = new CustomSensor();
             element.SensorData = sensor;
-            element.CustomBackground = (SolidColorBrush)(new BrushConverter().ConvertFrom(sensor.Sensor.SensorType.Color))??Brushes.PaleVioletRed;
+            element.CustomBackground = (SolidColorBrush)(new BrushConverter().ConvertFrom(sensor.Sensor.SensorType.Color??Colors.PaleVioletRed.ToString()));
             element.Focus();
             
             Canvas.SetLeft(element, point.X);

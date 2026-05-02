@@ -64,7 +64,7 @@
                     </CheckBox.Style>
                 </CheckBox>                
                 <Button Content="Показать список датчиков" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
-                <Button Content="Открыть электросхему" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
+                <Button Content="Открыть электросхему" Command="{Binding ShowScheme}" CommandParameter="{Binding CurrentMech}"/>
             </hc:SimpleStackPanel>
             <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
                 <StackPanel Orientation="Vertical" Margin="7">
@@ -144,6 +144,12 @@
                                     <HierarchicalDataTemplate.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock x:Name="txt" Text="{Binding Path=Data.Name}">
+                                                <TextBlock.ToolTip>
+                                                    <ToolTip>
+                                                        <Image Source="{Binding Data.Image}"
+                                                               Width="110" Height="90"/>
+                                                    </ToolTip>
+                                                </TextBlock.ToolTip>
                                                 <i:Interaction.Triggers>
                                                     <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
                                                         <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.DragSensorCommand}" 

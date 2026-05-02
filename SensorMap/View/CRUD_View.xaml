@@ -32,8 +32,14 @@
                 <hc:ElementGroup Orientation="Horizontal" Layout="Stack"
                                  Visibility="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                     <Button Name="Delete" ToolTip="Удалить"  Command="{Binding ElementName=root,Path=DataContext.DeleteCommand}"
-                            CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}, Path=Item}"
-                            hc:IconElement.Geometry="{StaticResource DeleteGeometry}" Style="{StaticResource ButtonDanger}"/>
+                            hc:IconElement.Geometry="{StaticResource DeleteGeometry}" Style="{StaticResource ButtonDanger}">
+                        <Button.CommandParameter>
+                            <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                <Binding RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type DataGridRow}}" Path="Item"/>
+                                <Binding RelativeSource="{RelativeSource FindAncestor, AncestorType={x:Type DataGrid}}" Path="ItemsSource"/>
+                            </MultiBinding>
+                        </Button.CommandParameter>
+                    </Button>
 
                     <Button Name="Save" ToolTip="Сохранить в БД"
                             Command="{Binding ElementName=root,Path=DataContext.SaveCommand}"
@@ -55,6 +61,11 @@
                         <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
                     <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
+                    <!--Триггер скрытия на время редактирования ячейки, для избегания ошибки по обновлению-->
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow},
+                                             Path=IsEditing}" Value="True">
                         <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
                 </DataTemplate.Triggers>
@@ -328,29 +339,10 @@
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
                                                                 <TextBlock Text="{Binding ItemCount}" Margin="10,0,0,0"
                                                                            Foreground="Gray" FontWeight="Normal"/>
-                                                                <hc:ButtonGroup Margin="10,0" x:Name="bGroup">
-                                                                    <Button x:Name="showScheme"
-                                                                            Visibility="Collapsed"
-                                                                            Width="40" Height="20"
-                                                                            hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"
-                                                                            hc:IconElement.Width="20" hc:IconElement.Height="13"
-                                                                            ToolTip="Показать электросхему"
-                                                                            />
-                                                                    <Button x:Name="loadScheme"
-                                                                            Width="40" Height="20"
-                                                                            hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
-                                                                            hc:IconElement.Width="20" hc:IconElement.Height="13"
-                                                                            ToolTip="Добавить электросхему"/>
-                                                                </hc:ButtonGroup>                                                                
                                                             </DockPanel>
                                                         </Expander.Header>
                                                         <ItemsPresenter />
                                                     </Expander>
-                                                    <ControlTemplate.Triggers>
-                                                        <DataTrigger Binding="{Binding Path=Files.Count}" Value="0">
-                                                            <Setter Property="Visibility" TargetName="showScheme" Value="Visible"/>
-                                                        </DataTrigger> 
-                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
@@ -413,6 +405,20 @@
                                             Command="{Binding ElementName=root,Path=DataContext.AddImage}"
                                             CommandParameter="{Binding}"/>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
+                                            <Button Name="showScheme"
+                                                        hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"
+                                                        hc:IconElement.Width="20" hc:IconElement.Height="13"
+                                                        Command="{Binding ElementName=root,Path=DataContext.ShowHelpfulFile}"
+                                                        CommandParameter="{Binding }"
+                                                        ToolTip="Показать электросхему">
+                                                
+                                            </Button>
+                                            <Button Name="loadScheme"
+                                                        hc:IconElement.Geometry="{StaticResource DropperGeometry}"
+                                                        hc:IconElement.Width="20" hc:IconElement.Height="13"
+                                                        Command="{Binding ElementName=root,Path=DataContext.AddHelpfulFile}"
+                                                        CommandParameter="{Binding }"
+                                                        ToolTip="Добавить электросхему"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
                                             <!--Триггер для скрытия кнопок из последней добавленной строки-->
@@ -421,6 +427,9 @@
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Files.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed" TargetName="showScheme"/>
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
@@ -440,7 +449,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Sensors}" Grid.Row="0"
+                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"

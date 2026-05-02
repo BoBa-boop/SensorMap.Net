@@ -46,13 +46,13 @@ namespace SensorMap.EF
 
         public override int SaveChanges()
         {
-            var s = base.SaveChanges();
+            
             var changesEntities = ChangeTracker.Entries().
                 Where(x=>x.State == EntityState.Modified ||
                         x.State == EntityState.Added||
                         x.State == EntityState.Deleted)
                 .ToList();
-
+            var s = base.SaveChanges();
             foreach (var entity in changesEntities)
             {
                 foreach (var prop in entity.Properties.Where(p=>p.IsModified))

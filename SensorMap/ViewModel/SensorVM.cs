@@ -80,18 +80,7 @@ namespace SensorMap.ViewModel
                 if (mech == null) return;
                 _navigation.NavigateTo<MechanismVM>(mech);
             });
-            AddFiles = new RelayCommand<Sensor>((s) =>
-            {
-                string[] paths = _fileManagment.OpenFileDialog();
-                foreach (var path in paths)
-                {
-                    s.Files.Add(new HelpfulFile()
-                    {
-                        NameFile = path,
-                        ImageFile = this.imgManag.ConvertToByte(_fileManagment.GetIconFile(path))
-                    });
-                }
-            });
+            AddFiles = new RelayCommand<Sensor>((s) => { fileManagment.AddHelpfulFile(imgManag, s,true);  });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
                 SelectedNode.Files.Remove(file);
@@ -114,10 +103,7 @@ namespace SensorMap.ViewModel
                     Logger.Error(ex.Message);
                 }
             });
-            OpenFile = new RelayCommand<HelpfulFile>((file) =>
-            {
-                Process.Start("explorer.exe", "/select,\"" + Path.GetFullPath(file.NameFile) + "\"");
-            });
+            OpenFile = new RelayCommand<HelpfulFile>((file) => { fileManagment.OpenFileInExplorer(file.NameFile); });
             SaveFiles = new RelayCommand(() =>
             {
                 try

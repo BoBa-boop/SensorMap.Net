@@ -32,6 +32,7 @@ namespace SensorMap.ViewModel
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private ITempImage _imgControl;
+        private readonly IFileManagment _fileManagment;
         private Sector? currentSector; 
         private Mechanism? currentMech;
         private Sensor? _curSensor;
@@ -106,6 +107,7 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Sensor>? SensorList { get; set; }
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
             IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
+            IFileManagment fileManagment,
             Mechanism curMechanism = null )
         {
             Navigation = _nav;
@@ -113,7 +115,7 @@ namespace SensorMap.ViewModel
             _service = service;
             _imgControl = imageControl;
             _appDbContextFactory = appDbContextFactory;
-            
+            _fileManagment = fileManagment;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
                 GetDataFromDB(_dbContext);
@@ -212,9 +214,16 @@ namespace SensorMap.ViewModel
                 if (obj==null || obj is Mechanism mech && mech.SensorsAssig!=null && mech.SensorsAssig.Count() == 0) return false; 
                 return true;
             });
+            ShowScheme = new RelayCommand<object>((obj) =>
+            {
+                if (obj is Mechanism mech)
+                {
+                    if (mech == null || mech.Files == null || !mech.Files.Any()) return;
+                    _fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
+                }
+            });
 
-
-            _service.WhenAnyValue(x => x.IsEditMode)
+                _service.WhenAnyValue(x => x.IsEditMode)
                .BindTo(this, x => x.IsEditMode);
             _undoRedoManager.WhenAnyValue(x => x.CanUndo)
             .Subscribe(_ => 
@@ -240,20 +249,19 @@ namespace SensorMap.ViewModel
 
         private async void GetDataFromDB(EF.AppDBContext _dbContext)
         {
-            var querySector = await _dbContext.Sectors.Include(x => x.Mechanisms)
-                                                      .ThenInclude(x => x.SensorsAssig)
-                                                      .ThenInclude(x => x.Sensor).ThenInclude(x => x.SensorType).ToListAsync();
-            var queryTypes = await _dbContext.SensorTypes.AsNoTracking().ToListAsync();
-            var queryDevice = await _dbContext.Devices.AsNoTracking().ToListAsync();
-            var querySensors = await _dbContext.Sensors.AsNoTracking().Include(x=>x.SensorType).ToListAsync();
+            var querySector = await _dbContext.Sectors.ToListAsync();
+            var queryMech = await _dbContext.Mechanisms.Include(m => m.Files).Include(m=>m.SensorsAssig).AsSplitQuery().ToListAsync();
+            var queryTypes = await _dbContext.SensorTypes.ToListAsync();
+            var queryDevice = await _dbContext.Devices.ToListAsync();
+            var querySensors = await _dbContext.Sensors.Include(x=>x.SensorType).ToListAsync();
             
             
             sensorTypes = new ObservableCollection<SensorType>(queryTypes);
-            Sectors = new ObservableCollection<Sector>(querySector);
             SensorList = new ObservableCollection<Sensor>(querySensors);
             Devices = new ObservableCollection<Device>(queryDevice);
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorList, filter);
+            Sectors = new ObservableCollection<Sector>(querySector);
         }
 
         private bool CanExecuteAddSensor(object selectedSensor)
@@ -317,6 +325,7 @@ namespace SensorMap.ViewModel
         }
         public ICommand SaveSensorPlace { get; }
         public ICommand ShowSensorMechanism { get; }
+        public ICommand ShowScheme { get; }
         public ICommand NavigateToSectors { get; }
 
         /// <summary>

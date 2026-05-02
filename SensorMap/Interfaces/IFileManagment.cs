@@ -1,4 +1,7 @@
-﻿using System;
+﻿using SensorMap.EF;
+using SensorMap.Model;
+using SensorMap.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,11 +17,14 @@ namespace SensorMap.Interfaces
         /// Открыть диалоговое окно
         /// </summary>
         /// <returns>Пути файлов</returns>
-        string[] OpenFileDialog();
+        string[] OpenFileDialog(bool multiselect = false);
         /// <summary>
         /// Получить иконку файла
         /// </summary>
         /// <returns>Картинка иконки</returns>
         ImageSource GetIconFile(string path);
+
+        bool AddHelpfulFile(ITempImage imgManag,object Entity, bool multiselect = false);
+        void OpenFileInExplorer(string path);
     }
 }

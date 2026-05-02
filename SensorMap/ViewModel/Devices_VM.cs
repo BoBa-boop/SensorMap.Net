@@ -86,24 +86,12 @@ namespace SensorMap.ViewModel
             DeviceTree = new TreeViewCollection<string, Device>("DeviceType.Name", new(_deviceType.Select(x => x.Name).ToList()), Device, filter);
             _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode);
-            AddFiles = new RelayCommand<Device>((d) =>
-            {
-                string[] paths = _fileManagment.OpenFileDialog();
-                foreach (var path in paths)
-                {
-                    d.Files.Add(new HelpfulFile()
-                    {
-                        NameFile = path,
-                        ImageFile = _imgManag.ConvertToByte(_fileManagment.GetIconFile(path))
-                    });
-                }
-            });
+            AddFiles = new RelayCommand<Device>((d) => { fileManagment.AddHelpfulFile(_imgManag,d,true); });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
                 SelectedDevice.Files.Remove(file);
                 try
                 {
-
                     //_dbContext.Remove(SelectedNode);
                     _dbContext.SaveChanges();
                     Growl.Success(new GrowlInfo
@@ -119,11 +107,8 @@ namespace SensorMap.ViewModel
                     Growl.Error("Ошибка при удаление путей!");
                     Logger.Error(ex.Message);
                 }
-            });
-            OpenFile = new RelayCommand<HelpfulFile>((file) =>
-            {
-                Process.Start("explorer.exe", "/select,\""+Path.GetFullPath(file.NameFile) + "\"");
-            });
+            }, (f) => { return f != null; });
+            OpenFile = new RelayCommand<HelpfulFile>((file) => { fileManagment.OpenFileInExplorer(file.NameFile);});
             SaveFiles = new RelayCommand(() =>
             {
                 try

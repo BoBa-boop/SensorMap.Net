@@ -18,6 +18,7 @@ namespace SensorMap.Model
         private byte[]? _image;
         private Device? _device;
         private Sector? sector;
+        private ObservableCollection<HelpfulFile> files = new ObservableCollection<HelpfulFile>();
 
         [Key] public int Id { get; set; }
         [MaxLength(250)]
@@ -69,7 +70,7 @@ namespace SensorMap.Model
         }
 
         public virtual ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
-        public virtual ObservableCollection<HelpfulFile>? Files { get; set; }
+        public virtual ObservableCollection<HelpfulFile> Files { get => files; set => files = value; }
         public virtual int SectorID { get; set; }
         public virtual int? DeviceID { get; set; }
 

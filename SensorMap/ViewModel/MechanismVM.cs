@@ -35,7 +35,7 @@ namespace SensorMap.ViewModel
         private readonly IFileManagment _fileManagment;
         private Sector? currentSector; 
         private Mechanism? currentMech;
-        private Sensor? _curSensor;
+        private SensorAssignments _curSensor;
         private bool isEditMode;
         private bool _isShowSensors;
         private bool _hasChanges;
@@ -70,7 +70,7 @@ namespace SensorMap.ViewModel
                 }
             }
         }
-        [Reactive] public Sensor? CurrentSensor
+        [Reactive] public SensorAssignments CurrentSensor
         {
             get => _curSensor;
             set
@@ -205,6 +205,7 @@ namespace SensorMap.ViewModel
                     MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, mechanism);
                     window.DataContext = mechSensorsVM;
                     mechSensorsVM.IsEditMode = IsEditMode;
+                    mechSensorsVM.WhenAnyValue(x => x.SelectedSensor).BindTo(this,x=>x.CurrentSensor);
                     window.ShowDialog();
                     if(mechSensorsVM.HasChanges) HasChanges=true;
 
@@ -243,6 +244,10 @@ namespace SensorMap.ViewModel
                 {
                     _undoRedoManager.Do(command);
                 }
+            });
+            SetCurrentSensorCommand = new RelayCommand<object>((obj) =>
+            {
+                MessageBox.Show("");
             });
 
         }
@@ -343,6 +348,6 @@ namespace SensorMap.ViewModel
         public ICommand DragSensorCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
-        
+        public ICommand SetCurrentSensorCommand { get; }
     }
 }

@@ -37,7 +37,6 @@ namespace SensorMap.ViewModel
             get { return _sensor; }
             set 
             {
-                _sensor = value;
                 this.RaiseAndSetIfChanged(ref _sensor, value);
             }
         }

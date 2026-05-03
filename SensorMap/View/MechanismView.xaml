@@ -178,6 +178,7 @@
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorCommand="{Binding RemoveSensorCommand}"
                                          IsEditMode="{Binding IsEditMode}"
+                                         CurrentSensorCommand="{Binding SetCurrentSensorCommand}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
                 </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>

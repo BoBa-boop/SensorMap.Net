@@ -68,6 +68,20 @@ namespace SensorMap.CustomControls
             DependencyProperty.Register("IsHideAddresses", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(true));
 
 
+        /// <summary>
+        /// Срабатывает от выбора датчика CustomSensor и передает в MechanismVM
+        /// </summary>
+        public ICommand CurrentSensorCommand
+        {
+            get { return (ICommand)GetValue(SetCurrentSensorProperty); }
+            set { SetValue(SetCurrentSensorProperty, value); }
+        }
+
+        public static readonly DependencyProperty SetCurrentSensorProperty =
+            DependencyProperty.Register("CurrentSensorCommand", typeof(ICommand), typeof(SensorDragDrop));
+
+
+
 
 
         #region add-remove sensor

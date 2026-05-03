@@ -37,7 +37,10 @@
                 Value="{Binding RemoveSensorEvent,
                 RelativeSource={RelativeSource Mode=FindAncestor, 
                 AncestorType={x:Type myCC:SensorDragDrop}}}"/>
-        
+        <Setter Property="CommandSetSelectedSensor"
+                Value="{Binding CurrentSensorCommand,
+                RelativeSource={RelativeSource Mode=FindAncestor, 
+                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">

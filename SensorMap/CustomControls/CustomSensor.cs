@@ -142,7 +142,19 @@ namespace SensorMap.CustomControls
 
 
 
-        public static CustomSensor SelectedSensor;
+        public static CustomSensor SelectedCustomSensor;
+
+        public ICommand CommandSetSelectedSensor
+        {
+            get { return (ICommand)GetValue(CommandSetSelectedSensorProperty); }
+            set { SetValue(CommandSetSelectedSensorProperty, value); }
+        }
+        public static readonly DependencyProperty CommandSetSelectedSensorProperty =
+            DependencyProperty.Register("CommandSetSelectedSensor", typeof(ICommand),
+                typeof(CustomSensor),
+                new PropertyMetadata(null));
+
+
 
         #endregion
 
@@ -234,7 +246,7 @@ namespace SensorMap.CustomControls
 
         private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if(SelectedSensor!=null)
+            if(SelectedCustomSensor!=null)
             {
                 if (DragInProgress)                
                 {
@@ -312,19 +324,20 @@ namespace SensorMap.CustomControls
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (SelectedSensor != null && SelectedSensor != this)
+            if (SelectedCustomSensor != null && SelectedCustomSensor != this)
             {
-                SelectedSensor.IsSelected = false;
-                SelectedSensor.CustBorderBrush = Brushes.Black;
+                SelectedCustomSensor.IsSelected = false;
+                SelectedCustomSensor.CustBorderBrush = Brushes.Black;
             }
             if (MouseHitType!=HitType.None)
             {
                 LastPoint = Mouse.GetPosition(_canvas);
                 DragInProgress = true;
             }
-            SelectedSensor = this;
+            SelectedCustomSensor = this;
             this.CustBorderBrush = Brushes.ForestGreen;
-            SelectedSensor.IsSelected = true;
+            SelectedCustomSensor.IsSelected = true;
+            CommandSetSelectedSensor.Execute(SelectedCustomSensor);
             this.Focus();
         }
 

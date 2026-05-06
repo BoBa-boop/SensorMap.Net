@@ -10,6 +10,7 @@ using SensorMap.Services;
 using SensorMap.ViewModel;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Drawing;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,6 +52,16 @@ namespace SensorMap.CustomControls
         private Image? _image;
 
         #region Dependency Properties
+
+
+        public bool IsMultiSelection
+        {
+            get { return (bool)GetValue(IsMultiSelectionProperty); }
+            set { SetValue(IsMultiSelectionProperty, value); }
+        }
+        public static readonly DependencyProperty IsMultiSelectionProperty =
+            DependencyProperty.Register("IsMultiSelection", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(0));
+
 
         public bool IsEditMode
         {
@@ -182,6 +193,7 @@ namespace SensorMap.CustomControls
         #endregion
 
         private ITransformObject _transformObject;
+        private Rect SelectionRect;
         private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
@@ -228,6 +240,7 @@ namespace SensorMap.CustomControls
         {
             _initialMousePosition = new Point();
             Cursor = Grab;
+            SelectionRect = new Rect();
             
         }
         #region ItemsSource events
@@ -346,7 +359,7 @@ namespace SensorMap.CustomControls
         private void _canvas_MouseMove(object sender, MouseEventArgs e)
         {
             Point mousePosition = e.GetPosition(_canvas);
-            if (e.RightButton == MouseButtonState.Pressed && _initialMousePosition.X > 0)
+            if (e.LeftButton == MouseButtonState.Released && e.RightButton == MouseButtonState.Pressed && _initialMousePosition.X > 0)
             {
                 
                 if (_viewMatrixTransform == null) return;
@@ -410,9 +423,14 @@ namespace SensorMap.CustomControls
                     _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
                 }
             }
-        }
-            //Coord = new Point(Math.Round(Mouse.GetPosition(_canvas).X,0), Math.Round(Mouse.GetPosition(_canvas).Y, 0));
+            if(e.LeftButton==MouseButtonState.Pressed && IsMultiSelection)
+            {
+                double offset_x = mousePosition.X - _initialMousePosition.X;
+                double offset_y = mousePosition.Y - _initialMousePosition.Y;
+                SelectionRect = new Rect(_initialMousePosition.X,_initialMousePosition.Y,this.ActualWidth + offset_x,this.ActualHeight + offset_y);
 
+            }
+        }            
         
         #region Zoom
         private void _canvas_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -509,6 +527,10 @@ namespace SensorMap.CustomControls
             {
                 _initialMousePosition = e.GetPosition(_canvas);
                 parentSize = RenderSize;
+            }
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                _initialMousePosition = e.GetPosition(_canvas);
             }
         }
 

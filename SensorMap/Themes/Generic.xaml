@@ -37,10 +37,10 @@
                 Value="{Binding RemoveSensorEvent,
                 RelativeSource={RelativeSource Mode=FindAncestor, 
                 AncestorType={x:Type myCC:SensorDragDrop}}}"/>
-        <Setter Property="CommandSetSelectedSensor"
-                Value="{Binding CurrentSensorCommand,
-                RelativeSource={RelativeSource Mode=FindAncestor, 
-                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
+        <!--<Setter Property="SelectedSensor"
+             Value="{Binding Path=SelectedCustomSensor,
+             RelativeSource={RelativeSource Mode=FindAncestor, 
+             AncestorType={x:Type myCC:SensorDragDrop}}}"/>-->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
@@ -74,6 +74,12 @@
                                     <Style TargetType="Rectangle">
                                         <Setter Property="Fill" Value="Transparent"/>
                                         <Setter Property="StrokeThickness" Value="2"/>
+                                        <Setter Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="1.2" ScaleY="1.2"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="RenderTransformOrigin" Value="0.5, 0.5"/>
                                         <Setter Property="Stroke">
                                             <Setter.Value>
                                                 <DrawingBrush Viewport="0,0,13,13" ViewportUnits="Absolute" TileMode="Tile">

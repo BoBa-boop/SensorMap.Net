@@ -20,6 +20,8 @@ namespace SensorMap.Model
         private Sector? sector;
         private ObservableCollection<HelpfulFile> files = new ObservableCollection<HelpfulFile>();
 
+        
+
         [Key] public int Id { get; set; }
         [MaxLength(250)]
         [Reactive] public string Name
@@ -80,5 +82,6 @@ namespace SensorMap.Model
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
+
     }
 }

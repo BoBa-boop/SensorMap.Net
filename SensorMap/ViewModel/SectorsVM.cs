@@ -67,7 +67,7 @@ namespace SensorMap.ViewModel
                     if (!string.IsNullOrWhiteSpace(SearchText))
                     {
                         var result = from sector in tempCollection
-                                     where sector.Name.ToLower().Contains(SearchText) ||
+                                     where sector.Name.ToLower().Contains(SearchText.ToLower()) ||
                                      sector.Mechanisms != null && sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
                                      select sector;
                         Sectors = new(result);

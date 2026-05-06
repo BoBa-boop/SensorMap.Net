@@ -144,15 +144,25 @@ namespace SensorMap.CustomControls
 
         public static CustomSensor SelectedCustomSensor;
 
-        public ICommand CommandSetSelectedSensor
+        public CustomSensor SelectedSensor
         {
-            get { return (ICommand)GetValue(CommandSetSelectedSensorProperty); }
-            set { SetValue(CommandSetSelectedSensorProperty, value); }
+            get { return (CustomSensor)GetValue(SelectedSensorProperty); }
+            set { SetValue(SelectedSensorProperty, value); }
         }
-        public static readonly DependencyProperty CommandSetSelectedSensorProperty =
-            DependencyProperty.Register("CommandSetSelectedSensor", typeof(ICommand),
+        public static readonly DependencyProperty SelectedSensorProperty =
+            DependencyProperty.Register("SelectedSensor", typeof(CustomSensor),
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
+
+        //private static void SelectedSensorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        //{
+        //    var control = (CustomSensor)d;
+        //    if (control.IsSelected)
+        //    {
+        //        MessageBox.Show("asdasd");
+        //    }
+        //}
+
 
 
 
@@ -326,8 +336,9 @@ namespace SensorMap.CustomControls
         {
             if (SelectedCustomSensor != null && SelectedCustomSensor != this)
             {
+                SelectedSensor = null;
                 SelectedCustomSensor.IsSelected = false;
-                SelectedCustomSensor.CustBorderBrush = Brushes.Black;
+                //SelectedCustomSensor.CustBorderBrush = Brushes.Black;
             }
             if (MouseHitType!=HitType.None)
             {
@@ -335,9 +346,9 @@ namespace SensorMap.CustomControls
                 DragInProgress = true;
             }
             SelectedCustomSensor = this;
-            this.CustBorderBrush = Brushes.ForestGreen;
+            SelectedSensor = this;
             SelectedCustomSensor.IsSelected = true;
-            CommandSetSelectedSensor.Execute(SelectedCustomSensor);
+            //SelectedSensor = SelectedCustomSensor.SensorData;
             this.Focus();
         }
 
@@ -345,6 +356,7 @@ namespace SensorMap.CustomControls
         
         private void SelectedChanged()
         {
+            SelectedCustomSensor = this.IsSelected ? this:null;
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
             MouseHitType = IsSelected ? MouseHitType : HitType.None;
             this.Cursor = _transformService.GetCursorForHitType(MouseHitType);

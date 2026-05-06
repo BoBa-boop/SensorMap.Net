@@ -67,6 +67,7 @@
                 <Button Content="Открыть электросхему" Command="{Binding ShowScheme}" CommandParameter="{Binding CurrentMech}"/>
             </hc:SimpleStackPanel>
             <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
+                <ScrollViewer PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
                 <StackPanel Orientation="Vertical" Margin="7">
                     <Expander Background="{StaticResource TitleBrush}"
                               Foreground="WhiteSmoke"
@@ -166,7 +167,8 @@
                         
                     </Expander>
                 </StackPanel>
-        </Border>
+                </ScrollViewer>
+            </Border>
             <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" ClipToBounds="True">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -177,8 +179,8 @@
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorCommand="{Binding RemoveSensorCommand}"
+                                         SelectedCustomSensor="{Binding CurrentSensor,UpdateSourceTrigger=PropertyChanged}"
                                          IsEditMode="{Binding IsEditMode}"
-                                         CurrentSensorCommand="{Binding SetCurrentSensorCommand}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
                 </Border>
                 <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>

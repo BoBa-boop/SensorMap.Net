@@ -170,10 +170,10 @@
                 </ScrollViewer>
             </Border>
             <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" ClipToBounds="True">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="20"/>
-            </Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="20"/>
+                </Grid.RowDefinitions>
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
@@ -183,7 +183,10 @@
                                          IsEditMode="{Binding IsEditMode}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
                 </Border>
-                <TextBlock Grid.Row="1" Text="{Binding ElementName=ccSensorMap,Path=Coord,UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <ToggleButton Content="Выбрать" Margin="20,0,0,0"
+                                  IsChecked="{Binding ElementName=ccSensorMap,Path=IsMultiSelection}"/>
+                </StackPanel>
             </Grid>
     </Grid>
     </hc:TransitioningContentControl>

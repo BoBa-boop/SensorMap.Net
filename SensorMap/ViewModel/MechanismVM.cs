@@ -78,7 +78,6 @@ namespace SensorMap.ViewModel
                 if (value != null)
                 {
                     this.RaiseAndSetIfChanged(ref _curSensor, value);
-                    _curSensor = value;
                 }
             }
         }
@@ -219,9 +218,16 @@ namespace SensorMap.ViewModel
             {
                 if (obj is Mechanism mech)
                 {
-                    if (mech == null || mech.Files == null || !mech.Files.Any()) return;
                     _fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
                 }
+            },(obj) => 
+            {
+                if (obj == null) return false;
+                var mech = obj as Mechanism;
+                bool SensorsNotNull = mech!.SensorsAssig != null && mech.SensorsAssig.Any();
+                bool FilesNotNull = mech.Files != null && mech.Files.Any();
+                if (SensorsNotNull && FilesNotNull) return true;
+                return false;
             });
 
                 _service.WhenAnyValue(x => x.IsEditMode)
@@ -244,10 +250,6 @@ namespace SensorMap.ViewModel
                 {
                     _undoRedoManager.Do(command);
                 }
-            });
-            SetCurrentSensorCommand = new RelayCommand<object>((obj) =>
-            {
-                MessageBox.Show("");
             });
 
         }

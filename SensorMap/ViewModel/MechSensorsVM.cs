@@ -14,6 +14,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace SensorMap.ViewModel
@@ -25,7 +26,6 @@ namespace SensorMap.ViewModel
         private ITempImage _imageControl;
         private bool isEditMode;
         private bool _hasChanges;
-
         [Reactive]public Mechanism Mechanism
         {
             get { return _mechanism; }
@@ -74,6 +74,7 @@ namespace SensorMap.ViewModel
                     browser.ShowDialog();
                 }
             });
+            
         }
 
         public ICommand AddImage { get; set; }

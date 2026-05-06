@@ -71,14 +71,36 @@ namespace SensorMap.CustomControls
         /// <summary>
         /// Срабатывает от выбора датчика CustomSensor и передает в MechanismVM
         /// </summary>
-        public ICommand CurrentSensorCommand
+        public SensorAssignments SelectedCustomSensor
         {
-            get { return (ICommand)GetValue(SetCurrentSensorProperty); }
-            set { SetValue(SetCurrentSensorProperty, value); }
+            get { return (SensorAssignments)GetValue(SelectedCustomSensorProperty); }
+            set { SetValue(SelectedCustomSensorProperty, value); }
         }
 
-        public static readonly DependencyProperty SetCurrentSensorProperty =
-            DependencyProperty.Register("CurrentSensorCommand", typeof(ICommand), typeof(SensorDragDrop));
+        public static readonly DependencyProperty SelectedCustomSensorProperty =
+            DependencyProperty.Register("SelectedCustomSensor", typeof(SensorAssignments), typeof(SensorDragDrop),new PropertyMetadata(null,SelectedChanged));
+
+        private static void SelectedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (SensorDragDrop)d;
+            SensorAssignments sensor = (SensorAssignments)e.NewValue;
+            SensorAssignments oldSensor = (SensorAssignments)e.OldValue;
+            if (control != null && control._canvas!=null)
+            {
+                var elementToUnSelect = control._canvas.Children
+                    .OfType<CustomSensor>()
+                    .FirstOrDefault(x => x.SensorData == oldSensor);
+
+                var elementToSelect = control._canvas.Children
+                    .OfType<CustomSensor>()
+                    .FirstOrDefault(x => x.SensorData == sensor);
+
+                elementToSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                elementToUnSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                CustomSensor.SelectedCustomSensor = elementToSelect;
+                //после закрытия окна выбранный объект остается, необходимо выбрать его и после сбросить
+            }
+        }
 
 
 

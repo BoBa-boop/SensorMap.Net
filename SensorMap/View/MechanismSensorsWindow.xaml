@@ -3,8 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:hc="https://handyorg.github.io/handycontrol"
+           xmlns:valid="clr-namespace:SensorMap.Model.Validation"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SensorMap.View"
+           xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
            xmlns:mv="clr-namespace:SensorMap.ViewModel"
         mc:Ignorable="d"
            d:DataContext="{d:DesignInstance mv:MechSensorsVM}"
@@ -21,7 +23,7 @@
                    Margin="5,0"
                    Grid.Row="0"/>
         <DataGrid ItemsSource="{Binding Mechanism.SensorsAssig}" AutoGenerateColumns="False" CanUserAddRows="False"
-                  SelectedItem="{Binding SelectedSensor}" Grid.Row="1">
+                  SelectedItem="{Binding SelectedSensor}" Grid.Row="1" >
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Sensor.Name}" MinWidth="100" Header="Название" IsReadOnly="True"/>
                 <DataGridTextColumn Binding="{Binding Address}" MinWidth="100" Header="Адрес"/>

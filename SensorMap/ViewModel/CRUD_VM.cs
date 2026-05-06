@@ -110,7 +110,8 @@ namespace SensorMap.ViewModel
                             dBContext.Entry(original).CurrentValues.SetValues(arg);
                         else
                         {
-                            dBContext.Entry(original).State = EntityState.Detached;
+                            if(original!=null)
+                                dBContext.Entry(original).State = EntityState.Detached;
                             dBContext.Update(arg);
                         }
                         dBContext.SaveChanges();

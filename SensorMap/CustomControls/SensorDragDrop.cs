@@ -60,7 +60,7 @@ namespace SensorMap.CustomControls
             set { SetValue(IsMultiSelectionProperty, value); }
         }
         public static readonly DependencyProperty IsMultiSelectionProperty =
-            DependencyProperty.Register("IsMultiSelection", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(0));
+            DependencyProperty.Register("IsMultiSelection", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
 
 
         public bool IsEditMode
@@ -193,7 +193,8 @@ namespace SensorMap.CustomControls
         #endregion
 
         private ITransformObject _transformObject;
-        private Rect SelectionRect;
+        private List<SensorAssignments> tempSelectedSensorsCollection;
+        private System.Windows.Shapes.Rectangle SelectionRect;
         private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
@@ -240,7 +241,8 @@ namespace SensorMap.CustomControls
         {
             _initialMousePosition = new Point();
             Cursor = Grab;
-            SelectionRect = new Rect();
+            _canvas.Children.Remove(SelectionRect);
+            SelectionRect = new System.Windows.Shapes.Rectangle();
             
         }
         #region ItemsSource events
@@ -423,12 +425,9 @@ namespace SensorMap.CustomControls
                     _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
                 }
             }
-            if(e.LeftButton==MouseButtonState.Pressed && IsMultiSelection)
+            if(e.LeftButton==MouseButtonState.Pressed && IsMultiSelection && _initialMousePosition.X > 0)
             {
-                double offset_x = mousePosition.X - _initialMousePosition.X;
-                double offset_y = mousePosition.Y - _initialMousePosition.Y;
-                SelectionRect = new Rect(_initialMousePosition.X,_initialMousePosition.Y,this.ActualWidth + offset_x,this.ActualHeight + offset_y);
-
+                UpdateSectionRectangle(mousePosition);
             }
         }            
         
@@ -523,17 +522,22 @@ namespace SensorMap.CustomControls
         #endregion
         private void _canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            //перемещение по карте
             if (e.ChangedButton == MouseButton.Right)
             {
                 _initialMousePosition = e.GetPosition(_canvas);
                 parentSize = RenderSize;
             }
-            if (e.ChangedButton == MouseButton.Left)
+            //выбор элементов на карте
+            if (e.ChangedButton == MouseButton.Left && IsMultiSelection)
             {
                 _initialMousePosition = e.GetPosition(_canvas);
+                Cursor = Cursors.Cross;
+                tempSelectedSensorsCollection = new List<SensorAssignments>();
+                CreateSelectionRectangle();
+                
             }
         }
-
         #endregion
         private void UIElementSensor_ShowMoreInfo(object sender, MouseButtonEventArgs e)
         {
@@ -600,8 +604,78 @@ namespace SensorMap.CustomControls
                 offsetX = _viewMatrixTransform.Matrix.OffsetX;
             }
         }
-        
-       
+        /// <summary>
+        /// Получить датчики находящиеся в диапазоне выделения
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        private List<SensorAssignments> GetSensorsInSelectionRectangle(Point pos)
+        {
+            double left = Math.Min(_initialMousePosition.X, pos.X);
+            double right = Math.Max(_initialMousePosition.X, pos.X);
+            double top = Math.Min(_initialMousePosition.Y, pos.Y);
+            double bottom = Math.Max(_initialMousePosition.Y, pos.Y);
+            var colletionSensors = (from sensors in ItemsSource
+                                    where sensors.X >= left && sensors.X <= right
+                                    where sensors.Y >= top && sensors.Y <= bottom
+                                    select sensors).ToList();
+            foreach (var sensor in colletionSensors)
+            {
+                if (_canvas != null)
+                {
+                    var elementToSelect = _canvas.Children
+                        .OfType<CustomSensor>()
+                        .FirstOrDefault(x => x.SensorData == sensor);
+
+                    elementToSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                }
+            }
+            foreach (var sensor in tempSelectedSensorsCollection.Except(colletionSensors))
+            {
+                if (_canvas != null)
+                {
+                    var elementToSelect = _canvas.Children
+                        .OfType<CustomSensor>()
+                        .FirstOrDefault(x => x.SensorData == sensor);
+
+                    elementToSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                }
+            }
+            return colletionSensors;
+        }
+        /// <summary>
+        /// Создать прямоугольник выделения
+        /// </summary>
+        private void CreateSelectionRectangle()
+        {
+            SelectionRect = new System.Windows.Shapes.Rectangle
+            {
+                Width = 0,
+                Height = 0,
+                Stroke = Brushes.Blue,
+                StrokeDashArray = new DoubleCollection { 4, 2 },//пунктир
+                Fill = new SolidColorBrush { Color = Colors.LightCyan, Opacity = 0.4 },
+                StrokeThickness = 1.5
+            };
+            Canvas.SetLeft(SelectionRect, _initialMousePosition.X);
+            Canvas.SetTop(SelectionRect, _initialMousePosition.Y);
+            _canvas.Children.Add(SelectionRect);
+        }
+        /// <summary>
+        /// Обновлять прямоугольник выделения
+        /// </summary>
+        /// <param name="pos"></param>
+        private void UpdateSectionRectangle(Point pos)
+        {
+            double offset_x = Math.Abs(pos.X - _initialMousePosition.X);
+            double offset_y = Math.Abs(pos.Y - _initialMousePosition.Y);
+            SelectionRect.Width = offset_x;
+            SelectionRect.Height = offset_y;
+            Canvas.SetLeft(SelectionRect, Math.Min(pos.X, _initialMousePosition.X));
+            Canvas.SetTop(SelectionRect, Math.Min(pos.Y, _initialMousePosition.Y));
+            tempSelectedSensorsCollection = GetSensorsInSelectionRectangle(pos);
+        }
+
 
     }
 }

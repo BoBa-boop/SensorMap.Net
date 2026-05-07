@@ -89,6 +89,18 @@ namespace SensorMap.CustomControls
             DependencyProperty.Register("IsEditMode", typeof(bool), typeof(CustomSensor),
                 new PropertyMetadata(false,OnIsEditPropertyChanged));
 
+
+        public bool IsMultiSelection
+        {
+            get { return (bool)GetValue(IsMultiSelectionProperty); }
+            set { SetValue(IsMultiSelectionProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsMultiSelectionProperty =
+            DependencyProperty.Register("IsMultiSelection", typeof(bool),
+                typeof(CustomSensor), new PropertyMetadata(false));
+        
+
         private static void OnIsEditPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (CustomSensor)d;
@@ -227,7 +239,7 @@ namespace SensorMap.CustomControls
 
         private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if(this.IsSelected && !DragInProgress)
+            if(this.IsSelected && !DragInProgress && !IsMultiSelection)
             {
                 Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
                 MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
@@ -358,8 +370,15 @@ namespace SensorMap.CustomControls
         {
             SelectedCustomSensor = this.IsSelected ? this:null;
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
-            MouseHitType = IsSelected ? MouseHitType : HitType.None;
-            this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
+            if (!IsMultiSelection)
+            {
+                MouseHitType = IsSelected ? MouseHitType : HitType.None;
+                this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
+            }
+            else
+            {
+                Cursor = System.Windows.Input.Cursors.Cross;
+            }
         }
     }
 }

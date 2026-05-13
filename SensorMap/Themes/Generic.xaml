@@ -30,10 +30,21 @@
 
 
     <Style TargetType="{x:Type myCC:CustomSensor}">
+        
+        <Setter Property="IsSelectionRectActive"
+                Value="{Binding IsSelectionRectEnable,
+                Mode=OneWay,    
+                RelativeSource={RelativeSource Mode=FindAncestor, 
+                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
+        <Setter Property="IsDragging" 
+                Value="{Binding IsCustomSensorDragging,
+                Mode=OneWayToSource,
+                RelativeSource={RelativeSource Mode=FindAncestor, 
+                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
         <Setter Property="TransformCommand" 
                 Value="{Binding DataContext.TransformSensorCommand,
                 RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-        <Setter Property="SensorCommand" 
+        <Setter Property="DeleteSensorCommand" 
                 Value="{Binding RemoveSensorEvent,
                 RelativeSource={RelativeSource Mode=FindAncestor, 
                 AncestorType={x:Type myCC:SensorDragDrop}}}"/>

@@ -25,7 +25,17 @@
         <DataGrid ItemsSource="{Binding Mechanism.SensorsAssig}" AutoGenerateColumns="False" CanUserAddRows="False"
                   SelectedItem="{Binding SelectedSensor}" Grid.Row="1" >
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Sensor.Name}" MinWidth="100" Header="Название" IsReadOnly="True"/>
+                <DataGridComboBoxColumn TextBinding="{Binding Sensor.Name}" DisplayMemberPath="Sensor.Name" MinWidth="100" Header="Название">
+                    <DataGridComboBoxColumn.EditingElementStyle>
+                        <Style TargetType="ComboBox"><!--не отображает имя. Необходимо показывать список датчиков для их изменения-->
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
+                            <Setter Property="SelectedItem" Value="{Binding Sensor,UpdateSourceTrigger=PropertyChanged}"/>
+                            <Setter Property="SelectedValue" Value="{Binding Sensor,UpdateSourceTrigger=PropertyChanged}"/>
+                            <Setter Property="ItemsSource" Value="{Binding Mechanism.SensorsAssig}"/>
+                        </Style>
+                    </DataGridComboBoxColumn.EditingElementStyle>
+                </DataGridComboBoxColumn>
                 <DataGridTextColumn Binding="{Binding Address}" MinWidth="100" Header="Адрес"/>
                 <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
                 <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>

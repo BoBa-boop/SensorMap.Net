@@ -125,9 +125,6 @@ namespace SensorMap.CustomControls
             var sensor = (CustomSensor)d;
             var newRect = (Rect)e.NewValue;
             sensor.CustomBounds = newRect;
-            //// Обновляем Width/Height если используете отдельные свойства
-            ////sensor.Width = newRect.Width;
-            ////sensor.Height = newRect.Height;
         }
         
         public ICommand TransformCommand
@@ -142,19 +139,15 @@ namespace SensorMap.CustomControls
         /// <summary>
         /// Команда от CustomSensor
         /// </summary>
-        public ICommand SensorCommand
+        public ICommand DeleteSensorCommand
         {
             get { return (ICommand)GetValue(SensorCommandProperty); }
             set { SetValue(SensorCommandProperty, value); }
         }
         public static readonly DependencyProperty SensorCommandProperty =
-            DependencyProperty.Register("SensorCommand", typeof(ICommand),
+            DependencyProperty.Register("DeleteSensorCommand", typeof(ICommand),
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
-
-
-
-        public static CustomSensor SelectedCustomSensor;
 
         public CustomSensor SelectedSensor
         {
@@ -166,15 +159,24 @@ namespace SensorMap.CustomControls
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
 
-        //private static void SelectedSensorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        //{
-        //    var control = (CustomSensor)d;
-        //    if (control.IsSelected)
-        //    {
-        //        MessageBox.Show("asdasd");
-        //    }
-        //}
 
+        public bool IsDragging
+        {
+            get { return (bool)GetValue(IsDraggingProperty); }
+            set { SetValue(IsDraggingProperty, value); }
+        }
+        public static readonly DependencyProperty IsDraggingProperty =
+            DependencyProperty.Register("IsDragging", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
+
+
+
+        public bool IsSelectionRectActive
+        {
+            get { return (bool)GetValue(IsSelectionRectActiveProperty); }
+            set { SetValue(IsSelectionRectActiveProperty, value); }
+        }
+        public static readonly DependencyProperty IsSelectionRectActiveProperty =
+            DependencyProperty.Register("IsSelectionRectActive", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
 
 
 
@@ -184,10 +186,8 @@ namespace SensorMap.CustomControls
         HitType MouseHitType = HitType.None;
         private Point LastPoint;
         private bool IsTransformed = false;
-        private bool DragInProgress = false;
         private  Canvas _canvas;
         private System.Windows.Controls.Image _image;
-        private HandyControl.Controls.TextBox _textBoxAddress;
         static CustomSensor()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomSensor), new FrameworkPropertyMetadata(typeof(CustomSensor)));
@@ -204,7 +204,6 @@ namespace SensorMap.CustomControls
             _image = _canvas.Children.OfType<Image>().First();
             if ( _canvas != null )
             {
-                _textBoxAddress = GetTemplateChild("PART_Address") as HandyControl.Controls.TextBox;
                 ChangeStateActions();
             }
 
@@ -234,12 +233,12 @@ namespace SensorMap.CustomControls
         private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Delete && IsSelected)
-                SensorCommand.Execute(this.SensorData);
+                DeleteSensorCommand.Execute(this.SensorData);
         }
 
         private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if(this.IsSelected && !DragInProgress && !IsMultiSelection)
+            if (this.IsSelected && !IsDragging && !IsSelectionRectActive)
             {
                 Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
                 MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
@@ -249,28 +248,31 @@ namespace SensorMap.CustomControls
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (DragInProgress == false) return;
-            double screenX = Canvas.GetLeft(this);
-            double screenY = Canvas.GetTop(this);
-
-            Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
-
-            if(IsTransformed)
+            if (IsDragging == false) return;
+            if(IsMultiSelection==false)
             {
-                var command = new TransformationSensor(this, CustomBounds, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
-                TransformCommand.Execute(command);
+                double screenX = Canvas.GetLeft(this);
+                double screenY = Canvas.GetTop(this);
+
+                Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
+
+                    if (IsTransformed)
+                    {
+                        var command = new TransformationSensor(this, CustomBounds, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
+                        TransformCommand.Execute(command);
+                    }
             }
 
             e.Handled = true;
-            DragInProgress = false;
+            IsDragging = false;
             IsTransformed = false;
         }
 
         private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if(SelectedCustomSensor!=null)
+            if(SelectedSensor!=null)
             {
-                if (DragInProgress)                
+                if (IsDragging)                
                 {
                     // See how much the mouse has moved.
                     Point point = Mouse.GetPosition(_canvas);
@@ -346,21 +348,17 @@ namespace SensorMap.CustomControls
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (SelectedCustomSensor != null && SelectedCustomSensor != this)
+            if (SelectedSensor != null && SelectedSensor != this)
             {
                 SelectedSensor = null;
-                SelectedCustomSensor.IsSelected = false;
-                //SelectedCustomSensor.CustBorderBrush = Brushes.Black;
             }
             if (MouseHitType!=HitType.None)
             {
                 LastPoint = Mouse.GetPosition(_canvas);
-                DragInProgress = true;
+                IsDragging = true;
             }
-            SelectedCustomSensor = this;
             SelectedSensor = this;
-            SelectedCustomSensor.IsSelected = true;
-            //SelectedSensor = SelectedCustomSensor.SensorData;
+            IsSelected = true;
             this.Focus();
         }
 
@@ -368,17 +366,8 @@ namespace SensorMap.CustomControls
         
         private void SelectedChanged()
         {
-            SelectedCustomSensor = this.IsSelected ? this:null;
+            SelectedSensor = this.IsSelected ? this : null;
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
-            if (!IsMultiSelection)
-            {
-                MouseHitType = IsSelected ? MouseHitType : HitType.None;
-                this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
-            }
-            else
-            {
-                Cursor = System.Windows.Input.Cursors.Cross;
-            }
         }
     }
 }

@@ -15,7 +15,11 @@
              mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=viewmodel:MechanismVM}"
         Height="auto" Width="auto" x:Name="root">
-
+    <UserControl.InputBindings>
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopySelectedSensors}"/>
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteSensors}"/>
+        <KeyBinding Key="Delete" Command="{Binding RemoveSensorCommand}"/>
+    </UserControl.InputBindings>
     <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
     <Grid>
             <Grid.Resources>
@@ -29,7 +33,8 @@
             <ColumnDefinition Width="*" MaxWidth="220" MinWidth="50"/>
             <ColumnDefinition Width="*" MinWidth="400"/>
         </Grid.ColumnDefinitions>
-            <hc:SimpleStackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="{StaticResource BorderBrush}">
+            <hc:SimpleStackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="{StaticResource BorderBrush}"
+                                 Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <Button hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" hc:IconElement.Width="18" hc:IconElement.Height="18"
                         ToolTip="Отменить" 
                         IsEnabled="{Binding CanUndo,UpdateSourceTrigger=PropertyChanged}"
@@ -171,10 +176,21 @@
             </Border>
             <Grid x:Name="mapScheme" Grid.Column="1" Grid.Row="1" Background="LightGray" ClipToBounds="True">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="20"/>
                 </Grid.RowDefinitions>
-                <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="20" ClipToBounds="True">
+                <StackPanel Grid.Row="0"
+                            Margin="10,2"
+                            Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"
+                            Orientation="Horizontal" VerticalAlignment="Center">
+                    <hc:ButtonGroup>
+                        <Button Content="Копировать" ToolTip="Копировать"/>
+                        <Button Content="Вставить" ToolTip="Вставить"/>
+                        <Button Content="Удалить" ToolTip="Удалить"/>
+                    </hc:ButtonGroup>
+                </StackPanel>
+                <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="10,0,10,10" ClipToBounds="True"
+                        Grid.Row="1">
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
@@ -183,10 +199,7 @@
                                          IsEditMode="{Binding IsEditMode}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
                 </Border>
-                <StackPanel Grid.Row="1" Orientation="Horizontal">
-                    <ToggleButton Content="Выбрать" Margin="20,0,0,0"
-                                  IsChecked="{Binding ElementName=ccSensorMap,Path=IsMultiSelection}"/>
-                </StackPanel>
+                
             </Grid>
     </Grid>
     </hc:TransitioningContentControl>

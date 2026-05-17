@@ -107,7 +107,7 @@ namespace SensorMap
             services.AddScoped<IPasswordHash,PasswordHashService>();
             services.AddTransient<IAuthorization, AuthorizationService>();
             services.AddSingleton<IFileManagment, FileManagmentService>();
-
+            services.AddTransient<IClipboard, ClipboardService>();
             // Регистрация для создания VM без параметров
             services.AddSingleton<Func<Type, ReactiveObject>>(serviceProvider => viewModelType =>
             (ReactiveObject)serviceProvider.GetRequiredService(viewModelType));

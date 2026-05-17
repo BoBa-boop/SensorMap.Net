@@ -16,8 +16,9 @@
         d:DataContext="{d:DesignInstance Type=viewmodel:MechanismVM}"
         Height="auto" Width="auto" x:Name="root">
     <UserControl.InputBindings>
-        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopySelectedSensors}"/>
-        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteSensors}"/>
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}"/>
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}"/>
+        <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding ElementName=ccSensorMap,Path=CutSensorsCommand}"/>
         <KeyBinding Key="Delete" Command="{Binding RemoveSensorCommand}"/>
     </UserControl.InputBindings>
     <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
@@ -182,12 +183,16 @@
                 <StackPanel Grid.Row="0"
                             Margin="10,2"
                             Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"
-                            Orientation="Horizontal" VerticalAlignment="Center">
+                            Orientation="Horizontal" VerticalAlignment="Center">                    
                     <hc:ButtonGroup>
-                        <Button Content="Копировать" ToolTip="Копировать"/>
-                        <Button Content="Вставить" ToolTip="Вставить"/>
-                        <Button Content="Удалить" ToolTip="Удалить"/>
+                        <Button Content="Копировать" ToolTip="Копировать" Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}"/>
+                        <Button Content="Вставить" ToolTip="Вставить"     Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}"/>
+                        <Button Content="Вырезать" ToolTip="Вырезать"     Command="{Binding ElementName=ccSensorMap,Path=CutSensorsCommand}"/>
                     </hc:ButtonGroup>
+                    <Border Background="Green"
+                            CornerRadius="10"
+                            Width="20"
+                            Visibility="{Binding ElementName=ccSensorMap,Path=IsMultiSelection,Converter={StaticResource Bool2VisOrHidden}}"/>
                 </StackPanel>
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="10,0,10,10" ClipToBounds="True"
                         Grid.Row="1">
@@ -197,7 +202,11 @@
                                          RemoveSensorCommand="{Binding RemoveSensorCommand}"
                                          SelectedCustomSensor="{Binding CurrentSensor,UpdateSourceTrigger=PropertyChanged}"
                                          IsEditMode="{Binding IsEditMode}"
-                                         ItemsSource="{Binding CurrentMech.SensorsAssig}"/>
+                                         TransformSensorsCommand="{Binding TransformSensorCommand}"
+                                         ItemsSource="{Binding CurrentMech.SensorsAssig}">
+                        
+                    </myCC:SensorDragDrop>
+                    
                 </Border>
                 
             </Grid>

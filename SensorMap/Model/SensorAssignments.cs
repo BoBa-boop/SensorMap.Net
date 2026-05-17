@@ -13,7 +13,7 @@ namespace SensorMap.Model
     /// <summary>
     /// Координаты, изображение месторасположния, адрес в ПЛК
     /// </summary>
-    public class SensorAssignments:ReactiveObject
+    public class SensorAssignments : ReactiveObject, ICloneable
     {
         private byte[]? _image;
         private double _y;
@@ -98,6 +98,26 @@ namespace SensorMap.Model
         {
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
+        }
+
+        public object Clone()
+        {
+            return new SensorAssignments
+            {
+                Id = Id,
+                SensorId = SensorId,
+                MechanismId = MechanismId,
+                Address = Address,
+                Description = Description,
+                Sensor = Sensor,
+                Mechanism = Mechanism,
+                X = X,
+                Y = Y,
+                Width = Width,
+                Height = Height,
+                Image = Image,
+                IsModified = IsModified
+            };
         }
     }
 }

@@ -25,15 +25,6 @@ namespace SensorMap.CustomControls
         #region Dependency Properties
 
 
-        public int Id
-        {
-            get { return (int)GetValue(IdProperty); }
-            set { SetValue(IdProperty, value); }
-        }
-        public static readonly DependencyProperty IdProperty =
-            DependencyProperty.Register("Id", typeof(int), typeof(CustomSensor), new PropertyMetadata(0));
-
-
         public SensorAssignments SensorData
         {
             get { return (SensorAssignments)GetValue(SensorProperty); }
@@ -141,10 +132,10 @@ namespace SensorMap.CustomControls
         /// </summary>
         public ICommand DeleteSensorCommand
         {
-            get { return (ICommand)GetValue(SensorCommandProperty); }
-            set { SetValue(SensorCommandProperty, value); }
+            get { return (ICommand)GetValue(DeleteSensorCommandProperty); }
+            set { SetValue(DeleteSensorCommandProperty, value); }
         }
-        public static readonly DependencyProperty SensorCommandProperty =
+        public static readonly DependencyProperty DeleteSensorCommandProperty =
             DependencyProperty.Register("DeleteSensorCommand", typeof(ICommand),
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
@@ -170,6 +161,18 @@ namespace SensorMap.CustomControls
 
 
 
+
+        public HitType MouseHitType
+        {
+            get { return (HitType)GetValue(MouseHitTypeProperty); }
+            set { SetValue(MouseHitTypeProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for MouseHitType.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty MouseHitTypeProperty =
+            DependencyProperty.Register("MouseHitType", typeof(HitType), typeof(CustomSensor), new PropertyMetadata(HitType.None));
+
+
         public bool IsSelectionRectActive
         {
             get { return (bool)GetValue(IsSelectionRectActiveProperty); }
@@ -178,12 +181,11 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty IsSelectionRectActiveProperty =
             DependencyProperty.Register("IsSelectionRectActive", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
 
-
+        private static CustomSensor _memorySelectedSensor;
 
         #endregion
 
         private readonly ITransformObject _transformService;
-        HitType MouseHitType = HitType.None;
         private Point LastPoint;
         private bool IsTransformed = false;
         private  Canvas _canvas;
@@ -218,6 +220,7 @@ namespace SensorMap.CustomControls
                 this.MouseMove += OnSensorMouseMove;
                 _canvas.MouseMove += OnMouseMove;
                 _canvas.MouseUp += OnMouseUp;
+                this.MouseLeave += OnMouseLeave;
                 this.PreviewKeyDown += OnPreviewKeyDown;
             }
             else
@@ -227,6 +230,15 @@ namespace SensorMap.CustomControls
                 _canvas.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;
                 this.PreviewKeyDown -= OnPreviewKeyDown;
+            }
+        }
+
+        private void OnMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (!IsDragging)
+            {
+                MouseHitType = HitType.None;
+                Cursor = _transformService.GetCursorForHitType(HitType.None);
             }
         }
 
@@ -240,10 +252,14 @@ namespace SensorMap.CustomControls
         {
             if (this.IsSelected && !IsDragging && !IsSelectionRectActive)
             {
-                Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
-                MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
+                if (IsMultiSelection) MouseHitType = HitType.Body;
+                else
+                {
+                    Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
+                    MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
+                }
                 this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
-            }
+            }            
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -272,75 +288,80 @@ namespace SensorMap.CustomControls
         {
             if(SelectedSensor!=null)
             {
-                if (IsDragging)                
+                if (IsDragging)
                 {
-                    // See how much the mouse has moved.
                     Point point = Mouse.GetPosition(_canvas);
                     double offset_x = point.X - LastPoint.X;
                     double offset_y = point.Y - LastPoint.Y;
-
+                    foreach (var item in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
+                    {
                     // Get the rectangle's current position.
-                    double new_x = Canvas.GetLeft(this);
-                    double new_y = Canvas.GetTop(this);
-                    double new_width = this.CustomBounds.Width;
-                    double new_height = this.CustomBounds.Height;
+                    double new_x = Canvas.GetLeft(item);
+                    double new_y = Canvas.GetTop(item);
+                    double new_width = item.CustomBounds.Width;
+                    double new_height = item.CustomBounds.Height;
 
                     // Update the rectangle.
-                    switch (MouseHitType)
-                    {
-                        case HitType.Body:
+                        if(MouseHitType == HitType.Body && MouseHitType != HitType.None)
+                        {
                             new_x += offset_x;
                             new_y += offset_y;
-                            break;
-                        case HitType.UpLeft:
-                            new_x += offset_x;
-                            new_y += offset_y;
-                            new_width -= offset_x;
-                            new_height -= offset_y;
-                            break;
-                        case HitType.UpRight:
-                            new_y += offset_y;
-                            new_width += offset_x;
-                            new_height -= offset_y;
-                            break;
-                        case HitType.BottomRight:
-                            new_width += offset_x;
-                            new_height += offset_y;
-                            break;
-                        case HitType.BottomLeft:
-                            new_x += offset_x;
-                            new_width -= offset_x;
-                            new_height += offset_y;
-                            break;
-                        case HitType.Left:
-                            new_x += offset_x;
-                            new_width -= offset_x;
-                            break;
-                        case HitType.Right:
-                            new_width += offset_x;
-                            break;
-                        case HitType.Bottom:
-                            new_height += offset_y;
-                            break;
-                        case HitType.Top:
-                            new_y += offset_y;
-                            new_height -= offset_y;
-                            break;
-                    }
+                        }
+                        else if(!IsMultiSelection)
+                        {
+                            switch (MouseHitType)
+                            {
+                                case HitType.UpLeft:
+                                    new_x += offset_x;
+                                    new_y += offset_y;
+                                    new_width -= offset_x;
+                                    new_height -= offset_y;
+                                    break;
+                                case HitType.UpRight:
+                                    new_y += offset_y;
+                                    new_width += offset_x;
+                                    new_height -= offset_y;
+                                    break;
+                                case HitType.BottomRight:
+                                    new_width += offset_x;
+                                    new_height += offset_y;
+                                    break;
+                                case HitType.BottomLeft:
+                                    new_x += offset_x;
+                                    new_width -= offset_x;
+                                    new_height += offset_y;
+                                    break;
+                                case HitType.Left:
+                                    new_x += offset_x;
+                                    new_width -= offset_x;
+                                    break;
+                                case HitType.Right:
+                                    new_width += offset_x;
+                                    break;
+                                case HitType.Bottom:
+                                    new_height += offset_y;
+                                    break;
+                                case HitType.Top:
+                                    new_y += offset_y;
+                                    new_height -= offset_y;
+                                    break;
+                            }
+                        }
                     if((new_x > 1 && new_x < _image.ActualWidth-new_width) && (new_y>1 && new_y < _image.ActualHeight-new_height))
                     {
                         // Don't use negative width or height.
                         if ((new_width > 17) && (new_height > 17))
                         {
-                            Canvas.SetLeft(this, new_x);
-                            Canvas.SetTop(this, new_y);
+                            Canvas.SetLeft(item, new_x);
+                            Canvas.SetTop(item, new_y);
 
-                            this.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                            item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
 
                             // Save the mouse's new location.
                             LastPoint = point;
                             IsTransformed = true;
                         }
+                    }
                     }
                 }
             }
@@ -348,16 +369,24 @@ namespace SensorMap.CustomControls
 
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (SelectedSensor != null && SelectedSensor != this)
+            if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
             {
-                SelectedSensor = null;
+                _memorySelectedSensor.IsSelected = false;
+                _memorySelectedSensor = null;
+                if (SelectedSensor != null)
+                {
+                    SelectedSensor.IsSelected = false;
+                    SelectedSensor.CustBorderBrush = Brushes.Black;
+                }
             }
             if (MouseHitType!=HitType.None)
             {
                 LastPoint = Mouse.GetPosition(_canvas);
                 IsDragging = true;
             }
+            
             SelectedSensor = this;
+            _memorySelectedSensor = this;
             IsSelected = true;
             this.Focus();
         }
@@ -368,6 +397,7 @@ namespace SensorMap.CustomControls
         {
             SelectedSensor = this.IsSelected ? this : null;
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
+            Mouse.OverrideCursor = IsSelected? _transformService.GetCursorForHitType(MouseHitType) : null;
         }
     }
 }

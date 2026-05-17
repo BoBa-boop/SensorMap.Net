@@ -161,13 +161,6 @@ namespace SensorMap.ViewModel
             {
                 if (obj[0] is RemoveSensor command && obj[1] is SensorAssignments sensor)
                 {
-                    using (var dbContext = _appDbContextFactory.CreateDbContext())
-                    {
-                        var element = dbContext.SensorAssignments.Find(sensor.Id);
-                        if (element != null)
-                            dbContext.SensorAssignments.Entry(element).State = EntityState.Deleted;
-                        dbContext.SaveChangesAsync();
-                    }
                     _undoRedoManager.Do(command);
                 }
             });
@@ -249,6 +242,10 @@ namespace SensorMap.ViewModel
                 if (obj is TransformationSensor command)
                 {
                     _undoRedoManager.Do(command);
+                }
+                if (obj is TransformationSensors command2)
+                {
+                    _undoRedoManager.Do(command2);
                 }
             });
 

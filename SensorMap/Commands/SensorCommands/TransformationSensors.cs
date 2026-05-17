@@ -22,7 +22,7 @@ namespace SensorMap.Commands.SensorCommands
                          Func<Point, Point> worldToScreen)
         {
             _elements = elements;
-            foreach (var item in _elements)
+            _old_rects =
             {
                 _old_rects.Add
                     ( 

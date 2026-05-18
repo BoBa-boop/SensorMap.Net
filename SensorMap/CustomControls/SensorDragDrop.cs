@@ -301,6 +301,7 @@ namespace SensorMap.CustomControls
                         uiElement.IsSelected = false;
                     }
                     tempSelectedSensorsCollection.Clear();
+                    IsMultiSelection = false;
                 }
                 
             }
@@ -333,16 +334,16 @@ namespace SensorMap.CustomControls
             SelectionRect = new System.Windows.Shapes.Rectangle();
             IsSelectionRectEnable = false;
             _isDragging = false;
-            IsMultiSelection = false;
         }
 
         private void TransformCommand(MouseButtonEventArgs e)
         {
             if(_isDragging)
             {
-                Point worldPoint = _transformObject.ScreenToWorld(e.GetPosition(_canvas), _viewMatrix);
+                Point worldPoint = _transformObject.ScreenToWorld(e.GetPosition(_canvas), MapProperties.GetViewMatrix(this));
                 var canvasCollection = _canvas.Children.OfType<CustomSensor>().Where(x => tempSelectedSensorsCollection.Contains(x.SensorData)).ToList();
-                var MultiTransform = new TransformationSensors(tempSelectedSensorsCollection,canvasCollection, (x) => _transformObject.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
+                var MultiTransform = new TransformationSensors(tempSelectedSensorsCollection,canvasCollection,
+                    (x) => _transformObject.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
                 TransformSensorsCommand.Execute(MultiTransform);
             }
         }
@@ -557,17 +558,6 @@ namespace SensorMap.CustomControls
             if (e.LeftButton == MouseButtonState.Pressed && IsCustomSensorDragging == false && _initialMousePosition.X > 0)
             {
                 UpdateSectionRectangle(mousePosition);
-            }
-            if(IsCustomSensorDragging && IsMultiSelection)
-            {
-                var vector = new Point(mousePosition.X - _initialMousePosition.X, mousePosition.Y - _initialMousePosition.Y);
-                foreach (var item in tempSelectedSensorsCollection)
-                {
-                    var ui = _canvas.Children.OfType<CustomSensor>().Where(x => x.SensorData == item).First();
-                    Canvas.SetLeft(ui, item.X+ vector.X);
-                    Canvas.SetTop(ui, item.Y+ vector.Y);
-                }
-                _isDragging = true;
             }
             IsGrabOrSelectNotActive(e);
         }

@@ -19,9 +19,9 @@
         <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}"/>
         <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}"/>
         <KeyBinding Key="X" Modifiers="Ctrl" Command="{Binding ElementName=ccSensorMap,Path=CutSensorsCommand}"/>
+        <KeyBinding Key="Delete" Command="{Binding ElementName=ccSensorMap, Path=RemoveSensorCommand}"/>
         <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}"/>
         <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}"/>
-        <KeyBinding Key="Delete" Command="{Binding RemoveSensorCommand}"/>
     </UserControl.InputBindings>
     <hc:TransitioningContentControl TransitionMode="Bottom2TopWithFade">
     <Grid>
@@ -201,12 +201,11 @@
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
-                                         RemoveSensorCommand="{Binding RemoveSensorCommand}"
+                                         RemoveSensorEvent="{Binding DeleteSensorCommand}"
                                          SelectedCustomSensor="{Binding CurrentSensor,UpdateSourceTrigger=PropertyChanged}"
                                          IsEditMode="{Binding IsEditMode}"
                                          TransformSensorsCommand="{Binding TransformSensorCommand}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}">
-                        
                     </myCC:SensorDragDrop>
                     
                 </Border>

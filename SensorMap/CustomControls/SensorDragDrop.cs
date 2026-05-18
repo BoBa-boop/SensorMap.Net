@@ -175,7 +175,7 @@ namespace SensorMap.CustomControls
 
         public static readonly DependencyProperty RemoveSensorEventProperty =
            DependencyProperty.Register("RemoveSensorEvent", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
-
+        
         /// <summary>
         /// Event срабатывает от CustomSensor события PreviewKeyDown
         /// </summary>
@@ -277,13 +277,14 @@ namespace SensorMap.CustomControls
             _image = GetTemplateChild("PART_Image") as Image;
             _transformObject = new TransformObjectService();
             _clipboard = new ClipboardService();
-            RemoveSensorEvent = new RelayCommand<SensorAssignments>((s)=>RemoveSensor(s));
             CopySensorsCommand = new RelayCommand(CopySensors);
             PasteSensorsCommand = new RelayCommand(PasteSensors);
             CutSensorsCommand = new RelayCommand(CutSensors);
+            RemoveSensorCommand = new RelayCommand(RemoveSensor);
             if (_canvas != null)
             {
                 Cursor = Grab;
+                
                 _viewMatrixTransform = new MatrixTransform(Matrix.Identity);
                 _canvas.RenderTransform = _viewMatrixTransform;
                 _viewMatrix = _viewMatrixTransform.Matrix;
@@ -414,14 +415,18 @@ namespace SensorMap.CustomControls
         #endregion
 
         #region SensorActionsLogic
-        public void RemoveSensor(SensorAssignments sensor)
+        public void RemoveSensor()
         {
-            if (sensor == null) return;
-            var UI_Sensor = _canvas!.Children.OfType<CustomSensor>().FirstOrDefault(x => x.SensorData == sensor);
-            _canvas.Children?.Remove(UI_Sensor);
-            var command = new RemoveSensor(sensor, UI_Sensor, _canvas, ItemsSource);
-            var param = new object[] {command, sensor };
-            RemoveSensorCommand.Execute(param);
+            if (_canvas != null)
+            {
+                var SelectedSensorsUI = _canvas.Children.OfType<CustomSensor>().Where(x => tempSelectedSensorsCollection.Contains(x.SensorData)).ToList();
+
+                var command = new RemoveSensor(SelectedSensorsUI, _canvas, ItemsSource);
+                var param = new object[] { command, SelectedSensorsUI};
+                RemoveSensorEvent.Execute(param);
+                tempSelectedSensorsCollection.Clear();
+                IsMultiSelection = false;
+            }
         }
 
         private void AddSensorToCanvas(SensorAssignments sensor)
@@ -477,11 +482,7 @@ namespace SensorMap.CustomControls
         private void CutSensors()
         {
             List<CustomSensor> SelectedSensors = _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected).ToList();
-            foreach (var item in SelectedSensors)
-            {
-                RemoveSensor(item.SensorData);
-            }
-            _clipboard.Cut<List<CustomSensor>>(ref SelectedSensors);
+            _clipboard.Copy(SelectedSensors);
         }
 
 

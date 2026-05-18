@@ -45,10 +45,7 @@
         <Setter Property="TransformCommand" 
                 Value="{Binding DataContext.TransformSensorCommand,
                 RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-        <Setter Property="DeleteSensorCommand" 
-                Value="{Binding RemoveSensorEvent,
-                RelativeSource={RelativeSource Mode=FindAncestor, 
-                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
+        
         <Setter Property="IsMultiSelection"
              Value="{Binding Path=IsMultiSelection,
              RelativeSource={RelativeSource Mode=FindAncestor, 

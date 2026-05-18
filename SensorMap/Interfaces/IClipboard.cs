@@ -17,10 +17,5 @@ namespace SensorMap.Interfaces
         /// Вставляет данные из буфера обмена.
         /// </summary>
         T? Paste<T>();
-
-        /// <summary>
-        /// Вырезает данные (копирует и очищает источник).
-        /// </summary>
-        T? Cut<T>(ref T? source);
     }
 }

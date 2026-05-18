@@ -16,13 +16,6 @@ namespace SensorMap.Services
             _clipboardData = data;
         }
 
-        public T? Cut<T>(ref T? source)
-        {
-            _clipboardData = source;
-            source = default;
-            return (T)_clipboardData??default;
-        }
-
         public T? Paste<T>()
         {
             return (T)_clipboardData??default;

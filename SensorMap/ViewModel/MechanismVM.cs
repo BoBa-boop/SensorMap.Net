@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Commands.SensorCommands;
+using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
@@ -157,11 +158,18 @@ namespace SensorMap.ViewModel
                     return CanExecuteAddSensor(sensor);
                 return false; 
             });
-            RemoveSensorCommand = new RelayCommand<object[]>((obj) => 
+            DeleteSensorCommand = new RelayCommand<object[]>((obj) => 
             {
-                if (obj[0] is RemoveSensor command && obj[1] is SensorAssignments sensor)
+                if (obj[0] is RemoveSensor command && obj[1] is List<CustomSensor> sensors)
                 {
                     _undoRedoManager.Do(command);
+                    using (var _dbContext = _appDbContextFactory.CreateDbContext())
+                    {
+                        foreach (var sensor in sensors)
+                        {
+                            _dbContext.Entry(sensor.SensorData).State = EntityState.Deleted;
+                        }
+                    }
                 }
             });
             DragSensorCommand = new RelayCommand<object>((obj) =>
@@ -338,7 +346,7 @@ namespace SensorMap.ViewModel
         /// Команда удаления датчика. Команда приходит от CustomSensor в SensorDragDrop.
         /// Происходит удаление из коллекции и Canvas
         /// </summary>
-        public ICommand RemoveSensorCommand { get; }
+        public ICommand DeleteSensorCommand { get; }
         public ICommand TransformSensorCommand { get; }
         public ICommand DragSensorCommand { get; }
         public ICommand UndoCommand { get; }

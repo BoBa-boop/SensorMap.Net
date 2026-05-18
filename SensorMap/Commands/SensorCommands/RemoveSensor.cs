@@ -13,34 +13,40 @@ namespace SensorMap.Commands.SensorCommands
 {
     public class RemoveSensor : IUndoRedoCommand
     {
-        private readonly CustomSensor _element;
-        private readonly SensorAssignments _sensorData;
+        private readonly List<CustomSensor> _elements;
         private readonly Canvas _canvas;
         private readonly ObservableCollection<SensorAssignments> _collection;
-        public RemoveSensor(SensorAssignments sensor, CustomSensor sensorVisual, Canvas canvas,
+        public RemoveSensor(List<CustomSensor> sensorsVisual, Canvas canvas,
         ObservableCollection<SensorAssignments> collection)
         {
-            _element = sensorVisual;
-            _sensorData = sensor;
+            _elements = sensorsVisual;
             _canvas = canvas;
             _collection = collection;
         }
         public void Do()
         {
-            if (_canvas.Children.Contains(_element))
+            foreach (var item in _elements)
             {
-                _canvas.Children.Remove(_element);
+                if (_canvas.Children.Contains(item))
+                {
+                    _canvas.Children.Remove(item);
+                }
+                if (_collection.Contains(item.SensorData))
+                {
+                    _collection.Remove(item.SensorData);
+                }
             }
-            if (_collection.Contains(_sensorData))
-            {
-                _collection.Remove(_sensorData);
-            }
+
         }
 
         public void Undo()
         {
-            _canvas.Children.Add(_element);
-            _collection.Add(_sensorData);
+            foreach (var item in _elements)
+            {
+                _canvas.Children.Add(item);
+                _collection.Add(item.SensorData);
+            }
+
         }
     }
 }

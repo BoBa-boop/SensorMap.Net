@@ -128,18 +128,7 @@ namespace SensorMap.CustomControls
             DependencyProperty.Register("TransformCommand", typeof(ICommand),
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
-        /// <summary>
-        /// Команда от CustomSensor
-        /// </summary>
-        public ICommand DeleteSensorCommand
-        {
-            get { return (ICommand)GetValue(DeleteSensorCommandProperty); }
-            set { SetValue(DeleteSensorCommandProperty, value); }
-        }
-        public static readonly DependencyProperty DeleteSensorCommandProperty =
-            DependencyProperty.Register("DeleteSensorCommand", typeof(ICommand),
-                typeof(CustomSensor),
-                new PropertyMetadata(null));
+       
 
         public CustomSensor SelectedSensor
         {
@@ -221,7 +210,6 @@ namespace SensorMap.CustomControls
                 _canvas.MouseMove += OnMouseMove;
                 _canvas.MouseUp += OnMouseUp;
                 this.MouseLeave += OnMouseLeave;
-                this.PreviewKeyDown += OnPreviewKeyDown;
             }
             else
             {
@@ -230,7 +218,6 @@ namespace SensorMap.CustomControls
                 this.MouseMove -= OnSensorMouseMove;
                 _canvas.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;
-                this.PreviewKeyDown -= OnPreviewKeyDown;
             }
         }
 
@@ -242,13 +229,6 @@ namespace SensorMap.CustomControls
                 Cursor = _transformService.GetCursorForHitType(HitType.None);
             }
         }
-
-        private void OnPreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == Key.Delete && IsSelected)
-                DeleteSensorCommand.Execute(this.SensorData);
-        }
-
         private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (this.IsSelected && !IsDragging && !IsSelectionRectActive)

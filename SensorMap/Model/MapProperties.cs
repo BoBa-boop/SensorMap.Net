@@ -11,6 +11,7 @@ namespace SensorMap.Model
 {
     public static class MapProperties
     {
+        #region ViewMatrix
         public static readonly DependencyProperty ViewMatrixProperty =
         DependencyProperty.RegisterAttached(
             "ViewMatrix",
@@ -29,5 +30,7 @@ namespace SensorMap.Model
         {
             obj.SetValue(ViewMatrixProperty, value);
         }
+        #endregion
+        
     }
 }

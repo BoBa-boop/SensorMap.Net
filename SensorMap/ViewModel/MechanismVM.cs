@@ -239,13 +239,9 @@ namespace SensorMap.ViewModel
             RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
             TransformSensorCommand = new RelayCommand<object>((obj) => 
             {
-                if (obj is TransformationSensor command)
+                if (obj is TransformationSensors command)
                 {
                     _undoRedoManager.Do(command);
-                }
-                if (obj is TransformationSensors command2)
-                {
-                    _undoRedoManager.Do(command2);
                 }
             });
 

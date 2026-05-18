@@ -6,6 +6,7 @@ using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
 using SensorMap.ViewModel;
+using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -20,7 +21,7 @@ namespace SensorMap.CustomControls
 {
     [TemplatePart(Name = "PART_Sensor", Type = typeof(Border))]
     [TemplatePart(Name = "PART_Address", Type = typeof(HandyControl.Controls.TextBox))]
-    public class CustomSensor : Control
+    public class CustomSensor : Control, ICloneable
     {
         #region Dependency Properties
 
@@ -150,7 +151,6 @@ namespace SensorMap.CustomControls
                 typeof(CustomSensor),
                 new PropertyMetadata(null));
 
-
         public bool IsDragging
         {
             get { return (bool)GetValue(IsDraggingProperty); }
@@ -265,20 +265,18 @@ namespace SensorMap.CustomControls
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
             if (IsDragging == false) return;
-            if(IsMultiSelection==false)
-            {
                 double screenX = Canvas.GetLeft(this);
                 double screenY = Canvas.GetTop(this);
 
-                Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
-
-                    if (IsTransformed)
-                    {
-                        var command = new TransformationSensor(this, CustomBounds, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
-                        TransformCommand.Execute(command);
-                    }
+            Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
+            List<SensorAssignments> SelectedSensors = _canvas.Children.OfType<CustomSensor>()
+                   .Where(x => x.IsSelected).Select(x => x.SensorData).ToList();
+            var canvasCollection = _canvas.Children.OfType<CustomSensor>().Where(x => SelectedSensors.Contains(x.SensorData)).ToList();
+            if (IsTransformed)
+            {
+                var command = new TransformationSensors(SelectedSensors, canvasCollection, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
+                TransformCommand.Execute(command);
             }
-
             e.Handled = true;
             IsDragging = false;
             IsTransformed = false;
@@ -286,7 +284,7 @@ namespace SensorMap.CustomControls
 
         private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if(SelectedSensor!=null)
+            if (SelectedSensor != null)
             {
                 if (IsDragging)
                 {
@@ -295,19 +293,19 @@ namespace SensorMap.CustomControls
                     double offset_y = point.Y - LastPoint.Y;
                     foreach (var item in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
                     {
-                    // Get the rectangle's current position.
-                    double new_x = Canvas.GetLeft(item);
-                    double new_y = Canvas.GetTop(item);
-                    double new_width = item.CustomBounds.Width;
-                    double new_height = item.CustomBounds.Height;
+                        double new_x = Canvas.GetLeft(item);
+                        double new_y = Canvas.GetTop(item);
+                        double new_width = item.CustomBounds.Width;
+                        double new_height = item.CustomBounds.Height;
 
-                    // Update the rectangle.
-                        if(MouseHitType == HitType.Body && MouseHitType != HitType.None)
+                        // Перемещение
+                        if (MouseHitType == HitType.Body && MouseHitType != HitType.None)
                         {
                             new_x += offset_x;
                             new_y += offset_y;
                         }
-                        else if(!IsMultiSelection)
+                        //Трансформация
+                        else if (!IsMultiSelection)
                         {
                             switch (MouseHitType)
                             {
@@ -347,21 +345,18 @@ namespace SensorMap.CustomControls
                                     break;
                             }
                         }
-                    if((new_x > 1 && new_x < _image.ActualWidth-new_width) && (new_y>1 && new_y < _image.ActualHeight-new_height))
-                    {
-                        // Don't use negative width or height.
-                        if ((new_width > 17) && (new_height > 17))
+                        if ((new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
-                            Canvas.SetLeft(item, new_x);
-                            Canvas.SetTop(item, new_y);
-
-                            item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
-
-                            // Save the mouse's new location.
-                            LastPoint = point;
-                            IsTransformed = true;
+                            if ((new_width > 17) && (new_height > 17))
+                            {
+                                Canvas.SetLeft(item, new_x);
+                                Canvas.SetTop(item, new_y);
+                                var oldBounds = item.CustomBounds;
+                                item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                                LastPoint = point; 
+                                IsTransformed=true;
+                            }
                         }
-                    }
                     }
                 }
             }
@@ -398,6 +393,15 @@ namespace SensorMap.CustomControls
             SelectedSensor = this.IsSelected ? this : null;
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
             Mouse.OverrideCursor = IsSelected? _transformService.GetCursorForHitType(MouseHitType) : null;
+        }
+
+        public object Clone()
+        {
+            return new CustomSensor
+            {
+                SensorData = SensorData,
+                CustomBounds = CustomBounds
+            };
         }
     }
 }

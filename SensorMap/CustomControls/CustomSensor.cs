@@ -213,7 +213,7 @@ namespace SensorMap.CustomControls
 
         private void ChangeStateActions()
         {
-            this.IsSelected = false;
+            
             if (IsEditMode)
             {
                 this.MouseDown += OnMouseDown;
@@ -225,6 +225,7 @@ namespace SensorMap.CustomControls
             }
             else
             {
+                this.IsSelected = false;
                 this.MouseDown -= OnMouseDown;
                 this.MouseMove -= OnSensorMouseMove;
                 _canvas.MouseMove -= OnMouseMove;
@@ -391,6 +392,7 @@ namespace SensorMap.CustomControls
         private void SelectedChanged()
         {
             SelectedSensor = this.IsSelected ? this : null;
+            if (this.IsSelected) Canvas.SetZIndex(this, 1); else Canvas.SetZIndex(this, 0);
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
             Mouse.OverrideCursor = IsSelected? _transformService.GetCursorForHitType(MouseHitType) : null;
         }

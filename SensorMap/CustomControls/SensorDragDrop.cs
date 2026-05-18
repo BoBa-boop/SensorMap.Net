@@ -21,6 +21,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Xml.Linq;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
@@ -36,7 +37,9 @@ using Size = System.Windows.Size;
 
 namespace SensorMap.CustomControls
 {
-    
+    /// <summary>
+    /// Элементы добавляются на 0 слой, при выделение они поднимаются на 1 слой
+    /// </summary>
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control
@@ -296,9 +299,10 @@ namespace SensorMap.CustomControls
 
                 void OnMainWindowClick(object sender, MouseButtonEventArgs e)
                 {
-                    foreach (var uiElement in _canvas.Children.OfType<CustomSensor>())
+                    foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected))
                     {
                         uiElement.IsSelected = false;
+                        Canvas.SetZIndex(uiElement, 0);
                     }
                     tempSelectedSensorsCollection.Clear();
                     IsMultiSelection = false;
@@ -432,7 +436,7 @@ namespace SensorMap.CustomControls
                 CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
                 var command = new AddSensor(sensor, element, _canvas, ItemsSource);
                 AddSensorsCommand.Execute(command);
-                
+                Canvas.SetZIndex(element, 0);
                 element.Tag = sensor.Id;
             }
         }
@@ -443,17 +447,30 @@ namespace SensorMap.CustomControls
         }
         private void PasteSensors()
         {
-            tempSelectedSensorsCollection.Clear();
-            foreach (var item in _clipboard.Paste<List<CustomSensor>>())
+            var collection = _clipboard.Paste<List<CustomSensor>>();
+
+            if (collection != null&&collection.Count>0)
             {
-                ItemsSource.Add(item.SensorData);
-                
-                item.SensorData.Id = 0;
-                item.Tag = 0;
-                item.IsSelected = true;
-                item.SensorData.Description = string.Empty;
-                item.SensorData.Address = string.Empty;
-                tempSelectedSensorsCollection.Add(item.SensorData);
+                foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected))
+                {
+                    uiElement.IsSelected = false;
+                }
+                tempSelectedSensorsCollection.Clear();
+                foreach (var item in collection)
+                {
+                    var newSensor = (SensorAssignments)item.SensorData.Clone();
+                    newSensor.Id = _canvas.Children.OfType<CustomSensor>().OrderBy(x => x.SensorData.Id).Last().SensorData.Id+1;
+                    item.Tag = newSensor.Id;
+                    
+                    newSensor.Description = "Копия";
+                    newSensor.Address = string.Empty;
+                    ItemsSource.Add(newSensor);
+                    var uiSensor = _canvas.Children.OfType<CustomSensor>()
+                                   .Where(x => x.SensorData == newSensor).FirstOrDefault();
+                    uiSensor.CustomBackground = Brushes.AliceBlue;
+                    uiSensor.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                    tempSelectedSensorsCollection.Add(newSensor);
+                }
             }
             
         }
@@ -700,7 +717,6 @@ namespace SensorMap.CustomControls
             element.SensorData = sensor;
             element.CustomBackground = (SolidColorBrush)(new BrushConverter().ConvertFrom(sensor.Sensor.SensorType.Color??Colors.PaleVioletRed.ToString()));
             element.Focus();
-            
             Canvas.SetLeft(element, point.X);
             Canvas.SetTop(element, point.Y);
             element.SensorData.X = point.X;
@@ -761,8 +777,12 @@ namespace SensorMap.CustomControls
                         var elementToSelect = _canvas.Children
                         .OfType<CustomSensor>()
                         .FirstOrDefault(x => x.SensorData == sensor);
-
-                        elementToSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                        if(elementToSelect != null)
+                        {
+                            elementToSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                            elementToSelect.IsSelected = true;
+                            Canvas.SetZIndex(elementToSelect, 1);
+                        }
                     }
                 }
                 foreach (var sensor in tempSelectedSensorsCollection.Except(colletionSensors))
@@ -772,8 +792,12 @@ namespace SensorMap.CustomControls
                         var elementToSelect = _canvas.Children
                             .OfType<CustomSensor>()
                             .FirstOrDefault(x => x.SensorData == sensor);
-
-                        elementToSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                        if (elementToSelect != null)
+                        {
+                            elementToSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                            elementToSelect.IsSelected = false;
+                            Canvas.SetZIndex(elementToSelect, 0);
+                        }
                     }
                 }
 

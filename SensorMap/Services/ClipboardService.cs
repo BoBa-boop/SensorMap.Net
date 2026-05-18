@@ -10,6 +10,7 @@ namespace SensorMap.Services
     public class ClipboardService : IClipboard
     {
         private object? _clipboardData;
+
         public void Copy<T>(T data)
         {
             _clipboardData = data;

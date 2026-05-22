@@ -403,7 +403,11 @@
                                             <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CRUD_Buttons}"/>
                                             <Button Name="AddImage" Style="{StaticResource LoadImageButtonStyle}"
                                             Command="{Binding ElementName=root,Path=DataContext.AddImage}"
-                                            CommandParameter="{Binding}"/>
+                                            CommandParameter="{Binding}">
+                                                <Button.Content>
+                                                    <Image Source="{StaticResource LoadImage}"/>
+                                                </Button.Content>
+                                            </Button>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                             <Button Name="showScheme"
                                                         hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"
@@ -413,12 +417,14 @@
                                                         ToolTip="Показать электросхему">
                                                 
                                             </Button>
-                                            <Button Name="loadScheme"
-                                                        hc:IconElement.Geometry="{StaticResource DropperGeometry}"
-                                                        hc:IconElement.Width="20" hc:IconElement.Height="13"
+                                            <Button Name="loadScheme" Padding="2" Width="40"
                                                         Command="{Binding ElementName=root,Path=DataContext.AddHelpfulFile}"
                                                         CommandParameter="{Binding }"
-                                                        ToolTip="Добавить электросхему"/>
+                                                        ToolTip="Добавить электросхему">
+                                                <Button.Content>
+                                                    <Image Source="{StaticResource FileAddImage}"/>
+                                                </Button.Content>
+                                            </Button>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
                                             <!--Триггер для скрытия кнопок из последней добавленной строки-->
@@ -540,7 +546,11 @@
                                             <Button Name="AddImage" Style="{StaticResource LoadImageButtonStyle}"
                                             Command="{Binding ElementName=root,Path=DataContext.AddImage}"
                                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor,
-                                        AncestorType={x:Type DataGridRow}}, Path=Item}"/>
+                                        AncestorType={x:Type DataGridRow}}, Path=Item}">
+                                                <Button.Content>
+                                                    <Image Source="{StaticResource LoadImage}"/>
+                                                </Button.Content>
+                                            </Button>
 
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
@@ -695,7 +705,11 @@
                                             <Button Name="AddImage" Style="{StaticResource LoadImageButtonStyle}"
                                             Command="{Binding ElementName=root,Path=DataContext.AddImage}"
                                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, 
-                                        AncestorType={x:Type DataGridRow}}, Path=Item}"/>
+                                        AncestorType={x:Type DataGridRow}}, Path=Item}">
+                                                <Button.Content>
+                                                    <Image Source="{StaticResource LoadImage}"/>
+                                                </Button.Content>
+                                            </Button>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
@@ -740,14 +754,17 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto"/>
-                                <RowDefinition Height="150"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <ListBox Effect="{StaticResource EffectShadow2}"
-                                     Name="lbSensors"                                    
+                            <ListBox Tag="Список типов датчиков"
+                                     Grid.Row="0"
+                                     Grid.ColumnSpan="2"
+                                     Effect="{StaticResource EffectShadow2}"
+                                     Name="lbSensors"
                                      Margin="0,0,0,20"
                                      SelectionMode="Single"
                                      ItemsSource="{Binding SensorTypes,UpdateSourceTrigger=PropertyChanged}"
-                                     MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
+                                     MinHeight="200"  VerticalAlignment="Top" >
                                 <i:Interaction.Behaviors>
                                     <beh:ListBoxBehavior CanUnselectItem="True"/>
                                 </i:Interaction.Behaviors>
@@ -841,19 +858,23 @@
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                             </ListBox>
-                            <Grid Grid.ColumnSpan="2" Grid.Row="1"
-                                  VerticalAlignment="Top" 
-                                  Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <Grid   Tag="Кнопки и характерстики датчиков"
+                                    Grid.ColumnSpan="2" Grid.Row="1"
+                                    VerticalAlignment="Top" 
+                                    Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition/>
+                                    <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                
-                                <StackPanel Margin="10,0" Grid.Column="1" HorizontalAlignment="Left">
+
+                                <StackPanel Margin="10,0" 
+                                            Grid.Row="0"
+                                            Grid.Column="1"
+                                            HorizontalAlignment="Left">
                                     <hc:TextBox Name="tbSensorType"
                                                 hc:InfoElement.Placeholder="Тип датчика"
                                                 Height="30"
@@ -863,12 +884,16 @@
                                                Orientation="Horizontal" Grid.Row="1"
                                                Margin="0,15" HorizontalAlignment="Center"
                                                ItemWidth="55">
-                                        <Button hc:IconElement.Geometry="{StaticResource DropperGeometry}"
-                                                ToolTip="Выбрать цвет" 
-                                                Cursor="Hand"
+                                        <Button ToolTip="Выбрать цвет" 
+                                                Cursor="Hand" Width="40"
+                                                Padding="1"
                                                 Background="{Binding ElementName=lbSensors,Path=SelectedItem.Color,TargetNullValue={StaticResource BackgroundBrush}}"                                        
                                                 Command="{Binding ShowColorPicker}" 
-                                                CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}"/>
+                                                CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}">
+                                            <Button.Content>
+                                                <Image Source="{StaticResource PalleteImage}"/>
+                                            </Button.Content>
+                                        </Button>
                                         <Button Name="sAdd" Style="{StaticResource ButtonSuccess}"
                                                 hc:IconElement.Geometry="{StaticResource AddGeometry}"
                                                 Command="{Binding AddSensorType}">
@@ -907,7 +932,7 @@
                                         </Button>
                                     </WrapPanel>
                                 </StackPanel>
-                                <Grid Grid.Column="2"
+                                <Grid Grid.Column="2" Grid.Row="0"
                                       MinWidth="200" MinHeight="60"
                                       Background="White">
                                     <Grid.RowDefinitions>
@@ -942,10 +967,11 @@
 
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBox Name="ActualText" Text="{Binding Title}"/>
+                                                <TextBox Name="ActualText" Text="{Binding Title}" BorderThickness="0"/>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
+
                                 </Grid>
                             </Grid>
                         </Grid>

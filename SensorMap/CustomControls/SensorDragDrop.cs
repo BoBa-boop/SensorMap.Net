@@ -419,7 +419,7 @@ namespace SensorMap.CustomControls
         {
             if (_canvas != null)
             {
-                var SelectedSensorsUI = _canvas.Children.OfType<CustomSensor>().Where(x => tempSelectedSensorsCollection.Contains(x.SensorData)).ToList();
+                var SelectedSensorsUI = _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected).ToList();
 
                 var command = new RemoveSensor(SelectedSensorsUI, _canvas, ItemsSource);
                 var param = new object[] { command, SelectedSensorsUI};
@@ -466,7 +466,7 @@ namespace SensorMap.CustomControls
                     var newSensor = (SensorAssignments)item.SensorData.Clone();
                     newSensor.Id = _canvas.Children.OfType<CustomSensor>().OrderBy(x => x.SensorData.Id).Last().SensorData.Id+1;
                     item.Tag = newSensor.Id;
-                    
+                    newSensor.IsNew = true;
                     newSensor.Description = "Копия";
                     newSensor.Address = string.Empty;
                     ItemsSource.Add(newSensor);
@@ -573,7 +573,7 @@ namespace SensorMap.CustomControls
                     _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
                 }
             }
-            if (e.LeftButton == MouseButtonState.Pressed && IsCustomSensorDragging == false && _initialMousePosition.X > 0)
+            if (e.LeftButton == MouseButtonState.Pressed && IsCustomSensorDragging == false && _initialMousePosition.X > 0 && IsEditMode)
             {
                 UpdateSectionRectangle(mousePosition);
             }
@@ -675,11 +675,10 @@ namespace SensorMap.CustomControls
             //перемещение по карте
             if (e.ChangedButton == MouseButton.Right)
             {
-                
                 parentSize = RenderSize;
             }
             //выделение элементов на карте
-            if (e.ChangedButton == MouseButton.Left && IsCustomSensorDragging == false && IsMultiSelection == false)
+            if (IsEditMode && e.ChangedButton == MouseButton.Left && IsCustomSensorDragging == false && IsMultiSelection == false)
             {
                 Mouse.OverrideCursor = Cursors.Cross;//переопределяем курсор, чтобы не было конфликтов с CustomSensor
                 CreateSelectionRectangle();

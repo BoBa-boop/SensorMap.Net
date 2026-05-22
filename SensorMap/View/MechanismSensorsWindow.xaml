@@ -44,7 +44,11 @@
                         <DataTemplate>
                             <Button Name="AddImage" Style="{StaticResource LoadImageButtonStyle}"
                                     Command="{Binding Path=DataContext.AddImage,ElementName=root}"
-                                    CommandParameter="{Binding}"/>
+                                    CommandParameter="{Binding}">
+                                <Button.Content>
+                                    <Image Source="{StaticResource CameraImage}"/>
+                                </Button.Content>
+                            </Button>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

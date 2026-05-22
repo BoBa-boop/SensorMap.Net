@@ -21,6 +21,8 @@ namespace SensorMap.Model
         private double _height;
         private double _width;
         private bool _isModified;
+        private bool _isNew;
+        private bool _toDelete;
 
         [Key]
         public int Id { get; set; }
@@ -99,7 +101,18 @@ namespace SensorMap.Model
             get => _isModified;
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
-
+        [NotMapped]
+        public bool IsNew
+        {
+            get => _isNew;
+            set => this.RaiseAndSetIfChanged(ref _isNew, value);
+        }
+        [NotMapped]
+        public bool ToDelete
+        {
+            get => _toDelete;
+            set => this.RaiseAndSetIfChanged(ref _toDelete, value);
+        }
         public object Clone()
         {
             return new SensorAssignments

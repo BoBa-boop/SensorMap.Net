@@ -311,8 +311,16 @@ namespace SensorMap.ViewModel
                 foreach (var sa in CurrentMech.SensorsAssig)
                 {
                     if (!IsValidData(sa)) break;
-                    if(sa.Id == 0)
+                    if(sa.Id == 0||sa.IsNew)
+                    {
+                        sa.Id = 0;
                         dbContext.Entry(sa).State = EntityState.Added;
+                        sa.IsNew = false;
+                    }
+                    else if (sa.ToDelete)
+                    {
+                        dbContext.Entry(sa).State = EntityState.Deleted;
+                    }
                     else
                     {
                         dbContext.Entry(sa).State = EntityState.Modified;

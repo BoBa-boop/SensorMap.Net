@@ -52,8 +52,12 @@
                               HorizontalContentAlignment="Right"
                               Style="{StaticResource BadgeDanger}"
                               ShowBadge="{Binding HasChanges,UpdateSourceTrigger=PropertyChanged}">
-                        <Button Content="Сохранить" Command="{Binding SaveSensorPlace}"
-                                IsEnabled="{Binding IsEditMode}"/>
+                        <Button ToolTip="Сохранить" Command="{Binding SaveSensorPlace}"
+                                IsEnabled="{Binding IsEditMode}" Padding="3">
+                            <Button.Content>
+                                <Image Source="{StaticResource SaveImage}"/>
+                            </Button.Content>
+                        </Button>
                     </hc:Badge>
                     <Button Content="Участки" Margin="5,0" Command="{Binding NavigateToSectors}"/>
                 </hc:SimpleStackPanel>
@@ -70,9 +74,20 @@
                         </Style.Triggers>
                     </Style>
                     </CheckBox.Style>
-                </CheckBox>                
-                <Button Content="Показать список датчиков" Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}"/>
-                <Button Content="Открыть электросхему" Command="{Binding ShowScheme}" CommandParameter="{Binding CurrentMech}"/>
+                </CheckBox>
+                <Button ToolTip="Показать список датчиков" Padding="2"
+                        Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}">
+                    <Button.Content>
+                        <Image Source="{StaticResource ListImage}"/>
+                    </Button.Content>
+                </Button>
+                <Button ToolTip="Открыть электросхему" 
+                        Padding="2"
+                        Command="{Binding ShowScheme}" CommandParameter="{Binding CurrentMech}">
+                    <Button.Content>
+                        <Image Source="{StaticResource FileCogImage}"/>
+                    </Button.Content>
+                </Button>
             </hc:SimpleStackPanel>
             <Border Grid.Row="1"  Background="{StaticResource BorderBrush}">
                 <ScrollViewer PreviewMouseWheel="ScrollViewer_PreviewMouseWheel">
@@ -187,13 +202,27 @@
                             Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"
                             Orientation="Horizontal" VerticalAlignment="Center">                    
                     <hc:ButtonGroup>
-                        <Button Content="Копировать" ToolTip="Копировать" Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}"/>
-                        <Button Content="Вставить" ToolTip="Вставить"     Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}"/>
-                        <Button Content="Вырезать" ToolTip="Вырезать"     Command="{Binding ElementName=ccSensorMap,Path=CutSensorsCommand}"/>
+                        <Button ToolTip="Копировать" Padding="2"
+                                Width="30" Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}">
+                            <Button.Content>
+                                <Image Source="{StaticResource CopyImage}"/>
+                            </Button.Content>
+                        </Button>
+                        <Button ToolTip="Вставить" Width="30"
+                                Padding="2"
+                                Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}">
+                            <Image Source="{StaticResource PasteImage}"/>
+                        </Button>
+                        <Button ToolTip="Вырезать" Width="30"
+                                Padding="2"
+                                Command="{Binding ElementName=ccSensorMap,Path=CutSensorsCommand}">
+                            <Button.Content>
+                                <Image Source="{StaticResource CutImage}"/>
+                            </Button.Content>
+                        </Button>
                     </hc:ButtonGroup>
-                    <Border Background="Green"
-                            CornerRadius="10"
-                            Width="20"
+                    <Ellipse Fill="Green" Margin="10,0"
+                            Width="15" Height="15"
                             Visibility="{Binding ElementName=ccSensorMap,Path=IsMultiSelection,Converter={StaticResource Bool2VisOrHidden}}"/>
                 </StackPanel>
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="10,0,10,10" ClipToBounds="True"

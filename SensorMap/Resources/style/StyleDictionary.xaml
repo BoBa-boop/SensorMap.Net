@@ -107,10 +107,8 @@
     <!-- Стиль кнопки "Загрузить изображение" -->
     <Style x:Key="LoadImageButtonStyle" BasedOn="{StaticResource ButtonDefault}" TargetType="Button">
         <Setter Property="ToolTip" Value="Загрузить изображение"/>
-        <Setter Property="Width" Value="auto"/>
-        <Setter Property="hc:IconElement.Geometry" Value="{StaticResource DownloadGeometry}"/>
-        <Setter Property="hc:IconElement.Width" Value="16"/>
-        <Setter Property="hc:IconElement.Height" Value="16"/>
+        <Setter Property="Padding" Value="2"/>
+        <Setter Property="Width" Value="40"/>
         <Setter Property="Visibility" Value="{Binding ElementName=root, Path=DataContext.IsEditMode, Converter={StaticResource Boolean2VisibilityConverter}}"/>
     </Style>
     <!--Шаблон кнопки просмотра картинки-->

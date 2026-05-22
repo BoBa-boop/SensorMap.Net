@@ -27,14 +27,15 @@ namespace SensorMap.Commands.SensorCommands
         {
             foreach (var item in _elements)
             {
+                item.SensorData.ToDelete=true;
                 if (_canvas.Children.Contains(item))
                 {
                     _canvas.Children.Remove(item);
                 }
-                if (_collection.Contains(item.SensorData))
-                {
-                    _collection.Remove(item.SensorData);
-                }
+                //if (_collection.Contains(item.SensorData))
+                //{
+                //    _collection.Remove(item.SensorData);
+                //}
             }
 
         }
@@ -43,8 +44,9 @@ namespace SensorMap.Commands.SensorCommands
         {
             foreach (var item in _elements)
             {
+                item.SensorData.ToDelete = false;
                 _canvas.Children.Add(item);
-                _collection.Add(item.SensorData);
+                //_collection.Add(item.SensorData);
             }
 
         }

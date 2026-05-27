@@ -21,6 +21,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Xml.Linq;
 using Application = System.Windows.Application;
@@ -284,7 +285,6 @@ namespace SensorMap.CustomControls
             if (_canvas != null)
             {
                 Cursor = Grab;
-                
                 _viewMatrixTransform = new MatrixTransform(Matrix.Identity);
                 _canvas.RenderTransform = _viewMatrixTransform;
                 _viewMatrix = _viewMatrixTransform.Matrix;
@@ -294,10 +294,10 @@ namespace SensorMap.CustomControls
                 _canvas.MouseUp += _canvas_MouseUp;
                 _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
+                _canvas.MouseLeave += _canvas_MouseLeave;
                 //_canvas.KeyDown += _canvas_KeyDown;
                 //_canvas.KeyUp += _canvas_KeyUp;
                 _image.PreviewMouseDown += OnMainWindowClick;
-
                 void OnMainWindowClick(object sender, MouseButtonEventArgs e)
                 {
                     foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected))
@@ -310,6 +310,11 @@ namespace SensorMap.CustomControls
                 }
                 
             }
+            
+        }
+
+        private void _canvas_MouseLeave(object sender, MouseEventArgs e)
+        {
             
         }
 
@@ -339,6 +344,7 @@ namespace SensorMap.CustomControls
             SelectionRect = new System.Windows.Shapes.Rectangle();
             IsSelectionRectEnable = false;
             _isDragging = false;
+            Mouse.Capture(null);
         }
 
         private void TransformCommand(MouseButtonEventArgs e)
@@ -683,6 +689,7 @@ namespace SensorMap.CustomControls
                 Mouse.OverrideCursor = Cursors.Cross;//переопределяем курсор, чтобы не было конфликтов с CustomSensor
                 CreateSelectionRectangle();
                 IsSelectionRectEnable = true;
+                Mouse.Capture(_canvas);
             }
         }
         #endregion
@@ -829,14 +836,37 @@ namespace SensorMap.CustomControls
         /// <param name="pos"></param>
         private void UpdateSectionRectangle(Point pos)
         {
-            double offset_x = Math.Abs(pos.X - _initialMousePosition.X);
-            double offset_y = Math.Abs(pos.Y - _initialMousePosition.Y);
-            SelectionRect.Width = offset_x;
-            SelectionRect.Height = offset_y;
-            Canvas.SetLeft(SelectionRect, Math.Min(pos.X, _initialMousePosition.X));
-            Canvas.SetTop(SelectionRect, Math.Min(pos.Y, _initialMousePosition.Y));
+            double left = Math.Min(pos.X, _initialMousePosition.X);
+            double top = Math.Min(pos.Y, _initialMousePosition.Y);
+            double width = Math.Abs(pos.X - _initialMousePosition.X);
+            double height = Math.Abs(pos.Y - _initialMousePosition.Y);
+
+            Rect imageBounds = GetImageBounds();
+
+            // Ограничиваем прямоугольник границами Image
+            Rect constrainedRect = new Rect(left, top, width, height);
+            constrainedRect.Intersect(imageBounds);
+
+            SelectionRect.Width = constrainedRect.Width;
+            SelectionRect.Height = constrainedRect.Height;
+            Canvas.SetLeft(SelectionRect, constrainedRect.Left);
+            Canvas.SetTop(SelectionRect, constrainedRect.Top);
+            
             tempSelectedSensorsCollection = GetSensorsInSelectionRectangle(pos);
             IsMultiSelection = tempSelectedSensorsCollection.Count > 1;
+        }
+        private Rect GetImageBounds()
+        {
+            if (_image == null) return new Rect(0, 0, _canvas.ActualWidth, _canvas.ActualHeight);
+
+            double left = Canvas.GetLeft(_image);
+            double top = Canvas.GetTop(_image);
+
+            // Если координаты не заданы, считаем что Image в (0,0)
+            if (double.IsNaN(left)) left = 0;
+            if (double.IsNaN(top)) top = 0;
+
+            return new Rect(left, top, _image.ActualWidth, _image.ActualHeight);
         }
         /// <summary>
         /// Проверка что при выходе из-за границ SensorDragDrop отжаты ккнопки мыши и происходит перетаскивание или выделение. 

@@ -23,6 +23,8 @@ namespace SensorMap.Model
         private bool _isModified;
         private bool _isNew;
         private bool _toDelete;
+        private string address = string.Empty;
+        private string description = string.Empty;
 
         [Key]
         public int Id { get; set; }
@@ -86,9 +88,18 @@ namespace SensorMap.Model
                 }
             }
         }
-        public string Address { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-
+        [Reactive] 
+        public string Address 
+        { 
+            get => address; 
+            set => this.RaiseAndSetIfChanged(ref address, value);
+        }
+        [Reactive]
+        public string Description 
+        {
+            get => description;
+            set => this.RaiseAndSetIfChanged(ref description, value);
+        }
         public virtual int SensorId { get; set; }
         public virtual Sensor? Sensor { get; set; }
         public virtual int MechanismId { get; set; }

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using DynamicData;
 using Microsoft.IdentityModel.Tokens;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -53,7 +54,9 @@ namespace SensorMap.ViewModel
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         public MechSensorsVM(ITempImage imageControl,Mechanism currentMech)
         {
-            Mechanism = currentMech;
+            Mechanism = (Mechanism)currentMech.Clone();
+            if(Mechanism!=null && Mechanism.SensorsAssig!=null)
+                Mechanism.SensorsAssig.RemoveMany(Mechanism.SensorsAssig.Where(x => x.ToDelete == true).ToList());
             _imageControl = imageControl;
             AddImage = new RelayCommand<SensorAssignments>((sens) =>
             {

@@ -180,13 +180,6 @@ namespace SensorMap.ViewModel
                 if (obj[0] is RemoveSensor command && obj[1] is List<CustomSensor> sensors)
                 {
                     _undoRedoManager.Do(command);
-                    using (var _dbContext = _appDbContextFactory.CreateDbContext())
-                    {
-                        foreach (var sensor in sensors)
-                        {
-                            _dbContext.Entry(sensor.SensorData).State = EntityState.Deleted;
-                        }
-                    }
                 }
             });
             DragSensorCommand = new RelayCommand<object>((obj) =>
@@ -214,12 +207,12 @@ namespace SensorMap.ViewModel
                 return false;
             });
             SaveSensorPlace = new RelayCommand(SaveCoordinates);
-            ShowSensorMechanism = new RelayCommand<Mechanism>((obj) =>
+            ShowSensorMechanism = new RelayCommand(()=>
             {
-                if (obj is Mechanism mechanism)
+                if (CurrentMech!=null)
                 {
                     MechanismSensorsWindow window = new MechanismSensorsWindow();
-                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, mechanism);
+                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, CurrentMech);
                     window.DataContext = mechSensorsVM;
                     mechSensorsVM.IsEditMode = IsEditMode;
                     mechSensorsVM.WhenAnyValue(x => x.SelectedSensor).BindTo(this,x=>x.SelectedSensor);
@@ -227,10 +220,6 @@ namespace SensorMap.ViewModel
                     if(mechSensorsVM.HasChanges) HasChanges=true;
 
                 }
-            }, (obj) => 
-            { 
-                if (obj==null || obj is Mechanism mech && mech.SensorsAssig!=null && mech.SensorsAssig.Count() == 0) return false; 
-                return true;
             });
             ShowScheme = new RelayCommand<object>((obj) =>
             {

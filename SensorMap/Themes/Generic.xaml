@@ -100,33 +100,27 @@
                                 </Rectangle.Style>
                             </Rectangle>
                         </Grid>
-                        <hc:TextBox x:Name="PART_Address"
-                                  MaxLength="7" TextAlignment="Left" VerticalContentAlignment="Center" 
-                                 Background="WhiteSmoke"
-                                 Visibility="{Binding IsHideAddresses,
-                                                      RelativeSource={RelativeSource Mode=FindAncestor,
-                                                      AncestorType={x:Type myCC:SensorDragDrop}},
-                                                      Converter={StaticResource Bool2ReVisOrHidden}}"
-                                    ToolTip="{Binding RelativeSource={x:Static RelativeSource.Self},
-                                        Path=(Validation.Errors)[0].ErrorContent}">
-                            <hc:TextBox.Text>
-                                <Binding Path="SensorData.Address" Mode="TwoWay" RelativeSource="{RelativeSource TemplatedParent}">
-                                    <Binding.ValidationRules>
-                                        <valid:InputDigitOnly IsIncludeSpecSymbols="True"/>
-                                    </Binding.ValidationRules>
-                                </Binding>
-                            </hc:TextBox.Text>
-                            <hc:TextBox.Style>
-                                <Style TargetType="hc:TextBox">
+                        <TextBlock x:Name="PART_Address" TextAlignment="Left"
+                                    Text="{Binding SensorData.Address,UpdateSourceTrigger=PropertyChanged,RelativeSource={RelativeSource TemplatedParent}}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
                                     <Setter Property="Height" Value="15"/>
+                                    <Setter Property="Visibility" Value="{Binding IsHideAddresses,
+                                                         RelativeSource={RelativeSource Mode=FindAncestor,
+                                                         AncestorType={x:Type myCC:SensorDragDrop}},
+                                                         Converter={StaticResource Bool2ReVisOrHidden}}"/>
+                                    <Setter Property="Background" Value="WhiteSmoke"/>
                                     <Setter Property="Width" Value="40"/>
-                                    <Setter Property="BorderBrush" Value="Black"/>
-                                    <Setter Property="BorderThickness" Value="1"/>
                                     <Setter Property="FontFamily" Value="Arial"/>
-                                    <Setter Property="FontSize" Value="9"/>
+                                    <Setter Property="FontSize" Value="11"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ElementName=PART_Address, Path=Text}" Value="">
+                                            <Setter Property="TextBlock.Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
                                 </Style>
-                            </hc:TextBox.Style>
-                        </hc:TextBox>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </ControlTemplate>
             </Setter.Value>

@@ -11,7 +11,7 @@ namespace SensorMap.Model
     /// <summary>
     /// Описывает оборудование
     /// </summary>
-    public class Mechanism : ReactiveObject
+    public class Mechanism : ReactiveObject, ICloneable
     {
         private bool _isModified;
         private string _name = string.Empty;
@@ -83,5 +83,20 @@ namespace SensorMap.Model
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
 
+        public object Clone()
+        {
+            return new Mechanism()
+            {
+                Id=Id,
+                Name=Name,
+                Image = Image,
+                SectorID = SectorID,
+                Sector = Sector,
+                DeviceID = DeviceID,
+                Device = Device,
+                SensorsAssig = new(SensorsAssig),
+                Files = Files
+            };
+        }
     }
 }

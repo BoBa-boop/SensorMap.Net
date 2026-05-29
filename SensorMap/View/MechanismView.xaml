@@ -76,10 +76,20 @@
                     </CheckBox.Style>
                 </CheckBox>
                 <Button ToolTip="Показать список датчиков" Padding="2"
-                        Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}">
+                        Command="{Binding ShowSensorMechanism}">
                     <Button.Content>
                         <Image Source="{StaticResource ListImage}"/>
                     </Button.Content>
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                            <Setter Property="IsEnabled" Value="True"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
                 </Button>
                 <Button ToolTip="Открыть электросхему" 
                         Padding="2"

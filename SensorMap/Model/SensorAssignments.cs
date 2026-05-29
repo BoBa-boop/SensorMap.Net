@@ -96,7 +96,8 @@ namespace SensorMap.Model
         }
         [Reactive]
         public string Description 
-        { get => description;
+        {
+            get => description;
             set => this.RaiseAndSetIfChanged(ref description, value);
         }
         public virtual int SensorId { get; set; }

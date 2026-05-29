@@ -36,15 +36,18 @@ namespace SensorMap.ViewModel
         private readonly IFileManagment _fileManagment;
         private Sector? currentSector; 
         private Mechanism? currentMech;
-        private SensorAssignments _curSensor;
+        private Sensor _curSensor;
         private bool isEditMode;
         private bool _isShowSensors;
         private bool _hasChanges;
+        private SensorAssignments _selectSensor;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation? Navigation { get; set; }
-        
+        /// <summary>
+        /// Переменная хранит значение из TreeView выбранного участка
+        /// </summary>
         [Reactive] public Sector? CurrentSector
         {
             get => currentSector;
@@ -58,6 +61,9 @@ namespace SensorMap.ViewModel
             }
 
         }
+        /// <summary>
+         /// Переменная хранит значение из TreeView выбранной механизации
+         /// </summary>
         [Reactive] public Mechanism? CurrentMech
         {
             get => currentMech;
@@ -71,17 +77,28 @@ namespace SensorMap.ViewModel
                 }
             }
         }
-        [Reactive] public SensorAssignments CurrentSensor
+        /// <summary>
+         /// Переменная хранит значение из TreeView выбранного датчика
+         /// </summary>
+        [Reactive] public Sensor CurrentSensor
         {
             get => _curSensor;
             set
             {
-                if (value != null)
-                {
-                    this.RaiseAndSetIfChanged(ref _curSensor, value);
-                }
+                this.RaiseAndSetIfChanged(ref _curSensor, value);
             }
         }
+        
+        /// <summary>
+        /// Датчик выбранный из списка MechSensors
+        /// </summary>
+        [Reactive]
+        public SensorAssignments SelectedSensor
+        {
+            get { return _selectSensor; }
+            set { this.RaiseAndSetIfChanged(ref _selectSensor, value); }
+        }
+
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
         [Reactive] public bool CanRedo => _undoRedoManager.CanRedo;
         [Reactive] public bool IsShowSensors
@@ -205,7 +222,7 @@ namespace SensorMap.ViewModel
                     MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, mechanism);
                     window.DataContext = mechSensorsVM;
                     mechSensorsVM.IsEditMode = IsEditMode;
-                    mechSensorsVM.WhenAnyValue(x => x.SelectedSensor).BindTo(this,x=>x.CurrentSensor);
+                    mechSensorsVM.WhenAnyValue(x => x.SelectedSensor).BindTo(this,x=>x.SelectedSensor);
                     window.ShowDialog();
                     if(mechSensorsVM.HasChanges) HasChanges=true;
 

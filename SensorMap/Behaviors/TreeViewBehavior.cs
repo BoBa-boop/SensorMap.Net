@@ -58,11 +58,14 @@ namespace SensorMap.Behaviors
                 {
                     this.SelectedItem = valueProperty.GetValue(e.NewValue)!;
                 }
-                if(type.Name == SelectedItemType)
+                else if(type.Name == SelectedItemType)
                 {
                     this.SelectedItem = e.NewValue;
                 }
-                
+                else
+                {
+                    this.SelectedItem = null;
+                }
             }
         }
     }

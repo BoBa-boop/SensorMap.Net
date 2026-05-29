@@ -231,7 +231,7 @@
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorEvent="{Binding DeleteSensorCommand}"
-                                         SelectedCustomSensor="{Binding CurrentSensor,UpdateSourceTrigger=PropertyChanged}"
+                                         SelectedCustomSensor="{Binding SelectedSensor,UpdateSourceTrigger=PropertyChanged}"
                                          IsEditMode="{Binding IsEditMode}"
                                          TransformSensorsCommand="{Binding TransformSensorCommand}"
                                          ItemsSource="{Binding CurrentMech.SensorsAssig}">

@@ -19,8 +19,9 @@ using Point = System.Windows.Point;
 
 namespace SensorMap.CustomControls
 {
+    [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Sensor", Type = typeof(Border))]
-    [TemplatePart(Name = "PART_Address", Type = typeof(HandyControl.Controls.TextBox))]
+    [TemplatePart(Name = "PART_Address", Type = typeof(TextBlock))]
     public class CustomSensor : Control, ICloneable
     {
         #region Dependency Properties
@@ -177,8 +178,17 @@ namespace SensorMap.CustomControls
         private readonly ITransformObject _transformService;
         private Point LastPoint;
         private bool IsTransformed = false;
+        private bool MouseMoveRight = false;
+        private bool MouseMoveUp = false;
         private  Canvas _canvas;
+        private bool CanChangePosAddress = false;
+        private TextBlock _textBlock;
+        Rect Map;
         private System.Windows.Controls.Image _image;
+        private bool IsMoving;
+        private bool AddressLeft = false;
+        private bool AddressBottom = false;
+
         static CustomSensor()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomSensor), new FrameworkPropertyMetadata(typeof(CustomSensor)));
@@ -193,9 +203,12 @@ namespace SensorMap.CustomControls
             base.OnApplyTemplate();
             _canvas = _transformService.GetParentCanvas(this);
             _image = _canvas.Children.OfType<Image>().First();
+            _textBlock = (TextBlock)GetTemplateChild("PART_Address");
             if ( _canvas != null )
             {
                 ChangeStateActions();
+                
+                
             }
 
         }
@@ -253,13 +266,14 @@ namespace SensorMap.CustomControls
             List<SensorAssignments> SelectedSensors = _canvas.Children.OfType<CustomSensor>()
                    .Where(x => x.IsSelected).Select(x => x.SensorData).ToList();
             var canvasCollection = _canvas.Children.OfType<CustomSensor>().Where(x => SelectedSensors.Contains(x.SensorData)).ToList();
-            if (IsTransformed)
+            if (IsTransformed || IsMoving)
             {
                 var command = new TransformationSensors(SelectedSensors, canvasCollection, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
                 TransformCommand.Execute(command);
             }
             e.Handled = true;
             IsDragging = false;
+            IsMoving = false;
             IsTransformed = false;
         }
 
@@ -272,6 +286,10 @@ namespace SensorMap.CustomControls
                     Point point = Mouse.GetPosition(_canvas);
                     double offset_x = point.X - LastPoint.X;
                     double offset_y = point.Y - LastPoint.Y;
+                    Vector offsetVector = point - LastPoint;
+
+                    MouseMoveRight = offsetVector.X > 0 ? true : false;
+                    MouseMoveUp = offsetVector.Y > 0 ? true : false;
                     foreach (var item in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
                     {
                         double new_x = Canvas.GetLeft(item);
@@ -284,6 +302,7 @@ namespace SensorMap.CustomControls
                         {
                             new_x += offset_x;
                             new_y += offset_y;
+                            IsMoving = true;
                         }
                         //Трансформация
                         else if (!IsMultiSelection)
@@ -295,34 +314,42 @@ namespace SensorMap.CustomControls
                                     new_y += offset_y;
                                     new_width -= offset_x;
                                     new_height -= offset_y;
+                                    IsTransformed = true;
                                     break;
                                 case HitType.UpRight:
                                     new_y += offset_y;
                                     new_width += offset_x;
                                     new_height -= offset_y;
+                                    IsTransformed = true;
                                     break;
                                 case HitType.BottomRight:
                                     new_width += offset_x;
                                     new_height += offset_y;
+                                    IsTransformed = true;
                                     break;
                                 case HitType.BottomLeft:
                                     new_x += offset_x;
                                     new_width -= offset_x;
                                     new_height += offset_y;
+                                    IsTransformed = true;
                                     break;
                                 case HitType.Left:
                                     new_x += offset_x;
                                     new_width -= offset_x;
+                                    IsTransformed = true;
                                     break;
                                 case HitType.Right:
                                     new_width += offset_x;
+                                    IsTransformed = true;
                                     break;
                                 case HitType.Bottom:
                                     new_height += offset_y;
+                                    IsTransformed = true;
                                     break;
                                 case HitType.Top:
                                     new_y += offset_y;
                                     new_height -= offset_y;
+                                    IsTransformed = true;
                                     break;
                             }
                         }
@@ -332,14 +359,208 @@ namespace SensorMap.CustomControls
                             {
                                 Canvas.SetLeft(item, new_x);
                                 Canvas.SetTop(item, new_y);
+                                
                                 var oldBounds = item.CustomBounds;
                                 item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                                ChangeAddressPosition();
                                 LastPoint = point; 
-                                IsTransformed=true;
+                                
                             }
                         }
                     }
                 }
+            }
+        }
+
+        private void ChangeAddressPosition()
+        {
+            int leftSet = Convert.ToInt32(-_textBlock.ActualWidth);
+            int rightSet = Convert.ToInt32(CustomBounds.Width);
+            int topSet = Convert.ToInt32(-_textBlock.ActualHeight);
+            int bottomSet = Convert.ToInt32(CustomBounds.Height);
+
+            if (IsTransformed && AddressLeft)
+                Canvas.SetLeft(_textBlock, leftSet);
+            else if (IsTransformed) Canvas.SetLeft(_textBlock, rightSet);
+
+            if (IsTransformed && AddressBottom)
+                Canvas.SetTop(_textBlock, bottomSet);
+            else if (IsTransformed) Canvas.SetTop(_textBlock, topSet);
+
+            ControlOutOfRangeImage(leftSet, rightSet, topSet, bottomSet);
+            Rect expandedBounds = this.CustomBounds;
+            double horizontalInflate = _textBlock.ActualWidth;
+            double verticalInflate = _textBlock.ActualHeight;
+
+            expandedBounds.Inflate(horizontalInflate, verticalInflate);
+            List<CustomSensor> neighborsSensors = _canvas.Children.OfType<CustomSensor>()
+                .Where(s => s.CustomBounds.IntersectsWith(expandedBounds) && this.SensorData.Id!=s.SensorData.Id).ToList();
+            var SelectedSensorWidth = CustomBounds.X + _textBlock.ActualWidth;
+            if (!neighborsSensors.Any()) CanChangePosAddress = true;
+            foreach (var neighbor in neighborsSensors)
+            {
+                #region old
+                int PointNeighborWithLeftAddress = Convert.ToInt32(neighbor.CustomBounds.X - neighbor._textBlock.ActualWidth);
+                int PointNeighborWithRightAddress = Convert.ToInt32(neighbor.CustomBounds.X);
+
+                //if(MouseMoveRight)
+                //{
+                //    //→ -○ -○
+                //    if (AddressLeft && neighbor.AddressLeft)
+                //    {
+                //        //сенсор пересекается с соседом
+                //        //необходимо переместить адрес соседа направо
+                //        if (SelectedSensorWidth >= PointNeighborWithLeftAddress)
+                //        {
+                //            Canvas.SetLeft(neighbor._textBlock, neighbor.CustomBounds.Width);                            
+                //            neighbor.AddressLeft = false;
+                //        }
+                //    }
+                //    //→ ○- -○
+                //    if (!AddressLeft && neighbor.AddressLeft)
+                //    {
+                //        //необходимо переместить адрес соседа направо
+                //        if (SelectedSensorWidth >= PointNeighborWithLeftAddress)
+                //        {
+                //            Canvas.SetLeft(neighbor._textBlock, neighbor.CustomBounds.Width);
+                //            neighbor.AddressLeft = false;
+                //        }
+                //    }
+                //    //→ ○- ○-
+                //    if (!AddressLeft && !neighbor.AddressLeft)
+                //    {
+                //        //необходимо переместить адрес налево
+                //        if (SelectedSensorWidth >= PointNeighborWithRightAddress)
+                //        {
+                //            Canvas.SetLeft(_textBlock, leftSet);
+                //            AddressLeft = true;
+                //        }
+                //    }
+                //}
+
+                ////Движение cправо налево в сторону соседа
+                //if (MouseMoveRight == false && SelectedSensorWidth > PointNeighborWithLeftAddress + _textBlock.Width)
+                //{
+                //    //-○ -○←
+                //    if (neighbor.AddressLeft && AddressLeft )
+                //    {
+                //        //сенсор пересекается с соседом
+                //        //необходимо переместить адрес направо
+
+                //            Canvas.SetLeft(_textBlock, rightSet);
+                //            AddressLeft = false;
+                //    }
+
+                //    //○- ○-←
+                //    if (!neighbor.AddressLeft && !AddressLeft )
+                //    {
+                //        //необходимо переместить адрес соседа налево
+
+                //            Canvas.SetLeft(neighbor._textBlock, -neighbor._textBlock.ActualWidth);
+                //            neighbor.AddressLeft = true;
+
+                //    }
+                //    //○- -○←
+                //    if (!neighbor.AddressLeft && AddressLeft )
+                //    {
+                //        //необходимо переместить адрес направо
+
+                //            Canvas.SetLeft(_textBlock, CustomBounds.Width);
+                //            AddressLeft = false;
+
+                //    }
+                //}
+                //if (AddressBottom)
+                //{
+
+                //}
+                //if (!AddressBottom)
+                //{
+
+                //}
+                //else break;
+                #endregion
+                // --- ЛОГИКА ДЛЯ АДРЕСОВ СЛЕВА ---
+                if (AddressLeft && neighbor.AddressLeft && CanChangePosAddress)
+                {
+                    // Оба хотят быть слева. Кто-то должен уступить.
+                    if (MouseMoveRight)
+                    {
+                        // Мы главнее -> сдвигаем соседа вправо
+                        Canvas.SetLeft(neighbor._textBlock, neighbor.CustomBounds.Width);
+                        neighbor.AddressLeft = false; // У соседа флаг меняется
+                        CanChangePosAddress = false;
+                    }
+                    else
+                    {
+                        // Сосед главнее -> сдвигаемся сами вправо
+                        Canvas.SetLeft(_textBlock, CustomBounds.Width);
+                        AddressLeft = false; // Наш флаг меняется
+                        CanChangePosAddress = false;
+                    }
+                }
+
+                // --- ЛОГИКА ДЛЯ АДРЕСОВ СПРАВА ---
+                else if (!AddressLeft && !neighbor.AddressLeft && CanChangePosAddress)
+                {
+                    // Оба хотят быть справа. Аналогичная логика.
+                    if (!MouseMoveRight)
+                    {
+                        // Мы главнее -> сдвигаем соседа влево
+                        Canvas.SetLeft(neighbor._textBlock, -neighbor._textBlock.ActualWidth);
+                        neighbor.AddressLeft = true;
+                        CanChangePosAddress = false;
+                    }
+                    else
+                    {
+                        // Сосед главнее -> сдвигаемся сами влево
+                        Canvas.SetLeft(_textBlock, -_textBlock.ActualWidth);
+                        AddressLeft = true;
+                        CanChangePosAddress = false;
+                    }
+                }
+
+                if (AddressLeft && !neighbor.AddressLeft && CanChangePosAddress)
+                {
+                    if (MouseMoveRight)
+                    {
+                        Canvas.SetLeft(_textBlock, CustomBounds.Width);
+                        AddressLeft = false;
+                        CanChangePosAddress = false;
+                    }
+
+                    else
+                    {
+                        Canvas.SetLeft(neighbor._textBlock, -neighbor._textBlock.ActualWidth);
+                        neighbor.AddressLeft = true;
+                        CanChangePosAddress = false;
+                    }
+                }
+            }
+        }
+
+
+        private void ControlOutOfRangeImage(int leftSet, int rightSet, int topSet, int bottomSet)
+        {
+            if (CustomBounds.X + Canvas.GetLeft(_textBlock) < 2)
+            {
+                Canvas.SetLeft(_textBlock, rightSet);
+                AddressLeft = false;
+            }
+            if (CustomBounds.X + rightSet + _textBlock.ActualWidth > Map.Width)
+            {
+                Canvas.SetLeft(_textBlock, leftSet);
+                AddressLeft = true;
+            }
+            if (CustomBounds.Y + Canvas.GetTop(_textBlock) < 2)
+            {
+                Canvas.SetTop(_textBlock, topSet);
+                AddressBottom = false;
+            }
+            if (CustomBounds.Y + topSet + _textBlock.ActualHeight > Map.Height)
+            {
+                Canvas.SetTop(_textBlock, bottomSet);
+                AddressBottom = true;
             }
         }
 
@@ -365,6 +586,9 @@ namespace SensorMap.CustomControls
             _memorySelectedSensor = this;
             IsSelected = true;
             this.Focus();
+
+            if (_image.Source != null)
+                Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
         }
 
         

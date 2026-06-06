@@ -178,10 +178,7 @@ namespace SensorMap.CustomControls
         private readonly ITransformObject _transformService;
         private Point LastPoint;
         private bool IsTransformed = false;
-        private bool MouseMoveRight = false;
-        private bool MouseMoveUp = false;
         private  Canvas _canvas;
-        private bool CanChangePosAddress = false;
         private TextBlock _textBlock;
         private System.Windows.Controls.Image _image;
         private bool IsMoving;
@@ -285,10 +282,6 @@ namespace SensorMap.CustomControls
                     Point point = Mouse.GetPosition(_canvas);
                     double offset_x = point.X - LastPoint.X;
                     double offset_y = point.Y - LastPoint.Y;
-                    Vector offsetVector = point - LastPoint;
-
-                    MouseMoveRight = offsetVector.X > 0 ? true : false;
-                    MouseMoveUp = offsetVector.Y > 0 ? true : false;
                     foreach (var item in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
                     {
                         double new_x = Canvas.GetLeft(item);
@@ -361,6 +354,9 @@ namespace SensorMap.CustomControls
                                 
                                 var oldBounds = item.CustomBounds;
                                 item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                                UpdateAddressRect();
+                                _transformService.NoCollisionWithRect(_textBlock,addressRect,new Rect(_image.RenderSize), CustomBounds);
+                                
                                 ChangeAddressPosition();
                                 LastPoint = point; 
                                 
@@ -370,6 +366,38 @@ namespace SensorMap.CustomControls
                 }
             }
         }
+        private int numTry = 0;
+        private void ChangeAddressPosition()
+        {
+            Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона поиска адресов
+            //searchArea.Inflate(20, 20);
+            bool isPositionFixed = false;
+            var interRect = _canvas.Children.OfType<CustomSensor>()
+                .Where(s => s != this && s._textBlock.Visibility != Visibility.Collapsed && Rect.Union(s.addressRect,s.CustomBounds).IntersectsWith(searchArea)).FirstOrDefault();
+            if (interRect==null) return;
+            while (isPositionFixed == false)
+            {
+                _transformService.CollisionWithRect(_textBlock, addressRect, Rect.Union(interRect.addressRect,interRect.CustomBounds), CustomBounds);
+                UpdateAddressRect();
+                isPositionFixed = !_canvas.Children.OfType<CustomSensor>()
+                .Where(s => s != this && s._textBlock.Visibility != Visibility.Collapsed && addressRect.IntersectsWith(s.CustomBounds)).Any();
+                numTry++;
+                if (numTry > 4) break;
+            }
+            if (!isPositionFixed)
+            {
+                Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2); // Более корректная центровка
+                Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
+                _textBlock.Opacity = 0.7;
+                numTry = 0;
+            }
+            if (isPositionFixed)
+            {
+                _textBlock.Opacity = 1;
+                numTry = 0;
+            }
+        }
+
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
@@ -423,185 +451,7 @@ namespace SensorMap.CustomControls
 
 
         private Rect addressRect;
-        private int numTry = 4;
-        public void ChangeAddressPosition()
-        {
-            int leftSet = Convert.ToInt32(-_textBlock.ActualWidth);
-            int rightSet = Convert.ToInt32(CustomBounds.Width);
-            int topSet = Convert.ToInt32(-_textBlock.ActualHeight);
-            int bottomSet = Convert.ToInt32(CustomBounds.Height);
-            //Центровка адреса при изменение размера датчика
-            if (IsTransformed)
-            {
-                double Xcoord = 0;
-                double Ycoord = 0;
-                if (AddressLeft)
-                {
-                    Xcoord = Convert.ToInt32(-_textBlock.ActualWidth);
-                }
-                else if (AddressRight)
-                {
-                    Xcoord = Convert.ToInt32(CustomBounds.Width);
-                }
-                if (AddressTop)
-                {
-                    Ycoord = Convert.ToInt32(-_textBlock.ActualHeight);
-                }
-                else if (AddressBottom)
-                {
-                    Ycoord = Convert.ToInt32(CustomBounds.Height);
-                }
-                Canvas.SetLeft(_textBlock, Xcoord);
-                Canvas.SetTop(_textBlock, Ycoord);
-            }
-
-            ControlOutOfRangeImage(leftSet, rightSet, topSet, bottomSet);
-
-            addressRect = new Rect(Canvas.GetLeft(_textBlock) + CustomBounds.X, Canvas.GetTop(_textBlock) + CustomBounds.Y, _textBlock.ActualWidth, _textBlock.ActualHeight);
-            ControlAddressCollision(leftSet, rightSet, topSet, bottomSet);
-
-        }
-        /// <summary>
-        /// Контролирование накладывание адрессов друг на друга. Перемещение адреса выбранного датчика в свободную позицию
-        /// </summary>
-        /// <param name="leftSet"></param>
-        /// <param name="rightSet"></param>
-        /// <param name="topSet"></param>
-        /// <param name="bottomSet"></param>
-        private void ControlAddressCollision(int leftSet, int rightSet, int topSet, int bottomSet)
-        {
-            Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона поиска адресов
-            searchArea.Inflate(20, 20);
-            var collectionsIntersects = _canvas.Children.OfType<CustomSensor>()
-                .Where(s => s != this && s._textBlock.Visibility != Visibility.Collapsed && s.addressRect.IntersectsWith(searchArea)).ToList();
-
-            bool isPositionFixed = false;
-
-            // --- ЭТАП 1: Попытки смещения ПО ГОРИЗОНТАЛИ ---
-            for (int attempt = 0; attempt < numTry && !isPositionFixed; attempt++)
-            {
-                // Пересчитываем пересечения на КАЖДОЙ попытке, так как позиция изменилась
-                var inter = collectionsIntersects.Where(s =>
-                    this.addressRect.IntersectsWith(s.CustomBounds) ||
-                    this.addressRect.IntersectsWith(s.addressRect)).ToList();
-
-                if (!inter.Any())
-                {
-                    // Горизонтальное смещение помогло
-                    isPositionFixed = true;
-                    break;
-                }
-
-                // Выполняем смену позиции по X
-                if (AddressRight || (!AddressLeft && !AddressRight))
-                {
-                    // Пробуем переместить влево
-                    Canvas.SetLeft(_textBlock, leftSet);
-                    AddressRight = false;
-                    AddressLeft = true;
-                }
-                else if (AddressLeft)
-                {
-                    // Пробуем переместить вправо
-                    Canvas.SetLeft(_textBlock, rightSet);
-                    AddressLeft = false;
-                    AddressRight = true;
-                }
-
-                // Обновляем адресный прямоугольник после изменения позиции
-                UpdateAddressRect();
-            }
-
-            // --- ЭТАП 2: Попытки смещения ПО ВЕРТИКАЛИ ---
-            // Начинаем только если горизонтальные попытки не помогли
-            if (!isPositionFixed)
-            {
-                for (int attempt = 0; attempt < numTry && !isPositionFixed; attempt++)
-                {
-                    // Снова пересчитываем пересечения
-                    var inter = collectionsIntersects.Where(s =>
-                        this.addressRect.IntersectsWith(s.CustomBounds) ||
-                        this.addressRect.IntersectsWith(s.addressRect)).ToList();
-
-                    if (!inter.Any())
-                    {
-                        // Вертикальное смещение помогло
-                        isPositionFixed = true;
-                        break;
-                    }
-
-                    // Выполняем смену позиции по Y
-                    if (AddressBottom || (!AddressTop && !AddressBottom))
-                    {
-                        // Пробуем переместить вверх
-                        Canvas.SetTop(_textBlock, topSet);
-                        AddressBottom = false;
-                        AddressTop = true;
-                    }
-                    else if (AddressTop)
-                    {
-                        // Пробуем переместить вниз
-                        Canvas.SetTop(_textBlock, bottomSet);
-                        AddressTop = false;
-                        AddressBottom = true;
-                    }
-
-                    // Обновляем адресный прямоугольник
-                    UpdateAddressRect();
-                }
-            }
-
-            // --- ПЛАН Б: Перемещение в центр, если ничего не помогло ---
-            if (!isPositionFixed)
-            {
-                Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2); // Более корректная центровка
-                Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
-                _textBlock.Opacity = 0.7; // Прозрачность, как индикатор неудачи
-                                          // Сбрасываем флаги положения
-                AddressLeft = false;
-                AddressRight = false;
-                AddressTop = false;
-                AddressBottom = false;
-                UpdateAddressRect();
-            }
-            else
-            {
-                _textBlock.Opacity = 1; // Возвращаем полную непрозрачность
-            }
-        }
-        /// <summary>
-        /// Контролирование выхода адреса за границу схемы.
-        /// </summary>
-        /// <param name="leftSet"></param>
-        /// <param name="rightSet"></param>
-        /// <param name="topSet"></param>
-        /// <param name="bottomSet"></param>
-        private void ControlOutOfRangeImage(int leftSet, int rightSet, int topSet, int bottomSet)
-        {
-            if (CustomBounds.X + Canvas.GetLeft(_textBlock) < 2)
-            {
-                Canvas.SetLeft(_textBlock, rightSet);
-                AddressLeft = false;
-                AddressRight = true;
-            }
-            if (CustomBounds.X + rightSet + _textBlock.ActualWidth > _image.ActualWidth)
-            {
-                Canvas.SetLeft(_textBlock, leftSet);
-                AddressLeft = true;
-                AddressRight = false;
-            }
-            if (CustomBounds.Y + Canvas.GetTop(_textBlock) + bottomSet > _image.ActualHeight)
-            {
-                Canvas.SetTop(_textBlock, topSet);
-                AddressBottom = false;
-                AddressTop = true;
-            }
-            if (CustomBounds.Y + topSet < 2)
-            {
-                Canvas.SetTop(_textBlock, bottomSet);
-                AddressBottom = true;
-                AddressTop = false;
-            }
-        }
+        
+        
     }
 }

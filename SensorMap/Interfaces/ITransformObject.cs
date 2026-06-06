@@ -46,7 +46,20 @@ namespace SensorMap.Interfaces
         /// <param name="offsetY">Смещение по Y</param>
         /// <returns>Новые границы прямоугольника или null, если трансформация недопустима</returns>
         Rect? TransformRectangle(Rect originalBounds, HitType hitType, double offsetX, double offsetY);
-
+        /// <summary>
+        /// Коллизия прямоугольников, если ChangePosiotion = true перемещение rect1 для устранения пересечения.
+        /// </summary>
+        /// <param name="rect1"></param>
+        /// <param name="rect2"></param>
+        /// <param name="rect3">Относительно чего происходит смещение</param>
+        void CollisionWithRect(FrameworkElement ui, Rect rect1,Rect rect2, Rect centerRect);
+        /// <summary>
+        /// Отсутсвие коллизии прямоугольников, если ChangePosiotion = true перемещение rect1 для создания пересечения.
+        /// </summary>
+        /// <param name="rect1"></param>
+        /// <param name="rect2"></param>
+        /// /// <param name="rect3">Относительно чего происходит смещение</param>
+        void NoCollisionWithRect(FrameworkElement ui,Rect rect1, Rect rect2,Rect rect3);
         Canvas GetParentCanvas(UIElement element);
 
         Point ScreenToWorld(Point point,Matrix matrix);

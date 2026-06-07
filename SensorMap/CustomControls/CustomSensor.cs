@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using static SensorMap.Services.TransformObjectService;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Image = System.Windows.Controls.Image;
@@ -367,6 +368,7 @@ namespace SensorMap.CustomControls
             }
         }
         private int numTry = 0;
+        
         private void ChangeAddressPosition()
         {
             Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона поиска адресов
@@ -386,7 +388,7 @@ namespace SensorMap.CustomControls
             }
             if (!isPositionFixed)
             {
-                Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2); // Более корректная центровка
+                Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2);
                 Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
                 _textBlock.Opacity = 0.7;
                 numTry = 0;

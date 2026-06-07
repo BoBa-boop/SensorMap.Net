@@ -37,6 +37,7 @@ namespace SensorMap.Services
             return desired_cursor;
         }
         public enum CollisionSide { None, Left, Right, Top, Bottom }
+        public enum AddressPosition { Center,Left,Right,Top, Bottom }
 
         public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 0)
         {
@@ -137,16 +138,13 @@ namespace SensorMap.Services
             return null;
         }
         private int numTry = 4;
+        private AddressPosition addressPosition=AddressPosition.Right;
         public void CollisionWithRect(FrameworkElement ui, Rect moveObject, Rect staticObject, Rect centerRect)
         {
             if (!moveObject.IntersectsWith(staticObject)) return;
             //какая сторона пересеклась
             CollisionSide collisionSide = GetCollisionSide(moveObject, staticObject);
             //координаты сторон
-            bool objLeft = moveObject.X < centerRect.Left;
-            bool objRight = moveObject.X > centerRect.Right;
-            bool objTop = moveObject.Y < centerRect.Top;
-            bool objBottom = moveObject.Y > centerRect.Bottom;
             int leftSet = Convert.ToInt32(-ui.ActualWidth - 5);
             int rightSet = Convert.ToInt32(centerRect.Width + 5);
             int topSet = Convert.ToInt32(-ui.ActualHeight - 5);
@@ -155,27 +153,35 @@ namespace SensorMap.Services
             // Выполняем смену позиции по X
             if (collisionSide == CollisionSide.Right)
             {
-                if (objTop || objBottom) Canvas.SetTop(ui, -(centerRect.Width - 40)/2);
+                if (addressPosition==AddressPosition.Top || addressPosition==AddressPosition.Bottom)
+                    Canvas.SetTop(ui, -(centerRect.Width - 40)/2);
                 Canvas.SetLeft(ui, leftSet);
+                addressPosition = AddressPosition.Left;
                 return;
             }
             else if (collisionSide == CollisionSide.Left)
             {
-                if (objTop || objBottom) Canvas.SetTop(ui, -(centerRect.Width - 40) / 2);
+                if (addressPosition == AddressPosition.Top || addressPosition == AddressPosition.Bottom)
+                    Canvas.SetTop(ui, -(centerRect.Width - 40) / 2);
                 Canvas.SetLeft(ui, rightSet);
+                addressPosition = AddressPosition.Right;
                 return;
             }
             // Выполняем смену позиции по Y
             if (collisionSide == CollisionSide.Bottom)
             {
-                if (objLeft || objRight) Canvas.SetLeft(ui, -(centerRect.Height - 15) / 2);
+                if (addressPosition == AddressPosition.Left || addressPosition == AddressPosition.Right)
+                    Canvas.SetLeft(ui, -(centerRect.Height - 15) / 2);
                 Canvas.SetTop(ui, topSet);
+                addressPosition = AddressPosition.Top;
                 return;
             }
             else if (collisionSide == CollisionSide.Top)
             {
-                if (objLeft || objRight) Canvas.SetLeft(ui, -(centerRect.Height - 15) / 2);
+                if (addressPosition == AddressPosition.Left || addressPosition == AddressPosition.Right)
+                    Canvas.SetLeft(ui, -(centerRect.Height - 15) / 2);
                 Canvas.SetTop(ui, bottomSet);
+                addressPosition = AddressPosition.Bottom;
                 return;
             }
         }
@@ -198,48 +204,42 @@ namespace SensorMap.Services
             if (objLeft)
             {
                 Canvas.SetLeft(ui, rightSet);
+                addressPosition = AddressPosition.Right;
             }
             else if (objRight)
             {
                 Canvas.SetLeft(ui, leftSet);
+                addressPosition = AddressPosition.Left;
             }
             if (objTop)
             {
-                Canvas.SetLeft(ui, topSet);
+                Canvas.SetTop(ui, bottomSet);
+                addressPosition = AddressPosition.Bottom;
             }
             else if (objBottom)
             {
-                Canvas.SetLeft(ui, bottomSet);
+                Canvas.SetTop(ui, topSet);
+                addressPosition = AddressPosition.Top;
             }
 
         }
         private CollisionSide GetCollisionSide(Rect moveObject, Rect staticObject)
         {
-            // 1. Проверяем факт пересечения
-            if (!moveObject.IntersectsWith(staticObject))
+            // Вычисляем глубину проникновения по осям
+            double penetrationX = Math.Min(moveObject.Right - staticObject.Left, staticObject.Right - moveObject.Left);
+            double penetrationY = Math.Min(moveObject.Bottom - staticObject.Top, staticObject.Bottom - moveObject.Top);
+
+            // Определяем сторону по минимальной глубине проникновения
+            if (penetrationX < penetrationY)
             {
-                return CollisionSide.None;
+                // Столкновение по горизонтали
+                return (moveObject.Left < staticObject.Left) ? CollisionSide.Right : CollisionSide.Left;
             }
-
-            var intersection = Rect.Intersect(moveObject, staticObject);
-            
-            bool objLeft = (moveObject.Left >= intersection.Right - 2) &&
-                           (moveObject.Left <= intersection.Right + 2);
-
-            bool objRight = (moveObject.Right >= intersection.Left - 2) &&
-                            (moveObject.Right <= intersection.Left + 2);
-
-            bool objTop = (moveObject.Top >= intersection.Bottom - 2) &&
-                          (moveObject.Top <= intersection.Bottom + 2);
-
-            bool objBottom = (moveObject.Bottom >= intersection.Top - 2) &&
-                             (moveObject.Bottom <= intersection.Top + 2);
-
-            if (objTop) return CollisionSide.Top;
-            if (objBottom) return CollisionSide.Bottom;
-            if (objLeft) return CollisionSide.Left;
-            if (objRight) return CollisionSide.Right;
-            return CollisionSide.None;
+            else
+            {
+                // Столкновение по вертикали
+                return (moveObject.Top < staticObject.Top) ? CollisionSide.Bottom : CollisionSide.Top;
+            }
         }
         //public void ChangeAddressPosition()
         //{

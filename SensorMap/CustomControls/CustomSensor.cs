@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using static SensorMap.Services.TransformObjectService;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
@@ -56,7 +57,7 @@ namespace SensorMap.CustomControls
                 "CustomBackground", 
                 typeof(SolidColorBrush), 
                 typeof(CustomSensor), 
-                new PropertyMetadata(new SolidColorBrush(Colors.Red)));
+                new PropertyMetadata(new SolidColorBrush(Colors.WhiteSmoke)));
         public SolidColorBrush CustBorderBrush
         {
             get { return (SolidColorBrush)GetValue(CustBorderBrushProperty); }
@@ -152,6 +153,17 @@ namespace SensorMap.CustomControls
 
 
 
+        public AddressPosition addressPosition
+        {
+            get { return (AddressPosition)GetValue(addressPositionProperty); }
+            set { SetValue(addressPositionProperty, value); }
+        }
+
+        public static readonly DependencyProperty addressPositionProperty =
+            DependencyProperty.Register("addressPosition", typeof(AddressPosition), typeof(CustomSensor), new PropertyMetadata(AddressPosition.Right));
+
+
+
 
         public HitType MouseHitType
         {
@@ -183,10 +195,6 @@ namespace SensorMap.CustomControls
         private TextBlock _textBlock;
         private System.Windows.Controls.Image _image;
         private bool IsMoving;
-        private bool AddressLeft = false;
-        private bool AddressRight = false;
-        private bool AddressBottom = false;
-        private bool AddressTop = false;
 
         static CustomSensor()
         {
@@ -367,36 +375,185 @@ namespace SensorMap.CustomControls
                 }
             }
         }
-        private int numTry = 0;
-        
         private void ChangeAddressPosition()
         {
-            Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона поиска адресов
-            //searchArea.Inflate(20, 20);
+            //координаты сторон
+            int leftSet = Convert.ToInt32(-_textBlock.ActualWidth);
+            int rightSet = Convert.ToInt32(CustomBounds.Width);
+            int topSet = Convert.ToInt32(-_textBlock.ActualHeight);
+            int bottomSet = Convert.ToInt32(CustomBounds.Height );
+
+            Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона где датчики будут считаться рядом с выбранным
+            searchArea.Inflate(20, 20);
             bool isPositionFixed = false;
-            var interRect = _canvas.Children.OfType<CustomSensor>()
-                .Where(s => s != this && s._textBlock.Visibility != Visibility.Collapsed && Rect.Union(s.addressRect,s.CustomBounds).IntersectsWith(searchArea)).FirstOrDefault();
-            if (interRect==null) return;
-            while (isPositionFixed == false)
+
+            var sensorsInSearchArea= _canvas.Children.OfType<CustomSensor>()
+                .Where(s => 
+                       s != this &&
+                       s._textBlock.Visibility != Visibility.Collapsed && 
+                       Rect.Union(s.addressRect,s.CustomBounds).IntersectsWith(searchArea))
+                .Select(s=>Rect.Union(s.addressRect, s.CustomBounds)).ToList();
+
+            var nearestSensor = sensorsInSearchArea
+                .Where(s => addressRect.IntersectsWith(s)).FirstOrDefault();
+
+            if (!sensorsInSearchArea.Any()) return;
+
+            if (nearestSensor.Width>0 || nearestSensor.Height > 0)
             {
-                _transformService.CollisionWithRect(_textBlock, addressRect, Rect.Union(interRect.addressRect,interRect.CustomBounds), CustomBounds);
+                // Флаги, которые покажут, является ли позиция безопасной для ВСЕХ сенсоров
+                bool isLeftSafe = addressPosition == AddressPosition.Left;
+                bool isRightSafe = addressPosition == AddressPosition.Right;
+                bool isTopSafe = addressPosition == AddressPosition.Top;
+                bool isBottomSafe = addressPosition == AddressPosition.Bottom;
+
+
+                // 1. ПРОХОДИМ ПО ВСЕМ СЕНСОРАМ И ПРОВЕРЯЕМ БЕЗОПАСНОСТЬ КАЖДОЙ ПОЗИЦИИ
+                foreach (var sensor in sensorsInSearchArea)
+                {
+                    // Если позиция еще не признана безопасной, проверяем её
+                    if (!isLeftSafe && addressPosition != AddressPosition.Left)
+                    {
+                        // Если для хотя бы одного сенсора есть пересечение, позиция Left небезопасна
+                        if (_transformService.IsRectWillIntersect(addressRect, sensor, leftSet, 0))
+                        {
+                            isLeftSafe = false; // Явно помечаем как небезопасную
+                        }
+                        else
+                        {
+                            // Если мы в цикле и еще не нашли пересечений, оставляем флаг true
+                            // Но он может стать false на следующей итерации
+                            isLeftSafe = true;
+                        }
+                    }
+
+                    // Аналогично для других позиций
+                    if (!isRightSafe && addressPosition != AddressPosition.Right)
+                    {
+                        if (_transformService.IsRectWillIntersect(addressRect, sensor, rightSet, 0))
+                        {
+                            isRightSafe = false;
+                        }
+                        else
+                        {
+                            isRightSafe = true;
+                        }
+                    }
+
+                    if (!isTopSafe && addressPosition != AddressPosition.Top)
+                    {
+                        if (_transformService.IsRectWillIntersect(addressRect, sensor, 0, topSet))
+                        {
+                            isTopSafe = false;
+                        }
+                        else
+                        {
+                            isTopSafe = true;
+                        }
+                    }
+
+                    if (!isBottomSafe && addressPosition != AddressPosition.Bottom)
+                    {
+                        if (_transformService.IsRectWillIntersect(addressRect, sensor, 0, bottomSet))
+                        {
+                            isBottomSafe = false;
+                        }
+                        else
+                        {
+                            isBottomSafe = true;
+                        }
+                    }
+                }
+
+                // 2. УСТАНАВЛИВАЕМ ПОЗИЦИЮ ТОЛЬКО ПОСЛЕ ПРОВЕРКИ ВСЕХ СЕНСОРОВ
+                // Проверяем флаги в порядке приоритета и устанавливаем первую же безопасную позицию
+
+                if (isLeftSafe && addressPosition != AddressPosition.Left)
+                {
+                    Canvas.SetTop(_textBlock, -(CustomBounds.Width - 40) / 2);
+                    Canvas.SetLeft(_textBlock, leftSet);
+                    isPositionFixed = true;
+                    addressPosition = AddressPosition.Left;
+                }
+                else if (isRightSafe && addressPosition != AddressPosition.Right)
+                {
+                    Canvas.SetTop(_textBlock, -(CustomBounds.Width - 40) / 2);
+                    Canvas.SetLeft(_textBlock, rightSet);
+                    isPositionFixed = true;
+                    addressPosition = AddressPosition.Right;
+                }
+                else if (isTopSafe && addressPosition != AddressPosition.Top)
+                {
+                    Canvas.SetLeft(_textBlock, -(CustomBounds.Height - 15) / 2);
+                    Canvas.SetTop(_textBlock, topSet);
+                    isPositionFixed = true;
+                    addressPosition = AddressPosition.Top;
+                }
+                else if (isBottomSafe && addressPosition != AddressPosition.Bottom)
+                {
+                    Canvas.SetLeft(_textBlock, -(CustomBounds.Height - 15) / 2);
+                    Canvas.SetTop(_textBlock, bottomSet);
+                    isPositionFixed = true;
+                    addressPosition = AddressPosition.Bottom;
+                }
+                else
+                {
+                    // Если ни одна из позиций не безопасна для ВСЕХ сенсоров,
+                    // или мы уже находимся в этой позиции, оставляем её по умолчанию
+                    Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2);
+                    Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
+                    isPositionFixed = false;
+                    // addressPosition остается прежним или устанавливается в Center по вашей логике
+                }
+
+
+                //запоминаем новую позицию адреса
+                //var newAddressPos = _transformService.ChangeRectPosition(addressRect, nearestSensor,AddressPosition.Right);
+                //проверяем будущие пересечения, для установки в верное положение
+                //foreach (var sensor in sensorsInSearchArea)
+                //{
+                //    if (addressPosition!=AddressPosition.Left && !_transformService.IsRectWillIntersect(addressRect, sensor, leftSet,0))
+                //    {
+                //        Canvas.SetTop(_textBlock, -(CustomBounds.Width - 40) / 2);
+                //        Canvas.SetLeft(_textBlock, leftSet);
+                //        isPositionFixed = true;
+                //        addressPosition = AddressPosition.Left;
+                //    }
+                //    else if (addressPosition != AddressPosition.Right && !_transformService.IsRectWillIntersect(addressRect, sensor, rightSet,0))
+                //    {
+                //        Canvas.SetTop(_textBlock, -(CustomBounds.Width - 40) / 2);
+                //        Canvas.SetLeft(_textBlock, rightSet);
+                //        isPositionFixed = true;
+                //        addressPosition = AddressPosition.Right;
+                //    }
+                //    else if (addressPosition != AddressPosition.Top && !_transformService.IsRectWillIntersect(addressRect, sensor, 0,topSet))
+                //    {
+                //        Canvas.SetLeft(_textBlock, -(CustomBounds.Height - 15) / 2);
+                //        Canvas.SetTop(_textBlock, topSet);
+                //        isPositionFixed = true;
+                //        addressPosition = AddressPosition.Top;
+                //    }
+                //    else if (addressPosition != AddressPosition.Bottom && !_transformService.IsRectWillIntersect(addressRect, sensor, 0,bottomSet))
+                //    {
+                //        Canvas.SetLeft(_textBlock, -(CustomBounds.Height - 15) / 2);
+                //        Canvas.SetTop(_textBlock, bottomSet);
+                //        isPositionFixed = true;
+                //        addressPosition = AddressPosition.Bottom;
+                //    }
+                //    else
+                //    {
+                //        Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2);
+                //        Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
+                //        isPositionFixed = false;
+                //        addressPosition = AddressPosition.Center;
+                //        _textBlock.Opacity = 0.7;
+                //    }
+                //}
                 UpdateAddressRect();
-                isPositionFixed = !_canvas.Children.OfType<CustomSensor>()
-                .Where(s => s != this && s._textBlock.Visibility != Visibility.Collapsed && addressRect.IntersectsWith(s.CustomBounds)).Any();
-                numTry++;
-                if (numTry > 4) break;
-            }
-            if (!isPositionFixed)
-            {
-                Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2);
-                Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
-                _textBlock.Opacity = 0.7;
-                numTry = 0;
             }
             if (isPositionFixed)
             {
                 _textBlock.Opacity = 1;
-                numTry = 0;
             }
         }
 
@@ -428,6 +585,7 @@ namespace SensorMap.CustomControls
         private void UpdateAddressRect()
         {
             addressRect = new Rect(Canvas.GetLeft(_textBlock) + CustomBounds.X, Canvas.GetTop(_textBlock) + CustomBounds.Y, _textBlock.ActualWidth, _textBlock.ActualHeight);
+            
         }
         
         

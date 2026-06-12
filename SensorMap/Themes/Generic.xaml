@@ -83,14 +83,8 @@
                             <Rectangle.Style>
                                 <Style TargetType="Rectangle">
                                     <Setter Property="Fill" Value="Transparent"/>
-                                    <Setter Property="StrokeThickness" Value="1"/>
-                                    <Setter Property="RenderTransform">
-                                        <Setter.Value>
-                                            <ScaleTransform ScaleX="1.2" ScaleY="1.2"/>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Setter Property="RenderTransformOrigin" Value="0.5, 0.5"/>
-                                    <Setter Property="StrokeDashArray" Value="2,2"/>
+                                        <Setter Property="StrokeThickness" Value="1"/>
+                                        <Setter Property="StrokeDashArray" Value="2,2"/>
                                     <Setter Property="Stroke">
                                         <Setter.Value>
                                             <SolidColorBrush Color="Black"/>

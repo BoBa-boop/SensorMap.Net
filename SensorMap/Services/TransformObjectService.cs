@@ -1,9 +1,11 @@
 ﻿using SensorMap.CustomControls;
 using SensorMap.Interfaces;
+using SensorMap.Model;
 using System.CodeDom;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using static SensorMap.Services.TransformObjectService;
 using Cursor = System.Windows.Input;
 using Cursors = System.Windows.Input;
 using MessageBox = System.Windows.MessageBox;
@@ -37,8 +39,12 @@ namespace SensorMap.Services
             return desired_cursor;
         }
         public enum CollisionSide { None, Left, Right, Top, Bottom }
-        public enum AddressPosition { Center,Left,Right,Top, Bottom }
-
+        public enum AddressPosition { Center,Left,Right,Top, Bottom,None }
+        public class PositionCheckState 
+        {
+            public AddressPosition CurrentPosition { get; set; }
+            public List<AddressPosition> RemainingPositions { get; set; }
+        }
         public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 0)
         {
             double leftBorder = customBounds.Left;
@@ -137,53 +143,32 @@ namespace SensorMap.Services
 
             return null;
         }
-        private int numTry = 4;
-        private AddressPosition addressPosition=AddressPosition.Right;
-        public void CollisionWithRect(FrameworkElement ui, Rect moveObject, Rect staticObject, Rect centerRect)
+        public AddressPosition ChangeRectPosition(Rect moveObject, Rect staticObject, AddressPosition pos)
         {
-            if (!moveObject.IntersectsWith(staticObject)) return;
+            if (!moveObject.IntersectsWith(staticObject)) return pos;
             //какая сторона пересеклась
             CollisionSide collisionSide = GetCollisionSide(moveObject, staticObject);
-            //координаты сторон
-            int leftSet = Convert.ToInt32(-ui.ActualWidth - 5);
-            int rightSet = Convert.ToInt32(centerRect.Width + 5);
-            int topSet = Convert.ToInt32(-ui.ActualHeight - 5);
-            int bottomSet = Convert.ToInt32(centerRect.Height + 5);
 
             // Выполняем смену позиции по X
             if (collisionSide == CollisionSide.Right)
             {
-                if (addressPosition==AddressPosition.Top || addressPosition==AddressPosition.Bottom)
-                    Canvas.SetTop(ui, -(centerRect.Width - 40)/2);
-                Canvas.SetLeft(ui, leftSet);
-                addressPosition = AddressPosition.Left;
-                return;
+                return AddressPosition.Left;
             }
             else if (collisionSide == CollisionSide.Left)
             {
-                if (addressPosition == AddressPosition.Top || addressPosition == AddressPosition.Bottom)
-                    Canvas.SetTop(ui, -(centerRect.Width - 40) / 2);
-                Canvas.SetLeft(ui, rightSet);
-                addressPosition = AddressPosition.Right;
-                return;
+                return AddressPosition.Right;
             }
             // Выполняем смену позиции по Y
             if (collisionSide == CollisionSide.Bottom)
             {
-                if (addressPosition == AddressPosition.Left || addressPosition == AddressPosition.Right)
-                    Canvas.SetLeft(ui, -(centerRect.Height - 15) / 2);
-                Canvas.SetTop(ui, topSet);
-                addressPosition = AddressPosition.Top;
-                return;
+                return AddressPosition.Top;
             }
             else if (collisionSide == CollisionSide.Top)
             {
-                if (addressPosition == AddressPosition.Left || addressPosition == AddressPosition.Right)
-                    Canvas.SetLeft(ui, -(centerRect.Height - 15) / 2);
-                Canvas.SetTop(ui, bottomSet);
-                addressPosition = AddressPosition.Bottom;
-                return;
+                return AddressPosition.Bottom;
             }
+
+            return AddressPosition.None;
         }
 
 
@@ -204,22 +189,18 @@ namespace SensorMap.Services
             if (objLeft)
             {
                 Canvas.SetLeft(ui, rightSet);
-                addressPosition = AddressPosition.Right;
             }
             else if (objRight)
             {
                 Canvas.SetLeft(ui, leftSet);
-                addressPosition = AddressPosition.Left;
             }
             if (objTop)
             {
                 Canvas.SetTop(ui, bottomSet);
-                addressPosition = AddressPosition.Bottom;
             }
             else if (objBottom)
             {
                 Canvas.SetTop(ui, topSet);
-                addressPosition = AddressPosition.Top;
             }
 
         }
@@ -366,7 +347,18 @@ namespace SensorMap.Services
         ///// <param name="rightSet"></param>
         ///// <param name="topSet"></param>
         ///// <param name="bottomSet"></param>
+        public bool IsRectWillIntersect(Rect current, Rect other, double moveX,double moveY)
+        {
+            // Создаем гипотетический прямоугольник после перемещения
+            var futurePosition = new Rect(
+                current.X + moveX, 
+                current.Y + moveY,
+                current.Width,
+                current.Height);
 
+            return futurePosition.IntersectsWith(other);
+        }
+       
         #region CoordConverter
         public Point WorldToScreen(Point world, Matrix matrix)
         {

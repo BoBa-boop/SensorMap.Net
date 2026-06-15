@@ -571,7 +571,7 @@ namespace SensorMap.CustomControls
         private void ControlOutOfRangeImage()
         {
             if (_textBlock == null) return;
-            if (true) return;
+            if (Map.Width==0) return;
 
             double sensorCanvasX = Canvas.GetLeft(this);
             double sensorCanvasY = Canvas.GetTop(this);

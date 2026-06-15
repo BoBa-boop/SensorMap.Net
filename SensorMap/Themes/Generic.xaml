@@ -96,8 +96,8 @@
                         </Grid>
                         <TextBlock x:Name="PART_Address"
                                    TextAlignment="Left"
-                                   Canvas.Left="{calc:Binding 'CustomBounds.Width+5', RelativeSource={RelativeSource TemplatedParent}}"
-                                   Canvas.Top="{calc:Binding '(CustomBounds.Height - 15)/ 2 ', RelativeSource={RelativeSource TemplatedParent}}"
+                                   Canvas.Left="5"
+                                   Canvas.Top="0"
                                    Text="{Binding SensorData.Address,UpdateSourceTrigger=PropertyChanged,RelativeSource={RelativeSource TemplatedParent}}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">

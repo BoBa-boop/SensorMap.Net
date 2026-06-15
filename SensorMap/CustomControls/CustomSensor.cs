@@ -351,7 +351,6 @@ namespace SensorMap.CustomControls
                                 Canvas.SetLeft(item, new_x);
                                 Canvas.SetTop(item, new_y);
 
-                                var oldBounds = item.CustomBounds;
                                 item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
                                 ChangeAddressPosition();
                                 LastPoint = point;
@@ -374,7 +373,50 @@ namespace SensorMap.CustomControls
             ResolveAddressPlacement();
             ApplyAddressPlacement();
         }
+        private void OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
+            {
+                _memorySelectedSensor.IsSelected = false;
+                _memorySelectedSensor = null;
+                if (SelectedSensor != null)
+                {
+                    SelectedSensor.IsSelected = false;
+                    SelectedSensor.CustBorderBrush = Brushes.Black;
+                }
+            }
+            if (MouseHitType != HitType.None)
+            {
+                LastPoint = Mouse.GetPosition(_canvas);
+                IsDragging = true;
+            }
 
+            SelectedSensor = this;
+            _memorySelectedSensor = this;
+            IsSelected = true;
+            this.Focus();
+
+            if (_image.Source != null)
+                Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
+        }
+
+        private void SelectedChanged()
+        {
+            SelectedSensor = this.IsSelected ? this : null;
+            if (this.IsSelected) Canvas.SetZIndex(this, 1); else Canvas.SetZIndex(this, 0);
+            CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
+            _textBlock.Background = IsSelected ? Brushes.Lavender : Brushes.WhiteSmoke;
+            Mouse.OverrideCursor = IsSelected ? _transformService.GetCursorForHitType(MouseHitType) : null;
+        }
+
+        public object Clone()
+        {
+            return new CustomSensor
+            {
+                SensorData = SensorData,
+                CustomBounds = CustomBounds
+            };
+        }
         private void ResolveAddressPlacement()
         {
             if (_textBlock == null || _canvas == null) return;
@@ -405,7 +447,7 @@ namespace SensorMap.CustomControls
             };
 
             var others = _canvas.Children.OfType<CustomSensor>()
-                .Where(s => s != this && s.SensorData.Id != SensorData.Id).ToList();
+                .Where(s => s != this && s.SensorData.Id != SensorData.Id && s._textBlock.Visibility!=Visibility.Collapsed).ToList();
 
             bool HasCollision(Rect addrRect)
             {
@@ -414,10 +456,10 @@ namespace SensorMap.CustomControls
                     double otherX = Canvas.GetLeft(other);
                     double otherY = Canvas.GetTop(other);
                     Rect otherBounds = new Rect(otherX, otherY, other.CustomBounds.Width, other.CustomBounds.Height);
-
+                    //проверка пересечения с датчиком
                     if (addrRect.IntersectsWith(otherBounds))
                         return true;
-
+                    //проверка пересечения с адресом и датчиком
                     Rect otherAddrRect = other.GetAddressRectOnCanvas();
                     if (!otherAddrRect.IsEmpty && addrRect.IntersectsWith(otherAddrRect))
                         return true;
@@ -451,7 +493,9 @@ namespace SensorMap.CustomControls
 
             _addressPlacement = AddressPlacement.Center;
         }
-
+        /// <summary>
+        /// Установка адреса на канвас исходя по расположению
+        /// </summary>
         private void ApplyAddressPlacement()
         {
             if (_textBlock == null) return;
@@ -466,22 +510,27 @@ namespace SensorMap.CustomControls
                 case AddressPlacement.Right:
                     Canvas.SetLeft(_textBlock, sensorW + 5);
                     Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                    _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Left:
                     Canvas.SetLeft(_textBlock, -addrW - 5);
                     Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                    _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Bottom:
                     Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
                     Canvas.SetTop(_textBlock, sensorH + 2);
+                    _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Top:
                     Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
                     Canvas.SetTop(_textBlock, -addrH - 2);
+                    _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Center:
                     Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
                     Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                    _textBlock.Opacity = 0.7;
                     break;
             }
 
@@ -568,49 +617,5 @@ namespace SensorMap.CustomControls
             }
         }
 
-        private void OnMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
-            {
-                _memorySelectedSensor.IsSelected = false;
-                _memorySelectedSensor = null;
-                if (SelectedSensor != null)
-                {
-                    SelectedSensor.IsSelected = false;
-                    SelectedSensor.CustBorderBrush = Brushes.Black;
-                }
-            }
-            if (MouseHitType != HitType.None)
-            {
-                LastPoint = Mouse.GetPosition(_canvas);
-                IsDragging = true;
-            }
-
-            SelectedSensor = this;
-            _memorySelectedSensor = this;
-            IsSelected = true;
-            this.Focus();
-
-            if (_image.Source != null)
-                Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
-        }
-
-        private void SelectedChanged()
-        {
-            SelectedSensor = this.IsSelected ? this : null;
-            if (this.IsSelected) Canvas.SetZIndex(this, 1); else Canvas.SetZIndex(this, 0);
-            CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
-            _textBlock.Background = IsSelected ? Brushes.Lavender : Brushes.WhiteSmoke;
-            Mouse.OverrideCursor = IsSelected ? _transformService.GetCursorForHitType(MouseHitType) : null;
-        }
-
-        public object Clone()
-        {
-            return new CustomSensor
-            {
-                SensorData = SensorData,
-                CustomBounds = CustomBounds
-            };
-        }
     }
 }

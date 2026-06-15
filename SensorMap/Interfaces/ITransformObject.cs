@@ -50,7 +50,7 @@ namespace SensorMap.Interfaces
         /// <summary>
         /// Изменить позицию адреса в случае пересечения с другим объектом
         /// </summary>
-        AddressPosition ChangeRectPosition(Rect rect1,Rect rect2,AddressPosition pos = AddressPosition.None);
+        //AddressPosition ChangeRectPosition(Rect rect1,Rect rect2,AddressPosition pos = AddressPosition.None);
         /// <summary>
         /// Отсутсвие коллизии прямоугольников, если ChangePosiotion = true перемещение rect1 для создания пересечения.
         /// </summary>

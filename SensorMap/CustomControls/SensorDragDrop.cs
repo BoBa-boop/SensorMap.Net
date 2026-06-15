@@ -624,10 +624,10 @@ namespace SensorMap.CustomControls
                     }
                 }
             }
-            foreach (var sensor in _canvas.Children.OfType<CustomSensor>())
-            {
-                sensor.UpdateAddressPosition();
-            }
+            //foreach (var sensor in _canvas.Children.OfType<CustomSensor>())
+            //{
+            //    sensor.UpdateAddressPosition();
+            //}
             MapProperties.SetViewMatrix(this, _viewMatrix);
         }
         

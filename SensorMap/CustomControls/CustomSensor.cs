@@ -172,10 +172,9 @@ namespace SensorMap.CustomControls
         private readonly ITransformObject _transformService;
         private Point LastPoint;
         private bool IsTransformed = false;
-        private bool MouseMoveRight = false;
-        private bool MouseMoveUp = false;
         private Canvas _canvas;
         private TextBlock _textBlock;
+        Rect addressRect;
         Rect Map;
         private System.Windows.Controls.Image _image;
         private bool IsMoving;
@@ -200,6 +199,7 @@ namespace SensorMap.CustomControls
             if (_canvas != null)
             {
                 ChangeStateActions();
+                addressRect = new Rect(Canvas.GetLeft(_textBlock) + CustomBounds.X, Canvas.GetTop(_textBlock) + CustomBounds.Y, _textBlock.Width, _textBlock.Height);
                 System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.Loaded,
                     new Action(() => UpdateAddressPosition()));
@@ -280,9 +280,6 @@ namespace SensorMap.CustomControls
                     double offset_x = point.X - LastPoint.X;
                     double offset_y = point.Y - LastPoint.Y;
                     Vector offsetVector = point - LastPoint;
-
-                    MouseMoveRight = offsetVector.X >= 0 ? true : false;
-                    MouseMoveUp = offsetVector.Y <= 0 ? true : false;
                     foreach (var item in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
                     {
                         double new_x = Canvas.GetLeft(item);
@@ -364,6 +361,7 @@ namespace SensorMap.CustomControls
         private void ChangeAddressPosition()
         {
             if (!IsTransformed && !IsMoving) return;
+
             ResolveAddressPlacement();
             ApplyAddressPlacement();
         }
@@ -444,24 +442,40 @@ namespace SensorMap.CustomControls
                     sensorCanvasX + (CustomBounds.Width - addrW) / 2,
                     sensorCanvasY - addrH - 2,
                     addrW, addrH)),
+                (AddressPlacement.Center, new Rect(
+                    sensorCanvasX + (CustomBounds.Width - addrW) / 2,
+                    sensorCanvasY + (CustomBounds.Height - addrH) / 2,
+                    addrW, addrH))
             };
 
-            var others = _canvas.Children.OfType<CustomSensor>()
-                .Where(s => s != this && s.SensorData.Id != SensorData.Id && s._textBlock.Visibility!=Visibility.Collapsed).ToList();
+            Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона где датчики будут считаться рядом с выбранным
+            searchArea.Inflate(20, 20);
+            bool isPositionFixed = false;
+            addressRect = candidates.Where(pos =>pos.placement == _addressPlacement).Select(pos=>pos.addrRect).First();
+            var sensorsInSearchArea = _canvas.Children.OfType<CustomSensor>()
+                .Where(s => s != this)
+                .Select(s =>
+                {
+                    // Для каждого элемента определяем, какой прямоугольник использовать для проверки
+                    var rectToCheck = s._textBlock.Visibility != Visibility.Collapsed
+                        ? Rect.Union(s.GetAddressRectOnCanvas(), s.CustomBounds)
+                        : s.CustomBounds;
+
+                    return new { Sensor = s, CheckRect = rectToCheck };
+                })
+    .Where(x => x.CheckRect.IntersectsWith(searchArea)) // Выполняем основную проверку
+    .Select(x => x.CheckRect).ToList();
+
+            var nearestSensor = sensorsInSearchArea
+                .Where(s => addressRect.IntersectsWith(s)).FirstOrDefault();
+           
 
             bool HasCollision(Rect addrRect)
             {
-                foreach (var other in others)
+                foreach (var nearSensor in sensorsInSearchArea)
                 {
-                    double otherX = Canvas.GetLeft(other);
-                    double otherY = Canvas.GetTop(other);
-                    Rect otherBounds = new Rect(otherX, otherY, other.CustomBounds.Width, other.CustomBounds.Height);
                     //проверка пересечения с датчиком
-                    if (addrRect.IntersectsWith(otherBounds))
-                        return true;
-                    //проверка пересечения с адресом и датчиком
-                    Rect otherAddrRect = other.GetAddressRectOnCanvas();
-                    if (!otherAddrRect.IsEmpty && addrRect.IntersectsWith(otherAddrRect))
+                    if (addrRect.IntersectsWith(nearSensor))
                         return true;
                 }
                 return false;
@@ -481,7 +495,7 @@ namespace SensorMap.CustomControls
                 if (!HasCollision(current.addrRect))
                     return;
             }
-
+            if (!sensorsInSearchArea.Any() || nearestSensor.Width==0) return;
             foreach (var (placement, addrRect) in candidates)
             {
                 if (!HasCollision(addrRect))
@@ -533,7 +547,7 @@ namespace SensorMap.CustomControls
                     _textBlock.Opacity = 0.7;
                     break;
             }
-
+            addressRect = new Rect(Canvas.GetLeft(_textBlock) + CustomBounds.X, Canvas.GetTop(_textBlock) + CustomBounds.Y, _textBlock.Width, _textBlock.Height);
             ControlOutOfRangeImage();
         }
 
@@ -557,6 +571,7 @@ namespace SensorMap.CustomControls
         private void ControlOutOfRangeImage()
         {
             if (_textBlock == null) return;
+            if (true) return;
 
             double sensorCanvasX = Canvas.GetLeft(this);
             double sensorCanvasY = Canvas.GetTop(this);

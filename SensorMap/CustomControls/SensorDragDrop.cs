@@ -618,7 +618,7 @@ namespace SensorMap.CustomControls
                     {
                         var sensor = ItemsSource.Where(x=>x == sensor1.SensorData).FirstOrDefault();
                         if (sensor == null) continue;
-                        Point screen = _transformObject.WorldToScreen(new Point(sensor.X, sensor.Y), _viewMatrix);
+                        Point screen = _transformObject.WorldToScreen(new Point(Canvas.GetLeft(sensor1), Canvas.GetTop(sensor1)), _viewMatrix);
                         Canvas.SetLeft(sensor1, screen.X);
                         Canvas.SetTop(sensor1, screen.Y);
                     }

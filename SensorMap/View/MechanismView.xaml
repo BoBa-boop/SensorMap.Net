@@ -36,8 +36,9 @@
             <ColumnDefinition Width="*" MaxWidth="220" MinWidth="50"/>
             <ColumnDefinition Width="*" MinWidth="400"/>
         </Grid.ColumnDefinitions>
-            <hc:SimpleStackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="{StaticResource BorderBrush}"
-                                 Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+            <hc:SimpleStackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Background="{StaticResource BorderBrush}">
+                <hc:SimpleStackPanel Orientation="Horizontal"
+                    Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <Button hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}" hc:IconElement.Width="18" hc:IconElement.Height="18"
                         ToolTip="Отменить (CTRL+Z)" 
                         IsEnabled="{Binding CanUndo,UpdateSourceTrigger=PropertyChanged}"
@@ -60,6 +61,7 @@
                         </Button>
                     </hc:Badge>
                     <Button Content="Участки" Margin="5,0" Command="{Binding NavigateToSectors}"/>
+                </hc:SimpleStackPanel>
                 </hc:SimpleStackPanel>
                 <CheckBox x:Name="chBox" IsChecked="{Binding ElementName=ccSensorMap, Path=IsHideAddresses,UpdateSourceTrigger=PropertyChanged}"
                           Margin="5,0">
@@ -91,7 +93,7 @@
                         </Style>
                     </Button.Style>
                 </Button>
-                <Button ToolTip="Открыть электросхему" 
+                <Button ToolTip="Открыть электросхему"
                         Padding="2"
                         Command="{Binding ShowScheme}" CommandParameter="{Binding CurrentMech}">
                     <Button.Content>

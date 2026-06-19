@@ -1,10 +1,15 @@
-﻿using SensorMap.Interfaces;
+﻿using SensorMap.CustomControls;
+using SensorMap.Interfaces;
+using SensorMap.Model;
+using System.CodeDom;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Point = System.Windows.Point;
+using static SensorMap.Services.TransformObjectService;
 using Cursor = System.Windows.Input;
 using Cursors = System.Windows.Input;
+using MessageBox = System.Windows.MessageBox;
+using Point = System.Windows.Point;
 namespace SensorMap.Services
 {
     public class TransformObjectService : ITransformObject
@@ -33,8 +38,13 @@ namespace SensorMap.Services
             }
             return desired_cursor;
         }
-        
-
+        public enum CollisionSide { None, Left, Right, Top, Bottom }
+        public enum AddressPosition { Center,Left,Right,Top, Bottom,None }
+        public class PositionCheckState 
+        {
+            public AddressPosition CurrentPosition { get; set; }
+            public List<AddressPosition> RemainingPositions { get; set; }
+        }
         public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 0)
         {
             double leftBorder = customBounds.Left;
@@ -133,8 +143,222 @@ namespace SensorMap.Services
 
             return null;
         }
+        public AddressPosition ChangeRectPosition(Rect moveObject, Rect staticObject, AddressPosition pos)
+        {
+            if (!moveObject.IntersectsWith(staticObject)) return pos;
+            //какая сторона пересеклась
+            CollisionSide collisionSide = GetCollisionSide(moveObject, staticObject);
+
+            // Выполняем смену позиции по X
+            if (collisionSide == CollisionSide.Right)
+            {
+                return AddressPosition.Left;
+            }
+            else if (collisionSide == CollisionSide.Left)
+            {
+                return AddressPosition.Right;
+            }
+            // Выполняем смену позиции по Y
+            if (collisionSide == CollisionSide.Bottom)
+            {
+                return AddressPosition.Top;
+            }
+            else if (collisionSide == CollisionSide.Top)
+            {
+                return AddressPosition.Bottom;
+            }
+
+            return AddressPosition.None;
+        }
 
 
+        public void NoCollisionWithRect(FrameworkElement ui, Rect moveObject, Rect staticObject,Rect centerRect)
+        {
+            if (moveObject.IntersectsWith(staticObject)) return;
+            int leftSet = Convert.ToInt32(-ui.ActualWidth-5);
+            int rightSet = Convert.ToInt32(centerRect.Width+5);
+            int topSet = Convert.ToInt32(-ui.ActualHeight-5);
+            int bottomSet = Convert.ToInt32(centerRect.Height+5);
+            //какая сторона вышла из пересечения
+            bool objLeft = moveObject.X < staticObject.Left;
+            bool objRight = moveObject.X > staticObject.Right;
+            bool objTop = moveObject.Y < staticObject.Top;
+            bool objBottom = moveObject.Y > staticObject.Bottom;
+
+
+            if (objLeft)
+            {
+                Canvas.SetLeft(ui, rightSet);
+            }
+            else if (objRight)
+            {
+                Canvas.SetLeft(ui, leftSet);
+            }
+            if (objTop)
+            {
+                Canvas.SetTop(ui, bottomSet);
+            }
+            else if (objBottom)
+            {
+                Canvas.SetTop(ui, topSet);
+            }
+
+        }
+        private CollisionSide GetCollisionSide(Rect moveObject, Rect staticObject)
+        {
+            // Вычисляем глубину проникновения по осям
+            double penetrationX = Math.Min(moveObject.Right - staticObject.Left, staticObject.Right - moveObject.Left);
+            double penetrationY = Math.Min(moveObject.Bottom - staticObject.Top, staticObject.Bottom - moveObject.Top);
+
+            // Определяем сторону по минимальной глубине проникновения
+            if (penetrationX < penetrationY)
+            {
+                // Столкновение по горизонтали
+                return (moveObject.Left < staticObject.Left) ? CollisionSide.Right : CollisionSide.Left;
+            }
+            else
+            {
+                // Столкновение по вертикали
+                return (moveObject.Top < staticObject.Top) ? CollisionSide.Bottom : CollisionSide.Top;
+            }
+        }
+        //public void ChangeAddressPosition()
+        //{
+
+
+        //    ControlOutOfRangeImage(leftSet, rightSet, topSet, bottomSet);
+
+        //    addressRect = new Rect(Canvas.GetLeft(_textBlock) + CustomBounds.X, Canvas.GetTop(_textBlock) + CustomBounds.Y, _textBlock.ActualWidth, _textBlock.ActualHeight);
+        //    ControlAddressCollision(leftSet, rightSet, topSet, bottomSet);
+
+        //}
+        ///// <summary>
+        ///// Контролирование накладывание адрессов друг на друга. Перемещение адреса выбранного датчика в свободную позицию
+        ///// </summary>
+        ///// <param name="leftSet"></param>
+        ///// <param name="rightSet"></param>
+        ///// <param name="topSet"></param>
+        ///// <param name="bottomSet"></param>
+        //private void ControlAddressCollision(int leftSet, int rightSet, int topSet, int bottomSet)
+        //{
+        //    Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона поиска адресов
+        //    searchArea.Inflate(20, 20);
+        //    var collectionsIntersects = _canvas.Children.OfType<CustomSensor>()
+        //        .Where(s => s != this && s._textBlock.Visibility != Visibility.Collapsed && s.addressRect.IntersectsWith(searchArea)).ToList();
+        //    if (!collectionsIntersects.Any()) return;
+        //    bool isPositionFixed = false;
+
+        //    // --- ЭТАП 1: Попытки смещения ПО ГОРИЗОНТАЛИ ---
+        //    for (int attempt = 0; attempt < numTry && !isPositionFixed; attempt++)
+        //    {
+        //        // Пересчитываем пересечения на КАЖДОЙ попытке, так как позиция изменилась
+        //        var inter = collectionsIntersects.Where(s =>
+        //            this.addressRect.IntersectsWith(s.CustomBounds) ||
+        //            this.addressRect.IntersectsWith(s.addressRect)).ToList();
+
+        //        if (!inter.Any())
+        //        {
+        //            // Горизонтальное смещение помогло
+        //            isPositionFixed = true;
+        //            break;
+        //        }
+
+        //        // Выполняем смену позиции по X
+        //        if (AddressRight || (!AddressLeft && !AddressRight))
+        //        {
+        //            // Пробуем переместить влево
+        //            Canvas.SetLeft(_textBlock, leftSet);
+        //            AddressRight = false;
+        //            AddressLeft = true;
+        //        }
+        //        else if (AddressLeft)
+        //        {
+        //            // Пробуем переместить вправо
+        //            Canvas.SetLeft(_textBlock, rightSet);
+        //            AddressLeft = false;
+        //            AddressRight = true;
+        //        }
+
+        //        // Обновляем адресный прямоугольник после изменения позиции
+        //        UpdateAddressRect();
+        //    }
+
+        //    // --- ЭТАП 2: Попытки смещения ПО ВЕРТИКАЛИ ---
+        //    // Начинаем только если горизонтальные попытки не помогли
+        //    if (!isPositionFixed)
+        //    {
+        //        for (int attempt = 0; attempt < numTry && !isPositionFixed; attempt++)
+        //        {
+        //            // Снова пересчитываем пересечения
+        //            var inter = collectionsIntersects.Where(s =>
+        //                this.addressRect.IntersectsWith(s.CustomBounds) ||
+        //                this.addressRect.IntersectsWith(s.addressRect)).ToList();
+
+        //            if (!inter.Any())
+        //            {
+        //                // Вертикальное смещение помогло
+        //                isPositionFixed = true;
+        //                break;
+        //            }
+
+        //            // Выполняем смену позиции по Y
+        //            if (AddressBottom || (!AddressTop && !AddressBottom))
+        //            {
+        //                // Пробуем переместить вверх
+        //                Canvas.SetTop(_textBlock, topSet);
+        //                AddressBottom = false;
+        //                AddressTop = true;
+        //            }
+        //            else if (AddressTop)
+        //            {
+        //                // Пробуем переместить вниз
+        //                Canvas.SetTop(_textBlock, bottomSet);
+        //                AddressTop = false;
+        //                AddressBottom = true;
+        //            }
+
+        //            // Обновляем адресный прямоугольник
+        //            UpdateAddressRect();
+        //        }
+        //    }
+
+        //    // --- ПЛАН Б: Перемещение в центр, если ничего не помогло ---
+        //    if (!isPositionFixed)
+        //    {
+        //        Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2); // Более корректная центровка
+        //        Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
+        //        _textBlock.Opacity = 0.7; // Прозрачность, как индикатор неудачи
+        //                                  // Сбрасываем флаги положения
+        //        AddressLeft = false;
+        //        AddressRight = false;
+        //        AddressTop = false;
+        //        AddressBottom = false;
+        //        UpdateAddressRect();
+        //    }
+        //    else
+        //    {
+        //        _textBlock.Opacity = 1; // Возвращаем полную непрозрачность
+        //    }
+        //}
+        ///// <summary>
+        ///// Контролирование выхода адреса за границу схемы.
+        ///// </summary>
+        ///// <param name="leftSet"></param>
+        ///// <param name="rightSet"></param>
+        ///// <param name="topSet"></param>
+        ///// <param name="bottomSet"></param>
+        public bool IsRectWillIntersect(Rect current, Rect other, double moveX,double moveY)
+        {
+            // Создаем гипотетический прямоугольник после перемещения
+            var futurePosition = new Rect(
+                current.X + moveX, 
+                current.Y + moveY,
+                current.Width,
+                current.Height);
+
+            return futurePosition.IntersectsWith(other);
+        }
+       
         #region CoordConverter
         public Point WorldToScreen(Point world, Matrix matrix)
         {

@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using ReactiveUI;
 using SensorMap.Behaviors;
@@ -624,6 +624,10 @@ namespace SensorMap.CustomControls
                     }
                 }
             }
+            //foreach (var sensor in _canvas.Children.OfType<CustomSensor>())
+            //{
+            //    sensor.UpdateAddressPosition();
+            //}
             MapProperties.SetViewMatrix(this, _viewMatrix);
         }
         

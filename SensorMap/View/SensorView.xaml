@@ -161,8 +161,8 @@
                                                     <DataTrigger Binding="{Binding ElementName=sFiles,Path=ItemsSource.Count}" Value="0">
                                                         <Setter Property="Background">
                                                             <Setter.Value>
-                                                                <ImageBrush ImageSource="{StaticResource NoImage}"
-                                                                            Stretch="Uniform"/>
+                                                                <ImageBrush ImageSource="{StaticResource EmptyBoxImage}"
+                                                                            Stretch="Uniform" />
                                                             </Setter.Value>
                                                         </Setter>
                                                     </DataTrigger>

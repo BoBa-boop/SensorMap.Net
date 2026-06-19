@@ -23,7 +23,8 @@
                    Margin="5,0"
                    Grid.Row="0"/>
         <DataGrid ItemsSource="{Binding Mechanism.SensorsAssig}" AutoGenerateColumns="False" CanUserAddRows="False"
-                  SelectedItem="{Binding SelectedSensor}" Grid.Row="1" >
+                  SelectedItem="{Binding SelectedSensor}" Grid.Row="1"
+                  IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
             <DataGrid.Columns>
                 <DataGridComboBoxColumn TextBinding="{Binding Sensor.Name}" DisplayMemberPath="Sensor.Name" MinWidth="100" Header="Название">
                     <DataGridComboBoxColumn.EditingElementStyle>

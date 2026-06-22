@@ -59,7 +59,6 @@ namespace SensorMap.CustomControls
 
         #region Dependency Properties
 
-
         public bool IsMultiSelection
         {
             get { return (bool)GetValue(IsMultiSelectionProperty); }
@@ -104,6 +103,10 @@ namespace SensorMap.CustomControls
             SensorAssignments oldSensor = (SensorAssignments)e.OldValue;
             if (control != null && control._canvas != null)
             {
+                if (control.IsMultiSelection)
+                {
+                    control.ClearSelectedSensors();
+                }
                 var elementToUnSelect = control._canvas.Children
                     .OfType<CustomSensor>()
                     .FirstOrDefault(x => x.SensorData == oldSensor);
@@ -297,17 +300,7 @@ namespace SensorMap.CustomControls
                 _canvas.MouseLeave += _canvas_MouseLeave;
                 //_canvas.KeyDown += _canvas_KeyDown;
                 //_canvas.KeyUp += _canvas_KeyUp;
-                _image.PreviewMouseDown += OnMainWindowClick;
-                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
-                {
-                    foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected))
-                    {
-                        uiElement.IsSelected = false;
-                        Canvas.SetZIndex(uiElement, 0);
-                    }
-                    tempSelectedSensorsCollection.Clear();
-                    IsMultiSelection = false;
-                }
+                _image.PreviewMouseDown += (s,e)=>ClearSelectedSensors();
                 
             }
             
@@ -893,7 +886,16 @@ namespace SensorMap.CustomControls
                 Cursor = Grab;
             }
         }
-
+        public void ClearSelectedSensors()
+        {
+            foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
+            {
+                uiElement.IsSelected = false;
+                Canvas.SetZIndex(uiElement, 0);
+            }
+            tempSelectedSensorsCollection.Clear();
+            IsMultiSelection = false;
+        }
     }
 }
 

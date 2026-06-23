@@ -1,4 +1,4 @@
-﻿using SensorMap.CustomControls;
+using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using System;

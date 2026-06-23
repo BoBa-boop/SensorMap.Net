@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="SensorMap.View.MechanismView"
+<UserControl x:Class="SensorMap.View.MechanismView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:myCC="clr-namespace:SensorMap.CustomControls"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"

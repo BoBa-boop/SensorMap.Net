@@ -460,9 +460,9 @@ namespace SensorMap.CustomControls
         {
             var collection = _clipboard.Paste<List<CustomSensor>>();
 
-            if (collection != null&&collection.Count>0)
+            if (collection != null && collection.Count > 0)
             {
-                foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected))
+                foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
                 {
                     uiElement.IsSelected = false;
                 }
@@ -470,20 +470,24 @@ namespace SensorMap.CustomControls
                 foreach (var item in collection)
                 {
                     var newSensor = (SensorAssignments)item.SensorData.Clone();
-                    newSensor.Id = _canvas.Children.OfType<CustomSensor>().OrderBy(x => x.SensorData.Id).Last().SensorData.Id+1;
+                    newSensor.Id = _canvas.Children.OfType<CustomSensor>().OrderBy(x => x.SensorData.Id).Last().SensorData.Id + 1;
                     item.Tag = newSensor.Id;
                     newSensor.IsNew = true;
                     newSensor.Description = "Копия";
                     newSensor.Address = string.Empty;
+
                     ItemsSource.Add(newSensor);
-                    var uiSensor = _canvas.Children.OfType<CustomSensor>()
-                                   .Where(x => x.SensorData == newSensor).FirstOrDefault();
-                    uiSensor.CustomBackground = Brushes.AliceBlue;
-                    uiSensor.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+
+                    CustomSensor element = CreateSensorObject(newSensor, new Point(item.SensorData.X, item.SensorData.Y));
+                    _canvas.Children.Add(element);
+                    Canvas.SetZIndex(element, 0);
+                    element.Tag = newSensor.Id;
+
+                    element.CustomBackground = Brushes.AliceBlue;
+                    element.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
                     tempSelectedSensorsCollection.Add(newSensor);
                 }
             }
-            
         }
         private void CutSensors()
         {
@@ -742,24 +746,10 @@ namespace SensorMap.CustomControls
         /// <param name="offsetX"></param>
         /// <param name="offsetY"></param>
         private void GetLeftTopPoint(out double offsetX, out double offsetY)
-        {            
-            offsetX = _viewMatrixTransform!.Matrix.OffsetX;
-            offsetY = _viewMatrixTransform.Matrix.OffsetY;
-            if (_viewMatrixTransform.Matrix.M11 != 1)
-            {
-                offsetX /= _viewMatrixTransform.Matrix.M11;
-                offsetY /= _viewMatrixTransform.Matrix.M22;
-            }
-            if (offsetX > 0 && offsetY < 0)
-            {
-                offsetX = 0;
-                offsetY = _viewMatrixTransform.Matrix.OffsetY;
-            }
-            if (offsetY > 0 && offsetX < 0)
-            {
-                offsetY = 0;
-                offsetX = _viewMatrixTransform.Matrix.OffsetX;
-            }
+        {
+            Point worldOrigin = _transformObject.ScreenToWorld(new Point(0, 0), _viewMatrixTransform!.Matrix);
+            offsetX = worldOrigin.X;
+            offsetY = worldOrigin.Y;
         }
         /// <summary>
         /// Получить датчики находящиеся в диапазоне выделения

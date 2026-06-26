@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using HandyControl.Data;
+using HandyControl.Expression.Shapes;
 using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -212,7 +213,7 @@ namespace SensorMap.ViewModel
                 if (CurrentMech!=null)
                 {
                     MechanismSensorsWindow window = new MechanismSensorsWindow();
-                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, CurrentMech);
+                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, CurrentMech,SensorList);
                     window.DataContext = mechSensorsVM;
                     mechSensorsVM.IsEditMode = IsEditMode;
                     mechSensorsVM.WhenAnyValue(x => x.SelectedSensor).BindTo(this,x=>x.SelectedSensor);
@@ -327,13 +328,22 @@ namespace SensorMap.ViewModel
                     {
                         dbContext.Entry(sa).State = EntityState.Deleted;
                     }
-                    else
+                    else if(sa.IsModified)
                     {
-                        dbContext.Entry(sa).State = EntityState.Modified;
+                        var original = _service.GetOriginalEntry(dbContext, sa);
+                        if (original != null && dbContext.ChangeTracker.HasChanges())
+                            dbContext.Entry(original).CurrentValues.SetValues(sa);
+                        else
+                        {
+                            if (original != null)
+                                dbContext.Entry(original).State = EntityState.Detached;
+                            dbContext.Update(sa);
+                        }
+                        //dbContext.Entry(sa).State = EntityState.Modified;
                     }
                     sa.IsModified = false;
                 }
-                dbContext.SaveChangesAsync();
+                dbContext.SaveChangesAsync();                
                 HasChanges = false;
                 Growl.Success("Данные сохранены");
             }

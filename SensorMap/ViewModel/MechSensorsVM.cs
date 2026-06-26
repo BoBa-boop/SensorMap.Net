@@ -10,6 +10,7 @@ using SensorMap.Model;
 using SensorMap.Services;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -47,14 +48,16 @@ namespace SensorMap.ViewModel
             get { return _hasChanges; }
             set
             {
-                _hasChanges = value;
+                 _hasChanges = value;
                 this.RaiseAndSetIfChanged(ref _hasChanges, value);
             }
         }
+        [Reactive] public ObservableCollection<Sensor> SensorList{get;set;}
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        public MechSensorsVM(ITempImage imageControl,Mechanism currentMech)
+        public MechSensorsVM(ITempImage imageControl,Mechanism currentMech,ObservableCollection<Sensor> sensorsList)
         {
             Mechanism = (Mechanism)currentMech.Clone();
+            SensorList = new (sensorsList);
             if(Mechanism!=null && Mechanism.SensorsAssig!=null)
                 Mechanism.SensorsAssig.RemoveMany(Mechanism.SensorsAssig.Where(x => x.ToDelete == true).ToList());
             _imageControl = imageControl;

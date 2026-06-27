@@ -320,8 +320,9 @@ namespace SensorMap.ViewModel
                     if (!IsValidData(sa)) break;
                     if(sa.Id == 0||sa.IsNew)
                     {
-                        sa.Id = 0;
-                        dbContext.Entry(sa).State = EntityState.Added;
+                        var tempSensor = (SensorAssignments)sa.Clone();//клонирую, потому что при Id = 0 не получиться обнаружит датчик при undo TransforCommand
+                        tempSensor.Id = 0;
+                        dbContext.Entry(tempSensor).State = EntityState.Added;
                         sa.IsNew = false;
                     }
                     else if (sa.ToDelete)

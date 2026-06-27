@@ -204,7 +204,7 @@ namespace SensorMap.CustomControls
                 _sensorSubscription = SensorData.WhenAnyValue(x => x.Sensor)
                     .Subscribe(_ =>
                     {
-                        if (SensorData?.Sensor?.SensorType?.Color != null)
+                        if (SensorData?.Sensor?.SensorType?.Color != null && SensorData.IsNew == false)
                         {
                             CustomBackground = (SolidColorBrush)new BrushConverter().ConvertFrom(SensorData.Sensor.SensorType.Color);
                         }

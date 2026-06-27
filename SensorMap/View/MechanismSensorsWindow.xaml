@@ -1,4 +1,4 @@
-﻿<hc:Window x:Class="SensorMap.View.MechanismSensorsWindow"
+<hc:Window x:Class="SensorMap.View.MechanismSensorsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -30,15 +30,15 @@
                 <beh:DataGridBahavior ViewModel="{Binding }"/>
             </i:Interaction.Behaviors>
             <DataGrid.Columns>
-                <DataGridComboBoxColumn TextBinding="{Binding Sensor.Name}" DisplayMemberPath="Name" MinWidth="100" Header="Название">
+                <DataGridComboBoxColumn DisplayMemberPath="Name"
+                                        MinWidth="100"
+                                        Header="Название"
+                                        TextBinding="{Binding Sensor.Name}">
                     <DataGridComboBoxColumn.EditingElementStyle>
                         <Style TargetType="ComboBox">
                             <Setter Property="Cursor" Value="Hand"/>
-                            <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
-                            
-                            <Setter Property="SelectedItem" Value="{Binding Sensor}"/>
                             <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.SensorList,Mode=OneWay}"/>
-                            
+                            <EventSetter Event="SelectionChanged" Handler="SensorComboBox_SelectionChanged"/>
                         </Style>
                     </DataGridComboBoxColumn.EditingElementStyle>                   
                 </DataGridComboBoxColumn>

@@ -1,4 +1,4 @@
-﻿using ReactiveUI;
+using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using System;
 using System.Collections.Generic;
@@ -25,6 +25,7 @@ namespace SensorMap.Model
         private bool _toDelete;
         private string address = string.Empty;
         private string description = string.Empty;
+        private Sensor? _sensor;
 
         [Key]
         public int Id { get; set; }
@@ -101,7 +102,20 @@ namespace SensorMap.Model
             set => this.RaiseAndSetIfChanged(ref description, value);
         }
         public virtual int SensorId { get; set; }
-        public virtual Sensor? Sensor { get; set; }
+        [Reactive]
+        public virtual Sensor? Sensor
+        {
+            get => _sensor;
+            set
+            {
+                if (_sensor != value)
+                {
+                    this.RaiseAndSetIfChanged(ref _sensor, value);
+                    SensorId = value?.Id ?? 0;
+                    IsModified = true;
+                }
+            }
+        }
         public virtual int MechanismId { get; set; }
         public virtual Mechanism? Mechanism { get; set; }
 

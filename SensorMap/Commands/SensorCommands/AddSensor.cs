@@ -35,7 +35,8 @@ namespace SensorMap.Commands.SensorCommands
             }
             if (!_collection.Contains(_sensorData))
             {
-                _collection.Add(_sensorData); 
+                _collection.Add(_sensorData);
+                _sensorData.IsNew = true;
             }
         }
 
@@ -43,6 +44,7 @@ namespace SensorMap.Commands.SensorCommands
         {
             _canvas.Children.Remove(_element);
             _collection.Remove(_sensorData);
+            _sensorData.IsNew = false;
         }
     }
 }

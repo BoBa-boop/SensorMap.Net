@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using HandyControl.Data;
 using HandyControl.Expression.Shapes;
@@ -42,7 +42,19 @@ namespace SensorMap.ViewModel
         private bool _isShowSensors;
         private bool _hasChanges;
         private SensorAssignments _selectSensor;
-        public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
+        private readonly Dictionary<int, UndoRedoStack> _undoRedoStacks = new();
+        private IDisposable? _undoSub;
+        private IDisposable? _redoSub;
+        private UndoRedoStack CurrentStack
+        {
+            get
+            {
+                if (CurrentMech == null) return null!;
+                if (!_undoRedoStacks.ContainsKey(CurrentMech.Id))
+                    _undoRedoStacks[CurrentMech.Id] = new UndoRedoStack();
+                return _undoRedoStacks[CurrentMech.Id];
+            }
+        }
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation? Navigation { get; set; }
@@ -74,7 +86,7 @@ namespace SensorMap.ViewModel
                 {
                     this.RaiseAndSetIfChanged(ref currentMech, value);
                     currentMech = value;
-                    
+                    SubscribeToCurrentStack();
                 }
             }
         }
@@ -100,8 +112,8 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _selectSensor, value); }
         }
 
-        [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
-        [Reactive] public bool CanRedo => _undoRedoManager.CanRedo;
+        [Reactive] public bool CanUndo => CurrentStack?.CanUndo ?? false;
+        [Reactive] public bool CanRedo => CurrentStack?.CanRedo ?? false;
         [Reactive] public bool IsShowSensors
         {
             get => _isShowSensors;
@@ -168,7 +180,7 @@ namespace SensorMap.ViewModel
                 if (obj is AddSensor command)
                 {
                     //Выполнение команды "Добавить"
-                    _undoRedoManager.Do(command);
+                    CurrentStack?.Do(command);
                 }
             }, (obj) =>
             { 
@@ -180,7 +192,7 @@ namespace SensorMap.ViewModel
             {
                 if (obj[0] is RemoveSensor command && obj[1] is List<CustomSensor> sensors)
                 {
-                    _undoRedoManager.Do(command);
+                    CurrentStack?.Do(command);
                 }
             });
             DragSensorCommand = new RelayCommand<object>((obj) =>
@@ -240,26 +252,35 @@ namespace SensorMap.ViewModel
 
                 _service.WhenAnyValue(x => x.IsEditMode)
                .BindTo(this, x => x.IsEditMode);
-            _undoRedoManager.WhenAnyValue(x => x.CanUndo)
-            .Subscribe(_ => 
-            {
-                this.RaisePropertyChanged(nameof(CanUndo));
-                HasChanges = CanUndo; 
-            });
 
-            _undoRedoManager.WhenAnyValue(x => x.CanRedo)
-                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
-
-            UndoCommand = new RelayCommand(() => _undoRedoManager.Undo());
-            RedoCommand = new RelayCommand(() => _undoRedoManager.Redo());
+            UndoCommand = new RelayCommand(() => CurrentStack?.Undo());
+            RedoCommand = new RelayCommand(() => CurrentStack?.Redo());
             TransformSensorCommand = new RelayCommand<object>((obj) => 
             {
                 if (obj is TransformationSensors command)
                 {
-                    _undoRedoManager.Do(command);
+                    CurrentStack?.Do(command);
                 }
             });
 
+        }
+
+        private void SubscribeToCurrentStack()
+        {
+            _undoSub?.Dispose();
+            _redoSub?.Dispose();
+            var stack = CurrentStack;
+            if (stack == null) return;
+            _undoSub = stack.WhenAnyValue(x => x.CanUndo)
+                .Subscribe(_ =>
+                {
+                    this.RaisePropertyChanged(nameof(CanUndo));
+                    HasChanges = CanUndo;
+                });
+            _redoSub = stack.WhenAnyValue(x => x.CanRedo)
+                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
         }
 
         private async void GetDataFromDB(EF.AppDBContext _dbContext)

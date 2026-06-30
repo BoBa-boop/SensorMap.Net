@@ -1,68 +1,75 @@
-﻿using SensorMap.CustomControls;
+using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using System.Windows;
 using System.Windows.Controls;
-using System.Xml.Linq;
 using Point = System.Windows.Point;
 
 namespace SensorMap.Commands.SensorCommands
 {
     public class TransformationSensors : IUndoRedoCommand
     {
-        private readonly IEnumerable<CustomSensor> _elements;
-        /// <summary>
-        /// Изначальные значения
-        /// </summary>
-        private readonly List<SensorAssignments> _startValues = new List<SensorAssignments>();
-        /// <summary>
-        /// Обновленные значения
-        /// </summary>
-        private readonly List<CustomSensor> _updatedValues = new List<CustomSensor>();
+        private readonly Canvas _canvas;
+        private readonly List<SensorAssignments> _startValues = new();
+        private readonly List<SensorAssignments> _updatedValues = new();
         private readonly Func<Point, Point> _worldToScreen;
+
         public TransformationSensors(IEnumerable<SensorAssignments> sensorsData, IEnumerable<CustomSensor> elements,
                          Func<Point, Point> worldToScreen)
         {
-            _elements = elements;
+            _canvas = elements.FirstOrDefault()?.Parent as Canvas;
             _startValues = sensorsData.Select(x => (SensorAssignments)x.Clone()).ToList();
-            _updatedValues = elements.Select(x => (CustomSensor)x.Clone()).ToList();
+            _updatedValues = sensorsData.Select(x => (SensorAssignments)x.Clone()).ToList();
+            foreach (var el in elements)
+            {
+                var uv = _updatedValues.FirstOrDefault(v => v.Id == el.SensorData.Id);
+                if (uv != null)
+                {
+                    uv.X = el.CustomBounds.X;
+                    uv.Y = el.CustomBounds.Y;
+                    uv.Width = el.CustomBounds.Width;
+                    uv.Height = el.CustomBounds.Height;
+                }
+            }
             _worldToScreen = worldToScreen;
+        }
+
+        private static CustomSensor? FindSensor(Canvas canvas, int sensorDataId)
+        {
+            return canvas.Children.OfType<CustomSensor>()
+                .FirstOrDefault(s => s.SensorData.Id == sensorDataId);
         }
 
         public void Do()
         {
-            foreach (var item in _elements)
+            foreach (var uv in _updatedValues)
             {
-                var obj = _updatedValues.Where(x=>x.SensorData.Id==item.SensorData.Id).First();
-                Point screenPos = obj.CustomBounds.Location;
-                Canvas.SetLeft(item, screenPos.X);
-                Canvas.SetTop(item, screenPos.Y);
-                item.SensorData.X = screenPos.X;
-                item.SensorData.Y = screenPos.Y;
-                item.SensorData.Width = obj.CustomBounds.Width;
-                item.SensorData.Height = obj.CustomBounds.Height;
-                item.CustomBounds = new Rect(obj.CustomBounds.X, obj.CustomBounds.Y,
-                                             obj.CustomBounds.Width, obj.CustomBounds.Height);
+                var item = FindSensor(_canvas, uv.Id);
+                if (item == null) continue;
+                item.SensorData.X = uv.X;
+                item.SensorData.Y = uv.Y;
+                item.SensorData.Width = uv.Width;
+                item.SensorData.Height = uv.Height;
+                item.CustomBounds = new Rect(uv.X, uv.Y, uv.Width, uv.Height);
+                Canvas.SetLeft(item, uv.X);
+                Canvas.SetTop(item, uv.Y);
             }
-            
         }
 
         public void Undo()
         {
-            foreach (var item in _elements)
+            foreach (var sv in _startValues)
             {
-                var obj = _startValues.Where(x => x.Id == item.SensorData.Id).FirstOrDefault();
-                item.SensorData.X = obj.X;
-                item.SensorData.Y = obj.Y;
-                Canvas.SetLeft(item, item.SensorData.X);
-                Canvas.SetTop(item, item.SensorData.Y);
-                item.SensorData.Width = obj.Width;
-                item.SensorData.Height = obj.Height;
-                item.CustomBounds = new Rect(obj.X, obj.Y,
-                                             obj.Width, obj.Height);
+                var item = FindSensor(_canvas, sv.Id);
+                if (item == null) continue;
+                item.SensorData.X = sv.X;
+                item.SensorData.Y = sv.Y;
+                item.SensorData.Width = sv.Width;
+                item.SensorData.Height = sv.Height;
+                item.CustomBounds = new Rect(sv.X, sv.Y, sv.Width, sv.Height);
+                Canvas.SetLeft(item, sv.X);
+                Canvas.SetTop(item, sv.Y);
             }
-            
         }
-
     }
 }

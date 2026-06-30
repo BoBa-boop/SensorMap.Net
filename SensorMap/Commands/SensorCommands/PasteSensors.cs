@@ -29,12 +29,11 @@ namespace SensorMap.Commands.SensorCommands
         {
             foreach (var uiElement in _elements)
             {
-                uiElement.SensorData.Id = 0;
                 _canvas.Children.Add(uiElement);
             }
             foreach (var item in _sensorsData)
             {
-                item.Id = 0;
+                item.IsNew = true;
                 _collection.Add(item);
             }
         }
@@ -43,12 +42,11 @@ namespace SensorMap.Commands.SensorCommands
         {
             foreach (var uiElement in _elements)
             {
-                uiElement.SensorData.Id = 0;
                 _canvas.Children.Remove(uiElement);
             }
             foreach (var item in _sensorsData)
             {
-                item.Id = 0;
+                item.IsNew = false;
                 _collection.Remove(item);
             }
         }

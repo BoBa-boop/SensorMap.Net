@@ -23,6 +23,11 @@ namespace SensorMap.Commands.SensorCommands
             _canvas = canvas;
             _collection = collection;
         }
+        private static CustomSensor? FindSensor(Canvas canvas, int sensorDataId)
+        {
+            return canvas.Children.OfType<CustomSensor>()
+                .FirstOrDefault(s => s.SensorData.Id == sensorDataId);
+        }
         public void Do()
         {
             foreach (var item in _elements)
@@ -42,8 +47,10 @@ namespace SensorMap.Commands.SensorCommands
 
         public void Undo()
         {
-            foreach (var item in _elements)
+            foreach (var sensor in _elements)
             {
+                var item = FindSensor(_canvas, sensor.SensorData.Id);
+                if (item == null) return;
                 item.SensorData.ToDelete = false;
                 _canvas.Children.Add(item);
                 //_collection.Add(item.SensorData);

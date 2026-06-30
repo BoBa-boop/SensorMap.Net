@@ -900,7 +900,7 @@
                                             <Button.CommandParameter>
                                                 <MultiBinding Converter="{StaticResource CreateMultiParams}">
                                                     <Binding Path="Text" ElementName="tbSensorType"/>
-                                                    <Binding Path="SelectedBrush" ElementName="colorPicker"/>
+                                                    <Binding Path="SelectedBrush" ElementName="colorPicker" FallbackValue="{StaticResource AccentBrush}"/>
                                                 </MultiBinding>
                                             </Button.CommandParameter>
                                         </Button>

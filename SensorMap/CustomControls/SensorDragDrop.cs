@@ -437,6 +437,8 @@ namespace SensorMap.CustomControls
                 sensor.Y = sensor.Y < 0 ? 50 : sensor.Y;
                 double offsetX, offsetY;
                 GetLeftTopPoint(out offsetX, out offsetY);
+                if(sensor.Id==0)
+                    sensor.Id = _canvas.Children.OfType<CustomSensor>().OrderBy(x => x.SensorData.Id).Last().SensorData.Id + 1;
                 CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
                 var command = new AddSensor(sensor, element, _canvas, ItemsSource);
                 AddSensorsCommand.Execute(command);
@@ -499,7 +501,8 @@ namespace SensorMap.CustomControls
                     _isDropAdd = true;
                     var command = new AddSensor(sensorData, element, _canvas!, ItemsSource);
                     AddSensorsCommand.Execute(command);
-                    
+                    if (sensorData.Id == 0)
+                        sensorData.Id = _canvas.Children.OfType<CustomSensor>().OrderBy(x => x.SensorData.Id).Last().SensorData.Id + 1;
                     element.Tag = sensorData.Id;
                 }
             }

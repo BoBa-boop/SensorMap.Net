@@ -27,22 +27,23 @@ namespace SensorMap.Commands.SensorCommands
             _canvas = canvas;
             _collection = collection;
         }
+        private static CustomSensor? FindSensor(Canvas canvas, int sensorDataId)
+        {
+            return canvas.Children.OfType<CustomSensor>()
+                .FirstOrDefault(s => s.SensorData.Id == sensorDataId);
+        }
         public void Do()
         {
-            if (!_canvas.Children.Contains(_element))
-            {
-                _canvas.Children.Add(_element);                
-            }
-            if (!_collection.Contains(_sensorData))
-            {
-                _collection.Add(_sensorData);
-                _sensorData.IsNew = true;
-            }
+            _canvas.Children.Add(_element);            
+            _collection.Add(_sensorData);
+            _sensorData.IsNew = true;
         }
 
         public void Undo()
         {
-            _canvas.Children.Remove(_element);
+            var item = FindSensor(_canvas, _sensorData.Id);
+            if (item == null) return;
+            _canvas.Children.Remove(item);
             _collection.Remove(_sensorData);
             _sensorData.IsNew = false;
         }

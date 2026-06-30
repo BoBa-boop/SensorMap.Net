@@ -220,7 +220,7 @@ namespace SensorMap.ViewModel
 
                 var values = (object[])param;
                 var name = (string)values[0];
-                var color = (string)values[1];
+                var color = (string)values[1].ToString();
                 SensorType sType = new SensorType();
                 sType.Name = name;
                 sType.Color = color;

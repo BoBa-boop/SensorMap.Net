@@ -53,6 +53,7 @@ namespace SensorMap.Commands.SensorCommands
                 item.CustomBounds = new Rect(uv.X, uv.Y, uv.Width, uv.Height);
                 Canvas.SetLeft(item, uv.X);
                 Canvas.SetTop(item, uv.Y);
+                item.SensorData.IsModified = true;
             }
         }
 

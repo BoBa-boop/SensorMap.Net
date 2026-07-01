@@ -34,9 +34,11 @@ namespace SensorMap.Commands.SensorCommands
         }
         public void Do()
         {
-            _canvas.Children.Add(_element);            
-            _collection.Add(_sensorData);
             _sensorData.IsNew = true;
+            _canvas.Children.Add(_element);
+            if (!_collection.Contains(_sensorData))
+                _collection.Add(_sensorData);
+            
         }
 
         public void Undo()

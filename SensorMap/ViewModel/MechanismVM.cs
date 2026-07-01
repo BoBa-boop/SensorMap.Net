@@ -330,44 +330,98 @@ namespace SensorMap.ViewModel
             else return true;
         }
 
-        private void SaveCoordinates()
+        private async void SaveCoordinates()
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
          //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
          //разобраться с сохранением
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
+                if (CurrentMech?.SensorsAssig == null) return;
+
+                // 1. Загружаем актуальное состояние из БД для поиска оригиналов
+                var existingMech = await dbContext.Mechanisms
+                    .Include(m => m.SensorsAssig)
+                    .FirstOrDefaultAsync(m => m.Id == CurrentMech.Id);
+
+                if (existingMech == null) return;
+
+                int changesCount = 0;
+
                 foreach (var sa in CurrentMech.SensorsAssig)
                 {
-                    if (!IsValidData(sa)) break;
-                    if(sa.Id == 0||sa.IsNew)
+                    if (!IsValidData(sa)) break; // Или continue, если хотите пропустить только битую строку
+
+                    // Ищем оригинал по Id для сравнения или обновления
+                    SensorAssignments? originalSa = existingMech.SensorsAssig?
+                        .FirstOrDefault(x => x.Id == sa.Id);
+
+                    if (sa.ToDelete)
                     {
-                        //var tempSensor = (SensorAssignments)sa.Clone();//клонирую, потому что при Id = 0 не получиться обнаружит датчик при undo TransforCommand
-                        //tempSensor.Id = 0;
-                        dbContext.Entry(sa).State = EntityState.Added;
-                        sa.IsNew = false;
+                        // Удаление
+                        if (originalSa != null)
+                        {
+                            // Вариант А: Жесткое удаление из БД
+                            //dbContext.SensorAssignments.Remove(originalSa);
+
+                            // Вариант Б: Мягкое удаление (если есть поле IsDeleted), тогда State = Modified + флаг
+                            //originalSa.ToDelete = true;
+                            dbContext.Entry(originalSa).State = EntityState.Deleted;
+
+                            changesCount++;
+                        }
                     }
-                    else if (sa.ToDelete)
+                    else if (sa.IsNew || sa.Id == 0)
                     {
-                        dbContext.Entry(sa).State = EntityState.Deleted;
+                        // Добавление новой записи
+                        // Важно: убедитесь, что у нового объекта сброшена навигация обратно к родителю,
+                        // иначе возникнет ошибка ссылающегося ключа (Foreign Key constraint).
+
+                        var temp = sa;
+                        temp.Id = 0;
+                        dbContext.Entry(temp).State = EntityState.Added;
+                        changesCount++;
                     }
-                    else if(sa.IsModified)
+                    else if (sa.IsModified)
                     {
-                        var original = _service.GetOriginalEntry(dbContext, sa);
-                        if (original != null && dbContext.ChangeTracker.HasChanges())
-                            dbContext.Entry(original).CurrentValues.SetValues(sa);
+                        // Обновление существующей записи
+                        if (originalSa != null)
+                        {
+                            // Оптимальный способ: обновит только измененные поля
+                            dbContext.Entry(originalSa).CurrentValues.SetValues(sa);
+                            changesCount++;
+                        }
                         else
                         {
-                            if (original != null)
-                                dbContext.Entry(original).State = EntityState.Detached;
-                            dbContext.Update(sa);
+                            // Запись должна быть в базе, но ее нет в загруженном графе (например, сработал QueryFilter)
+                            // Присоединяем как модифицированную
+                            dbContext.Attach(sa).State = EntityState.Modified;
+                            changesCount++;
                         }
-                        //dbContext.Entry(sa).State = EntityState.Modified;
                     }
+
+                    // Сброс локальных флагов UI-модели, чтобы следующий клик "Сохранить" не делал лишнего
+                    sa.IsNew = false;
                     sa.IsModified = false;
+                    sa.ToDelete = false;
                 }
-                dbContext.SaveChangesAsync();                
-                HasChanges = false;
-                Growl.Success("Данные сохранены");
+
+                if (changesCount > 0)
+                {
+                    try
+                    {
+                        int affectedRows = await dbContext.SaveChangesAsync();
+                        HasChanges = false;
+                        Growl.Success("Данные сохранены");
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        Growl.Error("Данные были изменены другим пользователем. Попробуйте снова.");
+                    }
+                }
+                else
+                {
+                    Growl.Error("Нет изменений для сохранения");
+                }
             }
         }
 

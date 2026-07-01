@@ -31,6 +31,7 @@ namespace SensorMap.Commands.SensorCommands
         public void Do()
         {
             // Конвертируем мировые в экранные и устанавливаем
+            
             Point screenPos = _worldToScreen(_new_rect.Location);
             Canvas.SetLeft(_element, screenPos.X);
             Canvas.SetTop(_element, screenPos.Y);
@@ -40,6 +41,7 @@ namespace SensorMap.Commands.SensorCommands
             _element.SensorData.Height = _new_rect.Height;
             _element.CustomBounds = new Rect(_new_rect.X, _new_rect.Y,
                                          _new_rect.Width, _new_rect.Height);
+            _element.SensorData.IsModified = true;
         }
 
         public void Undo()

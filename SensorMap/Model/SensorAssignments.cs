@@ -112,7 +112,6 @@ namespace SensorMap.Model
                 {
                     this.RaiseAndSetIfChanged(ref _sensor, value);
                     SensorId = value?.Id ?? 0;
-                    IsModified = true;
                 }
             }
         }

@@ -39,6 +39,27 @@ namespace SensorMap.ViewModel
             get { return _sensor; }
             set 
             {
+                // Подписываемся на новый объект
+                if (_sensor != null)
+                {
+                    // Слушаем любые значимые изменения полей сущности
+                    var changes = Observable.Merge(
+                        this.WhenAnyValue(x => x._sensor.Sensor.Name),
+                        this.WhenAnyValue(x => x._sensor.Address),
+                        this.WhenAnyValue(x => x._sensor.Description)
+                    );
+
+                    changes.Subscribe(_ =>
+                    {
+                        // Устанавливаем флаг только если пользователь реально меняет данные,
+                        // а не просто переключает строки
+                        if (!_sensor.IsModified)
+                        {
+                            _sensor.IsModified = true;
+                            HasChanges = true;
+                        }
+                    }); 
+                }
                 this.RaiseAndSetIfChanged(ref _sensor, value);
             }
         }

@@ -107,6 +107,10 @@ namespace SensorMap.CustomControls
                 {
                     control.ClearSelectedSensors();
                 }
+                if (sensor == null)
+                {
+                    control.ClearSelectedSensors();
+                }
                 var elementToUnSelect = control._canvas.Children
                     .OfType<CustomSensor>()
                     .FirstOrDefault(x => x.SensorData == oldSensor);

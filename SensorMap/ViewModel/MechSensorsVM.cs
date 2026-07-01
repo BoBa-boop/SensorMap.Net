@@ -53,7 +53,7 @@ namespace SensorMap.ViewModel
                     {
                         // Устанавливаем флаг только если пользователь реально меняет данные,
                         // а не просто переключает строки
-                        if (!_sensor.IsModified)
+                        if (_sensor!=null&&!_sensor.IsModified)
                         {
                             _sensor.IsModified = true;
                             HasChanges = true;

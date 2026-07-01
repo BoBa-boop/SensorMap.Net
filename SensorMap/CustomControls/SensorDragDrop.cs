@@ -850,7 +850,7 @@ namespace SensorMap.CustomControls
             // Ограничиваем прямоугольник границами Image
             Rect constrainedRect = new Rect(left, top, width, height);
             constrainedRect.Intersect(imageBounds);
-
+            if (constrainedRect.IsEmpty) return;
             SelectionRect.Width = constrainedRect.Width;
             SelectionRect.Height = constrainedRect.Height;
             Canvas.SetLeft(SelectionRect, constrainedRect.Left);

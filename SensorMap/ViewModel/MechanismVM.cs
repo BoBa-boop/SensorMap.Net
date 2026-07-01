@@ -244,9 +244,9 @@ namespace SensorMap.ViewModel
             {
                 if (obj == null) return false;
                 var mech = obj as Mechanism;
-                bool SensorsNotNull = mech!.SensorsAssig != null && mech.SensorsAssig.Any();
+                //bool SensorsNotNull = mech!.SensorsAssig != null && mech.SensorsAssig.Any();
                 bool FilesNotNull = mech.Files != null && mech.Files.Any();
-                if (SensorsNotNull && FilesNotNull) return true;
+                if (/*SensorsNotNull && */FilesNotNull) return true;
                 return false;
             });
 

@@ -19,7 +19,7 @@ namespace SensorMap.Commands.SensorCommands
         public RemoveSensor(List<CustomSensor> sensorsVisual, Canvas canvas,
         ObservableCollection<SensorAssignments> collection)
         {
-            _elements = sensorsVisual;
+            _elements = sensorsVisual.Select(x => (CustomSensor)x.Clone()).ToList();
             _canvas = canvas;
             _collection = collection;
         }
@@ -30,13 +30,12 @@ namespace SensorMap.Commands.SensorCommands
         }
         public void Do()
         {
-            foreach (var item in _elements)
+            foreach (var sensor in _elements)
             {
+                var item = FindSensor(_canvas, sensor.SensorData.Id);
+                if (item is null) return;
                 item.SensorData.ToDelete=true;
-                if (_canvas.Children.Contains(item))
-                {
-                    _canvas.Children.Remove(item);
-                }
+                _canvas.Children.Remove(item);
                 //if (_collection.Contains(item.SensorData))
                 //{
                 //    _collection.Remove(item.SensorData);
@@ -47,12 +46,12 @@ namespace SensorMap.Commands.SensorCommands
 
         public void Undo()
         {
-            foreach (var sensor in _elements)
+            foreach (var sensor in _elements.Where(x=>x.SensorData.ToDelete==true))
             {
-                var item = FindSensor(_canvas, sensor.SensorData.Id);
-                if (item == null) return;
-                item.SensorData.ToDelete = false;
-                _canvas.Children.Add(item);
+                sensor.SensorData.ToDelete = false;
+                _canvas.Children.Add(sensor);
+                Canvas.SetLeft(sensor, sensor.SensorData.X);
+                Canvas.SetTop(sensor, sensor.SensorData.Y);
                 //_collection.Add(item.SensorData);
             }
 

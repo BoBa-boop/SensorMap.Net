@@ -22,7 +22,7 @@ namespace SensorMap.Commands.SensorCommands
         public AddSensor(SensorAssignments sensor, CustomSensor sensorVisual,Canvas canvas,
         ObservableCollection<SensorAssignments> collection) 
         {
-            _element = sensorVisual;
+            _element = (CustomSensor)sensorVisual.Clone();
             _sensorData = sensor;
             _canvas = canvas;
             _collection = collection;
@@ -36,6 +36,8 @@ namespace SensorMap.Commands.SensorCommands
         {
             _sensorData.IsNew = true;
             _canvas.Children.Add(_element);
+            Canvas.SetLeft(_element, _sensorData.X);
+            Canvas.SetTop(_element, _sensorData.Y);
             if (!_collection.Contains(_sensorData))
                 _collection.Add(_sensorData);
             

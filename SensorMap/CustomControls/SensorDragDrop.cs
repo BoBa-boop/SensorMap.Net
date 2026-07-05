@@ -384,7 +384,7 @@ namespace SensorMap.CustomControls
             foreach (var sensor in ItemsSource)
             {
                 int sensorsInMap = _canvas!.Children.OfType<CustomSensor>().Count();
-                if (sensor != null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
+                if (sensor != null && !_isDropAdd && sensor.ToDelete==false && ItemsSource.Count != sensorsInMap)
                 {
                     sensor.X = sensor.X < 0 ? 50 : sensor.X;
                     sensor.Y = sensor.Y < 0 ? 50 : sensor.Y;

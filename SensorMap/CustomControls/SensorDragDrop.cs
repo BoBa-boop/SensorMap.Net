@@ -697,31 +697,7 @@ namespace SensorMap.CustomControls
             }
         }
         #endregion
-        private void UIElementSensor_ShowMoreInfo(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Right)
-            {
-                if (sender is CustomSensor sensor)
-                {
-                    var pop = new View.SensorAddInfo();
-                    var window = new PopupWindow()
-                    {
-                        PopupElement = pop,
-                        DataContext = sensor.SensorData
-                    };
-                    Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
-
-                    void OnMainWindowClick(object sender, MouseButtonEventArgs e)
-                    {
-                        window.Close();
-                        Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
-                    }
-                        window.Show(sensor, false);
-                    }
-                }
-                e.Handled = true;
-            
-        }
+       
         private CustomSensor CreateSensorObject(SensorAssignments sensor, Point point)
         {           
             var element = new CustomSensor();
@@ -732,7 +708,6 @@ namespace SensorMap.CustomControls
             Canvas.SetTop(element, point.Y);
             element.SensorData.X = point.X;
             element.SensorData.Y = point.Y;
-            element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
             return element;
         }
 

@@ -143,7 +143,7 @@
                                         <MultiDataTrigger>
                                             <MultiDataTrigger.Conditions>
                                                 <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
-                                                <Condition Binding="{Binding SelectedCustomSensor,
+                                                <Condition Binding="{Binding SelectedMapObject,
                                                     Converter={StaticResource Object2BooleanConverter},
                                                     RelativeSource={RelativeSource AncestorType={x:Type myCC:SensorDragDrop}}}" 
                                                            Value="True"/>
@@ -184,6 +184,91 @@
                 <Setter Property="IsEditMode" Value="False"/>
             </DataTrigger>
 
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="{x:Type myCC:CustomDevice}">
+        <Setter Property="IsSelectionRectActive"
+                Value="{Binding IsSelectionRectEnable,
+                Mode=OneWay,
+                RelativeSource={RelativeSource Mode=FindAncestor,
+                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
+        <Setter Property="IsDragging"
+                Value="{Binding IsCustomSensorDragging,
+                Mode=OneWayToSource,
+                RelativeSource={RelativeSource Mode=FindAncestor,
+                AncestorType={x:Type myCC:SensorDragDrop}}}"/>
+        <Setter Property="TransformCommand"
+                Value="{Binding DataContext.TransformSensorCommand,
+                RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+        <Setter Property="IsMultiSelection"
+             Value="{Binding Path=IsMultiSelection,
+             RelativeSource={RelativeSource Mode=FindAncestor,
+             AncestorType={x:Type myCC:SensorDragDrop}}}"/>
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type myCC:CustomDevice}">
+                    <Canvas x:Name="PART_Canvas">
+                        <Grid x:Name="Device">
+                            <Border x:Name="PART_Device"
+                                Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                                Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}"
+                                Background="{TemplateBinding Property=CustomBackground}"
+                                BorderBrush="{TemplateBinding CustBorderBrush}"
+                                BorderThickness="2" CornerRadius="3">
+                            </Border>
+                            <Viewbox>
+                                <TextBlock Background="Transparent" FontSize="10" TextWrapping="NoWrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Text" Value="{Binding DeviceData.Description,
+                                                            RelativeSource={RelativeSource TemplatedParent}}"/>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Viewbox>
+                            <Rectangle x:Name="PART_Transform"
+                                   IsHitTestVisible="True"
+                                   Visibility="{TemplateBinding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                   Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                                   Height="{Binding CustomBounds.Height, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Rectangle.Style>
+                                    <Style TargetType="Rectangle">
+                                        <Setter Property="Fill" Value="Transparent"/>
+                                        <Setter Property="StrokeThickness" Value="1"/>
+                                        <Setter Property="StrokeDashArray" Value="2,2"/>
+                                        <Setter Property="Stroke">
+                                            <Setter.Value>
+                                                <SolidColorBrush Color="Black"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Rectangle.Style>
+                            </Rectangle>
+                        </Grid>
+                        <TextBlock x:Name="PART_Address"
+                                   TextAlignment="Left"
+                                   Canvas.Left="5"
+                                   Canvas.Top="0"
+                                   Text="{Binding DeviceData.Description,UpdateSourceTrigger=PropertyChanged,RelativeSource={RelativeSource TemplatedParent}}"
+                                   Visibility="Collapsed"/>
+                    </Canvas>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Path=DataContext.IsEditMode,
+                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Value="True">
+                <Setter Property="IsEditMode" Value="True"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=DataContext.IsEditMode,
+                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                         Value="False">
+                <Setter Property="IsEditMode" Value="False"/>
+            </DataTrigger>
         </Style.Triggers>
     </Style>
 </ResourceDictionary>

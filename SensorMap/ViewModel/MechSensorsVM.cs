@@ -1,107 +1,98 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using DynamicData;
-using Microsoft.IdentityModel.Tokens;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
-using SensorMap.Behaviors;
-using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using SensorMap.Services;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace SensorMap.ViewModel
 {
-    public class MechSensorsVM:ReactiveObject
+    public class MechSensorsVM : ReactiveObject
     {
         private Mechanism _mechanism;
-        private SensorAssignments _sensor;
+        private MapObject _selectedMapObject;
         private ITempImage _imageControl;
         private bool isEditMode;
         private bool _hasChanges;
-        [Reactive]public Mechanism Mechanism
+
+        [Reactive] public Mechanism Mechanism
         {
             get { return _mechanism; }
             set { _mechanism = value; this.RaiseAndSetIfChanged(ref _mechanism, value); }
         }
-        
-        [Reactive]public SensorAssignments SelectedSensor
+
+        /// <summary>
+        /// Выбранный объект на карте (датчик или устройство)
+        /// </summary>
+        [Reactive]
+        public MapObject SelectedMapObject
         {
-            get { return _sensor; }
-            set 
+            get { return _selectedMapObject; }
+            set
             {
-                // Подписываемся на новый объект
-                if (_sensor != null)
+                if (_selectedMapObject != null)
                 {
-                    // Слушаем любые значимые изменения полей сущности
                     var changes = Observable.Merge(
-                        this.WhenAnyValue(x => x._sensor.Sensor.Name),
-                        this.WhenAnyValue(x => x._sensor.Address),
-                        this.WhenAnyValue(x => x._sensor.Description)
+                        this.WhenAnyValue(x => x._selectedMapObject.Description)
                     );
 
                     changes.Subscribe(_ =>
                     {
-                        // Устанавливаем флаг только если пользователь реально меняет данные,
-                        // а не просто переключает строки
-                        if (_sensor!=null&&!_sensor.IsModified)
+                        if (_selectedMapObject != null && !_selectedMapObject.IsModified)
                         {
-                            _sensor.IsModified = true;
+                            _selectedMapObject.IsModified = true;
                             HasChanges = true;
                         }
-                    }); 
+                    });
                 }
-                this.RaiseAndSetIfChanged(ref _sensor, value);
+                this.RaiseAndSetIfChanged(ref _selectedMapObject, value);
             }
         }
+
         [Reactive]
         public bool HasChanges
         {
             get { return _hasChanges; }
             set
             {
-                 _hasChanges = value;
+                _hasChanges = value;
                 this.RaiseAndSetIfChanged(ref _hasChanges, value);
             }
         }
-        [Reactive] public ObservableCollection<Sensor> SensorList{get;set;}
+
+        [Reactive] public ObservableCollection<Sensor> SensorList { get; set; }
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        public MechSensorsVM(ITempImage imageControl,Mechanism currentMech,ObservableCollection<Sensor> sensorsList)
+
+        public MechSensorsVM(ITempImage imageControl, Mechanism currentMech, ObservableCollection<Sensor> sensorsList)
         {
             Mechanism = (Mechanism)currentMech.Clone();
-            SensorList = new (sensorsList);
-            if(Mechanism!=null && Mechanism.SensorsAssig!=null)
-                Mechanism.SensorsAssig.RemoveMany(Mechanism.SensorsAssig.Where(x => x.ToDelete == true).ToList());
+            SensorList = new(sensorsList);
+            if (Mechanism != null && Mechanism.MapObjects != null)
+                Mechanism.MapObjects.RemoveMany(Mechanism.MapObjects.Where(x => x.ToDelete == true).ToList());
             _imageControl = imageControl;
-            AddImage = new RelayCommand<SensorAssignments>((sens) =>
+            AddImage = new RelayCommand<MapObject>((mapObj) =>
             {
                 byte[] tempImage = _imageControl.OpenImageDialog();
-                if (!tempImage.IsNullOrEmpty())
+                if (!string.IsNullOrEmpty(Convert.ToBase64String(tempImage ?? Array.Empty<byte>())))
                 {
-                    SelectedSensor.Image = tempImage;
-                    SelectedSensor.IsModified = true;
+                    SelectedMapObject.Image = tempImage;
+                    SelectedMapObject.IsModified = true;
                     HasChanges = true;
                 }
-                
             });
             ShowPreviewImage = new RelayCommand<object>((image) =>
             {
                 if (image is byte[] img && img != null)
                 {
-                    var browser = new CustomImageBrowser(_imageControl.CreateImageFromBytes(img)) { Title = "Просмотр" };
+                    var browser = new Behaviors.CustomImageBrowser(_imageControl.CreateImageFromBytes(img)) { Title = "Просмотр" };
                     browser.ShowDialog();
                 }
             });
-            
         }
 
         public ICommand AddImage { get; set; }

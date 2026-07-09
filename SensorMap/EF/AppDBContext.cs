@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -26,11 +26,15 @@ namespace SensorMap.EF
         public DbSet<SensorCharacteristic> SensorCharacteristic { get; set; }
         public DbSet<Device> Devices { get; set; }
         public DbSet<DeviceType> DeviceTypes { get; set; }
+        public DbSet<MapObject> MapObjects { get; set; }
         public DbSet<SensorAssignments> SensorAssignments { get; set; }
+        public DbSet<DeviceAssignment> DeviceAssignments { get; set; }
         public DbSet<DeviceCharacteristic> DeviceCharacteristic { get; set; }
        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // TPT: базовая таблица MapObjects, дочерние SensorAssignments и DeviceAssignments
+            modelBuilder.Entity<MapObject>().UseTptMappingStrategy();
             modelBuilder.ApplyConfiguration(new SectorConfiguration());
             modelBuilder.ApplyConfiguration(new MechanismConfiguration());
             modelBuilder.ApplyConfiguration(new SensorConfiguration());
@@ -39,6 +43,7 @@ namespace SensorMap.EF
             modelBuilder.ApplyConfiguration(new DeviceTypeConfiguration());
             modelBuilder.ApplyConfiguration(new DeviceCharacteristicConfiguration());
             modelBuilder.ApplyConfiguration(new SensorAssignmentConfiguration());
+            modelBuilder.ApplyConfiguration(new DeviceAssignmentConfiguration());
             modelBuilder.ApplyConfiguration(new SensorCharacteristicConfiguration());
             modelBuilder.ApplyConfiguration(new HelpfulFilesConfiguration());
             base.OnModelCreating(modelBuilder);
@@ -111,9 +116,9 @@ namespace SensorMap.EF
                 .HasKey(mech => mech.Id);
            
             builder
-                .HasMany(x => x.SensorsAssig)
-                .WithOne(sens => sens.Mechanism)
-                .HasForeignKey(sens => sens.MechanismId)
+                .HasMany(x => x.MapObjects)
+                .WithOne(obj => obj.Mechanism)
+                .HasForeignKey(obj => obj.MechanismId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
@@ -139,7 +144,20 @@ namespace SensorMap.EF
     {
         public void Configure(EntityTypeBuilder<SensorAssignments> builder)
         {
-            builder.HasKey(x => x.Id);
+            builder.HasOne(x => x.Sensor)
+                .WithMany()
+                .HasForeignKey(x => x.SensorId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+    public class DeviceAssignmentConfiguration : IEntityTypeConfiguration<DeviceAssignment>
+    {
+        public void Configure(EntityTypeBuilder<DeviceAssignment> builder)
+        {
+            builder.HasOne(x => x.Device)
+                .WithMany()
+                .HasForeignKey(x => x.DeviceId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
     public class DeviceConfiguration : IEntityTypeConfiguration<Device>

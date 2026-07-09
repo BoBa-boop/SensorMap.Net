@@ -3,48 +3,37 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:hc="https://handyorg.github.io/handycontrol"
-           xmlns:valid="clr-namespace:SensorMap.Model.Validation"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SensorMap.View"
-           xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-           xmlns:mv="clr-namespace:SensorMap.ViewModel"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:mv="clr-namespace:SensorMap.ViewModel"
+        xmlns:model="clr-namespace:SensorMap.Model"
         mc:Ignorable="d"
-           xmlns:beh="clr-namespace:SensorMap.Behaviors"
-           d:DataContext="{d:DesignInstance mv:MechSensorsVM}"
-        Title="{Binding StringFormat=Датчики {0},Path=Mechanism.Name}"
-           Height="450" Width="600" WindowStartupLocation="CenterScreen"
-           Name="root">
+        xmlns:beh="clr-namespace:SensorMap.Behaviors"
+        d:DataContext="{d:DesignInstance mv:MechSensorsVM}"
+        Title="{Binding StringFormat=Объекты на карте {0},Path=Mechanism.Name}"
+        Height="450" Width="700" WindowStartupLocation="CenterScreen"
+        Name="root">
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Mechanism.SensorsAssig.Count}"
+        <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Mechanism.MapObjects.Count}"
                    Margin="5,0"
                    Grid.Row="0"/>
-        <DataGrid ItemsSource="{Binding Mechanism.SensorsAssig}" AutoGenerateColumns="False" CanUserAddRows="False"
-                  SelectedItem="{Binding SelectedSensor}" Grid.Row="1"
+        <DataGrid ItemsSource="{Binding Mechanism.MapObjects}" AutoGenerateColumns="False" CanUserAddRows="False"
+                  SelectedItem="{Binding SelectedMapObject}" Grid.Row="1"
                   IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
             <i:Interaction.Behaviors>
                 <beh:DataGridBahavior ViewModel="{Binding }"/>
             </i:Interaction.Behaviors>
             <DataGrid.Columns>
-                <DataGridComboBoxColumn DisplayMemberPath="Name"
-                                        MinWidth="100"
-                                        Header="Название"
-                                        TextBinding="{Binding Sensor.Name}">
-                    <DataGridComboBoxColumn.EditingElementStyle>
-                        <Style TargetType="ComboBox">
-                            <Setter Property="Cursor" Value="Hand"/>
-                            <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.SensorList,Mode=OneWay}"/>
-                            <EventSetter Event="SelectionChanged" Handler="SensorComboBox_SelectionChanged"/>
-                        </Style>
-                    </DataGridComboBoxColumn.EditingElementStyle>                   
-                </DataGridComboBoxColumn>
-                <DataGridTextColumn Binding="{Binding Address}" MinWidth="100" Header="Адрес"/>
-                <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
-                <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
+                <DataGridTextColumn Binding="{Binding Description}" Header="Описание" MinWidth="100"/>
+                <DataGridTextColumn Binding="{Binding Address, FallbackValue=''}" MinWidth="100" Header="Адрес"/>
+                <DataGridTextColumn Binding="{Binding Width, StringFormat=F0}" Header="Ширина" IsReadOnly="True" Width="60"/>
+                <DataGridTextColumn Binding="{Binding Height, StringFormat=F0}" Header="Высота" IsReadOnly="True" Width="60"/>
                 <DataGridTemplateColumn Header="Действие">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

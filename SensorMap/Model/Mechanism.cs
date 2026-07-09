@@ -1,8 +1,6 @@
-﻿using ReactiveUI;
+using ReactiveUI;
 using ReactiveUI.SourceGenerators;
-using System.Collections;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -19,8 +17,6 @@ namespace SensorMap.Model
         private Device? _device;
         private Sector? sector;
         private ObservableCollection<HelpfulFile> files = new ObservableCollection<HelpfulFile>();
-
-        
 
         [Key] public int Id { get; set; }
         [MaxLength(250)]
@@ -71,11 +67,10 @@ namespace SensorMap.Model
             }
         }
 
-        public virtual ObservableCollection<SensorAssignments>? SensorsAssig { get; set; }
+        public virtual ObservableCollection<MapObject>? MapObjects { get; set; }
         public virtual ObservableCollection<HelpfulFile> Files { get => files; set => files = value; }
         public virtual int SectorID { get; set; }
         public virtual int? DeviceID { get; set; }
-
 
         [NotMapped] public bool IsModified
         {
@@ -94,7 +89,7 @@ namespace SensorMap.Model
                 Sector = Sector,
                 DeviceID = DeviceID,
                 Device = Device,
-                SensorsAssig = new(SensorsAssig),
+                MapObjects = MapObjects != null ? new(MapObjects) : null,
                 Files = Files
             };
         }

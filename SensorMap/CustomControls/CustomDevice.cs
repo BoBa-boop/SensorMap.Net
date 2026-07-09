@@ -1,12 +1,9 @@
 using CommunityToolkit.Mvvm.Input;
-using HandyControl.Controls;
 using ReactiveUI;
 using SensorMap.Commands.SensorCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
-using SensorMap.ViewModel;
-using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -14,33 +11,34 @@ using System.Windows.Media;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Image = System.Windows.Controls.Image;
-using MessageBox = System.Windows.MessageBox;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
 
 namespace SensorMap.CustomControls
 {
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
-    [TemplatePart(Name = "PART_Sensor", Type = typeof(Border))]
+    [TemplatePart(Name = "PART_Device", Type = typeof(Border))]
     [TemplatePart(Name = "PART_Address", Type = typeof(TextBlock))]
-    public class CustomSensor : Control, ICloneable, IMapElement
+    public class CustomDevice : Control, ICloneable, IMapElement
     {
-        MapObject IMapElement.MapData => SensorData;
-        public void SetCustomBounds(Rect bounds) => CustomBounds = bounds;
-        public Rect GetCustomBounds() => CustomBounds;
         #region Dependency Properties
 
-        public SensorAssignments SensorData
+        public DeviceAssignment DeviceData
         {
-            get { return (SensorAssignments)GetValue(SensorProperty); }
-            set { SetValue(SensorProperty, value); }
+            get { return (DeviceAssignment)GetValue(DeviceProperty); }
+            set { SetValue(DeviceProperty, value); }
         }
-        public static readonly DependencyProperty SensorProperty =
-            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor), new PropertyMetadata(null, SensorDataChanged));
+        public static readonly DependencyProperty DeviceProperty =
+            DependencyProperty.Register("Device", typeof(DeviceAssignment), typeof(CustomDevice), new PropertyMetadata(null, DeviceDataChanged));
 
-        private static void SensorDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        MapObject IMapElement.MapData => DeviceData;
+        public void SetCustomBounds(Rect bounds) => CustomBounds = bounds;
+        public Rect GetCustomBounds() => CustomBounds;
+
+        private static void DeviceDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = (CustomSensor)d;
-            if (e.NewValue != null && e.NewValue is SensorAssignments value)
+            var control = (CustomDevice)d;
+            if (e.NewValue != null && e.NewValue is DeviceAssignment value)
             {
                 Rect rect = new Rect(value.X, value.Y, value.Width, value.Height);
                 control.CustomBounds = rect;
@@ -56,8 +54,8 @@ namespace SensorMap.CustomControls
             DependencyProperty.Register(
                 "CustomBackground",
                 typeof(SolidColorBrush),
-                typeof(CustomSensor),
-                new PropertyMetadata(new SolidColorBrush(Colors.WhiteSmoke)));
+                typeof(CustomDevice),
+                new PropertyMetadata(new SolidColorBrush(Colors.LightBlue)));
 
         public SolidColorBrush CustBorderBrush
         {
@@ -66,7 +64,7 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty CustBorderBrushProperty =
             DependencyProperty.Register("CustBorderBrush", typeof(SolidColorBrush),
-                typeof(CustomSensor),
+                typeof(CustomDevice),
                 new PropertyMetadata(Brushes.Black));
 
         public bool IsSelected
@@ -75,7 +73,7 @@ namespace SensorMap.CustomControls
             set { SetValue(IsSelectedProperty, value); SelectedChanged(); }
         }
         public static readonly DependencyProperty IsSelectedProperty =
-            DependencyProperty.Register("IsSelected", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
+            DependencyProperty.Register("IsSelected", typeof(bool), typeof(CustomDevice), new PropertyMetadata(false));
 
         public bool IsEditMode
         {
@@ -83,7 +81,7 @@ namespace SensorMap.CustomControls
             set { SetValue(IsEditModeProperty, value); }
         }
         public static readonly DependencyProperty IsEditModeProperty =
-            DependencyProperty.Register("IsEditMode", typeof(bool), typeof(CustomSensor),
+            DependencyProperty.Register("IsEditMode", typeof(bool), typeof(CustomDevice),
                 new PropertyMetadata(false, OnIsEditPropertyChanged));
 
         public bool IsMultiSelection
@@ -93,11 +91,11 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsMultiSelectionProperty =
             DependencyProperty.Register("IsMultiSelection", typeof(bool),
-                typeof(CustomSensor), new PropertyMetadata(false));
+                typeof(CustomDevice), new PropertyMetadata(false));
 
         private static void OnIsEditPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = (CustomSensor)d;
+            var control = (CustomDevice)d;
             if (e.NewValue != null && e.NewValue is bool value)
             {
                 if (control._canvas != null) control.ChangeStateActions();
@@ -110,16 +108,16 @@ namespace SensorMap.CustomControls
             set => SetValue(BoundsProperty, value);
         }
         public static readonly DependencyProperty BoundsProperty = DependencyProperty.Register("CustomBounds", typeof(Rect),
-            typeof(CustomSensor), new FrameworkPropertyMetadata(
-                new Rect(0, 0, 30, 30),
+            typeof(CustomDevice), new FrameworkPropertyMetadata(
+                new Rect(0, 0, 50, 30),
                 FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
                 OnCustomBoundsChanged));
 
         private static void OnCustomBoundsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var sensor = (CustomSensor)d;
+            var device = (CustomDevice)d;
             var newRect = (Rect)e.NewValue;
-            sensor.CustomBounds = newRect;
+            device.CustomBounds = newRect;
         }
 
         public ICommand TransformCommand
@@ -129,17 +127,17 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty TransformCommandProperty =
             DependencyProperty.Register("TransformCommand", typeof(ICommand),
-                typeof(CustomSensor),
+                typeof(CustomDevice),
                 new PropertyMetadata(null));
 
-        public CustomSensor SelectedSensor
+        public CustomDevice SelectedDevice
         {
-            get { return (CustomSensor)GetValue(SelectedSensorProperty); }
-            set { SetValue(SelectedSensorProperty, value); }
+            get { return (CustomDevice)GetValue(SelectedDeviceProperty); }
+            set { SetValue(SelectedDeviceProperty, value); }
         }
-        public static readonly DependencyProperty SelectedSensorProperty =
-            DependencyProperty.Register("SelectedSensor", typeof(CustomSensor),
-                typeof(CustomSensor),
+        public static readonly DependencyProperty SelectedDeviceProperty =
+            DependencyProperty.Register("SelectedDevice", typeof(CustomDevice),
+                typeof(CustomDevice),
                 new PropertyMetadata(null));
 
         public bool IsDragging
@@ -148,7 +146,7 @@ namespace SensorMap.CustomControls
             set { SetValue(IsDraggingProperty, value); }
         }
         public static readonly DependencyProperty IsDraggingProperty =
-            DependencyProperty.Register("IsDragging", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
+            DependencyProperty.Register("IsDragging", typeof(bool), typeof(CustomDevice), new PropertyMetadata(false));
 
         public HitType MouseHitType
         {
@@ -156,7 +154,7 @@ namespace SensorMap.CustomControls
             set { SetValue(MouseHitTypeProperty, value); }
         }
         public static readonly DependencyProperty MouseHitTypeProperty =
-            DependencyProperty.Register("MouseHitType", typeof(HitType), typeof(CustomSensor), new PropertyMetadata(HitType.None));
+            DependencyProperty.Register("MouseHitType", typeof(HitType), typeof(CustomDevice), new PropertyMetadata(HitType.None));
 
         public bool IsSelectionRectActive
         {
@@ -164,9 +162,9 @@ namespace SensorMap.CustomControls
             set { SetValue(IsSelectionRectActiveProperty, value); }
         }
         public static readonly DependencyProperty IsSelectionRectActiveProperty =
-            DependencyProperty.Register("IsSelectionRectActive", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
+            DependencyProperty.Register("IsSelectionRectActive", typeof(bool), typeof(CustomDevice), new PropertyMetadata(false));
 
-        private static CustomSensor _memorySelectedSensor;
+        private static CustomDevice _memorySelectedDevice;
 
         #endregion
 
@@ -179,17 +177,16 @@ namespace SensorMap.CustomControls
         private TextBlock _textBlock;
         Rect addressRect;
         Rect Map;
-        private System.Windows.Controls.Image _image;
+        private Image _image;
         private bool IsMoving;
         private AddressPlacement _addressPlacement = AddressPlacement.Right;
-        private IDisposable? _sensorSubscription;
 
-        static CustomSensor()
+        static CustomDevice()
         {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomSensor), new FrameworkPropertyMetadata(typeof(CustomSensor)));
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomDevice), new FrameworkPropertyMetadata(typeof(CustomDevice)));
         }
 
-        public CustomSensor()
+        public CustomDevice()
         {
             _transformService = new TransformObjectService();
         }
@@ -203,15 +200,6 @@ namespace SensorMap.CustomControls
             if (_canvas != null)
             {
                 ChangeStateActions();
-                _sensorSubscription?.Dispose();
-                _sensorSubscription = SensorData.WhenAnyValue(x => x.Sensor)
-                    .Subscribe(_ =>
-                    {
-                        if (SensorData?.Sensor?.SensorType?.Color != null && SensorData.Description != "Копия")
-                        {
-                            CustomBackground = (SolidColorBrush)new BrushConverter().ConvertFrom(SensorData.Sensor.SensorType.Color);
-                        }
-                    });
                 System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.Loaded,
                     new Action(() => UpdateAddressPosition()));
@@ -223,7 +211,7 @@ namespace SensorMap.CustomControls
             if (IsEditMode)
             {
                 this.MouseDown += OnMouseDown;
-                this.MouseMove += OnSensorMouseMove;
+                this.MouseMove += OnDeviceMouseMove;
                 _canvas.MouseMove += OnMouseMove;
                 _canvas.MouseUp += OnMouseUp;
                 this.MouseLeave += OnMouseLeave;
@@ -232,13 +220,13 @@ namespace SensorMap.CustomControls
             {
                 this.IsSelected = false;
                 this.MouseDown -= OnMouseDown;
-                this.MouseMove -= OnSensorMouseMove;
+                this.MouseMove -= OnDeviceMouseMove;
                 _canvas.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;
             }
         }
 
-        private void OnMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        private void OnMouseLeave(object sender, MouseEventArgs e)
         {
             if (!IsDragging)
             {
@@ -247,7 +235,7 @@ namespace SensorMap.CustomControls
             }
         }
 
-        private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void OnDeviceMouseMove(object sender, MouseEventArgs e)
         {
             if (this.IsSelected && !IsDragging && !IsSelectionRectActive)
             {
@@ -268,12 +256,13 @@ namespace SensorMap.CustomControls
             double screenY = Canvas.GetTop(this);
 
             Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
-            List<SensorAssignments> SelectedSensors = _canvas.Children.OfType<CustomSensor>()
-                   .Where(x => x.IsSelected).Select(x => x.SensorData).ToList();
-            var canvasCollection = _canvas.Children.OfType<CustomSensor>().Where(x => SelectedSensors.Contains(x.SensorData)).ToList();
+            var selectedDevices = _canvas.Children.OfType<CustomDevice>()
+                   .Where(x => x.IsSelected).Select(x => x.DeviceData).Cast<MapObject>().ToList();
+            var canvasCollection = _canvas.Children.OfType<CustomDevice>()
+                .Where(x => selectedDevices.Contains(x.DeviceData)).ToList().Cast<UIElement>().ToList();
             if (IsTransformed || IsMoving)
             {
-                var command = new TransformationSensors(SelectedSensors, canvasCollection, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
+                var command = new TransformationSensors(selectedDevices, canvasCollection, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
                 TransformCommand.Execute(command);
             }
             e.Handled = true;
@@ -282,17 +271,17 @@ namespace SensorMap.CustomControls
             IsTransformed = false;
         }
 
-        private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (SelectedSensor != null)
+            if (SelectedDevice != null)
             {
                 if (IsDragging)
                 {
                     Point point = Mouse.GetPosition(_canvas);
                     double offset_x = point.X - LastPoint.X;
                     double offset_y = point.Y - LastPoint.Y;
-                    Vector offsetVector = point - LastPoint;
-                    foreach (var item in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
+
+                    foreach (var item in _canvas.Children.OfType<CustomDevice>().Where(x => x.IsSelected))
                     {
                         double new_x = Canvas.GetLeft(item);
                         double new_y = Canvas.GetTop(item);
@@ -373,7 +362,6 @@ namespace SensorMap.CustomControls
         private void ChangeAddressPosition()
         {
             if (!IsTransformed && !IsMoving) return;
-
             ResolveAddressPlacement();
             ApplyAddressPlacement();
         }
@@ -383,16 +371,17 @@ namespace SensorMap.CustomControls
             ResolveAddressPlacement();
             ApplyAddressPlacement();
         }
+
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
+            if (_memorySelectedDevice != null && _memorySelectedDevice != this && !IsMultiSelection)
             {
-                _memorySelectedSensor.IsSelected = false;
-                _memorySelectedSensor = null;
-                if (SelectedSensor != null)
+                _memorySelectedDevice.IsSelected = false;
+                _memorySelectedDevice = null;
+                if (SelectedDevice != null)
                 {
-                    SelectedSensor.IsSelected = false;
-                    SelectedSensor.CustBorderBrush = Brushes.Black;
+                    SelectedDevice.IsSelected = false;
+                    SelectedDevice.CustBorderBrush = Brushes.Black;
                 }
             }
             if (MouseHitType != HitType.None)
@@ -401,8 +390,8 @@ namespace SensorMap.CustomControls
                 IsDragging = true;
             }
 
-            SelectedSensor = this;
-            _memorySelectedSensor = this;
+            SelectedDevice = this;
+            _memorySelectedDevice = this;
             IsSelected = true;
             this.Focus();
 
@@ -412,7 +401,7 @@ namespace SensorMap.CustomControls
 
         private void SelectedChanged()
         {
-            SelectedSensor = this.IsSelected ? this : null;
+            SelectedDevice = this.IsSelected ? this : null;
             if (this.IsSelected) Canvas.SetZIndex(this, 1); else Canvas.SetZIndex(this, 0);
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
             _textBlock.Background = IsSelected ? Brushes.Lavender : Brushes.WhiteSmoke;
@@ -421,73 +410,66 @@ namespace SensorMap.CustomControls
 
         public object Clone()
         {
-            return new CustomSensor
+            return new CustomDevice
             {
-                SensorData = SensorData,
+                DeviceData = DeviceData,
                 CustomBounds = CustomBounds
             };
         }
+
         private void ResolveAddressPlacement()
         {
             if (_textBlock == null || _canvas == null) return;
 
-            double sensorCanvasX = Canvas.GetLeft(this);
-            double sensorCanvasY = Canvas.GetTop(this);
+            double deviceCanvasX = Canvas.GetLeft(this);
+            double deviceCanvasY = Canvas.GetTop(this);
             double addrW = _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40;
             double addrH = _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15;
 
             var candidates = new (AddressPlacement placement, Rect addrRect)[]
             {
                 (AddressPlacement.Right, new Rect(
-                    sensorCanvasX + CustomBounds.Width + 5,
-                    sensorCanvasY + (CustomBounds.Height - addrH) / 2,
+                    deviceCanvasX + CustomBounds.Width + 5,
+                    deviceCanvasY + (CustomBounds.Height - addrH) / 2,
                     addrW, addrH)),
                 (AddressPlacement.Left, new Rect(
-                    sensorCanvasX - addrW - 5,
-                    sensorCanvasY + (CustomBounds.Height - addrH) / 2,
+                    deviceCanvasX - addrW - 5,
+                    deviceCanvasY + (CustomBounds.Height - addrH) / 2,
                     addrW, addrH)),
                 (AddressPlacement.Bottom, new Rect(
-                    sensorCanvasX + (CustomBounds.Width - addrW) / 2,
-                    sensorCanvasY + CustomBounds.Height + 2,
+                    deviceCanvasX + (CustomBounds.Width - addrW) / 2,
+                    deviceCanvasY + CustomBounds.Height + 2,
                     addrW, addrH)),
                 (AddressPlacement.Top, new Rect(
-                    sensorCanvasX + (CustomBounds.Width - addrW) / 2,
-                    sensorCanvasY - addrH - 2,
+                    deviceCanvasX + (CustomBounds.Width - addrW) / 2,
+                    deviceCanvasY - addrH - 2,
                     addrW, addrH)),
                 (AddressPlacement.Center, new Rect(
-                    sensorCanvasX + (CustomBounds.Width - addrW) / 2,
-                    sensorCanvasY + (CustomBounds.Height - addrH) / 2,
+                    deviceCanvasX + (CustomBounds.Width - addrW) / 2,
+                    deviceCanvasY + (CustomBounds.Height - addrH) / 2,
                     addrW, addrH))
             };
 
-            Rect searchArea = Rect.Union(addressRect, CustomBounds);//���� ��� ������� ����� ��������� ����� � ���������
+            Rect searchArea = Rect.Union(addressRect, CustomBounds);
             searchArea.Inflate(20, 20);
-            bool isPositionFixed = false;
-            addressRect = candidates.Where(pos =>pos.placement == _addressPlacement).Select(pos=>pos.addrRect).First();
-            var sensorsInSearchArea = _canvas.Children.OfType<CustomSensor>()
+            addressRect = candidates.Where(pos => pos.placement == _addressPlacement).Select(pos => pos.addrRect).First();
+            var devicesInSearchArea = _canvas.Children.OfType<CustomDevice>()
                 .Where(s => s != this)
                 .Select(s =>
                 {
-                    // ��� ������� �������� ����������, ����� ������������� ������������ ��� ��������
                     var rectToCheck = s._textBlock.Visibility != Visibility.Collapsed
                         ? Rect.Union(s.GetAddressRectOnCanvas(), s.CustomBounds)
                         : s.CustomBounds;
-
-                    return new { Sensor = s, CheckRect = rectToCheck };
+                    return new { Device = s, CheckRect = rectToCheck };
                 })
-    .Where(x => x.CheckRect.IntersectsWith(searchArea)) // ��������� �������� ��������
-    .Select(x => x.CheckRect).ToList();
-
-            var nearestSensor = sensorsInSearchArea
-                .Where(s => addressRect.IntersectsWith(s)).FirstOrDefault();
-           
+                .Where(x => x.CheckRect.IntersectsWith(searchArea))
+                .Select(x => x.CheckRect).ToList();
 
             bool HasCollision(Rect addrRect)
             {
-                foreach (var nearSensor in sensorsInSearchArea)
+                foreach (var nearDevice in devicesInSearchArea)
                 {
-                    //�������� ����������� � ��������
-                    if (addrRect.IntersectsWith(nearSensor))
+                    if (addrRect.IntersectsWith(nearDevice))
                         return true;
                 }
                 return false;
@@ -507,7 +489,7 @@ namespace SensorMap.CustomControls
                 if (!HasCollision(current.addrRect))
                     return;
             }
-            if (!sensorsInSearchArea.Any() || nearestSensor.Width==0) return;
+
             foreach (var (placement, addrRect) in candidates)
             {
                 if (!HasCollision(addrRect))
@@ -519,43 +501,41 @@ namespace SensorMap.CustomControls
 
             _addressPlacement = AddressPlacement.Center;
         }
-        /// <summary>
-        /// ��������� ������ �� ������ ������ �� ������������
-        /// </summary>
+
         private void ApplyAddressPlacement()
         {
             if (_textBlock == null) return;
 
             double addrW = _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40;
             double addrH = _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15;
-            double sensorW = CustomBounds.Width;
-            double sensorH = CustomBounds.Height;
+            double deviceW = CustomBounds.Width;
+            double deviceH = CustomBounds.Height;
 
             switch (_addressPlacement)
             {
                 case AddressPlacement.Right:
-                    Canvas.SetLeft(_textBlock, sensorW + 5);
-                    Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                    Canvas.SetLeft(_textBlock, deviceW + 5);
+                    Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
                     _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Left:
                     Canvas.SetLeft(_textBlock, -addrW - 5);
-                    Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                    Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
                     _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Bottom:
-                    Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
-                    Canvas.SetTop(_textBlock, sensorH + 2);
+                    Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                    Canvas.SetTop(_textBlock, deviceH + 2);
                     _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Top:
-                    Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
+                    Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
                     Canvas.SetTop(_textBlock, -addrH - 2);
                     _textBlock.Opacity = 1;
                     break;
                 case AddressPlacement.Center:
-                    Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
-                    Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                    Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                    Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
                     _textBlock.Opacity = 0.7;
                     break;
             }
@@ -567,14 +547,14 @@ namespace SensorMap.CustomControls
         {
             if (_textBlock == null) return Rect.Empty;
 
-            double sensorCanvasX = Canvas.GetLeft(this);
-            double sensorCanvasY = Canvas.GetTop(this);
+            double deviceCanvasX = Canvas.GetLeft(this);
+            double deviceCanvasY = Canvas.GetTop(this);
             double addrLocalX = Canvas.GetLeft(_textBlock);
             double addrLocalY = Canvas.GetTop(_textBlock);
 
             return new Rect(
-                sensorCanvasX + addrLocalX,
-                sensorCanvasY + addrLocalY,
+                deviceCanvasX + addrLocalX,
+                deviceCanvasY + addrLocalY,
                 _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40,
                 _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15
             );
@@ -583,17 +563,17 @@ namespace SensorMap.CustomControls
         private void ControlOutOfRangeImage()
         {
             if (_textBlock == null) return;
-            if (Map.Width==0) return;
+            if (Map.Width == 0) return;
 
-            double sensorCanvasX = Canvas.GetLeft(this);
-            double sensorCanvasY = Canvas.GetTop(this);
+            double deviceCanvasX = Canvas.GetLeft(this);
+            double deviceCanvasY = Canvas.GetTop(this);
             double addrLocalX = Canvas.GetLeft(_textBlock);
             double addrLocalY = Canvas.GetTop(_textBlock);
             double addrW = _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40;
             double addrH = _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15;
 
-            double addrAbsX = sensorCanvasX + addrLocalX;
-            double addrAbsY = sensorCanvasY + addrLocalY;
+            double addrAbsX = deviceCanvasX + addrLocalX;
+            double addrAbsY = deviceCanvasY + addrLocalY;
 
             bool moved = false;
             if (addrAbsX < 2)
@@ -620,29 +600,28 @@ namespace SensorMap.CustomControls
 
             if (moved)
             {
-                double sensorW = CustomBounds.Width;
-                double sensorH = CustomBounds.Height;
+                double deviceW = CustomBounds.Width;
+                double deviceH = CustomBounds.Height;
                 switch (_addressPlacement)
                 {
                     case AddressPlacement.Right:
-                        Canvas.SetLeft(_textBlock, sensorW + 5);
-                        Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                        Canvas.SetLeft(_textBlock, deviceW + 5);
+                        Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
                         break;
                     case AddressPlacement.Left:
                         Canvas.SetLeft(_textBlock, -addrW - 5);
-                        Canvas.SetTop(_textBlock, (sensorH - addrH) / 2);
+                        Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
                         break;
                     case AddressPlacement.Bottom:
-                        Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
-                        Canvas.SetTop(_textBlock, sensorH + 2);
+                        Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                        Canvas.SetTop(_textBlock, deviceH + 2);
                         break;
                     case AddressPlacement.Top:
-                        Canvas.SetLeft(_textBlock, (sensorW - addrW) / 2);
+                        Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
                         Canvas.SetTop(_textBlock, -addrH - 2);
                         break;
                 }
             }
         }
-
     }
 }

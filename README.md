@@ -1,6 +1,4 @@
-# SensorMap
-
-Информационная система для визуального размещения датчиков и устройств на схемах оборудования.
+# Информационная система для визуального размещения датчиков и устройств на схемах оборудования.
 <img width="1496" height="825" alt="3" src="https://github.com/user-attachments/assets/e36a2fde-79f1-49b7-ae26-f587ee42e8e8" />
 <img width="1436" height="757" alt="2" src="https://github.com/user-attachments/assets/cb2f8758-6f2f-4181-8a68-bb11b11d980d" />
 <img width="1440" height="758" alt="1" src="https://github.com/user-attachments/assets/d7f7da39-d451-49cc-a836-cdcd6ee56e79" />

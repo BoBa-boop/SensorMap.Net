@@ -201,6 +201,52 @@
                         </TreeView>
                         
                     </Expander>
+                    <Expander IsExpanded="True"
+                              Margin="0,5"
+                              Foreground="WhiteSmoke"
+                              Background="{StaticResource DarkInfoBrush}">
+                            <Expander.Header>
+                                <TextBlock Text="Устройства" FontSize="16" FontWeight="Medium"/>
+                            </Expander.Header>
+                            <TreeView Name="twDevices" IsEnabled="{Binding IsEditMode,UpdateSourceTrigger=PropertyChanged}"
+              ItemsSource="{Binding ElementName=root, Path=DataContext.Devices.Nodes}">
+                                <i:Interaction.Behaviors>
+                                    <beh:TreeViewBehavior SelectedItem="{Binding CurrentDevice,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
+                              SelectedItemType="Device"/>
+                                </i:Interaction.Behaviors>
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="MouseDoubleClick">
+                                        <i:InvokeCommandAction Command="{Binding AddSensorToMap}" CommandParameter="{Binding CurrentDevice}"/>
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                                <TreeView.ItemTemplate>
+                                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}"/>
+                                        </StackPanel>
+                                        <HierarchicalDataTemplate.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock x:Name="txt" Text="{Binding Path=Data.Name}">
+                                                    <TextBlock.ToolTip>
+                                                        <ToolTip>
+                                                            <Image Source="{Binding Data.Image}"
+                                       Width="110" Height="90"/>
+                                                        </ToolTip>
+                                                    </TextBlock.ToolTip>
+                        <i:Interaction.Triggers>
+                            <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                                <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.DragDeviceCommand}" 
+                                                           CommandParameter="{Binding ElementName=txt}" />
+                            </i:EventTrigger>
+                        </i:Interaction.Triggers>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </HierarchicalDataTemplate.ItemTemplate>
+                                    </HierarchicalDataTemplate>
+
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+                        </Expander>
                 </StackPanel>
                 </ScrollViewer>
             </Border>
@@ -243,10 +289,10 @@
                                          SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorEvent="{Binding DeleteSensorCommand}"
-                                         SelectedCustomSensor="{Binding SelectedSensor,UpdateSourceTrigger=PropertyChanged}"
+                                         SelectedMapObject="{Binding SelectedMapObject,UpdateSourceTrigger=PropertyChanged}"
                                          IsEditMode="{Binding IsEditMode}"
                                          TransformSensorsCommand="{Binding TransformSensorCommand}"
-                                         ItemsSource="{Binding CurrentMech.SensorsAssig}">
+                                         ItemsSource="{Binding CurrentMech.MapObjects}">
                     </myCC:SensorDragDrop>
                     
                 </Border>

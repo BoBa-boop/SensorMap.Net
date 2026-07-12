@@ -24,43 +24,50 @@ namespace SensorMap.ViewModel
     public class MechSensorsVM:ReactiveObject
     {
         private Mechanism _mechanism;
-        private SensorAssignments _sensor;
+        private MapObject _selectedMapObject;
         private ITempImage _imageControl;
         private bool isEditMode;
         private bool _hasChanges;
+
+        private List<SensorAssignments> _sensors;
+
+        [Reactive]public List<SensorAssignments> Sensors
+        {
+            get { return _sensors; }
+            set { this.RaiseAndSetIfChanged(ref _sensors, value); }
+        }
+
         [Reactive]public Mechanism Mechanism
         {
             get { return _mechanism; }
             set { _mechanism = value; this.RaiseAndSetIfChanged(ref _mechanism, value); }
         }
-        
-        [Reactive]public SensorAssignments SelectedSensor
-        {
-            get { return _sensor; }
-            set 
-            {
-                // Подписываемся на новый объект
-                if (_sensor != null)
-                {
-                    // Слушаем любые значимые изменения полей сущности
-                    var changes = Observable.Merge(
-                        this.WhenAnyValue(x => x._sensor.Sensor.Name),
-                        this.WhenAnyValue(x => x._sensor.Address),
-                        this.WhenAnyValue(x => x._sensor.Description)
-                    );
 
+        /// <summary>
+        /// Выбранный объект на карте (датчик или устройство)
+        /// </summary>
+        [Reactive]
+        public MapObject SelectedMapObject
+        {
+            get { return _selectedMapObject; }
+            set
+            {
+                if (_selectedMapObject != null)
+                {
+                    var changes = Observable.Merge(
+                        this.WhenAnyValue(x => x._selectedMapObject.Description)
+                    );
+                    //неправильная работа фиксации изменений
                     changes.Subscribe(_ =>
                     {
-                        // Устанавливаем флаг только если пользователь реально меняет данные,
-                        // а не просто переключает строки
-                        if (_sensor!=null&&!_sensor.IsModified)
+                        if (_selectedMapObject != null && !_selectedMapObject.IsModified)
                         {
-                            _sensor.IsModified = true;
+                            _selectedMapObject.IsModified = true;
                             HasChanges = true;
                         }
-                    }); 
+                    });
                 }
-                this.RaiseAndSetIfChanged(ref _sensor, value);
+                this.RaiseAndSetIfChanged(ref _selectedMapObject, value);
             }
         }
         [Reactive]
@@ -75,20 +82,21 @@ namespace SensorMap.ViewModel
         }
         [Reactive] public ObservableCollection<Sensor> SensorList{get;set;}
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        public MechSensorsVM(ITempImage imageControl,Mechanism currentMech,ObservableCollection<Sensor> sensorsList)
+        public MechSensorsVM(ITempImage imageControl,Mechanism currentMech,IEnumerable<Sensor> sensorsList)
         {
             Mechanism = (Mechanism)currentMech.Clone();
             SensorList = new (sensorsList);
-            if(Mechanism!=null && Mechanism.SensorsAssig!=null)
-                Mechanism.SensorsAssig.RemoveMany(Mechanism.SensorsAssig.Where(x => x.ToDelete == true).ToList());
+            Sensors = Mechanism.MapObjects.OfType<SensorAssignments>().ToList();
+            if (Mechanism!=null && Mechanism.MapObjects!=null)
+                Mechanism.MapObjects.RemoveMany(Mechanism.MapObjects.Where(x => x.ToDelete == true).ToList());
             _imageControl = imageControl;
             AddImage = new RelayCommand<SensorAssignments>((sens) =>
             {
                 byte[] tempImage = _imageControl.OpenImageDialog();
                 if (!tempImage.IsNullOrEmpty())
                 {
-                    SelectedSensor.Image = tempImage;
-                    SelectedSensor.IsModified = true;
+                    SelectedMapObject.Image = tempImage;
+                    SelectedMapObject.IsModified = true;
                     HasChanges = true;
                 }
                 

@@ -24,8 +24,12 @@ namespace SensorMap.CustomControls
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Sensor", Type = typeof(Border))]
     [TemplatePart(Name = "PART_Address", Type = typeof(TextBlock))]
-    public class CustomSensor : Control, ICloneable
+    public class CustomSensor : Control, ICloneable,IMapElement
     {
+        public FrameworkElement Element => this;
+        MapObject IMapElement.MapData => SensorData;
+        public void SetCustomBounds(Rect bounds) => CustomBounds = bounds;
+        public Rect GetCustomBounds() => CustomBounds;
         #region Dependency Properties
 
         public SensorAssignments SensorData

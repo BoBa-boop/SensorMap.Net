@@ -45,6 +45,9 @@ namespace SensorMap.ViewModel
         private readonly Dictionary<int, UndoRedoStack> _undoRedoStacks = new();
         private IDisposable? _undoSub;
         private IDisposable? _redoSub;
+        private Sensor _curDevice;
+        private MapObject _selectMapObject;
+
         private UndoRedoStack CurrentStack
         {
             get
@@ -101,15 +104,23 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref _curSensor, value);
             }
         }
-        
+        [Reactive]
+        public Sensor CurrentDevice
+        {
+            get => _curDevice;
+            set
+            {
+                this.RaiseAndSetIfChanged(ref _curDevice, value);
+            }
+        }
         /// <summary>
-        /// Датчик выбранный из списка MechSensors
+        /// Объект (датчик или устройство) выбранный на карте или из списка
         /// </summary>
         [Reactive]
-        public SensorAssignments SelectedSensor
+        public MapObject SelectedMapObject
         {
-            get { return _selectSensor; }
-            set { this.RaiseAndSetIfChanged(ref _selectSensor, value); }
+            get { return _selectMapObject; }
+            set { this.RaiseAndSetIfChanged(ref _selectMapObject, value); }
         }
 
         [Reactive] public bool CanUndo => CurrentStack?.CanUndo ?? false;
@@ -132,7 +143,7 @@ namespace SensorMap.ViewModel
         }
         [Reactive] public ObservableCollection<Sector>? Sectors { get; set; } = new();
         [Reactive] public ObservableCollection<SensorType>? sensorTypes { get; private set; }
-        [Reactive] public ObservableCollection<Device> Devices { get; set; } = new();
+        [Reactive] public TreeViewCollection<DeviceType, Device> Devices { get; set; }
         [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors { get; set; }
         [Reactive] public ObservableCollection<Sensor>? SensorList { get; set; }
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
@@ -154,7 +165,6 @@ namespace SensorMap.ViewModel
             CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
             if (curMechanism!=null && CurrentSector!=null)
             {
-                
                 CurrentMech = CurrentSector?.Mechanisms?.Where(x => x.Id == curMechanism.Id).FirstOrDefault();
             }
 
@@ -164,7 +174,6 @@ namespace SensorMap.ViewModel
             {
                 if (obj is Sensor sensor)
                 {
-                    //Пакет данных нового датчика
                     SensorAssignments sensorAssignments = new SensorAssignments()
                     {
                         SensorId = sensor.Id,
@@ -174,8 +183,21 @@ namespace SensorMap.ViewModel
                         Width = 30,
                         Height = 30
                     };
-                    //Добавление в коллекцию. Далее обработка события и добавления визуального элемента
-                    CurrentMech.SensorsAssig!.Add(sensorAssignments);
+                    CurrentMech.MapObjects!.Add(sensorAssignments);
+                }
+                if (obj is Device device)
+                {
+                    DeviceAssignment deviceAssignment = new DeviceAssignment()
+                    {
+                        DeviceId = device.Id,
+                        Device = device,
+                        MechanismId = CurrentMech!.Id,
+                        Mechanism = CurrentMech,
+                        Width = 50,
+                        Height = 30,
+                        Description = device.Name
+                    };
+                    CurrentMech.MapObjects!.Add(deviceAssignment);
                 }
                 if (obj is AddSensor command)
                 {
@@ -190,7 +212,7 @@ namespace SensorMap.ViewModel
             });
             DeleteSensorCommand = new RelayCommand<object[]>((obj) => 
             {
-                if (obj[0] is RemoveSensor command && obj[1] is List<CustomSensor> sensors)
+                if (obj[0] is RemoveSensor command && obj[1] is List<IMapElement> objects)
                 {
                     CurrentStack?.Do(command);
                 }
@@ -219,16 +241,40 @@ namespace SensorMap.ViewModel
                         return CanExecuteAddSensor(node);
                 return false;
             });
+            DragDeviceCommand = new RelayCommand<object>((obj) =>
+            {
+                if (obj is TextBlock tb)
+                    if (tb.DataContext is TreeNode<Device> device)
+                    {
+                        DeviceAssignment deviceAssignment = new DeviceAssignment()
+                        {
+                            DeviceId = device.Data.Id,
+                            Device = device.Data,
+                            MechanismId = CurrentMech.Id,
+                            Mechanism = CurrentMech,
+                            Width = 50,
+                            Height = 30,
+                            Description = device.Name
+                        };
+                        DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, deviceAssignment), DragDropEffects.Copy);
+                    }
+            }, (obj) =>
+            {
+                if (obj is TextBlock tb)
+                    if (tb.DataContext is TreeNode<Device> device)
+                        return CanExecuteAddDevice(device);
+                return false;
+            });
             SaveSensorPlace = new RelayCommand(SaveCoordinates);
             ShowSensorMechanism = new RelayCommand(()=>
             {
                 if (CurrentMech!=null)
                 {
                     MechanismSensorsWindow window = new MechanismSensorsWindow();
-                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl, CurrentMech,SensorList);
+                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl,CurrentMech,SensorList);
                     window.DataContext = mechSensorsVM;
                     mechSensorsVM.IsEditMode = IsEditMode;
-                    mechSensorsVM.WhenAnyValue(x => x.SelectedSensor).BindTo(this,x=>x.SelectedSensor);
+                    mechSensorsVM.WhenAnyValue(x => x.SelectedMapObject).BindTo(this, x => x.SelectedMapObject);
                     window.ShowDialog();
                     if(mechSensorsVM.HasChanges) HasChanges=true;
 
@@ -285,18 +331,29 @@ namespace SensorMap.ViewModel
 
         private async void GetDataFromDB(EF.AppDBContext _dbContext)
         {
+            //var queryMech = await _dbContext.Mechanisms
+            //    .Include(m => m.Files)
+            //    .Include(m => m.MapObjects)
+            //        .ThenInclude(o => ((SensorAssignments)o).Sensor)
+            //            .ThenInclude(s => s!.SensorType)
+            //    .Include(m => m.MapObjects)
+            //        .ThenInclude(o => ((DeviceAssignment)o).Device)
+            //    .AsSplitQuery().ToListAsync();
             var querySector = await _dbContext.Sectors.ToListAsync();
-            var queryMech = await _dbContext.Mechanisms.Include(m => m.Files).Include(m=>m.SensorsAssig).AsSplitQuery().ToListAsync();
+            var queryMech = await _dbContext.Mechanisms.Include(m => m.Files)
+                .Include(m=>m.MapObjects).AsSplitQuery().ToListAsync();
             var queryTypes = await _dbContext.SensorTypes.ToListAsync();
             var queryDevice = await _dbContext.Devices.ToListAsync();
             var querySensors = await _dbContext.Sensors.Include(x=>x.SensorType).ToListAsync();
-            
-            
+            var queryDevTypes = await _dbContext.DeviceTypes.ToListAsync();
+
             sensorTypes = new ObservableCollection<SensorType>(queryTypes);
             SensorList = new ObservableCollection<Sensor>(querySensors);
-            Devices = new ObservableCollection<Device>(queryDevice);
+
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
+            Func<DeviceType, Device, bool> filter2 = (type, devce) => devce.DeviceTypeId == type.Id;
             Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorList, filter);
+            Devices = new TreeViewCollection<DeviceType, Device>("Name", new(queryDevTypes), new(queryDevice), filter2);
             Sectors = new ObservableCollection<Sector>(querySector);
         }
 
@@ -329,80 +386,96 @@ namespace SensorMap.ViewModel
             }
             else return true;
         }
-
+        private bool CanExecuteAddDevice(object selectedDevice)
+        {
+            if (selectedDevice == null) return false;
+            if (CurrentMech == null || CurrentMech.Image == null)
+            {
+                Growl.Error(new GrowlInfo
+                {
+                    Message = $"Необходимо выбрать механизацию!",
+                    CancelStr = "Ignore",
+                    ShowDateTime = false,
+                    Type = InfoType.Error,
+                    WaitTime = 2
+                });
+                return false;
+            }
+            return true;
+        }
         private async void SaveCoordinates()
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
          //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
          //разобраться с сохранением
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
-                if (CurrentMech?.SensorsAssig == null) return;
+                if (CurrentMech?.MapObjects == null) return;
 
                 // 1. Загружаем актуальное состояние из БД для поиска оригиналов
                 var existingMech = await dbContext.Mechanisms
-                    .Include(m => m.SensorsAssig)
+                    .Include(m => m.MapObjects)
                     .FirstOrDefaultAsync(m => m.Id == CurrentMech.Id);
 
                 if (existingMech == null) return;
 
                 int changesCount = 0;
 
-                foreach (var sa in CurrentMech.SensorsAssig)
+                foreach (var mapObj in CurrentMech.MapObjects)
                 {
-                    if (!IsValidData(sa)) break; // Или continue, если хотите пропустить только битую строку
+                    if (!IsValidData(mapObj)) break; // Или continue, если хотите пропустить только битую строку
 
                     // Ищем оригинал по Id для сравнения или обновления
-                    SensorAssignments? originalSa = existingMech.SensorsAssig?
-                        .FirstOrDefault(x => x.Id == sa.Id);
+                    MapObject? originalObj = existingMech.MapObjects?
+                        .FirstOrDefault(x => x.Id == mapObj.Id);
 
-                    if (sa.ToDelete)
+                    if (mapObj.ToDelete)
                     {
                         // Удаление
-                        if (originalSa != null)
+                        if (originalObj != null)
                         {
                             // Вариант А: Жесткое удаление из БД
                             //dbContext.SensorAssignments.Remove(originalSa);
 
                             // Вариант Б: Мягкое удаление (если есть поле IsDeleted), тогда State = Modified + флаг
                             //originalSa.ToDelete = true;
-                            dbContext.Entry(originalSa).State = EntityState.Deleted;
+                            dbContext.Entry(originalObj).State = EntityState.Deleted;
 
                             changesCount++;
                         }
                     }
-                    else if (sa.IsNew || sa.Id == 0)
+                    else if (mapObj.IsNew || mapObj.Id == 0)
                     {
                         // Добавление новой записи
                         // Важно: убедитесь, что у нового объекта сброшена навигация обратно к родителю,
                         // иначе возникнет ошибка ссылающегося ключа (Foreign Key constraint).
 
-                        var temp = sa;
+                        var temp = mapObj;
                         temp.Id = 0;
                         dbContext.Entry(temp).State = EntityState.Added;
                         changesCount++;
                     }
-                    else if (sa.IsModified)
+                    else if (mapObj.IsModified)
                     {
                         // Обновление существующей записи
-                        if (originalSa != null)
+                        if (originalObj != null)
                         {
                             // Оптимальный способ: обновит только измененные поля
-                            dbContext.Entry(originalSa).CurrentValues.SetValues(sa);
+                            dbContext.Entry(originalObj).CurrentValues.SetValues(mapObj);
                             changesCount++;
                         }
                         else
                         {
                             // Запись должна быть в базе, но ее нет в загруженном графе (например, сработал QueryFilter)
                             // Присоединяем как модифицированную
-                            dbContext.Attach(sa).State = EntityState.Modified;
+                            dbContext.Attach(mapObj).State = EntityState.Modified;
                             changesCount++;
                         }
                     }
 
                     // Сброс локальных флагов UI-модели, чтобы следующий клик "Сохранить" не делал лишнего
-                    sa.IsNew = false;
-                    sa.IsModified = false;
-                    sa.ToDelete = false;
+                    mapObj.IsNew = false;
+                    mapObj.IsModified = false;
+                    mapObj.ToDelete = false;
                 }
 
                 if (changesCount > 0)
@@ -425,7 +498,7 @@ namespace SensorMap.ViewModel
             }
         }
 
-        private bool IsValidData(SensorAssignments sensor)
+        private bool IsValidData(MapObject sensor)
         {
             if(sensor.Width <=10 || sensor.Height <=10) return false;
             if(sensor.X <=0 || sensor.Y <=0) return false;
@@ -449,6 +522,7 @@ namespace SensorMap.ViewModel
         public ICommand DeleteSensorCommand { get; }
         public ICommand TransformSensorCommand { get; }
         public ICommand DragSensorCommand { get; }
+        public ICommand DragDeviceCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
         public ICommand SetCurrentSensorCommand { get; }

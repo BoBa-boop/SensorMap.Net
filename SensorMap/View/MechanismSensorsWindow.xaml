@@ -20,11 +20,11 @@
             <RowDefinition Height="20"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Mechanism.SensorsAssig.Count}"
+        <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Sensors.Count}"
                    Margin="5,0"
                    Grid.Row="0"/>
-        <DataGrid ItemsSource="{Binding Mechanism.SensorsAssig}" AutoGenerateColumns="False" CanUserAddRows="False"
-                  SelectedItem="{Binding SelectedSensor}" Grid.Row="1"
+        <DataGrid ItemsSource="{Binding Sensors}" AutoGenerateColumns="False" CanUserAddRows="False"
+                  SelectedItem="{Binding SelectedMapObject}" Grid.Row="1"
                   IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
             <i:Interaction.Behaviors>
                 <beh:DataGridBahavior ViewModel="{Binding }"/>

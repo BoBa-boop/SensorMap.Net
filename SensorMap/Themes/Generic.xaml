@@ -223,7 +223,7 @@
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="Text" Value="{Binding DeviceData.Description,
+                                            <Setter Property="Text" Value="{Binding DeviceData.Device.DeviceType.Name,
                                                             RelativeSource={RelativeSource TemplatedParent}}"/>
                                         </Style>
                                     </TextBlock.Style>

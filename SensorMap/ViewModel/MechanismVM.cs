@@ -145,7 +145,8 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<SensorType>? sensorTypes { get; private set; }
         [Reactive] public TreeViewCollection<DeviceType, Device> Devices { get; set; }
         [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors { get; set; }
-        [Reactive] public ObservableCollection<Sensor>? SensorList { get; set; }
+        [Reactive] private ObservableCollection<Sensor>? SensorsList { get; set; }
+        [Reactive] private ObservableCollection<Device>? DevicesList { get; set; }
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
             IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
             IFileManagment fileManagment,
@@ -271,7 +272,7 @@ namespace SensorMap.ViewModel
                 if (CurrentMech!=null)
                 {
                     MechanismSensorsWindow window = new MechanismSensorsWindow();
-                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl,CurrentMech,SensorList);
+                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl,CurrentMech,SensorsList,DevicesList);
                     window.DataContext = mechSensorsVM;
                     mechSensorsVM.IsEditMode = IsEditMode;
                     mechSensorsVM.WhenAnyValue(x => x.SelectedMapObject).BindTo(this, x => x.SelectedMapObject);
@@ -348,11 +349,12 @@ namespace SensorMap.ViewModel
             var queryDevTypes = await _dbContext.DeviceTypes.ToListAsync();
 
             sensorTypes = new ObservableCollection<SensorType>(queryTypes);
-            SensorList = new ObservableCollection<Sensor>(querySensors);
+            SensorsList = new ObservableCollection<Sensor>(querySensors);
+            DevicesList = new ObservableCollection<Device>(queryDevice);
 
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
             Func<DeviceType, Device, bool> filter2 = (type, devce) => devce.DeviceTypeId == type.Id;
-            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorList, filter);
+            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorsList, filter);
             Devices = new TreeViewCollection<DeviceType, Device>("Name", new(queryDevTypes), new(queryDevice), filter2);
             Sectors = new ObservableCollection<Sector>(querySector);
         }

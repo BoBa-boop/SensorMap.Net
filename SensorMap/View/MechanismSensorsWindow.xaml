@@ -3,17 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:hc="https://handyorg.github.io/handycontrol"
-           xmlns:valid="clr-namespace:SensorMap.Model.Validation"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SensorMap.View"
-           xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-           xmlns:mv="clr-namespace:SensorMap.ViewModel"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:mv="clr-namespace:SensorMap.ViewModel"
+        xmlns:model="clr-namespace:SensorMap.Model"
         mc:Ignorable="d"
-           xmlns:beh="clr-namespace:SensorMap.Behaviors"
-           d:DataContext="{d:DesignInstance mv:MechSensorsVM}"
-        Title="{Binding StringFormat=Датчики {0},Path=Mechanism.Name}"
-           Height="450" Width="600" WindowStartupLocation="CenterScreen"
-           Name="root">
+        xmlns:beh="clr-namespace:SensorMap.Behaviors"
+        d:DataContext="{d:DesignInstance mv:MechSensorsVM}"
+        Title="{Binding StringFormat=Объекты на карте {0},Path=Mechanism.Name}"
+        Height="450" Width="700" WindowStartupLocation="CenterScreen"
+        Name="root">
 
     <Grid>
        

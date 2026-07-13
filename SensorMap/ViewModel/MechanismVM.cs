@@ -1,27 +1,22 @@
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using HandyControl.Data;
-using HandyControl.Expression.Shapes;
 using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Commands.SensorCommands;
-using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
 using SensorMap.View;
 using System.Collections.ObjectModel;
-using System.Net.WebSockets;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Xml;
 using DataFormats = System.Windows.DataFormats;
 using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
-using MessageBox = System.Windows.MessageBox;
 
 namespace SensorMap.ViewModel
 {
@@ -35,13 +30,13 @@ namespace SensorMap.ViewModel
         private readonly IDataService _service;
         private ITempImage _imgControl;
         private readonly IFileManagment _fileManagment;
-        private Sector? currentSector; 
+        private Sector? currentSector;
         private Mechanism? currentMech;
         private Sensor _curSensor;
         private bool isEditMode;
         private bool _isShowSensors;
         private bool _hasChanges;
-        private SensorAssignments _selectSensor;
+        private MapObject _selectMapObject;
         private readonly Dictionary<int, UndoRedoStack> _undoRedoStacks = new();
         private IDisposable? _undoSub;
         private IDisposable? _redoSub;
@@ -61,9 +56,6 @@ namespace SensorMap.ViewModel
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation? Navigation { get; set; }
-        /// <summary>
-        /// Переменная хранит значение из TreeView выбранного участка
-        /// </summary>
         [Reactive] public Sector? CurrentSector
         {
             get => currentSector;
@@ -75,11 +67,7 @@ namespace SensorMap.ViewModel
                     currentSector = value;
                 }
             }
-
         }
-        /// <summary>
-         /// Переменная хранит значение из TreeView выбранной механизации
-         /// </summary>
         [Reactive] public Mechanism? CurrentMech
         {
             get => currentMech;
@@ -93,9 +81,6 @@ namespace SensorMap.ViewModel
                 }
             }
         }
-        /// <summary>
-         /// Переменная хранит значение из TreeView выбранного датчика
-         /// </summary>
         [Reactive] public Sensor CurrentSensor
         {
             get => _curSensor;
@@ -150,7 +135,7 @@ namespace SensorMap.ViewModel
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
             IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
             IFileManagment fileManagment,
-            Mechanism curMechanism = null )
+            Mechanism curMechanism = null)
         {
             Navigation = _nav;
             _provider = provider;
@@ -164,13 +149,13 @@ namespace SensorMap.ViewModel
             }
             var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;
             CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
-            if (curMechanism!=null && CurrentSector!=null)
+            if (curMechanism != null && CurrentSector != null)
             {
                 CurrentMech = CurrentSector?.Mechanisms?.Where(x => x.Id == curMechanism.Id).FirstOrDefault();
             }
 
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
-            
+
             AddSensorToMap = new RelayCommand<object>((obj) =>
             {
                 if (obj is Sensor sensor)
@@ -202,40 +187,42 @@ namespace SensorMap.ViewModel
                 }
                 if (obj is AddSensor command)
                 {
-                    //Выполнение команды "Добавить"
                     CurrentStack?.Do(command);
                 }
             }, (obj) =>
-            { 
+            {
                 if (obj is Sensor sensor)
                     return CanExecuteAddSensor(sensor);
-                return false; 
+                if (obj is Device device)
+                    return CanExecuteAddDevice(device);
+                return false;
             });
-            DeleteSensorCommand = new RelayCommand<object[]>((obj) => 
+
+            DeleteSensorCommand = new RelayCommand<object[]>((obj) =>
             {
                 if (obj[0] is RemoveSensor command && obj[1] is List<IMapElement> objects)
                 {
                     CurrentStack?.Do(command);
                 }
             });
+
             DragSensorCommand = new RelayCommand<object>((obj) =>
             {
-                if(obj is TextBlock tb)
+                if (obj is TextBlock tb)
                     if (tb.DataContext is TreeNode<Sensor> node)
                     {
-                            SensorAssignments sensorAssignments = new SensorAssignments()
-                            {
-                                SensorId = node.Data.Id,
-                                Sensor = node.Data,
-                                MechanismId = CurrentMech.Id,
-                                Mechanism = CurrentMech,
-                                Width = 30,
-                                Height = 30
-                            };
-
-                            DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
+                        SensorAssignments sensorAssignments = new SensorAssignments()
+                        {
+                            SensorId = node.Data.Id,
+                            Sensor = node.Data,
+                            MechanismId = CurrentMech.Id,
+                            Mechanism = CurrentMech,
+                            Width = 30,
+                            Height = 30
+                        };
+                        DragDrop.DoDragDrop(obj as TextBlock, new DataObject(DataFormats.Serializable, sensorAssignments), DragDropEffects.Copy);
                     }
-            }, (obj) => 
+            }, (obj) =>
             {
                 if (obj is TextBlock tb)
                     if (tb.DataContext is TreeNode<Sensor> node)
@@ -267,9 +254,9 @@ namespace SensorMap.ViewModel
                 return false;
             });
             SaveSensorPlace = new RelayCommand(SaveCoordinates);
-            ShowSensorMechanism = new RelayCommand(()=>
+            ShowSensorMechanism = new RelayCommand(() =>
             {
-                if (CurrentMech!=null)
+                if (CurrentMech != null)
                 {
                     MechanismSensorsWindow window = new MechanismSensorsWindow();
                     MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl,CurrentMech,SensorsList,DevicesList);
@@ -277,8 +264,7 @@ namespace SensorMap.ViewModel
                     mechSensorsVM.IsEditMode = IsEditMode;
                     mechSensorsVM.WhenAnyValue(x => x.SelectedMapObject).BindTo(this, x => x.SelectedMapObject);
                     window.ShowDialog();
-                    if(mechSensorsVM.HasChanges) HasChanges=true;
-
+                    if (mechSensorsVM.HasChanges) HasChanges = true;
                 }
             });
             ShowScheme = new RelayCommand<object>((obj) =>
@@ -287,29 +273,27 @@ namespace SensorMap.ViewModel
                 {
                     _fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
                 }
-            },(obj) => 
+            }, (obj) =>
             {
                 if (obj == null) return false;
                 var mech = obj as Mechanism;
-                //bool SensorsNotNull = mech!.SensorsAssig != null && mech.SensorsAssig.Any();
                 bool FilesNotNull = mech.Files != null && mech.Files.Any();
-                if (/*SensorsNotNull && */FilesNotNull) return true;
+                if (FilesNotNull) return true;
                 return false;
             });
 
-                _service.WhenAnyValue(x => x.IsEditMode)
-               .BindTo(this, x => x.IsEditMode);
+            _service.WhenAnyValue(x => x.IsEditMode)
+           .BindTo(this, x => x.IsEditMode);
 
             UndoCommand = new RelayCommand(() => CurrentStack?.Undo());
             RedoCommand = new RelayCommand(() => CurrentStack?.Redo());
-            TransformSensorCommand = new RelayCommand<object>((obj) => 
+            TransformSensorCommand = new RelayCommand<object>((obj) =>
             {
                 if (obj is TransformationSensors command)
                 {
                     CurrentStack?.Do(command);
                 }
             });
-
         }
 
         private void SubscribeToCurrentStack()
@@ -344,6 +328,7 @@ namespace SensorMap.ViewModel
             var queryMech = await _dbContext.Mechanisms.Include(m => m.Files)
                 .Include(m=>m.MapObjects).AsSplitQuery().ToListAsync();
             var queryTypes = await _dbContext.SensorTypes.ToListAsync();
+            var queryDevTypes = await _dbContext.DeviceTypes.ToListAsync();
             var queryDevice = await _dbContext.Devices.ToListAsync();
             var querySensors = await _dbContext.Sensors.Include(x=>x.SensorType).ToListAsync();
             var queryDevTypes = await _dbContext.DeviceTypes.ToListAsync();
@@ -356,13 +341,14 @@ namespace SensorMap.ViewModel
             Func<DeviceType, Device, bool> filter2 = (type, devce) => devce.DeviceTypeId == type.Id;
             Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorsList, filter);
             Devices = new TreeViewCollection<DeviceType, Device>("Name", new(queryDevTypes), new(queryDevice), filter2);
+            Devices = new TreeViewCollection<DeviceType,Device>("Name", new(queryDevTypes),new(queryDevice),filter2);
             Sectors = new ObservableCollection<Sector>(querySector);
         }
 
         private bool CanExecuteAddSensor(object selectedSensor)
         {
             if (selectedSensor == null) return false;
-            if (CurrentMech == null||CurrentMech.Image==null)
+            if (CurrentMech == null || CurrentMech.Image == null)
             {
                 Growl.Error(new GrowlInfo
                 {
@@ -406,14 +392,11 @@ namespace SensorMap.ViewModel
             return true;
         }
         private async void SaveCoordinates()
-        {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
-         //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
-         //разобраться с сохранением
+        {
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
                 if (CurrentMech?.MapObjects == null) return;
 
-                // 1. Загружаем актуальное состояние из БД для поиска оригиналов
                 var existingMech = await dbContext.Mechanisms
                     .Include(m => m.MapObjects)
                     .FirstOrDefaultAsync(m => m.Id == CurrentMech.Id);
@@ -502,31 +485,21 @@ namespace SensorMap.ViewModel
 
         private bool IsValidData(MapObject sensor)
         {
-            if(sensor.Width <=10 || sensor.Height <=10) return false;
-            if(sensor.X <=0 || sensor.Y <=0) return false;
+            if (mapObj.Width <= 10 || mapObj.Height <= 10) return false;
+            if (mapObj.X <= 0 || mapObj.Y <= 0) return false;
             return true;
         }
+
         public ICommand SaveSensorPlace { get; }
         public ICommand ShowSensorMechanism { get; }
         public ICommand ShowScheme { get; }
         public ICommand NavigateToSectors { get; }
-
-        /// <summary>
-        /// Команда добавления датчика на карту. Формируются данные нового датчика, добавляются в коллекцию
-        /// и обрабатывает событие добавления для создания визуального CustomSensor
-        /// </summary>
         public ICommand AddSensorToMap { get; }
-
-        /// <summary>
-        /// Команда удаления датчика. Команда приходит от CustomSensor в SensorDragDrop.
-        /// Происходит удаление из коллекции и Canvas
-        /// </summary>
         public ICommand DeleteSensorCommand { get; }
         public ICommand TransformSensorCommand { get; }
         public ICommand DragSensorCommand { get; }
         public ICommand DragDeviceCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
-        public ICommand SetCurrentSensorCommand { get; }
     }
 }

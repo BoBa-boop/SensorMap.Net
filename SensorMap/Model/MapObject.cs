@@ -6,6 +6,9 @@ using System.Windows;
 using System.Windows.Controls;
 namespace SensorMap.Model
 {
+    /// <summary>
+    /// Базовый класс для объектов, размещаемых на карте Mechanism (датчики, устройства)
+    /// </summary>
     public abstract class MapObject : ReactiveObject, ICloneable
     {
         private double _x;

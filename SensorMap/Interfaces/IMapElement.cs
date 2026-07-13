@@ -9,6 +9,9 @@ using System.Windows.Controls;
 
 namespace SensorMap.Interfaces
 {
+    /// <summary>
+    /// Интерфейс для UI-элементов на карте (CustomSensor, CustomDevice)
+    /// </summary>
     public interface IMapElement
     {
         FrameworkElement Element { get; }

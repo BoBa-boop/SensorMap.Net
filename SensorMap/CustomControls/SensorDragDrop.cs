@@ -12,18 +12,14 @@ using SensorMap.View;
 using SensorMap.ViewModel;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Drawing;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Xml.Linq;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
@@ -39,7 +35,7 @@ using Size = System.Windows.Size;
 namespace SensorMap.CustomControls
 {
     /// <summary>
-    /// Элементы добавляются на 0 слой, при выделение они поднимаются на 1 слой
+    /// Элементы добавляются на 0 слой, при выделении они поднимаются на 1 слой
     /// </summary>
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
@@ -51,9 +47,8 @@ namespace SensorMap.CustomControls
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SensorDragDrop),
                 new FrameworkPropertyMetadata(typeof(SensorDragDrop)));
-           
         }
-        
+
         private Canvas? _canvas;
         private Image? _image;
 
@@ -67,7 +62,6 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty IsMultiSelectionProperty =
             DependencyProperty.Register("IsMultiSelection", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
 
-
         public bool IsEditMode
         {
             get { return (bool)GetValue(IsEditModeProperty); }
@@ -75,6 +69,7 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsEditModeProperty =
             DependencyProperty.Register("IsEditMode", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
+
         public bool IsHideAddresses
         {
             get { return (bool)GetValue(IsHideAddressesProperty); }
@@ -82,7 +77,6 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsHideAddressesProperty =
             DependencyProperty.Register("IsHideAddresses", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(true));
-
 
         /// <summary>
         /// Выбранный объект на карте (датчик или устройство)
@@ -132,6 +126,12 @@ namespace SensorMap.CustomControls
                 .FirstOrDefault(e => e is IMapElement me && me.MapData == mapData);
         }
 
+        private static UIElement? FindMapElement(Canvas canvas, MapObject? mapData)
+        {
+            if (mapData == null) return null;
+            return canvas.Children.OfType<UIElement>()
+                .FirstOrDefault(e => e is IMapElement me && me.MapData == mapData);
+        }
 
         public ICommand TransformSensorsCommand
         {
@@ -141,9 +141,6 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty TransformSensorsCommandProperty =
             DependencyProperty.Register("TransformSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
 
-
-
-
         public bool IsCustomSensorDragging
         {
             get { return (bool)GetValue(IsCustomSensorDraggingProperty); }
@@ -152,24 +149,15 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty IsCustomSensorDraggingProperty =
             DependencyProperty.Register("IsCustomSensorDragging", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
 
-
-
         public bool IsSelectionRectEnable
         {
             get { return (bool)GetValue(IsSelectionRectEnableProperty); }
             set { SetValue(IsSelectionRectEnableProperty, value); }
         }
-
         public static readonly DependencyProperty IsSelectionRectEnableProperty =
             DependencyProperty.Register("IsSelectionRectEnable", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
 
-
-
-
-        
-
-
-        #region add-remove sensor
+        #region add-remove commands
 
         public static readonly DependencyProperty SaveSensorsCommandProperty =
             DependencyProperty.Register("SaveSensorsCommand", typeof(ICommand), typeof(SensorDragDrop));
@@ -181,7 +169,6 @@ namespace SensorMap.CustomControls
 
         public static readonly DependencyProperty AddSensorsCommandProperty =
             DependencyProperty.Register("AddSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
-
         public ICommand AddSensorsCommand
         {
             get { return (ICommand)GetValue(AddSensorsCommandProperty); }
@@ -190,10 +177,6 @@ namespace SensorMap.CustomControls
 
         public static readonly DependencyProperty RemoveSensorEventProperty =
            DependencyProperty.Register("RemoveSensorEvent", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
-        
-        /// <summary>
-        /// Event срабатывает от CustomSensor события PreviewKeyDown
-        /// </summary>
         public ICommand RemoveSensorEvent
         {
             get { return (ICommand)GetValue(RemoveSensorEventProperty); }
@@ -202,41 +185,35 @@ namespace SensorMap.CustomControls
 
         public static readonly DependencyProperty RemoveSensorCommandProperty =
            DependencyProperty.Register("RemoveSensorCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
-        /// <summary>
-        /// Команда выполняет команду из MechanismVM
-        /// </summary>
         public ICommand RemoveSensorCommand
         {
             get { return (ICommand)GetValue(RemoveSensorCommandProperty); }
             set { SetValue(RemoveSensorCommandProperty, value); }
         }
+
         public ICommand CopySensorsCommand
         {
             get { return (ICommand)GetValue(CopySensorsProperty); }
             set { SetValue(CopySensorsProperty, value); }
         }
-
         public static readonly DependencyProperty CopySensorsProperty =
             DependencyProperty.Register("CopySensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
+
         public ICommand PasteSensorsCommand
         {
             get { return (ICommand)GetValue(PasteSensorsProperty); }
             set { SetValue(PasteSensorsProperty, value); }
         }
-
         public static readonly DependencyProperty PasteSensorsProperty =
             DependencyProperty.Register("PasteSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
-
-
 
         public ICommand CutSensorsCommand
         {
             get { return (ICommand)GetValue(CutSensorsProperty); }
             set { SetValue(CutSensorsProperty, value); }
-        }   
+        }
         public static readonly DependencyProperty CutSensorsProperty =
             DependencyProperty.Register("CutSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
-
 
         #endregion
 
@@ -260,6 +237,7 @@ namespace SensorMap.CustomControls
             get { return (ObservableCollection<MapObject>)GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
+
         public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource",
             typeof(BitmapFrame), typeof(SensorDragDrop),
             new PropertyMetadata(default(BitmapFrame)));
@@ -282,12 +260,13 @@ namespace SensorMap.CustomControls
         private double scaleLevel = 1;
         private bool _isDropAdd = false;
         private bool _isDragging;
-        private Rect movingObject;  // Границы нашего объекта
-        private Size parentSize; // Размер родительского элемента
+        private Rect movingObject;
+        private Size parentSize;
+
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-            
+
             _canvas = GetTemplateChild("PART_Canvas") as Canvas;
             _image = GetTemplateChild("PART_Image") as Image;
             _transformObject = new TransformObjectService();
@@ -309,34 +288,13 @@ namespace SensorMap.CustomControls
                 _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
                 _canvas.MouseLeave += _canvas_MouseLeave;
-                //_canvas.KeyDown += _canvas_KeyDown;
-                //_canvas.KeyUp += _canvas_KeyUp;
-                _image.PreviewMouseDown += (s,e)=>ClearSelectedSensors();
-                
+                _image.PreviewMouseDown += (s, e) => ClearSelectedSensors();
             }
-            
         }
 
         private void _canvas_MouseLeave(object sender, MouseEventArgs e)
         {
-            
         }
-
-        //private void _canvas_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
-        //{
-        //    if (e.Key == Key.LeftShift && _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected == true).Count()<2)
-        //    {
-        //        IsMultiSelection = false;
-        //    }
-        //}
-
-        //private void _canvas_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        //{
-        //    if((e.IsToggled) && e.Key == Key.LeftShift)
-        //    {
-        //        IsMultiSelection = true;
-        //    }
-        //}
 
         private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
@@ -353,7 +311,7 @@ namespace SensorMap.CustomControls
 
         private void TransformCommand(MouseButtonEventArgs e)
         {
-            if(_isDragging)
+            if (_isDragging)
             {
                 Point worldPoint = _transformObject.ScreenToWorld(e.GetPosition(_canvas), MapProperties.GetViewMatrix(this));
                 var canvasCollection = GetAllMapElements()
@@ -384,23 +342,21 @@ namespace SensorMap.CustomControls
         {
             var control = (SensorDragDrop)d;
             if (control._canvas == null) return;
-            control._viewMatrixTransform!.Matrix = Matrix.Identity;            
+            control._viewMatrixTransform!.Matrix = Matrix.Identity;
             if (e.NewValue != null)
             {
                 if (e.NewValue is INotifyCollectionChanged notify) notify.CollectionChanged += control.OnCollectionChanged;
                 if (!e.NewValue.Equals(e.OldValue)) control.SourceCollectionChanged();
             }
         }
-        /// <summary>
-        /// Изменение всей коллекции. Не сохраняется в Do/Undo
-        /// </summary>
+
         private void SourceCollectionChanged()
         {
             if (_canvas == null) return;
             var nonSensorChildren = _canvas.Children.OfType<FrameworkElement>()
                                     .Where(element=> element is not IMapElement).ToList();
             _canvas.Children.Clear();
-            foreach (var element in nonSensorChildren)
+            foreach (var element in nonMapChildren)
             {
                 _canvas.Children.Add(element);
             }
@@ -419,11 +375,7 @@ namespace SensorMap.CustomControls
                 }
             }
         }
-        /// <summary>
-        /// Изменение коллекции при Добавление нового объекта.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+
         private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             switch (e.Action)
@@ -432,7 +384,7 @@ namespace SensorMap.CustomControls
                     if (e.NewItems == null) return;
                     foreach (MapObject newItem in e.NewItems)
                     {
-                        AddSensorToCanvas(newItem);
+                        AddMapObjectToCanvas(newItem);
                     }
                     break;
             }
@@ -440,7 +392,8 @@ namespace SensorMap.CustomControls
         }
         #endregion
 
-        #region SensorActionsLogic
+        #region MapActionsLogic
+
         public void RemoveSensor()
         {
             if (_canvas != null)
@@ -489,17 +442,18 @@ namespace SensorMap.CustomControls
                 if (element is FrameworkElement fe1) fe1.Tag = mapObj.Id;
             }
         }
-        
+
         private void CopySensors()
         {
             var selectedElements = GetAllMapElements().Where(x => IsElementSelected(x)).ToList();
             _clipboard.Copy<List<IMapElement>>(selectedElements);
         }
+
         private void PasteSensors()
         {
             var collection = _clipboard.Paste<List<IMapElement>>();
 
-            if (collection != null&&collection.Count>0)
+            if (collection != null && collection.Count > 0)
             {
                 foreach (var me in GetAllMapElements().Where(x => IsElementSelected(x)))
                 {
@@ -542,9 +496,10 @@ namespace SensorMap.CustomControls
             _clipboard.Copy(selectedElements);
         }
 
-
         #endregion
+
         #region CanvasEvents
+
         private void _canvas_Drop(object sender, DragEventArgs e)
         {
             object data = e.Data.GetData(DataFormats.Serializable);
@@ -566,13 +521,12 @@ namespace SensorMap.CustomControls
                 }
             }
         }
-        
+
         private void _canvas_MouseMove(object sender, MouseEventArgs e)
         {
             Point mousePosition = e.GetPosition(_canvas);
             if (e.LeftButton == MouseButtonState.Released && e.RightButton == MouseButtonState.Pressed && _initialMousePosition.X > 0)
             {
-
                 if (_viewMatrixTransform == null) return;
 
                 movingObject = VisualTreeHelper.GetDescendantBounds(this);
@@ -583,52 +537,31 @@ namespace SensorMap.CustomControls
                 double leftMargin = _viewMatrixTransform.Matrix.OffsetX;
                 double topMargin = _viewMatrixTransform.Matrix.OffsetY;
 
-
                 double scaledWidth = _image!.ActualWidth * _viewMatrixTransform.Matrix.M11;
                 double scaledHeight = _image.ActualHeight * _viewMatrixTransform.Matrix.M11;
 
-                //задание границ
-                //левая граница
                 if (movingObject.Width > parentSize.Width)
                 {
                     leftMargin += DeltaX;
-                    if (leftMargin > 0.0)
-                    {
-                        DeltaX = 0.0;
-                    }
-                    //правая граница
+                    if (leftMargin > 0.0) DeltaX = 0.0;
                     double minOffsetX = parentSize.Width - scaledWidth;
-                    if (leftMargin < minOffsetX)
-                        DeltaX = 0.0;
+                    if (leftMargin < minOffsetX) DeltaX = 0.0;
                     CanMoveX = true;
                 }
 
                 if (movingObject.Height > parentSize.Height)
                 {
                     topMargin += DeltaY;
-                    //верхняя граница
-                    if (topMargin > 0.0)
-                    {
-                        DeltaY = 0.0;
-                    }
-                    //нижняя граница
+                    if (topMargin > 0.0) DeltaY = 0.0;
                     double minOffsetY = parentSize.Height - scaledHeight;
-                    if (topMargin < minOffsetY)
-                        DeltaY = 0.0;
-
+                    if (topMargin < minOffsetY) DeltaY = 0.0;
                     CanMoveY = true;
                 }
 
                 if (CanMoveX || CanMoveY)
                 {
-                    if ((CanMoveX == false))
-                    {
-                        DeltaX = 0;
-                    }
-                    if (CanMoveY == false)
-                    {
-                        DeltaY = 0;
-                    }
+                    if (!CanMoveX) DeltaX = 0;
+                    if (!CanMoveY) DeltaY = 0;
                     Cursor = Grabbing;
                     var translate = new TranslateTransform(DeltaX, DeltaY);
                     _viewMatrixTransform!.Matrix = translate.Value * _viewMatrixTransform.Matrix;
@@ -643,25 +576,22 @@ namespace SensorMap.CustomControls
 
         #region Zoom
         private void _canvas_MouseWheel(object sender, MouseWheelEventArgs e)
-        {            
+        {
             parentSize = RenderSize;
             Point mousePosition = e.GetPosition(this);
             double delta = e.Delta > 0 ? 1.08 : 1.0 / 1.08;
-            
+
             Matrix scaleMatrix = _viewMatrixTransform!.Matrix;
             double newZoom = scaleMatrix.M11 * delta;
 
-            // Проверка предела масштаба
             if (newZoom < 0.2 || newZoom > 10.0) return;
 
             Point mouseScreen = e.GetPosition(_canvas);
 
             scaleMatrix.ScaleAt(delta, delta, mousePosition.X, mousePosition.Y);
-            
-            //// Вычисляем новые размеры изображения
+
             double scaledWidth = _image!.ActualWidth * newZoom;
             double scaledHeight = _image.ActualHeight * newZoom;
-
 
             ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize);
             _viewMatrixTransform.Matrix = scaleMatrix;
@@ -681,67 +611,51 @@ namespace SensorMap.CustomControls
             }
             MapProperties.SetViewMatrix(this, _viewMatrix);
         }
-        
-        /// <summary>
-        /// Коррекция пустоты у границы
-        /// </summary>
+
         private void ApplyBounds(ref Matrix matrix, double scaledWidth, double scaledHeight, Size parentSize)
         {
             double offsetX = matrix.OffsetX;
             double offsetY = matrix.OffsetY;
             double minOffsetY = parentSize.Height;
             double minOffsetX = parentSize.Width;
-            // Если изображение меньше контейнера по ширине - центрируем по горизонтали
+
             if (scaledWidth <= parentSize.Width)
             {
                 offsetX = (parentSize.Width - scaledWidth) / 2;
             }
             else
             {
-                // Проверяем левую границу
-                if (offsetX > 0)
-                    offsetX = 0;
-
-                // Проверяем правую границу
+                if (offsetX > 0) offsetX = 0;
                 minOffsetX = parentSize.Width - scaledWidth;
-                if (offsetX < minOffsetX)
-                    offsetX = minOffsetX;
+                if (offsetX < minOffsetX) offsetX = minOffsetX;
             }
 
-            // Если изображение меньше контейнера по высоте - центрируем по вертикали
             if (scaledHeight <= parentSize.Height)
             {
                 offsetY = (parentSize.Height - scaledHeight) / 2;
             }
             else
             {
-                // Проверяем верхнюю границу
-                if (offsetY > 0)
-                    offsetY = 0;
-
-                // Проверяем нижнюю границу
+                if (offsetY > 0) offsetY = 0;
                 minOffsetY = parentSize.Height - scaledHeight;
-                if (offsetY < minOffsetY)
-                    offsetY = minOffsetY;
+                if (offsetY < minOffsetY) offsetY = minOffsetY;
             }
 
-            // Устанавливаем скорректированные смещения
             matrix.OffsetX = offsetX;
             matrix.OffsetY = offsetY;
         }
         #endregion
+
         private void _canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             _initialMousePosition = e.GetPosition(_canvas);
-            //перемещение по карте
             if (e.ChangedButton == MouseButton.Right)
             {
                 parentSize = RenderSize;
             }
-            //выделение элементов на карте
             if (IsEditMode && e.ChangedButton == MouseButton.Left && IsCustomSensorDragging == false && IsMultiSelection == false)
             {
-                Mouse.OverrideCursor = Cursors.Cross;//переопределяем курсор, чтобы не было конфликтов с CustomSensor
+                Mouse.OverrideCursor = Cursors.Cross;
                 CreateSelectionRectangle();
                 IsSelectionRectEnable = true;
                 Mouse.Capture(_canvas);
@@ -778,13 +692,8 @@ namespace SensorMap.CustomControls
             return null!;
         }
 
-        /// <summary>
-        /// Получение точки верхнего левого угла
-        /// </summary>
-        /// <param name="offsetX"></param>
-        /// <param name="offsetY"></param>
         private void GetLeftTopPoint(out double offsetX, out double offsetY)
-        {            
+        {
             offsetX = _viewMatrixTransform!.Matrix.OffsetX;
             offsetY = _viewMatrixTransform.Matrix.OffsetY;
             if (_viewMatrixTransform.Matrix.M11 != 1)
@@ -866,9 +775,7 @@ namespace SensorMap.CustomControls
             }
             return new List<MapObject>();
         }
-        /// <summary>
-        /// Создать прямоугольник выделения
-        /// </summary>
+
         private void CreateSelectionRectangle()
         {
             SelectionRect = new System.Windows.Shapes.Rectangle
@@ -876,7 +783,7 @@ namespace SensorMap.CustomControls
                 Width = 0,
                 Height = 0,
                 Stroke = Brushes.Blue,
-                StrokeDashArray = new DoubleCollection { 4, 2 },//пунктир
+                StrokeDashArray = new DoubleCollection { 4, 2 },
                 Fill = new SolidColorBrush { Color = Colors.LightCyan, Opacity = 0.4 },
                 StrokeThickness = 1.5
             };
@@ -884,10 +791,7 @@ namespace SensorMap.CustomControls
             Canvas.SetTop(SelectionRect, _initialMousePosition.Y);
             _canvas.Children.Add(SelectionRect);
         }
-        /// <summary>
-        /// Обновлять прямоугольник выделения
-        /// </summary>
-        /// <param name="pos"></param>
+
         private void UpdateSectionRectangle(Point pos)
         {
             double left = Math.Min(pos.X, _initialMousePosition.X);
@@ -897,7 +801,6 @@ namespace SensorMap.CustomControls
 
             Rect imageBounds = GetImageBounds();
 
-            // Ограничиваем прямоугольник границами Image
             Rect constrainedRect = new Rect(left, top, width, height);
             constrainedRect.Intersect(imageBounds);
             if (constrainedRect.IsEmpty) return;
@@ -909,6 +812,7 @@ namespace SensorMap.CustomControls
             tempSelectedMapObjects = GetMapObjectsInSelectionRectangle(pos);
             IsMultiSelection = tempSelectedMapObjects.Count > 1;
         }
+
         private Rect GetImageBounds()
         {
             if (_image == null) return new Rect(0, 0, _canvas.ActualWidth, _canvas.ActualHeight);
@@ -916,20 +820,15 @@ namespace SensorMap.CustomControls
             double left = Canvas.GetLeft(_image);
             double top = Canvas.GetTop(_image);
 
-            // Если координаты не заданы, считаем что Image в (0,0)
             if (double.IsNaN(left)) left = 0;
             if (double.IsNaN(top)) top = 0;
 
             return new Rect(left, top, _image.ActualWidth, _image.ActualHeight);
         }
-        /// <summary>
-        /// Проверка что при выходе из-за границ SensorDragDrop отжаты ккнопки мыши и происходит перетаскивание или выделение. 
-        /// Если верно, то сбрасывается pan и/или выделение.
-        /// </summary>
-        /// <param name="e"></param>
+
         private void IsGrabOrSelectNotActive(MouseEventArgs e)
         {
-            if(e.LeftButton == MouseButtonState.Released && e.RightButton == MouseButtonState.Released)
+            if (e.LeftButton == MouseButtonState.Released && e.RightButton == MouseButtonState.Released)
             {
                 if (Cursor == Grabbing)
                 {
@@ -943,6 +842,7 @@ namespace SensorMap.CustomControls
                 Cursor = Grab;
             }
         }
+
         public void ClearSelectedSensors()
         {
             var selectedElements = GetAllMapUIElements()
@@ -967,4 +867,3 @@ namespace SensorMap.CustomControls
         }
     }
 }
-

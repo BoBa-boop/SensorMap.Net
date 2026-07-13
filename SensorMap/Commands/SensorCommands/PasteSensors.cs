@@ -1,7 +1,5 @@
-﻿using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;

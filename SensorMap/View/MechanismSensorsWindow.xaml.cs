@@ -1,6 +1,3 @@
-﻿using SensorMap.Model;
-using System.Windows.Controls;
-
 namespace SensorMap.View
 {
     /// <summary>

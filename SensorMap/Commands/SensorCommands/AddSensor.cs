@@ -1,16 +1,11 @@
-ï»¿using DynamicData;
-using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Shapes;
 
 namespace SensorMap.Commands.SensorCommands
 {
@@ -23,7 +18,7 @@ namespace SensorMap.Commands.SensorCommands
         public AddSensor(MapObject mapData, FrameworkElement sensorVisual,Canvas canvas,
         ObservableCollection<MapObject> collection) 
         {
-            _element = sensorVisual; //(FrameworkElement)sensorVisual.MapData.Clone();//Ð±Ñ‹Ð» clone
+            _element = sensorVisual; //(FrameworkElement)sensorVisual.MapData.Clone();//áûë clone
             _mapData = mapData;
             _canvas = canvas;
             _collection = collection;

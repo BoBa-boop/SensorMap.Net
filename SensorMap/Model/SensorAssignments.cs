@@ -7,7 +7,7 @@ using System.Windows.Controls;
 namespace SensorMap.Model
 {
     /// <summary>
-    /// Координаты, изображение месторасположния, адрес в ПЛК
+    /// Размещение датчика на карте Mechanism. Координаты, адрес в ПЛК, изображение.
     /// </summary>
     public class SensorAssignments : MapObject
     {

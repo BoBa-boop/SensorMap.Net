@@ -18,6 +18,7 @@ namespace SensorMap.CustomControls
 {
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Device", Type = typeof(Border))]
+    [TemplatePart(Name = "PART_Address", Type = typeof(TextBlock))]
     public class CustomDevice : Control, ICloneable, IMapElement
     {
         #region Dependency Properties
@@ -168,14 +169,18 @@ namespace SensorMap.CustomControls
 
         #endregion
 
+        private enum AddressPlacement { Right, Left, Bottom, Top, Center }
+
         private readonly ITransformObject _transformService;
         private Point LastPoint;
         private bool IsTransformed = false;
         private Canvas _canvas;
         private TextBlock _textBlock;
+        Rect addressRect;
         Rect Map;
         private Image _image;
         private bool IsMoving;
+        private AddressPlacement _addressPlacement = AddressPlacement.Right;
 
         static CustomDevice()
         {
@@ -192,9 +197,13 @@ namespace SensorMap.CustomControls
             base.OnApplyTemplate();
             _canvas = _transformService.GetParentCanvas(this);
             _image = _canvas.Children.OfType<Image>().First();
+            _textBlock = (TextBlock)GetTemplateChild("PART_Address");
             if (_canvas != null)
             {
                 ChangeStateActions();
+                System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+                    System.Windows.Threading.DispatcherPriority.Loaded,
+                    new Action(() => UpdateAddressPosition()));
             }
         }
 
@@ -342,6 +351,7 @@ namespace SensorMap.CustomControls
                                 Canvas.SetTop(item, new_y);
 
                                 item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                                ChangeAddressPosition();
                                 LastPoint = point;
                             }
                         }
@@ -350,7 +360,19 @@ namespace SensorMap.CustomControls
             }
         }
 
-        
+        private void ChangeAddressPosition()
+        {
+            if (!IsTransformed && !IsMoving) return;
+            ResolveAddressPlacement();
+            ApplyAddressPlacement();
+        }
+
+        public void UpdateAddressPosition()
+        {
+            ResolveAddressPlacement();
+            ApplyAddressPlacement();
+        }
+
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (_memorySelectedDevice != null && _memorySelectedDevice != this && !IsMultiSelection)
@@ -383,6 +405,7 @@ namespace SensorMap.CustomControls
             SelectedDevice = this.IsSelected ? this : null;
             if (this.IsSelected) Canvas.SetZIndex(this, 1); else Canvas.SetZIndex(this, 0);
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
+            _textBlock.Background = IsSelected ? Brushes.Lavender : Brushes.WhiteSmoke;
             Mouse.OverrideCursor = IsSelected ? _transformService.GetCursorForHitType(MouseHitType) : null;
         }
 
@@ -393,6 +416,213 @@ namespace SensorMap.CustomControls
                 DeviceData = DeviceData,
                 CustomBounds = CustomBounds
             };
+        }
+
+        private void ResolveAddressPlacement()
+        {
+            if (_textBlock == null || _canvas == null) return;
+
+            double deviceCanvasX = Canvas.GetLeft(this);
+            double deviceCanvasY = Canvas.GetTop(this);
+            double addrW = _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40;
+            double addrH = _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15;
+
+            var candidates = new (AddressPlacement placement, Rect addrRect)[]
+            {
+                (AddressPlacement.Right, new Rect(
+                    deviceCanvasX + CustomBounds.Width + 5,
+                    deviceCanvasY + (CustomBounds.Height - addrH) / 2,
+                    addrW, addrH)),
+                (AddressPlacement.Left, new Rect(
+                    deviceCanvasX - addrW - 5,
+                    deviceCanvasY + (CustomBounds.Height - addrH) / 2,
+                    addrW, addrH)),
+                (AddressPlacement.Bottom, new Rect(
+                    deviceCanvasX + (CustomBounds.Width - addrW) / 2,
+                    deviceCanvasY + CustomBounds.Height + 2,
+                    addrW, addrH)),
+                (AddressPlacement.Top, new Rect(
+                    deviceCanvasX + (CustomBounds.Width - addrW) / 2,
+                    deviceCanvasY - addrH - 2,
+                    addrW, addrH)),
+                (AddressPlacement.Center, new Rect(
+                    deviceCanvasX + (CustomBounds.Width - addrW) / 2,
+                    deviceCanvasY + (CustomBounds.Height - addrH) / 2,
+                    addrW, addrH))
+            };
+
+            Rect searchArea = Rect.Union(addressRect, CustomBounds);
+            searchArea.Inflate(20, 20);
+            addressRect = candidates.Where(pos => pos.placement == _addressPlacement).Select(pos => pos.addrRect).First();
+            var devicesInSearchArea = _canvas.Children.OfType<CustomDevice>()
+                .Where(s => s != this)
+                .Select(s =>
+                {
+                    var rectToCheck = s._textBlock.Visibility != Visibility.Collapsed
+                        ? Rect.Union(s.GetAddressRectOnCanvas(), s.CustomBounds)
+                        : s.CustomBounds;
+                    return new { Device = s, CheckRect = rectToCheck };
+                })
+                .Where(x => x.CheckRect.IntersectsWith(searchArea))
+                .Select(x => x.CheckRect).ToList();
+
+            bool HasCollision(Rect addrRect)
+            {
+                foreach (var nearDevice in devicesInSearchArea)
+                {
+                    if (addrRect.IntersectsWith(nearDevice))
+                        return true;
+                }
+                return false;
+            }
+
+            if (_addressPlacement == AddressPlacement.Center)
+            {
+                if (!HasCollision(candidates[0].addrRect))
+                {
+                    _addressPlacement = AddressPlacement.Right;
+                    return;
+                }
+            }
+            else
+            {
+                var current = candidates.FirstOrDefault(c => c.placement == _addressPlacement);
+                if (!HasCollision(current.addrRect))
+                    return;
+            }
+
+            foreach (var (placement, addrRect) in candidates)
+            {
+                if (!HasCollision(addrRect))
+                {
+                    _addressPlacement = placement;
+                    return;
+                }
+            }
+
+            _addressPlacement = AddressPlacement.Center;
+        }
+
+        private void ApplyAddressPlacement()
+        {
+            if (_textBlock == null) return;
+
+            double addrW = _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40;
+            double addrH = _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15;
+            double deviceW = CustomBounds.Width;
+            double deviceH = CustomBounds.Height;
+
+            switch (_addressPlacement)
+            {
+                case AddressPlacement.Right:
+                    Canvas.SetLeft(_textBlock, deviceW + 5);
+                    Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
+                    _textBlock.Opacity = 1;
+                    break;
+                case AddressPlacement.Left:
+                    Canvas.SetLeft(_textBlock, -addrW - 5);
+                    Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
+                    _textBlock.Opacity = 1;
+                    break;
+                case AddressPlacement.Bottom:
+                    Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                    Canvas.SetTop(_textBlock, deviceH + 2);
+                    _textBlock.Opacity = 1;
+                    break;
+                case AddressPlacement.Top:
+                    Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                    Canvas.SetTop(_textBlock, -addrH - 2);
+                    _textBlock.Opacity = 1;
+                    break;
+                case AddressPlacement.Center:
+                    Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                    Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
+                    _textBlock.Opacity = 0.7;
+                    break;
+            }
+            addressRect = new Rect(Canvas.GetLeft(_textBlock) + CustomBounds.X, Canvas.GetTop(_textBlock) + CustomBounds.Y, _textBlock.Width, _textBlock.Height);
+            ControlOutOfRangeImage();
+        }
+
+        private Rect GetAddressRectOnCanvas()
+        {
+            if (_textBlock == null) return Rect.Empty;
+
+            double deviceCanvasX = Canvas.GetLeft(this);
+            double deviceCanvasY = Canvas.GetTop(this);
+            double addrLocalX = Canvas.GetLeft(_textBlock);
+            double addrLocalY = Canvas.GetTop(_textBlock);
+
+            return new Rect(
+                deviceCanvasX + addrLocalX,
+                deviceCanvasY + addrLocalY,
+                _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40,
+                _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15
+            );
+        }
+
+        private void ControlOutOfRangeImage()
+        {
+            if (_textBlock == null) return;
+            if (Map.Width == 0) return;
+
+            double deviceCanvasX = Canvas.GetLeft(this);
+            double deviceCanvasY = Canvas.GetTop(this);
+            double addrLocalX = Canvas.GetLeft(_textBlock);
+            double addrLocalY = Canvas.GetTop(_textBlock);
+            double addrW = _textBlock.ActualWidth > 0 ? _textBlock.ActualWidth : 40;
+            double addrH = _textBlock.ActualHeight > 0 ? _textBlock.ActualHeight : 15;
+
+            double addrAbsX = deviceCanvasX + addrLocalX;
+            double addrAbsY = deviceCanvasY + addrLocalY;
+
+            bool moved = false;
+            if (addrAbsX < 2)
+            {
+                _addressPlacement = AddressPlacement.Right;
+                moved = true;
+            }
+            else if (addrAbsX + addrW > Map.Width)
+            {
+                _addressPlacement = AddressPlacement.Left;
+                moved = true;
+            }
+
+            if (addrAbsY < 2)
+            {
+                _addressPlacement = AddressPlacement.Bottom;
+                moved = true;
+            }
+            else if (addrAbsY + addrH > Map.Height)
+            {
+                _addressPlacement = AddressPlacement.Top;
+                moved = true;
+            }
+
+            if (moved)
+            {
+                double deviceW = CustomBounds.Width;
+                double deviceH = CustomBounds.Height;
+                switch (_addressPlacement)
+                {
+                    case AddressPlacement.Right:
+                        Canvas.SetLeft(_textBlock, deviceW + 5);
+                        Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
+                        break;
+                    case AddressPlacement.Left:
+                        Canvas.SetLeft(_textBlock, -addrW - 5);
+                        Canvas.SetTop(_textBlock, (deviceH - addrH) / 2);
+                        break;
+                    case AddressPlacement.Bottom:
+                        Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                        Canvas.SetTop(_textBlock, deviceH + 2);
+                        break;
+                    case AddressPlacement.Top:
+                        Canvas.SetLeft(_textBlock, (deviceW - addrW) / 2);
+                        Canvas.SetTop(_textBlock, -addrH - 2);
+                        break;
+                }
+            }
         }
     }
 }

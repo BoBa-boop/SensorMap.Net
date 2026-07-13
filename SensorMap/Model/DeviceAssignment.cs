@@ -8,6 +8,10 @@ using System.Windows.Controls;
 namespace SensorMap.Model
 {
     public class DeviceAssignment:MapObject
+    /// <summary>
+    /// Размещение устройства на карте Mechanism
+    /// </summary>
+    public class DeviceAssignment : MapObject
     {
         private Device? _device;
 

@@ -1,7 +1,5 @@
-﻿using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -37,7 +35,6 @@ namespace SensorMap.Commands.SensorCommands
                 //    _collection.Remove(item.SensorData);
                 //}
             }
-
         }
 
         public void Undo()
@@ -51,7 +48,6 @@ namespace SensorMap.Commands.SensorCommands
                 Canvas.SetTop(element.Element, element.MapData.Y);
                 //_collection.Add(item.SensorData);
             }
-
         }
     }
 }

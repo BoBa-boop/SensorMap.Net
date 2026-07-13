@@ -1,6 +1,7 @@
-using SensorMap.CustomControls;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Point = System.Windows.Point;

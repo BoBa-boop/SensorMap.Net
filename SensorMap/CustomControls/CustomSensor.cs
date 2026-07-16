@@ -11,6 +11,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Xml.Linq;
+using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Image = System.Windows.Controls.Image;
@@ -22,8 +24,12 @@ namespace SensorMap.CustomControls
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Sensor", Type = typeof(Border))]
     [TemplatePart(Name = "PART_Address", Type = typeof(TextBlock))]
-    public class CustomSensor : Control, ICloneable
+    public class CustomSensor : Control, ICloneable,IMapElement
     {
+        public FrameworkElement Element => this;
+        MapObject IMapElement.MapData => SensorData;
+        public void SetCustomBounds(Rect bounds) => CustomBounds = bounds;
+        public Rect GetCustomBounds() => CustomBounds;
         #region Dependency Properties
 
         public SensorAssignments SensorData
@@ -397,7 +403,24 @@ namespace SensorMap.CustomControls
                 LastPoint = Mouse.GetPosition(_canvas);
                 IsDragging = true;
             }
+            if(e.RightButton == MouseButtonState.Pressed)
+            {
+                var pop = new View.SensorAddInfo();
+                var window = new PopupWindow()
+                {
+                    PopupElement = pop,
+                    DataContext = this.SensorData
+                };
+                Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
 
+                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
+                {
+                    window.Close();
+                    Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
+                }
+                window.Show(this, false);
+                e.Handled = true;
+            }
             SelectedSensor = this;
             _memorySelectedSensor = this;
             IsSelected = true;
@@ -418,11 +441,12 @@ namespace SensorMap.CustomControls
 
         public object Clone()
         {
-            return new CustomSensor
+            var clone = new CustomSensor
             {
                 SensorData = SensorData,
                 CustomBounds = CustomBounds
             };
+            return clone;
         }
         private void ResolveAddressPlacement()
         {

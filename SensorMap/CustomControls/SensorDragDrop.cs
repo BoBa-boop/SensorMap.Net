@@ -85,41 +85,52 @@ namespace SensorMap.CustomControls
 
 
         /// <summary>
-        /// Срабатывает от выбора из списка датчика CustomSensor и передает в MechanismVM
+        /// Выбранный объект на карте (датчик или устройство)
         /// </summary>
-        public SensorAssignments SelectedCustomSensor
+        public MapObject SelectedMapObject
         {
-            get { return (SensorAssignments)GetValue(SelectedCustomSensorProperty); }
-            set { SetValue(SelectedCustomSensorProperty, value); }
+            get { return (MapObject)GetValue(SelectedMapObjectProperty); }
+            set { SetValue(SelectedMapObjectProperty, value); }
         }
 
-        public static readonly DependencyProperty SelectedCustomSensorProperty =
-            DependencyProperty.Register("SelectedCustomSensor", typeof(SensorAssignments), typeof(SensorDragDrop),new PropertyMetadata(null,SelectedChanged));
+        public static readonly DependencyProperty SelectedMapObjectProperty =
+            DependencyProperty.Register("SelectedMapObject", typeof(MapObject), typeof(SensorDragDrop), new PropertyMetadata(null, SelectedChanged));
 
         private static void SelectedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (SensorDragDrop)d;
-            SensorAssignments sensor = (SensorAssignments)e.NewValue;
-            SensorAssignments oldSensor = (SensorAssignments)e.OldValue;
+            MapObject newMapObj = e.NewValue as MapObject;
+            MapObject oldMapObj = e.OldValue as MapObject;
             if (control != null && control._canvas != null)
             {
                 if (control.IsMultiSelection)
                 {
                     control.ClearSelectedSensors();
                 }
-                var elementToUnSelect = control._canvas.Children
-                    .OfType<CustomSensor>()
-                    .FirstOrDefault(x => x.SensorData == oldSensor);
+                if (newMapObj == null)
+                {
+                    control.ClearSelectedSensors();
+                }
+                var elementToUnSelect = FindMapElement(control._canvas, oldMapObj);
+                var elementToSelect = FindMapElement(control._canvas, newMapObj);
 
-                var elementToSelect = control._canvas.Children
-                    .OfType<CustomSensor>()
-                    .FirstOrDefault(x => x.SensorData == sensor);
+                if (elementToSelect is CustomSensor sensorToSelect)
+                    sensorToSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                else if (elementToSelect is CustomDevice deviceToSelect)
+                    deviceToSelect.SetCurrentValue(CustomDevice.IsSelectedProperty, true);
 
-                elementToSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
-                elementToUnSelect?.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                if (elementToUnSelect is CustomSensor sensorToUnSelect)
+                    sensorToUnSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                else if (elementToUnSelect is CustomDevice deviceToUnSelect)
+                    deviceToUnSelect.SetCurrentValue(CustomDevice.IsSelectedProperty, false);
             }
         }
-
+        private static FrameworkElement? FindMapElement(Canvas canvas, MapObject? mapData)
+        {
+            if (mapData == null) return null;
+            return canvas.Children.OfType<FrameworkElement>()
+                .FirstOrDefault(e => e is IMapElement me && me.MapData == mapData);
+        }
 
 
         public ICommand TransformSensorsCommand
@@ -241,12 +252,12 @@ namespace SensorMap.CustomControls
 
         #region Source Props
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
-            typeof(ObservableCollection<SensorAssignments>), typeof(SensorDragDrop),
-            new PropertyMetadata(new ObservableCollection<SensorAssignments>(), OnItemsSourceChanged));
+            typeof(ObservableCollection<MapObject>), typeof(SensorDragDrop),
+            new PropertyMetadata(new ObservableCollection<MapObject>(), OnItemsSourceChanged));
 
-        public ObservableCollection<SensorAssignments> ItemsSource
+        public ObservableCollection<MapObject> ItemsSource
         {
-            get { return (ObservableCollection<SensorAssignments>)GetValue(ItemsSourceProperty); }
+            get { return (ObservableCollection<MapObject>)GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
         public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource",
@@ -263,7 +274,7 @@ namespace SensorMap.CustomControls
 
         private ITransformObject _transformObject;
         private IClipboard _clipboard;
-        private List<SensorAssignments> tempSelectedSensorsCollection = new List<SensorAssignments>();
+        private List<MapObject> tempSelectedMapObjects = new List<MapObject>();
         private System.Windows.Shapes.Rectangle SelectionRect;
         private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
@@ -345,11 +356,27 @@ namespace SensorMap.CustomControls
             if(_isDragging)
             {
                 Point worldPoint = _transformObject.ScreenToWorld(e.GetPosition(_canvas), MapProperties.GetViewMatrix(this));
-                var canvasCollection = _canvas.Children.OfType<CustomSensor>().Where(x => tempSelectedSensorsCollection.Contains(x.SensorData)).ToList();
-                var MultiTransform = new TransformationSensors(tempSelectedSensorsCollection,canvasCollection,
+                var canvasCollection = GetAllMapElements()
+                    .Where(x => tempSelectedMapObjects.Contains(x.MapData)).ToList().Cast<IMapElement>().ToList();
+                var MultiTransform = new TransformationSensors(tempSelectedMapObjects, canvasCollection,
                     (x) => _transformObject.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
                 TransformSensorsCommand.Execute(MultiTransform);
             }
+        }
+        /// <summary>
+         /// Получить все UI-элементы карты (датчики и устройства)
+         /// </summary>
+        private IEnumerable<IMapElement> GetAllMapElements()
+        {
+            return _canvas.Children.OfType<IMapElement>();
+        }
+
+        /// <summary>
+        /// Получить все UI-элементы карты как UIElement
+        /// </summary>
+        private IEnumerable<UIElement> GetAllMapUIElements()
+        {
+            return _canvas.Children.OfType<UIElement>().Where(e => e is IMapElement);
         }
         #region ItemsSource events
 
@@ -370,25 +397,25 @@ namespace SensorMap.CustomControls
         private void SourceCollectionChanged()
         {
             if (_canvas == null) return;
-            var nonSensorChildren = _canvas.Children.OfType<UIElement>()
-                                    .Where(element=>element.GetType().Name!="CustomSensor").ToList();
+            var nonSensorChildren = _canvas.Children.OfType<FrameworkElement>()
+                                    .Where(element=> element is not IMapElement).ToList();
             _canvas.Children.Clear();
             foreach (var element in nonSensorChildren)
             {
                 _canvas.Children.Add(element);
             }
-            foreach (var sensor in ItemsSource)
+            foreach (var mapObj in ItemsSource)
             {
-                int sensorsInMap = _canvas!.Children.OfType<CustomSensor>().Count();
-                if (sensor != null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
+                int MapObjectsCanvas = GetAllMapElements().Count();
+                if (mapObj != null && !_isDropAdd && mapObj.ToDelete==false && ItemsSource.Count != MapObjectsCanvas)
                 {
-                    sensor.X = sensor.X < 0 ? 50 : sensor.X;
-                    sensor.Y = sensor.Y < 0 ? 50 : sensor.Y;
+                    mapObj.X = mapObj.X < 0 ? 50 : mapObj.X;
+                    mapObj.Y = mapObj.Y < 0 ? 50 : mapObj.Y;
                     
-                    CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X,sensor.Y));
+                    FrameworkElement element = CreateMapObject(mapObj, new Point(mapObj.X,mapObj.Y));
                     _canvas.Children.Add(element);
-                    
-                    element.Tag = sensor.Id;
+
+                    if (element is FrameworkElement fe) fe.Tag = mapObj.Id;
                 }
             }
         }
@@ -403,7 +430,7 @@ namespace SensorMap.CustomControls
             {
                 case NotifyCollectionChangedAction.Add:
                     if (e.NewItems == null) return;
-                    foreach (SensorAssignments newItem in e.NewItems)
+                    foreach (MapObject newItem in e.NewItems)
                     {
                         AddSensorToCanvas(newItem);
                     }
@@ -418,70 +445,101 @@ namespace SensorMap.CustomControls
         {
             if (_canvas != null)
             {
-                var SelectedSensorsUI = _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected).ToList();
+                var selectedElements = GetAllMapElements()
+                    .Where(e => e is IMapElement me && IsElementSelected(me))
+                    .ToList();
 
-                var command = new RemoveSensor(SelectedSensorsUI, _canvas, ItemsSource);
-                var param = new object[] { command, SelectedSensorsUI};
+                var command = new RemoveSensor(selectedElements, _canvas, ItemsSource);
+                var param = new object[] { command, selectedElements };
                 RemoveSensorEvent.Execute(param);
-                tempSelectedSensorsCollection.Clear();
+                tempSelectedMapObjects.Clear();
                 IsMultiSelection = false;
             }
         }
-
-        private void AddSensorToCanvas(SensorAssignments sensor)
+        private bool IsElementSelected(IMapElement element)
         {
-            int sensorsInMap = _canvas!.Children.OfType<CustomSensor>().Count();
-            if (sensor!=null && !_isDropAdd && ItemsSource.Count != sensorsInMap)
+            if (element is CustomSensor s) return s.IsSelected;
+            if (element is CustomDevice d) return d.IsSelected;
+            return false;
+        }
+
+        private void SetElementSelected(IMapElement element, bool selected)
+        {
+            if (element is CustomSensor s) s.IsSelected = selected;
+            else if (element is CustomDevice d) d.IsSelected = selected;
+        }
+        private void AddSensorToCanvas(MapObject mapObj)
+        {
+            int objectsInMap = GetAllMapElements().Count();
+            if (mapObj != null && !_isDropAdd && ItemsSource.Count != objectsInMap)
             {
-                sensor.X = sensor.X < 0 ? 50 : sensor.X;
-                sensor.Y = sensor.Y < 0 ? 50 : sensor.Y;
+                mapObj.X = mapObj.X < 0 ? 50 : mapObj.X;
+                mapObj.Y = mapObj.Y < 0 ? 50 : mapObj.Y;
                 double offsetX, offsetY;
                 GetLeftTopPoint(out offsetX, out offsetY);
-                CustomSensor element = CreateSensorObject(sensor, new Point(sensor.X + Math.Abs(offsetX), sensor.Y + Math.Abs(offsetY)));
-                var command = new AddSensor(sensor, element, _canvas, ItemsSource);
+                if (mapObj.Id == 0)
+                {
+                    var existingIds = GetAllMapElements().Select(e => e.MapData.Id).ToList();
+                    mapObj.Id = existingIds.Any() ? existingIds.Max() + 1 : 1;
+                }
+                FrameworkElement element = CreateMapObject(mapObj, new Point(mapObj.X + Math.Abs(offsetX), mapObj.Y + Math.Abs(offsetY)));
+                var command = new AddSensor(mapObj, (FrameworkElement)element, _canvas, ItemsSource);
                 AddSensorsCommand.Execute(command);
                 Canvas.SetZIndex(element, 0);
-                element.Tag = sensor.Id;
+                if (element is FrameworkElement fe1) fe1.Tag = mapObj.Id;
             }
         }
         
         private void CopySensors()
         {
-            _clipboard.Copy<List<CustomSensor>>(_canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected).ToList());
+            var selectedElements = GetAllMapElements().Where(x => IsElementSelected(x)).ToList();
+            _clipboard.Copy<List<IMapElement>>(selectedElements);
         }
         private void PasteSensors()
         {
-            var collection = _clipboard.Paste<List<CustomSensor>>();
+            var collection = _clipboard.Paste<List<IMapElement>>();
 
             if (collection != null&&collection.Count>0)
             {
-                foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected))
+                foreach (var me in GetAllMapElements().Where(x => IsElementSelected(x)))
                 {
-                    uiElement.IsSelected = false;
+                    SetElementSelected(me, false);
                 }
-                tempSelectedSensorsCollection.Clear();
+                tempSelectedMapObjects.Clear();
                 foreach (var item in collection)
                 {
-                    var newSensor = (SensorAssignments)item.SensorData.Clone();
-                    newSensor.Id = _canvas.Children.OfType<CustomSensor>().OrderBy(x => x.SensorData.Id).Last().SensorData.Id+1;
-                    item.Tag = newSensor.Id;
-                    newSensor.IsNew = true;
-                    newSensor.Description = "Копия";
-                    newSensor.Address = string.Empty;
-                    ItemsSource.Add(newSensor);
-                    var uiSensor = _canvas.Children.OfType<CustomSensor>()
-                                   .Where(x => x.SensorData == newSensor).FirstOrDefault();
-                    uiSensor.CustomBackground = Brushes.AliceBlue;
-                    uiSensor.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
-                    tempSelectedSensorsCollection.Add(newSensor);
+                    var newObj = (MapObject)item.MapData.Clone();
+                    var existingIds = GetAllMapElements().Select(e => e.MapData.Id).ToList();
+                    newObj.Id = existingIds.Any() ? existingIds.Max() + 1 : 1;
+                    if (item is FrameworkElement feItem) feItem.Tag = newObj.Id;
+                    newObj.IsNew = true;
+                    newObj.Description = "Копия";
+                    if (newObj is SensorAssignments sa) sa.Address = string.Empty;
+                    ItemsSource.Add(newObj);
+                    var uiElement = GetAllMapElements()
+                                   .FirstOrDefault(x => x.MapData == newObj);
+                    if (uiElement != null)
+                    {
+                        if (uiElement is CustomSensor cs)
+                        {
+                            cs.CustomBackground = Brushes.AliceBlue;
+                            cs.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                        }
+                        else if (uiElement is CustomDevice cd)
+                        {
+                            cd.CustomBackground = Brushes.AliceBlue;
+                            cd.SetCurrentValue(CustomDevice.IsSelectedProperty, true);
+                        }
+                    }
+                    tempSelectedMapObjects.Add(newObj);
                 }
             }
             
         }
         private void CutSensors()
         {
-            List<CustomSensor> SelectedSensors = _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected).ToList();
-            _clipboard.Copy(SelectedSensors);
+            var selectedElements = GetAllMapElements().Where(x => IsElementSelected(x)).ToList();
+            _clipboard.Copy(selectedElements);
         }
 
 
@@ -490,17 +548,21 @@ namespace SensorMap.CustomControls
         private void _canvas_Drop(object sender, DragEventArgs e)
         {
             object data = e.Data.GetData(DataFormats.Serializable);
-            if (data is SensorAssignments sensorData&&IsEditMode)
+            if (data is MapObject mapData && IsEditMode)
             {  
-                if (sensorData != null)
+                if (mapData != null)
                 {
                     Point dropPosition = e.GetPosition(_canvas);
-                    CustomSensor element = CreateSensorObject(sensorData,_transformObject.WorldToScreen(dropPosition, _viewMatrix));
+                    FrameworkElement element = CreateMapObject(mapData, _transformObject.WorldToScreen(dropPosition, _viewMatrix));
                     _isDropAdd = true;
-                    var command = new AddSensor(sensorData, element, _canvas!, ItemsSource);
+                    var command = new AddSensor(mapData, (FrameworkElement)element, _canvas!, ItemsSource);
                     AddSensorsCommand.Execute(command);
-                    
-                    element.Tag = sensorData.Id;
+                    if (mapData.Id == 0)
+                    {
+                        var existingIds = GetAllMapElements().Select(e2 => e2.MapData.Id).ToList();
+                        mapData.Id = existingIds.Any() ? existingIds.Max() + 1 : 1;
+                    }
+                    if (element is FrameworkElement feDrop) feDrop.Tag = mapData.Id;
                 }
             }
         }
@@ -603,24 +665,20 @@ namespace SensorMap.CustomControls
 
             ApplyBounds(ref scaleMatrix, scaledWidth, scaledHeight, parentSize);
             _viewMatrixTransform.Matrix = scaleMatrix;
-            foreach (UIElement element in _canvas!.Children)
+            foreach (FrameworkElement element in _canvas!.Children)
             {
                 if (element != null)
                 {
-                    if (element is CustomSensor sensor1)
+                    if (element is IMapElement mapElement)
                     {
-                        var sensor = ItemsSource.Where(x=>x == sensor1.SensorData).FirstOrDefault();
-                        if (sensor == null) continue;
-                        Point screen = _transformObject.WorldToScreen(new Point(Canvas.GetLeft(sensor1), Canvas.GetTop(sensor1)), _viewMatrix);
-                        Canvas.SetLeft(sensor1, screen.X);
-                        Canvas.SetTop(sensor1, screen.Y);
+                        var data = ItemsSource.Where(x => x == mapElement.MapData).FirstOrDefault();
+                        if (data == null) continue;
+                        Point screen = _transformObject.WorldToScreen(new Point(Canvas.GetLeft(element), Canvas.GetTop(element)), _viewMatrix);
+                        Canvas.SetLeft(element, screen.X);
+                        Canvas.SetTop(element, screen.Y);
                     }
                 }
             }
-            //foreach (var sensor in _canvas.Children.OfType<CustomSensor>())
-            //{
-            //    sensor.UpdateAddressPosition();
-            //}
             MapProperties.SetViewMatrix(this, _viewMatrix);
         }
         
@@ -690,43 +748,34 @@ namespace SensorMap.CustomControls
             }
         }
         #endregion
-        private void UIElementSensor_ShowMoreInfo(object sender, MouseButtonEventArgs e)
+       
+        private FrameworkElement CreateMapObject(MapObject mapData, Point point)
         {
-            if (e.ChangedButton == MouseButton.Right)
+            if (mapData is SensorAssignments sensorData)
             {
-                if (sender is CustomSensor sensor)
-                {
-                    var pop = new View.SensorAddInfo();
-                    var window = new PopupWindow()
-                    {
-                        PopupElement = pop,
-                        DataContext = sensor.SensorData
-                    };
-                    Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
-
-                    void OnMainWindowClick(object sender, MouseButtonEventArgs e)
-                    {
-                        window.Close();
-                        Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
-                    }
-                        window.Show(sensor, false);
-                    }
-                }
-                e.Handled = true;
-            
-        }
-        private CustomSensor CreateSensorObject(SensorAssignments sensor, Point point)
-        {           
-            var element = new CustomSensor();
-            element.SensorData = sensor;
-            element.CustomBackground = (SolidColorBrush)(new BrushConverter().ConvertFrom(sensor.Sensor.SensorType.Color??Colors.PaleVioletRed.ToString()));
-            element.Focus();
-            Canvas.SetLeft(element, point.X);
-            Canvas.SetTop(element, point.Y);
-            element.SensorData.X = point.X;
-            element.SensorData.Y = point.Y;
-            element.AddHandler(UIElement.MouseRightButtonDownEvent, new MouseButtonEventHandler(UIElementSensor_ShowMoreInfo), false);
-            return element;
+                var element = new CustomSensor();
+                element.SensorData = sensorData;
+                element.CustomBackground = (SolidColorBrush)(new BrushConverter().ConvertFrom(sensorData.Sensor?.SensorType?.Color ?? Colors.PaleVioletRed.ToString()));
+                element.Focus();
+                Canvas.SetLeft(element, point.X);
+                Canvas.SetTop(element, point.Y);
+                element.SensorData.X = point.X;
+                element.SensorData.Y = point.Y;
+                return element;
+            }
+            else if (mapData is DeviceAssignment deviceData)
+            {
+                var element = new CustomDevice();
+                element.DeviceData = deviceData;
+                element.CustomBackground = new SolidColorBrush(Colors.LightBlue);
+                element.Focus();
+                Canvas.SetLeft(element, point.X);
+                Canvas.SetTop(element, point.Y);
+                element.DeviceData.X = point.X;
+                element.DeviceData.Y = point.Y;
+                return element;
+            }
+            return null!;
         }
 
         /// <summary>
@@ -759,7 +808,7 @@ namespace SensorMap.CustomControls
         /// </summary>
         /// <param name="pos"></param>
         /// <returns></returns>
-        private List<SensorAssignments> GetSensorsInSelectionRectangle(Point pos)
+        private List<MapObject> GetMapObjectsInSelectionRectangle(Point pos)
         {
             if (SelectionRect.Width > 5 && SelectionRect.Height > 5)
             {
@@ -768,46 +817,54 @@ namespace SensorMap.CustomControls
                 double top = Math.Min(_initialMousePosition.Y, pos.Y);
                 double bottom = Math.Max(_initialMousePosition.Y, pos.Y);
 
-                var colletionSensors = (from sensor in ItemsSource
-                                        where !(sensor.X + sensor.Width < left ||
-                                              sensor.X > right ||
-                                              sensor.Y + sensor.Height < top ||
-                                              sensor.Y > bottom)
-                                        select sensor).ToList();
-                foreach (var sensor in colletionSensors)
+                var collectionMapObjects = (from mapObj in ItemsSource
+                                        where !(mapObj.X + mapObj.Width < left ||
+                                              mapObj.X > right ||
+                                              mapObj.Y + mapObj.Height < top ||
+                                              mapObj.Y > bottom)
+                                        select mapObj).ToList();
+                foreach (var mapObj in collectionMapObjects)
                 {
                     if (_canvas != null)
                     {
-                        var elementToSelect = _canvas.Children
-                        .OfType<CustomSensor>()
-                        .FirstOrDefault(x => x.SensorData == sensor);
-                        if(elementToSelect != null)
+                        var elementToSelect = FindMapElement(_canvas, mapObj);
+                        if (elementToSelect is CustomSensor cs)
                         {
-                            elementToSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
-                            elementToSelect.IsSelected = true;
-                            Canvas.SetZIndex(elementToSelect, 1);
+                            cs.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
+                            cs.IsSelected = true;
+                            Canvas.SetZIndex(cs, 1);
+                        }
+                        else if (elementToSelect is CustomDevice cd)
+                        {
+                            cd.SetCurrentValue(CustomDevice.IsSelectedProperty, true);
+                            cd.IsSelected = true;
+                            Canvas.SetZIndex(cd, 1);
                         }
                     }
                 }
-                foreach (var sensor in tempSelectedSensorsCollection.Except(colletionSensors))
+                foreach (var mapObj in tempSelectedMapObjects.Except(collectionMapObjects))
                 {
                     if (_canvas != null)
                     {
-                        var elementToSelect = _canvas.Children
-                            .OfType<CustomSensor>()
-                            .FirstOrDefault(x => x.SensorData == sensor);
-                        if (elementToSelect != null)
+                        var elementToUnSelect = FindMapElement(_canvas, mapObj);
+                        if (elementToUnSelect is CustomSensor cs)
                         {
-                            elementToSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
-                            elementToSelect.IsSelected = false;
-                            Canvas.SetZIndex(elementToSelect, 0);
+                            cs.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                            cs.IsSelected = false;
+                            Canvas.SetZIndex(cs, 0);
+                        }
+                        else if (elementToUnSelect is CustomDevice cd)
+                        {
+                            cd.SetCurrentValue(CustomDevice.IsSelectedProperty, false);
+                            cd.IsSelected = false;
+                            Canvas.SetZIndex(cd, 0);
                         }
                     }
                 }
 
-                return new List<SensorAssignments>(colletionSensors);
+                return new List<MapObject>(collectionMapObjects);
             }
-            return new List<SensorAssignments>();
+            return new List<MapObject>();
         }
         /// <summary>
         /// Создать прямоугольник выделения
@@ -843,14 +900,14 @@ namespace SensorMap.CustomControls
             // Ограничиваем прямоугольник границами Image
             Rect constrainedRect = new Rect(left, top, width, height);
             constrainedRect.Intersect(imageBounds);
-
+            if (constrainedRect.IsEmpty) return;
             SelectionRect.Width = constrainedRect.Width;
             SelectionRect.Height = constrainedRect.Height;
             Canvas.SetLeft(SelectionRect, constrainedRect.Left);
             Canvas.SetTop(SelectionRect, constrainedRect.Top);
             
-            tempSelectedSensorsCollection = GetSensorsInSelectionRectangle(pos);
-            IsMultiSelection = tempSelectedSensorsCollection.Count > 1;
+            tempSelectedMapObjects = GetMapObjectsInSelectionRectangle(pos);
+            IsMultiSelection = tempSelectedMapObjects.Count > 1;
         }
         private Rect GetImageBounds()
         {
@@ -888,12 +945,24 @@ namespace SensorMap.CustomControls
         }
         public void ClearSelectedSensors()
         {
-            foreach (var uiElement in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
+            var selectedElements = GetAllMapUIElements()
+                    .Where(e => e is IMapElement me && IsElementSelected(me))
+                    .ToList();
+            foreach (var uiElement in selectedElements)
             {
-                uiElement.IsSelected = false;
+                if (uiElement is CustomSensor cs)
+                {
+                    cs.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+                    cs.IsSelected = false;
+                }
+                else if (uiElement is CustomDevice cd)
+                {
+                    cd.SetCurrentValue(CustomDevice.IsSelectedProperty, false);
+                    cd.IsSelected = false;
+                }
                 Canvas.SetZIndex(uiElement, 0);
             }
-            tempSelectedSensorsCollection.Clear();
+            tempSelectedMapObjects.Clear();
             IsMultiSelection = false;
         }
     }

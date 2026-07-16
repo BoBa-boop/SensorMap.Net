@@ -7,31 +7,31 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace SensorMap.Commands.SensorCommands
 {
     public class RemoveSensor : IUndoRedoCommand
     {
-        private readonly List<CustomSensor> _elements;
+        private readonly List<IMapElement> _elements;
         private readonly Canvas _canvas;
-        private readonly ObservableCollection<SensorAssignments> _collection;
-        public RemoveSensor(List<CustomSensor> sensorsVisual, Canvas canvas,
-        ObservableCollection<SensorAssignments> collection)
+        private readonly ObservableCollection<MapObject> _collection;
+        public RemoveSensor(List<IMapElement> elements, Canvas canvas,
+        ObservableCollection<MapObject> collection)
         {
-            _elements = sensorsVisual;
+            _elements = elements;//.Select(x => (IMapElement)x.MapData.Clone()).ToList();
             _canvas = canvas;
             _collection = collection;
         }
         public void Do()
         {
-            foreach (var item in _elements)
+            foreach (var element in _elements)
             {
-                item.SensorData.ToDelete=true;
-                if (_canvas.Children.Contains(item))
-                {
-                    _canvas.Children.Remove(item);
-                }
+                var item = element.MapData.FindInCanvas(_canvas);
+                if (item is null) return;
+                element.MapData.ToDelete=true;
+                _canvas.Children.Remove(item);
                 //if (_collection.Contains(item.SensorData))
                 //{
                 //    _collection.Remove(item.SensorData);
@@ -42,10 +42,13 @@ namespace SensorMap.Commands.SensorCommands
 
         public void Undo()
         {
-            foreach (var item in _elements)
+            
+            foreach (var element in _elements.Where(x=>x.MapData.ToDelete==true))
             {
-                item.SensorData.ToDelete = false;
-                _canvas.Children.Add(item);
+                element.MapData.ToDelete = false;
+                _canvas.Children.Add(element.Element);
+                Canvas.SetLeft(element.Element, element.MapData.X);
+                Canvas.SetTop(element.Element, element.MapData.Y);
                 //_collection.Add(item.SensorData);
             }
 

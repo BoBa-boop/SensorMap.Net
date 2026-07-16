@@ -68,7 +68,7 @@ namespace SensorMap.ViewModel
             
                 sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().Include(x => x.Characteristics).ToList());
                 Sensors = new(_dbContext.Sensors.Include(s=>s.Files).ToList());
-                Mechanisms = new(_dbContext.Mechanisms.Include(x => x.SensorsAssig).AsNoTracking().ToList());
+                Mechanisms = new(_dbContext.Mechanisms.Include(x => x.MapObjects).AsNoTracking().ToList());
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
                 SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
             
@@ -131,8 +131,8 @@ namespace SensorMap.ViewModel
 
             this.WhenAnyValue(x => x.SelectedNode)
                 .Where(sensor => sensor != null)
-                .Select(sensor => Mechanisms.Where(mech =>mech.SensorsAssig!=null)
-                .Where(x=>x.SensorsAssig!.Any(sa => sa.SensorId == sensor.Id)))
+                .Select(sensor => Mechanisms.Where(mech =>mech.MapObjects!=null)
+                .Where(x=>x.MapObjects!.OfType<SensorAssignments>().Any(sa => sa.SensorId == sensor.Id)))
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(filteredMechanisms =>
                 { 

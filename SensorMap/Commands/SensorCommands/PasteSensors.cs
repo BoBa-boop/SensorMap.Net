@@ -7,21 +7,22 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace SensorMap.Commands.SensorCommands
 {
     public class PasteSensors : IUndoRedoCommand
     {
-        private readonly IEnumerable<CustomSensor> _elements;
-        private readonly IEnumerable<SensorAssignments> _sensorsData;
+        private readonly IEnumerable<UIElement> _elements;
+        private readonly IEnumerable<MapObject> _mapData;
         private readonly Canvas _canvas;
-        private readonly ObservableCollection<SensorAssignments> _collection;
-        public PasteSensors(IEnumerable<SensorAssignments> sensors, IEnumerable<CustomSensor> sensorsVisual, Canvas canvas,
-        ObservableCollection<SensorAssignments> collection)
+        private readonly ObservableCollection<MapObject> _collection;
+        public PasteSensors(IEnumerable<MapObject> mapData, IEnumerable<UIElement> elements, Canvas canvas,
+        ObservableCollection<MapObject> collection)
         {
-            _elements = sensorsVisual;
-            _sensorsData = sensors;
+            _elements = elements;
+            _mapData = mapData;
             _canvas = canvas;
             _collection = collection;
         }
@@ -29,12 +30,11 @@ namespace SensorMap.Commands.SensorCommands
         {
             foreach (var uiElement in _elements)
             {
-                uiElement.SensorData.Id = 0;
                 _canvas.Children.Add(uiElement);
             }
-            foreach (var item in _sensorsData)
+            foreach (var item in _mapData)
             {
-                item.Id = 0;
+                item.IsNew = true;
                 _collection.Add(item);
             }
         }
@@ -43,12 +43,11 @@ namespace SensorMap.Commands.SensorCommands
         {
             foreach (var uiElement in _elements)
             {
-                uiElement.SensorData.Id = 0;
                 _canvas.Children.Remove(uiElement);
             }
-            foreach (var item in _sensorsData)
+            foreach (var item in _mapData)
             {
-                item.Id = 0;
+                item.IsNew = false;
                 _collection.Remove(item);
             }
         }

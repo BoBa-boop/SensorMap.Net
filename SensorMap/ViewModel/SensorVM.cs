@@ -39,7 +39,7 @@ namespace SensorMap.ViewModel
         {
             get => _sensorsTreeNode;
             set { this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value); }
-        }
+            }
         [Reactive]public ObservableCollection<Sensor> Sensors {  get; set; }
         
         [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms 
@@ -74,7 +74,10 @@ namespace SensorMap.ViewModel
             
             _additionalData = new(LoadMoreData());
 
-            SaveMoreData = new RelayCommand(SaveDataFileds);
+            SaveMoreData = new RelayCommand<Sensor>((_)=>SaveDataFileds(),
+                (_node) => { if (_node == null || _node.AdditionalData==null) return false;
+                        return _node.AdditionalData.HasData() && IsEditMode; 
+                });
             NavigateToMech = new RelayCommand<Mechanism>((mech) =>
             {
                 if (mech == null) return;

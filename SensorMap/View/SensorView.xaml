@@ -106,9 +106,34 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                             </Grid>
-                            <GroupBox Header="Файлы" Style="{StaticResource BaseStyle}">
+                            <GroupBox Style="{StaticResource BaseStyle}">
+                                <GroupBox.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Файлы"/>
+                                        <WrapPanel Name="fButtons" Orientation="Horizontal"
+                                                   Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}" 
+                                                   Margin="5,0,0,0"
+                                                   HorizontalAlignment="Center"
+                                                   ItemWidth="20" ItemHeight="20">
+                                            <Button Style="{StaticResource ButtonSuccess.Small}" Padding="1"
+                                                    hc:IconElement.Geometry="{StaticResource AddGeometry}" hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                    Command="{Binding AddFiles}" CommandParameter="{Binding SelectedNode}"/>
+
+                                            <Button Style="{StaticResource ButtonDanger.Small}" Padding="1"
+                                                    hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}" hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                    Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=sFiles,Path=SelectedItem}"/>
+
+                                            <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1"
+                                                    hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                    Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary.Small}">
+                                                
+                                            </Button>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </GroupBox.Header>
                                 <StackPanel Orientation="Vertical">
                                     <ListBox Name="sFiles"
+                                             Background="Transparent"
                                              MinHeight="100"
                                              ItemsSource="{Binding SelectedNode.Files,UpdateSourceTrigger=PropertyChanged}">
                                         <ListBox.ItemTemplate>
@@ -154,44 +179,23 @@
                                                 </Setter>
                                             </Style>
                                         </ListBox.ItemContainerStyle>
-                                        <ListBox.Style>
-                                            <Style TargetType="ListBox" BasedOn="{StaticResource ListBoxCustom}">
-                                                <Setter Property="Background" Value="Transparent"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding ElementName=sFiles,Path=ItemsSource.Count}" Value="0">
-                                                        <Setter Property="Background">
-                                                            <Setter.Value>
-                                                                <ImageBrush ImageSource="{StaticResource EmptyBoxImage}"
-                                                                            Stretch="Uniform" />
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ListBox.Style>
                                     </ListBox>
-                                    <WrapPanel Name="fButtons" Orientation="Horizontal"
-                                               Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"
-                                               Grid.Row="1" Margin="0,15"
-                                               HorizontalAlignment="Center"
-                                               ItemWidth="55">
-                                        <Button Style="{StaticResource ButtonSuccess}"
-                                                hc:IconElement.Geometry="{StaticResource AddGeometry}"
-                                                Command="{Binding AddFiles}" CommandParameter="{Binding SelectedNode}"/>
-                                        
-                                        <Button Style="{StaticResource ButtonDanger}"
-                                                hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
-                                                Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=sFiles,Path=SelectedItem}"/>
-
-                                        <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}"
-                                                Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary}">                                            
-                                        </Button>
-                                    </WrapPanel>
                                 </StackPanel>
                             </GroupBox>
-                            <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">
+                            <GroupBox Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">
+                                <GroupBox.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Дополнительная информация" Margin="0,0,5,0"/>
+                                        <Button Command="{Binding SaveMoreData}"
+                                                Style="{StaticResource ButtonPrimary.Small}"
+                                                CommandParameter="{Binding SelectedNode}"
+                                                hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1"
+                                                hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                    </StackPanel>
+                                </GroupBox.Header>
                                 <StackPanel Orientation="Vertical">
-                                    <ListBox x:Name="sInfo"
+                                    <ListBox x:Name="sInfo" Background="Transparent"
                                         ItemsSource="{Binding SelectedNode.AdditionalData.Data}"
                                              BorderThickness="0">
                                         <ListBox.ItemTemplate>
@@ -221,8 +225,6 @@
                                             </ItemsPanelTemplate>
                                         </ListBox.ItemsPanel>
                                     </ListBox>
-                                    <Button Content="Сохранить" Command="{Binding SaveMoreData}" 
-                            Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                 </StackPanel>
                             </GroupBox>
                         </StackPanel>

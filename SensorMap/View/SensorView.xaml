@@ -9,6 +9,7 @@
         xmlns:vm="clr-namespace:SensorMap.ViewModel"
         xmlns:beh="clr-namespace:SensorMap.Behaviors"
         xmlns:local="clr-namespace:SensorMap.View"
+             xmlns:cmd="clr-namespace:SensorMap.Commands"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:SensorVM}"
         Height="auto" Width="auto" x:Name="root">
@@ -18,7 +19,7 @@
             <ColumnDefinition MaxWidth="400"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-            <Grid Margin="30,20">
+            <Grid Margin="20">
                 <Border Background="WhiteSmoke" CornerRadius="12">
                     <TreeView x:Name="tvSensors" ItemsSource="{Binding SensorsTree.Nodes,UpdateSourceTrigger=PropertyChanged}"  SelectedValuePath="Children">
                         <i:Interaction.Behaviors>
@@ -51,14 +52,27 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions> 
+                        </Grid.RowDefinitions>
                         <StackPanel Grid.Row="0" Margin="10">
-                            <Border CornerRadius="140" Width="270" Height="270"
-                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1.5">
+                            <Border Width="270" Height="270"
+                                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1.5">
+                                <Border.Clip>
+                                    <EllipseGeometry Center="135,135" RadiusX="130" RadiusY="130"/>
+                                </Border.Clip>
                                 <Border.Background>
-                                    <ImageBrush ImageSource="{Binding SelectedNode.Image}"/>
+                                    <ImageBrush ImageSource="{Binding SelectedNode.Image}" Stretch="UniformToFill"/>
                                 </Border.Background>
+                                <Button Style="{StaticResource OverlayImageButtonStyle}" ClipToBounds="True"
+                                            Command="{Binding OpenFullScreen}" CommandParameter="{Binding SelectedNode.Image}"
+                                            Width="270" Height="270">
+                                    <Path Data="{StaticResource FullScreenGeometry}"
+                                          Stroke="Black" 
+                                          Fill="DarkGray"
+                                          Stretch="Uniform"
+                                          Margin="90"/>
+                                </Button>
                             </Border>
+
                             <TextBlock Text="{Binding SelectedNode.Name}"
                                        Style="{StaticResource TextBlockTitle}"
                                        HorizontalAlignment="Center"/>
@@ -89,6 +103,7 @@
                                         <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                                             <Setter Property="Margin" Value="2"/>
                                             <Setter Property="FontSize" Value="14"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
                                         </Style>
                                     </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
@@ -106,36 +121,45 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                             </Grid>
-                            <GroupBox Style="{StaticResource BaseStyle}">
+                            <GroupBox Style="{StaticResource GroupBoxOriginal}" BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
                                 <GroupBox.Header>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Файлы"/>
+                                        <TextBlock Text="Файлы" Style="{StaticResource TextBlockDefault}"
+                                                   FontFamily="Bahnschrift" FontSize="17"/>
                                         <WrapPanel Name="fButtons" Orientation="Horizontal"
                                                    Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}" 
                                                    Margin="5,0,0,0"
                                                    HorizontalAlignment="Center"
-                                                   ItemWidth="20" ItemHeight="20">
-                                            <Button Style="{StaticResource ButtonSuccess.Small}" Padding="1"
+                                                   ItemWidth="25" ItemHeight="20">
+                                            <Button Style="{StaticResource ButtonSuccess.Small}" Padding="1" Width="20" Height="20"
                                                     hc:IconElement.Geometry="{StaticResource AddGeometry}" hc:IconElement.Width="15" hc:IconElement.Height="15"
-                                                    Command="{Binding AddFiles}" CommandParameter="{Binding SelectedNode}"/>
+                                                    Command="{Binding AddFiles}" CommandParameter="{Binding SelectedNode}" Cursor="Hand"/>
 
-                                            <Button Style="{StaticResource ButtonDanger.Small}" Padding="1"
+                                            <Button Style="{StaticResource ButtonDanger.Small}" Padding="1" Width="20" Height="20"
                                                     hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}" hc:IconElement.Width="15" hc:IconElement.Height="15"
-                                                    Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=sFiles,Path=SelectedItem}"/>
+                                                    Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=sFiles,Path=SelectedItem}" Cursor="Hand"/>
 
-                                            <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1"
+                                            <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1" Width="20" Height="20"
                                                     hc:IconElement.Width="15" hc:IconElement.Height="15"
-                                                    Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary.Small}">
-                                                
-                                            </Button>
+                                                    Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary.Small}" Cursor="Hand"/>
+
+                                            <Button hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}" Padding="1" Width="20" Height="20"
+                                                        hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                        Command="{Binding ShowAllFiles}" Style="{StaticResource ButtonPrimary.Small}" Cursor="Hand"/>
+
                                         </WrapPanel>
                                     </StackPanel>
                                 </GroupBox.Header>
                                 <StackPanel Orientation="Vertical">
                                     <ListBox Name="sFiles"
-                                             Background="Transparent"
-                                             MinHeight="100"
+                                             Background="Transparent" BorderThickness="0"
                                              ItemsSource="{Binding SelectedNode.Files,UpdateSourceTrigger=PropertyChanged}">
+                                        <ListBox.Resources>
+                                            <cmd:BindingProxy x:Key="proxy" Data="{Binding}"/>
+                                        </ListBox.Resources>
+                                        <i:Interaction.Behaviors>
+                                            <beh:ListBoxBehavior CanUnselectItem="True"/>
+                                        </i:Interaction.Behaviors>
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Vertical" Width="50">
@@ -143,7 +167,20 @@
                                                            Stretch="Uniform"
                                                            Width="25"/>
                                                     <TextBlock Text="{Binding NameFile,Converter={StaticResource PathConverter}}"
-                                                               ToolTip="{Binding NameFile}" TextTrimming="CharacterEllipsis"/>
+                                                               ToolTip="{Binding NameFile}"
+                                                               FontSize="12"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel.ContextMenu>
+                                                        <ContextMenu DataContext="{Binding Source={StaticResource proxy},Path=Data}">
+                                                            <MenuItem Header="Открыть" 
+                                                                      Command="{Binding Source={StaticResource proxy}, Path=Data.OpenFile}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+
+                                                            <MenuItem Header="Удалить" 
+                                                                      Command="{Binding Source={StaticResource proxy}, Path=Data.DeletePathFiles}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                        </ContextMenu>
+                                                    </StackPanel.ContextMenu>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
@@ -155,20 +192,27 @@
                                         <ListBox.ItemContainerStyle>
                                             <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource InputElementBaseStyle}">
                                                 <Setter Property="Margin" Value="5"/>
-                                                <Setter Property="FontSize" Value="12"/>
                                                 <Setter Property="Cursor" Value="Hand"/>
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                            <Border x:Name="brd" Background="{StaticResource BorderBrush}" 
+                                                            <hc:Badge x:Name="badge"
+                                                                      Background="{StaticResource InfoBrush}"
+                                                                      Text="Новый" FontSize="11"
+                                                                      BadgeMargin="-15,-5"
+                                                                      ShowBadge="{Binding IsNew}"
+                                                                      >
+                                                                <Border x:Name="brd" Background="{StaticResource BorderBrush}" 
                                                                     BorderBrush="Transparent"
-                                                                    BorderThickness="1.5">
-                                                                <ContentPresenter/>
-                                                                <Border.InputBindings>
-                                                                    <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ElementName=root,Path=DataContext.OpenFile}"
+                                                                    BorderThickness="1.5"
+                                                                    Visibility="{Binding IsHide,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                                                    <ContentPresenter/>
+                                                                    <Border.InputBindings>
+                                                                        <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ElementName=root,Path=DataContext.OpenFile}"
                                                                                   CommandParameter="{Binding }"/>
-                                                                </Border.InputBindings>
-                                                            </Border>
+                                                                    </Border.InputBindings>
+                                                                </Border>
+                                                            </hc:Badge>
                                                             <ControlTemplate.Triggers>
                                                                 <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}"  Value="True">
                                                                     <Setter Property="Border.BorderBrush" TargetName="brd" Value="{StaticResource AccentBrush}"/>
@@ -182,15 +226,18 @@
                                     </ListBox>
                                 </StackPanel>
                             </GroupBox>
-                            <GroupBox Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">
+                            <GroupBox Style="{StaticResource GroupBoxOriginal}" BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
                                 <GroupBox.Header>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Дополнительная информация" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Дополнительная информация"
+                                                   Style="{StaticResource TextBlockDefault}"
+                                                   FontFamily="Bahnschrift" FontSize="17" Margin="0,0,5,0"/>
                                         <Button Command="{Binding SaveMoreData}"
                                                 Style="{StaticResource ButtonPrimary.Small}"
                                                 CommandParameter="{Binding SelectedNode}"
                                                 hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1"
                                                 hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                Cursor="Hand"
                                                 Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                     </StackPanel>
                                 </GroupBox.Header>

@@ -1,5 +1,6 @@
 ﻿using HandyControl.Controls;
 using HandyControl.Data;
+using SensorMap.Behaviors;
 using SensorMap.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -127,6 +128,13 @@ namespace SensorMap.Services
             }
             return Array.Empty<byte>();
             
+        }
+        public void OpenFullScreen(ImageSource image)
+        {
+            var viewer = new CustomImageBrowser(image) { Title = "Просмотр" };
+
+            // Показываем как модальное окно текущего приложения
+            viewer.ShowDialog();
         }
     }
 }

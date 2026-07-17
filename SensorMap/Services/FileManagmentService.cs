@@ -62,7 +62,8 @@ namespace SensorMap.Services
                     {
                         DeviceId = device.Id,
                         NameFile = path,
-                        ImageFile = imgManag.ConvertToByte(GetIconFile(path))
+                        ImageFile = imgManag.ConvertToByte(GetIconFile(path)),
+                        IsNew = true
                     });
                 }
                 
@@ -81,26 +82,29 @@ namespace SensorMap.Services
                     {
                         SensorId = sensor.Id,
                         NameFile = path,
-                        ImageFile = imgManag.ConvertToByte(GetIconFile(path))
+                        ImageFile = imgManag.ConvertToByte(GetIconFile(path)),
+                        IsNew = true
                     });
                 }
             }
             return true;
         }
 
-        public void OpenFileInExplorer(string path)
+        public bool OpenFileInExplorer(string path)
         {
             try
             {
                 if(!File.Exists(path)) throw new FileNotFoundException();
                 Process.Start("explorer.exe", "/select,\"" + Path.GetFullPath(path) + "\"");
+                return true;
             }
             catch (Exception ex) 
             {
                 Growl.Error("Не удалось открыть файл в проводнике");
-                MessageBox.Show(ex.Message);
                 Logger.Error(ex.Message);
+                return false;
             }
         }
+
     }
 }

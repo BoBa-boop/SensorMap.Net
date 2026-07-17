@@ -13,7 +13,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reactive.Linq;
+using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace SensorMap.ViewModel
 {
@@ -26,10 +28,9 @@ namespace SensorMap.ViewModel
         private readonly ITempImage imgManag;
         private IAppDbContextFactory _appDbContextFactory;
         private readonly IFileManagment _fileManagment;
-        private readonly AppDBContext _dbContext;
         private Sensor _sensorsTreeNode;
         public ObservableCollection<AdditionalData> _additionalData;
-        private ObservableCollection<Mechanism> Mechanisms { get; set; }
+        private List<Mechanism> Mechanisms { get; set; }
         private ObservableCollection<Mechanism> _FilteredMechanisms;
         private ObservableCollection<SensorCharacteristic> _sensorCharacteristics;
 
@@ -38,8 +39,13 @@ namespace SensorMap.ViewModel
         [Reactive]public Sensor SelectedNode
         {
             get => _sensorsTreeNode;
-            set { this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value); }
+            set 
+            {
+                if(value!=null)
+                this.RaiseAndSetIfChanged(ref _sensorsTreeNode, value);
             }
+            
+        }
         [Reactive]public ObservableCollection<Sensor> Sensors {  get; set; }
         
         [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms 
@@ -48,7 +54,7 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _FilteredMechanisms, value); }
         }
         [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree { get; set; }
-        private ObservableCollection<SensorType> sensorTypes {  get; set; }
+        private List<SensorType> sensorTypes {  get; set; }
         
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
 
@@ -64,14 +70,35 @@ namespace SensorMap.ViewModel
             _service = service;
             _appDbContextFactory = appDbContextFactory;
             _fileManagment = fileManagment;
-            _dbContext = _appDbContextFactory.CreateDbContext();
-            
-                sensorTypes = new(_dbContext.SensorTypes.AsNoTracking().Include(x => x.Characteristics).ToList());
-                Sensors = new(_dbContext.Sensors.Include(s=>s.Files).ToList());
-                Mechanisms = new(_dbContext.Mechanisms.Include(x => x.MapObjects).AsNoTracking().ToList());
+            using (var _dbContext = _appDbContextFactory.CreateDbContext())
+            {
+                // Загружаем датчики вместе с их типами и характеристиками одним пакетом
+                var sensorsWithDetails = _dbContext.Sensors
+                    .AsNoTracking()
+                    .Include(s => s.Files)
+                    .Include(s => s.SensorType)
+                        .ThenInclude(st => st.Characteristics)
+                    .ToList();
+
+                Sensors = new(sensorsWithDetails);
+
+                // Извлекаем уникальные типы датчиков из уже полученной коллекции
+                sensorTypes = new(sensorsWithDetails
+                    .Select(s => s.SensorType!)
+                    .Where(st => st != null)
+                    .DistinctBy(st => st.Id)
+                    .ToList());
+                Mechanisms = _dbContext.Mechanisms.AsNoTracking().Select(x=> new Mechanism 
+                    {
+                        Id=x.Id,
+                        Name=x.Name,
+                        SectorID = x.SectorID,
+                        MapObjects = new(x.MapObjects.OfType<SensorAssignments>().Select(x => new SensorAssignments { SensorId = x.SensorId }).ToList())
+
+                    }).ToList();
                 Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-                SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, Sensors, filter);
-            
+                SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", new(sensorTypes), Sensors, filter);
+            }
             _additionalData = new(LoadMoreData());
 
             SaveMoreData = new RelayCommand<Sensor>((_)=>SaveDataFileds(),
@@ -89,9 +116,16 @@ namespace SensorMap.ViewModel
                 SelectedNode.Files.Remove(file);
                 try
                 {
-                   
-                        //_dbContext.Remove(SelectedNode);
-                        _dbContext.SaveChanges();
+                    using (var _dbContext = _appDbContextFactory.CreateDbContext())
+                    {
+                        var fileInDb = _dbContext.HelpfulFiles.Find(file.Id);
+
+                        if (fileInDb != null)
+                        {
+                            _dbContext.HelpfulFiles.Remove(file);
+                            _dbContext.SaveChanges();
+                        }
+                    }
                         Growl.Success(new GrowlInfo
                         {
                             Message = "Путь к файлам удален.",
@@ -106,15 +140,38 @@ namespace SensorMap.ViewModel
                     Logger.Error(ex.Message);
                 }
             });
-            OpenFile = new RelayCommand<HelpfulFile>((file) => { fileManagment.OpenFileInExplorer(file.NameFile); });
+            OpenFile = new RelayCommand<HelpfulFile>((file) => 
+            { 
+                if (!fileManagment.OpenFileInExplorer(file.NameFile))
+                {
+                    MessageBoxResult res = HandyControl.Controls.MessageBox.Show(
+                        new MessageBoxInfo
+                        {
+                            Message = "Файл не найден, скрыть файл?",
+                            Caption = "Ошибка",
+                            DefaultResult = MessageBoxResult.No
+                        });
+                    if (res == MessageBoxResult.OK)
+                    {
+                        file.IsHide = true;
+                        
+                    }
+                } 
+            });
             SaveFiles = new RelayCommand(() =>
             {
                 try
                 {
-                    if (_dbContext.ChangeTracker.HasChanges())
+                    using (var _dbContext = _appDbContextFactory.CreateDbContext())
                     {
-                        //_dbContext.Update(SelectedNode);
-                        _dbContext.SaveChanges();
+                        _dbContext.Attach(SelectedNode);
+
+                        // Говорим EF Core, что навигационное свойство Files было изменено целиком
+                        _dbContext.Entry(SelectedNode).Collection(s => s.Files).IsModified = true;
+                        bool success = _dbContext.SaveChanges() > 0 ? true:false;
+                        if (success) UnSetIsNew(SelectedNode.Files);
+                            
+                    }
                         Growl.Success(new GrowlInfo
                         {
                             Message = "Путь к файлам сохранен.",
@@ -122,7 +179,6 @@ namespace SensorMap.ViewModel
                             ShowDateTime = false,
                             WaitTime = 2
                         });
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -131,6 +187,17 @@ namespace SensorMap.ViewModel
                 }
                 
             });
+            ShowAllFiles = new RelayCommand(() => 
+            {
+                foreach (var item in SelectedNode.Files)
+                {
+                    item.IsHide = false;
+                }
+            });
+            OpenFullScreen = new RelayCommand<byte[]>((s) => 
+            {
+                imgManag.OpenFullScreen(imgManag.CreateImageFromBytes(s)); 
+            }, (s) => { return s != null; });
 
             this.WhenAnyValue(x => x.SelectedNode)
                 .Where(sensor => sensor != null)
@@ -201,8 +268,11 @@ namespace SensorMap.ViewModel
         public ICommand AddFiles { get; }
         public ICommand DeletePathFiles { get; }
         public ICommand SaveFiles { get; }
+        public ICommand ShowAllFiles { get; }
         public ICommand OpenFile { get; }
         public ICommand NavigateToMech {  get; }
+        public ICommand OpenFullScreen { get; }
+
         private void SaveDataFileds()
         {
             string FILE_PATH = "SensorMoreData.json";
@@ -238,6 +308,12 @@ namespace SensorMap.ViewModel
                 });
             }
         }
-
+        private void UnSetIsNew(IEnumerable<HelpfulFile> files)
+        {
+            foreach (var item in files)
+            {
+                item.IsNew = false;
+            }
+        }
     }
 }

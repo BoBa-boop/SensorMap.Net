@@ -25,6 +25,7 @@ namespace SensorMap.Interfaces
         ImageSource GetIconFile(string path);
 
         bool AddHelpfulFile(ITempImage imgManag,object Entity, bool multiselect = false);
-        void OpenFileInExplorer(string path);
+        bool OpenFileInExplorer(string path);
+        
     }
 }

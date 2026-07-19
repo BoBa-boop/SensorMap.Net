@@ -113,7 +113,7 @@ namespace SensorMap.ViewModel
             AddFiles = new RelayCommand<Sensor>((s) => { fileManagment.AddHelpfulFile(imgManag, s,true);  });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
-                SelectedNode.Files.Remove(file);
+                
                 try
                 {
                     using (var _dbContext = _appDbContextFactory.CreateDbContext())
@@ -122,9 +122,10 @@ namespace SensorMap.ViewModel
 
                         if (fileInDb != null)
                         {
-                            _dbContext.HelpfulFiles.Remove(file);
+                            _dbContext.HelpfulFiles.Remove(fileInDb);
                             _dbContext.SaveChanges();
                         }
+                        SelectedNode.Files.Remove(file);
                     }
                         Growl.Success(new GrowlInfo
                         {

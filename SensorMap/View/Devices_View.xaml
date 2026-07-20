@@ -9,7 +9,8 @@
              xmlns:vm="clr-namespace:SensorMap.ViewModel"
              xmlns:beh="clr-namespace:SensorMap.Behaviors"
              xmlns:cnv="clr-namespace:SensorMap.Converters"
-             d:DataContext="{d:DesignInstance vm:Device_VM}"
+             xmlns:cmd="clr-namespace:SensorMap.Commands"
+             d:DataContext="{d:DesignInstance vm:Devices_VM}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" x:Name="root">
     <hc:TransitioningContentControl TransitionMode="Bottom2Top">
@@ -18,7 +19,7 @@
                 <ColumnDefinition MaxWidth="400"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Grid Margin="30,20">
+            <Grid Margin="20">
                 <Border Background="WhiteSmoke" CornerRadius="12">
                     <TreeView ItemsSource="{Binding DeviceTree.Nodes,UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Children">
                         <i:Interaction.Behaviors>
@@ -52,8 +53,24 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <StackPanel Grid.Row="0" Margin="10">
-                            <Image Width="250" Height="250" SnapsToDevicePixels="True"
-                                   Source="{Binding SelectedDevice.Image}" Stretch="Uniform"/>
+                            <Border Width="270" Height="270"
+                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1.5">
+                                <Border.Clip>
+                                    <EllipseGeometry Center="135,135" RadiusX="130" RadiusY="130"/>
+                                </Border.Clip>
+                                <Border.Background>
+                                    <ImageBrush ImageSource="{Binding SelectedDevice.Image}" Stretch="UniformToFill"/>
+                                </Border.Background>
+                                <Button Style="{StaticResource OverlayImageButtonStyle}" ClipToBounds="True"
+                                        Command="{Binding OpenFullScreen}" CommandParameter="{Binding SelectedDevice.Image}"
+                                        Width="270" Height="270" IsHitTestVisible="{Binding SelectedDevice.Image,Converter={StaticResource Object2BooleanConverter}}">
+                                    <Path Data="{StaticResource FullScreenGeometry}"
+                                          Stroke="Black" 
+                                          Fill="DarkGray"
+                                          Stretch="Uniform"
+                                          Margin="90"/>
+                                </Button>
+                            </Border>
                             <TextBlock Text="{Binding SelectedDevice.Name}"
                                    Style="{StaticResource TextBlockTitle}"
                                    HorizontalAlignment="Center"/>
@@ -84,6 +101,7 @@
                                         <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                                             <Setter Property="Margin" Value="2"/>
                                             <Setter Property="FontSize" Value="14"/>
+                                            <Setter Property="Cursor" Value="Hand"/>
                                         </Style>
                                     </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
@@ -101,10 +119,42 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
                             </Grid>
-                            <GroupBox Header="Файлы" Style="{StaticResource BaseStyle}">
+                            <GroupBox Style="{StaticResource GroupBoxOriginal}" BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
+                                <GroupBox.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Файлы" Style="{StaticResource TextBlockDefault}"
+                                                   FontFamily="Bahnschrift" FontSize="17"/>
+                                        <WrapPanel Name="fButtons" Orientation="Horizontal"
+                                                   Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}" 
+                                                   Margin="5,0,0,0"
+                                                   HorizontalAlignment="Center"
+                                                   ItemWidth="25" ItemHeight="20">
+                                            <Button Style="{StaticResource ButtonSuccess.Small}" Padding="1" Width="20" Height="20"
+                                                    hc:IconElement.Geometry="{StaticResource AddGeometry}" hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                    Command="{Binding AddFiles}" CommandParameter="{Binding SelectedDevice}" Cursor="Hand"/>
+                                            
+                                            <Button Style="{StaticResource ButtonDanger.Small}" Padding="1" Width="20" Height="20"
+                                                    hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}" hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                    Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=dFiles,Path=SelectedItem}" Cursor="Hand"/>
+                                            
+                                            <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1" Width="20" Height="20"
+                                                    hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                    Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary.Small}" Cursor="Hand"/>
+                                            
+                                            <Button hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}" Padding="1" Width="20" Height="20"
+                                                    hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                    Command="{Binding ShowAllFiles}" Style="{StaticResource ButtonPrimary.Small}" Cursor="Hand"/>
+                                            
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </GroupBox.Header>
                                 <StackPanel Orientation="Vertical">
-                                    <ListBox Name="dFiles" Height="100"
+                                    <ListBox Name="dFiles"
+                                             Background="Transparent" BorderThickness="0"
                                              ItemsSource="{Binding SelectedDevice.Files,UpdateSourceTrigger=PropertyChanged}">
+                                        <ListBox.Resources>
+                                            <cmd:BindingProxy x:Key="proxy" Data="{Binding}"/>
+                                        </ListBox.Resources>
                                         <i:Interaction.Behaviors>
                                             <beh:ListBoxBehavior CanUnselectItem="True"/>
                                         </i:Interaction.Behaviors>
@@ -112,10 +162,23 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Vertical" Width="50">
                                                     <Image Source="{Binding ImageFile}"
-                               Stretch="Uniform"
-                               Width="25"/>
+                                                           Stretch="Uniform"
+                                                           Width="25"/>
                                                     <TextBlock Text="{Binding NameFile,Converter={StaticResource PathConverter}}"
-                                   ToolTip="{Binding NameFile}" TextTrimming="CharacterEllipsis"/>
+                                                               ToolTip="{Binding NameFile}"
+                                                               FontSize="12"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel.ContextMenu>
+                                                        <ContextMenu DataContext="{Binding Source={StaticResource proxy},Path=Data}">
+                                                            <MenuItem Header="Открыть" 
+                                                                      Command="{Binding Source={StaticResource proxy}, Path=Data.OpenFile}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                            
+                                                            <MenuItem Header="Удалить" 
+                                                                      Command="{Binding Source={StaticResource proxy}, Path=Data.DeletePathFiles}"
+                                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                        </ContextMenu>
+                                                    </StackPanel.ContextMenu>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
@@ -127,20 +190,26 @@
                                         <ListBox.ItemContainerStyle>
                                             <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource InputElementBaseStyle}">
                                                 <Setter Property="Margin" Value="5"/>
-                                                <Setter Property="FontSize" Value="12"/>
                                                 <Setter Property="Cursor" Value="Hand"/>
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                            <Border x:Name="brd" Background="{StaticResource BorderBrush}" 
-                                        BorderBrush="Transparent"
-                                        BorderThickness="1.5">
-                                                                <ContentPresenter/>
-                                                                <Border.InputBindings>
-                                                                    <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ElementName=root,Path=DataContext.OpenFile}"
-                                                      CommandParameter="{Binding }"/>
-                                                                </Border.InputBindings>
-                                                            </Border>
+                                                            <hc:Badge x:Name="badge"
+                                                                      Background="{StaticResource InfoBrush}"
+                                                                      Text="Новый" FontSize="11"
+                                                                      BadgeMargin="-15,-5"
+                                                                      ShowBadge="{Binding IsNew}">
+                                                                <Border x:Name="brd" Background="{StaticResource BorderBrush}" 
+                                                                        BorderBrush="Transparent"
+                                                                        BorderThickness="1.5"
+                                                                        Visibility="{Binding IsHide,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                                                    <ContentPresenter/>
+                                                                    <Border.InputBindings>
+                                                                        <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ElementName=root,Path=DataContext.OpenFile}"
+                                                                                      CommandParameter="{Binding }"/>
+                                                                    </Border.InputBindings>
+                                                                </Border>
+                                                            </hc:Badge>
                                                             <ControlTemplate.Triggers>
                                                                 <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource Self}}"  Value="True">
                                                                     <Setter Property="Border.BorderBrush" TargetName="brd" Value="{StaticResource AccentBrush}"/>
@@ -151,42 +220,24 @@
                                                 </Setter>
                                             </Style>
                                         </ListBox.ItemContainerStyle>
-                                        <ListBox.Style>
-                                            <Style TargetType="ListBox" BasedOn="{StaticResource ListBoxCustom}">
-                                                <Setter Property="Background" Value="Transparent"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding ElementName=dFiles,Path=ItemsSource.Count}" Value="0">
-                                                        <Setter Property="Background">
-                                                            <Setter.Value>
-                                                                <ImageBrush ImageSource="{StaticResource EmptyBoxImage}"
-                                                                            Stretch="Uniform"/>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ListBox.Style>
                                     </ListBox>
-                                    <WrapPanel Name="fButtons" Orientation="Horizontal"
-                                               Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"
-                                               Grid.Row="1" Margin="0,15"
-                                               HorizontalAlignment="Center"
-                                               ItemWidth="55">
-                                        <Button Style="{StaticResource ButtonSuccess}"
-                                                hc:IconElement.Geometry="{StaticResource AddGeometry}"
-                                                Command="{Binding AddFiles}" CommandParameter="{Binding SelectedDevice}"/>
-                                        
-                                        <Button Style="{StaticResource ButtonDanger}"
-                                                hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
-                                                Command="{Binding DeletePathFiles}" CommandParameter="{Binding ElementName=dFiles,Path=SelectedItem}"/>
-                                        
-                                        <Button hc:IconElement.Geometry="{StaticResource SaveGeometry}"
-                                                Command="{Binding SaveFiles}" Style="{StaticResource ButtonPrimary}">
-                                        </Button>
-                                    </WrapPanel>
                                 </StackPanel>
                             </GroupBox>
-                            <GroupBox Header="Дополнительная информация" Style="{StaticResource BaseStyle}" BorderThickness="1.5" Margin="0,0,30,0">
+                            <GroupBox Style="{StaticResource GroupBoxOriginal}" BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
+                                <GroupBox.Header>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Дополнительная информация"
+                                                   Style="{StaticResource TextBlockDefault}"
+                                                   FontFamily="Bahnschrift" FontSize="17" Margin="0,0,5,0"/>
+                                        <Button Command="{Binding SaveMoreData}"
+                                                Style="{StaticResource ButtonPrimary.Small}"
+                                                CommandParameter="{Binding SelectedDevice}"
+                                                hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1"
+                                                hc:IconElement.Width="15" hc:IconElement.Height="15"
+                                                Cursor="Hand"
+                                                Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                    </StackPanel>
+                                </GroupBox.Header>
                                 <StackPanel Orientation="Vertical">
                                     <ListBox x:Name="dInfo"  ItemsSource="{Binding SelectedDevice.AdditionalData.Data}"
                                              BorderThickness="0">
@@ -217,9 +268,7 @@
                                                 <WrapPanel Orientation="Horizontal" VirtualizingPanel.IsVirtualizing="True"/>
                                             </ItemsPanelTemplate>
                                         </ListBox.ItemsPanel>
-                                    </ListBox>
-                                    <Button Content="Сохранить" Command="{Binding SaveMoreData}" 
-                                            Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                    </ListBox>                                    
                                 </StackPanel>
                             </GroupBox>
                         </StackPanel>

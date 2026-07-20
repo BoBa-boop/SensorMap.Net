@@ -12,6 +12,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reactive.Linq;
+using System.Windows;
 using System.Windows.Input;
 using static System.ComponentModel.Design.ObjectSelectorEditor;
 
@@ -25,19 +26,18 @@ namespace SensorMap.ViewModel
         private readonly IJsonSerialization _json;
         private readonly IDataService _service;
         private readonly ITempImage _imgManag;
-        private readonly AppDBContext _dbContext;
         private readonly IFileManagment _fileManagment;
         private IAppDbContextFactory _appDbContextFactory;
-        private Device _selectedDevice;
-        private ObservableCollection<Mechanism> _FilteredMechanisms;
+        private Device _selectedDevice = new Device();
+        private ObservableCollection<Mechanism> _FilteredMechanisms = new ObservableCollection<Mechanism>();
         private bool isEditMode;
         [Reactive] public Device SelectedDevice
         {
             get => _selectedDevice;
-            set { this.RaiseAndSetIfChanged(ref _selectedDevice, value); }
+            set { if (value != null) this.RaiseAndSetIfChanged(ref _selectedDevice, value); }
         }
-        [Reactive] public ObservableCollection<Device> Device { get; set; }
-        private ObservableCollection<DeviceType> _deviceType { get; set; }
+        [Reactive] public ObservableCollection<Device> Devices { get; set; }
+        private ObservableCollection<DeviceType> _deviceTypes { get; set; }
         [Reactive] public TreeViewCollection<string, Device> DeviceTree { get; set; }
         [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms
         {
@@ -45,7 +45,7 @@ namespace SensorMap.ViewModel
             set { this.RaiseAndSetIfChanged(ref _FilteredMechanisms, value); }
         }
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        private ObservableCollection<Mechanism> _mechs = new ObservableCollection<Mechanism>();
+        private List<Mechanism> _mechs = new List<Mechanism>();
         private List<AdditionalData> addDataList = new List<AdditionalData>();
 
         public Devices_VM(IDataBaseProvider provider, INavigation nav, IJsonSerialization json,
@@ -59,18 +59,40 @@ namespace SensorMap.ViewModel
             _fileManagment = fileManagment;
             _json = json;
             _appDbContextFactory = appDbContextFactory;
-            _dbContext = _appDbContextFactory.CreateDbContext();
-            Device = new(_dbContext.Devices.Include(x => x.DeviceType).ThenInclude(k => k.Characteristics)
-                                           .Include(k=>k.Files).AsSplitQuery().ToList());
-            _mechs = new(_dbContext.Mechanisms.ToList());
-            _deviceType = new(_dbContext.DeviceTypes.ToList());
             
+            using (var _dbContext = _appDbContextFactory.CreateDbContext())
+            {
+                var devicesWithDetails = _dbContext.Devices
+                    .AsNoTracking()
+                    .Include(s => s.Files)
+                    .Include(s => s.DeviceType)
+                        .ThenInclude(st => st.Characteristics).AsSplitQuery()
+                    .ToList();
+
+                Devices = new(devicesWithDetails);
+
+                _deviceTypes = new(devicesWithDetails
+                    .Select(s => s.DeviceType!)
+                    .Where(st => st != null)
+                    .DistinctBy(st => st.Id)
+                    .ToList());
+                _mechs = _dbContext.Mechanisms.AsNoTracking().Select(x => new Mechanism
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    SectorID = x.SectorID,
+                    MapObjects = new(x.MapObjects.OfType<DeviceAssignment>().Select(x => new DeviceAssignment { DeviceId = x.DeviceId }).ToList())
+
+                }).ToList(); 
+                Func<string, Device, bool> filter = (m, p) => p.DeviceType.Name == m;
+                DeviceTree = new TreeViewCollection<string, Device>("DeviceType.Name", new(_deviceTypes.Select(x => x.Name).ToList()), Devices, filter);
+            }
             SelectedDevice = device;
             LoadAddData();
             this.WhenAnyValue(x => x.SelectedDevice)
                 .Where(device => device != null)
-                .Select(device => _mechs.Where(mech => mech.Device != null)
-                .Where(x => x.DeviceID == device.Id))
+                .Select(device => _mechs.Where(mech => mech.MapObjects != null)
+                .Where(x => x.MapObjects!.OfType<DeviceAssignment>().Any(da => da.DeviceId == device.Id)))
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(filteredMechanisms =>
                 {
@@ -81,19 +103,40 @@ namespace SensorMap.ViewModel
                 if (mech == null) return;
                 _nav.NavigateTo<MechanismVM>(mech);
             });
+
+            OpenFullScreen = new RelayCommand<byte[]>((image) =>
+            {
+                _imgManag.OpenFullScreen(_imgManag.CreateImageFromBytes(image!));
+            }, (image) => { return image != null; });
+
+            ShowAllFiles = new RelayCommand(() =>
+            {
+                foreach (var item in SelectedDevice.Files)
+                {
+                    item.IsHide = false;
+                }
+            });
+
             SaveMoreData = new RelayCommand(SaveDataFileds);
-            Func<string, Device, bool> filter = (m, p) => p.DeviceType.Name == m;
-            DeviceTree = new TreeViewCollection<string, Device>("DeviceType.Name", new(_deviceType.Select(x => x.Name).ToList()), Device, filter);
+            
             _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode);
             AddFiles = new RelayCommand<Device>((d) => { fileManagment.AddHelpfulFile(_imgManag,d,true); });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
-                SelectedDevice.Files.Remove(file);
                 try
                 {
-                    //_dbContext.Remove(SelectedNode);
-                    _dbContext.SaveChanges();
+                    using (var _dbContext = _appDbContextFactory.CreateDbContext())
+                    {
+                        var fileInDb = _dbContext.HelpfulFiles.Find(file!.Id);
+
+                        if (fileInDb != null)
+                        {
+                            _dbContext.HelpfulFiles.Remove(fileInDb);
+                            _dbContext.SaveChanges();
+                        }
+                        SelectedDevice.Files.Remove(file);
+                    }
                     Growl.Success(new GrowlInfo
                     {
                         Message = "Путь к файлам удален.",
@@ -108,23 +151,44 @@ namespace SensorMap.ViewModel
                     Logger.Error(ex.Message);
                 }
             }, (f) => { return f != null; });
-            OpenFile = new RelayCommand<HelpfulFile>((file) => { fileManagment.OpenFileInExplorer(file.NameFile);});
+            OpenFile = new RelayCommand<HelpfulFile>((file) => 
+            {
+                if (!fileManagment.OpenFileInExplorer(file.NameFile))
+                {
+                    MessageBoxResult res = HandyControl.Controls.MessageBox.Show(
+                        new MessageBoxInfo
+                        {
+                            Message = "Файл не найден, скрыть файл?",
+                            Caption = "Ошибка",
+                            DefaultResult = MessageBoxResult.No
+                        });
+                    if (res == MessageBoxResult.OK)
+                    {
+                        file.IsHide = true;
+                    }
+                }
+            });
             SaveFiles = new RelayCommand(() =>
             {
                 try
                 {
-                    if (_dbContext.ChangeTracker.HasChanges())
+                    
+                    using (var _dbContext = _appDbContextFactory.CreateDbContext())
                     {
-                        //_dbContext.Update(SelectedNode);
-                        _dbContext.SaveChanges();
-                        Growl.Success(new GrowlInfo
-                        {
-                            Message = "Путь к файлам сохранен.",
-                            CancelStr = "Ignore",
-                            ShowDateTime = false,
-                            WaitTime = 2
-                        });
+                        _dbContext.Attach(SelectedDevice);
+                        _dbContext.Entry(SelectedDevice).Collection(s => s.Files).IsModified = true;
+                        bool success = _dbContext.SaveChanges() > 0 ? true : false;
+                        if (success) UnSetIsNew(SelectedDevice.Files);
+
                     }
+                    Growl.Success(new GrowlInfo
+                    {
+                        Message = "Путь к файлам сохранен.",
+                        CancelStr = "Ignore",
+                        ShowDateTime = false,
+                        WaitTime = 2
+                    });
+                    
                 }
                 catch (Exception ex)
                 {
@@ -143,7 +207,7 @@ namespace SensorMap.ViewModel
                 //заполнение данными из файла
                 foreach (var item in _json.ReadFromJsonFile<List<AdditionalData>>("DevicesMoreData.json"))
                 {
-                    var device = Device.FirstOrDefault((Func<Device, bool>)(x => x.Name == item.Name));
+                    var device = Devices.FirstOrDefault((Func<Device, bool>)(x => x.Name == item.Name));
                     if (device != null)
                     {
                         if (item.HasData())
@@ -155,9 +219,9 @@ namespace SensorMap.ViewModel
                 }
             }
 
-            foreach (var deviceType in _deviceType.Where(d => d.Characteristics.Any()))
+            foreach (var deviceType in _deviceTypes.Where(d => d.Characteristics.Any()))
             {
-                var currentDevices = Device.Where(x => x.DeviceTypeId == deviceType.Id);
+                var currentDevices = Devices.Where(x => x.DeviceTypeId == deviceType.Id);
                 foreach (var device in currentDevices)
                 {
                     if (device != null && !addDataList.Contains(device.AdditionalData))
@@ -225,6 +289,15 @@ namespace SensorMap.ViewModel
         public ICommand OpenFile { get; }
         public ICommand DeletePathFiles { get; }
         public ICommand AddFiles {get;}
+        public ICommand OpenFullScreen { get; }
+        public ICommand ShowAllFiles { get; }
 
+        private void UnSetIsNew(IEnumerable<HelpfulFile> files)
+        {
+            foreach (var item in files)
+            {
+                item.IsNew = false;
+            }
+        }
     }
 }

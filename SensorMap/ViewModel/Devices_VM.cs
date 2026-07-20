@@ -28,7 +28,7 @@ namespace SensorMap.ViewModel
         private readonly ITempImage _imgManag;
         private readonly IFileManagment _fileManagment;
         private IAppDbContextFactory _appDbContextFactory;
-        private Device _selectedDevice = new Device();
+        private Device _selectedDevice;
         private ObservableCollection<Mechanism> _FilteredMechanisms = new ObservableCollection<Mechanism>();
         private bool isEditMode;
         [Reactive] public Device SelectedDevice

@@ -64,7 +64,7 @@
                                 </Border.Background>
                                 <Button Style="{StaticResource OverlayImageButtonStyle}" ClipToBounds="True"
                                             Command="{Binding OpenFullScreen}" CommandParameter="{Binding SelectedNode.Image}"
-                                            Width="270" Height="270">
+                                            Width="270" Height="270" IsHitTestVisible="{Binding SelectedNode.Image,Converter={StaticResource Object2BooleanConverter}}">
                                     <Path Data="{StaticResource FullScreenGeometry}"
                                           Stroke="Black" 
                                           Fill="DarkGray"

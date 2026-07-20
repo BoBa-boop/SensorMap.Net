@@ -118,7 +118,7 @@ namespace SensorMap.ViewModel
                 {
                     using (var _dbContext = _appDbContextFactory.CreateDbContext())
                     {
-                        var fileInDb = _dbContext.HelpfulFiles.Find(file.Id);
+                        var fileInDb = _dbContext.HelpfulFiles.Find(file!.Id);
 
                         if (fileInDb != null)
                         {
@@ -140,7 +140,7 @@ namespace SensorMap.ViewModel
                     Growl.Error("Ошибка при удаление путей!");
                     Logger.Error(ex.Message);
                 }
-            });
+            }, (file) => { return file != null; });
             OpenFile = new RelayCommand<HelpfulFile>((file) => 
             { 
                 if (!fileManagment.OpenFileInExplorer(file.NameFile))
@@ -195,10 +195,10 @@ namespace SensorMap.ViewModel
                     item.IsHide = false;
                 }
             });
-            OpenFullScreen = new RelayCommand<byte[]>((s) => 
+            OpenFullScreen = new RelayCommand<byte[]>((image) => 
             {
-                imgManag.OpenFullScreen(imgManag.CreateImageFromBytes(s)); 
-            }, (s) => { return s != null; });
+                imgManag.OpenFullScreen(imgManag.CreateImageFromBytes(image!)); 
+            }, (image) => { return image != null; });
 
             this.WhenAnyValue(x => x.SelectedNode)
                 .Where(sensor => sensor != null)

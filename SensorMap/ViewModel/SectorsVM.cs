@@ -23,7 +23,8 @@ namespace SensorMap.ViewModel
         private IAppDbContextFactory _appDbContextFactory;
         private ObservableCollection<Sector>? _coll;
         private string _searchText = string.Empty;
-
+        private Sector _sect;
+        private Mechanism _mech;
 
         [Reactive]
         public string SearchText
@@ -39,20 +40,17 @@ namespace SensorMap.ViewModel
             get => _coll;
             set => this.RaiseAndSetIfChanged(ref _coll, value);
         }
-        [Reactive] public Sector? SelectedSector { get; set; }
+        [Reactive] public Sector? SelectedSector 
+        {
+            get => _sect;
+            set => this.RaiseAndSetIfChanged(ref _sect, value);
+        }
         public SectorsVM(INavigation _nav, IDataBaseProvider provider, IAppDbContextFactory cxFactory, IDataService data)
         {            
             navigation = _nav;
             _data = data;
             _appDbContextFactory = cxFactory;
-            GoToSector = new RelayCommand<Sector>((sector) =>
-            {
-                if (sector != null)
-                {
-                    _data.CurrentSector_Global = sector;
-                    navigation.NavigateTo<MechanismVM>();
-                }
-            });
+            GoToMech = new RelayCommand<Mechanism>((mech) => navigation.NavigateTo<MechanismVM>(mech),(mech) => { return mech != null; });
             _provider = provider;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
@@ -76,6 +74,6 @@ namespace SensorMap.ViewModel
                 });
             }
         }
-        public ICommand GoToSector { get; set; }
+        public ICommand GoToMech { get; set; }
     }
 }

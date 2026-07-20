@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:SensorMap.View"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
+             xmlns:beh="clr-namespace:SensorMap.Behaviors"
              xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:viewmodel="clr-namespace:SensorMap.ViewModel"
              d:DataContext="{d:DesignInstance Type=viewmodel:SectorsVM}"
@@ -20,81 +21,154 @@
         <hc:TextBox hc:InfoElement.Placeholder="Участок или механизация"
                     Margin="0,10,0,10" Text="{Binding SearchText,UpdateSourceTrigger=PropertyChanged}"
                     HorizontalAlignment="Center" Width="300">
-        </hc:TextBox>
-        <ListBox Background="Transparent" BorderThickness="0" Margin="10"
-               ItemsSource="{Binding Sectors}" Grid.Row="1">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="50"/>
-                            <RowDefinition Height="*"/>
-                                <RowDefinition Height="5"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="{Binding Name}" TextWrapping="Wrap"
-                                   TextAlignment="Left"
-                                   FontSize="18" 
-                                   FontWeight="Bold"
-                                   Grid.Row="0"
-                                   Margin="5"/>
-                            <ListBox x:Name="mechanisms"
-                                 ItemsSource="{Binding Mechanisms}"
-                                 DisplayMemberPath="Name"
-                                 Background="Transparent"
-                                 Grid.Row="1"
-                                 VerticalAlignment="Bottom"                                     
-                                 BorderThickness="0" Margin="5,10" IsHitTestVisible="True">
-                                <ListBox.ItemContainerStyle>
-                                    <Style TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource ListBoxItemCustom}">
-                                        <Setter Property="IsHitTestVisible" Value="False" />
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                    <TextBlock Text="{Binding Name}" Background="Transparent"
-                                                           FontSize="14" FontWeight="DemiBold" 
-                                                           TextWrapping="WrapWithOverflow"/>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </ListBox.ItemContainerStyle>
-                            </ListBox>
+            </hc:TextBox>
+            <Grid Margin="10" Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <!-- Левый столбец: Детальная информация (занимает всё оставшееся место) -->
+                    <ColumnDefinition Width="auto" />
+                    <!-- Правый столбец: Список всех секторов (фиксированная ширина, как боковая панель YouTube) -->
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- ================= 1. ЛЕВЫЙ СТОЛБЕЦ (ДЕТАЛИ) ================= -->
+                <!-- Grid привязан к SelectedItem правого ListBox (имя: SectorsListBox) -->
+                <Grid Grid.Column="0"
+                      DataContext="{Binding SelectedItem, ElementName=SectorsListBox}"
+                      Margin="0,0,15,0"
+                      Visibility="{Binding ElementName=root,Path=DataContext.SelectedSector,Converter={StaticResource Object2VisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <!-- Строка 1: Крупное название сектора -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Строка 2: Контент (Картинка + Механизмы) -->
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="30"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Название сектора (Большой шрифт) -->
+                    <TextBlock Text="{Binding Name}" 
+                               FontSize="32" 
+                               FontWeight="Bold" 
+                               TextWrapping="Wrap" 
+                               Margin="0,0,0,20"
+                               Grid.Row="0"
+                               VerticalAlignment="Center"/>
+
+                    <!-- Вторая строка: Горизонтальный контейнер для визуала и списка -->
+                    <Grid Grid.Row="1" VerticalAlignment="Top">
+                        <Grid.ColumnDefinitions>
+                            <!-- Строка 1: Крупное название сектора -->
+                            <ColumnDefinition Width="Auto"/>
+                            <!-- Строка 2: Контент (Картинка + Механизмы) -->
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Картинка механизации сектора -->
+                        <hc:ImageViewer ImageSource="{Binding SelectedItem.Image, ElementName=MechListBox}"
+                                        Height="800" 
+                                        Width="800"
+                                        Cursor="SizeAll"
+                                        Grid.Column="0"
+                                        VerticalAlignment="Center"
+                                        ShowImgMap="False" ShowToolBar="False">
+                        </hc:ImageViewer>
+
+                        <!-- Список механизмов (Оптимизированный текстовый список) -->
+                        <ListBox x:Name="MechListBox" ItemsSource="{Binding Mechanisms}"
+                                 Grid.Column="1"
+                                 Style="{StaticResource ListBox.Small}"
+                                 Background="WhiteSmoke" BorderThickness="1.5">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemCustom}">
+                                    <Setter Property="Background" Value="LightGray"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                <Border x:Name="brd"
+                                                        Background="{TemplateBinding Background}" 
+                                                        CornerRadius="5"
+                                                        Padding="10,6" 
+                                                        Margin="0,0,0,6" 
+                                                        Width="200"
+                                                        Cursor="Hand">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background">
+                                                            <Setter.Value>
+                                                                <SolidColorBrush Color="{StaticResource BorderColor}" Opacity="0.5"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+
                     </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="{x:Type ListBoxItem}">
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                <Border x:Name="brd" Margin="5" BorderBrush="Transparent" BorderThickness="1.5"
-                                        CornerRadius="15" Width="200" Height="310">
-                                    <Border.Background>
-                                        <SolidColorBrush Color="Black" Opacity="0.2"/>
-                                    </Border.Background>
-                                    <ContentPresenter/>
-                                    <i:Interaction.Triggers>
-                                        <i:EventTrigger EventName="MouseLeftButtonDown">
-                                            <i:InvokeCommandAction Command="{Binding ElementName=root,Path=DataContext.GoToSector}" CommandParameter="{Binding }"/>
-                                        </i:EventTrigger>
-                                    </i:Interaction.Triggers>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Border.BorderBrush" TargetName="brd"  Value="Black"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ListBox.ItemContainerStyle>
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel VirtualizingPanel.IsVirtualizing="True" MaxWidth="1000"/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-        </ListBox>
-    </Grid>
+
+                    <Button Content="Перейти"
+                            Grid.Row="2" 
+                            Visibility="{Binding ElementName=MechListBox,Path=SelectedItem,Converter={StaticResource Object2VisibilityConverter}}"
+                            VerticalAlignment="Bottom"
+                            Command="{Binding ElementName=root,Path=DataContext.GoToMech}" CommandParameter="{Binding SelectedItem, ElementName=MechListBox}"/>
+                </Grid>
+
+                <!-- ================= 2. ПРАВЫЙ СТОЛБЕЦ (СПИСОК СЕКТОРОВ) ================= -->
+                <ListBox x:Name="SectorsListBox" 
+                         Grid.Column="1" 
+                         Background="Transparent" 
+                         BorderThickness="0"
+                         ItemsSource="{Binding Sectors}" SelectionMode="Single"
+                         SelectedItem="{Binding SelectedSector}" HorizontalContentAlignment="Left" HorizontalAlignment="Center">
+                    <!-- По умолчанию выбран первый сектор -->
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <!-- Компактная прямоугольная плитка сектора в боковой панели -->
+                            <Border Padding="10" Width="200" Height="70">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}" FontSize="18" FontWeight="Bold"/>
+                                    <TextBlock Text="Нажмите для просмотра" FontSize="12" Foreground="Gray"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="{x:Type ListBoxItem}">
+                            <Setter Property="Background" Value="LightGray"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                        <Border x:Name="brd"
+                                                Background="{TemplateBinding Background}"
+                                                Margin="5" Cursor="Hand">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+                                            </Trigger>                                            
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel VirtualizingPanel.IsVirtualizing="True"/>
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </Grid>
+            
+        </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

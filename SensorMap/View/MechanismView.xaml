@@ -93,7 +93,7 @@
                         </Style>
                     </Button.Style>
                 </Button>
-                <Button ToolTip="Открыть электросхему"
+                <Button ToolTip="Полезные файлы"
                         Padding="2"
                         Command="{Binding ShowScheme}" CommandParameter="{Binding CurrentMech}">
                     <Button.Content>

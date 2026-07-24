@@ -281,20 +281,22 @@ namespace SensorMap.ViewModel
 
                 }
             });
-            ShowScheme = new RelayCommand<object>((obj) =>
+            ShowScheme = new RelayCommand<Mechanism>((mech) =>
             {
-                if (obj is Mechanism mech)
-                {
-                    _fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
-                }
+                FilesWindow fsWindow = new FilesWindow();
+                var dc = new FilesWindowVM(_fileManagment, imageControl, mech.Files,mech);
+                fsWindow.DataContext = dc;
+                dc.IsEditMode = IsEditMode;
+                fsWindow.ShowDialog();
+                if (dc.HasChanges) HasChanges = true;
+                //if (obj is Mechanism mech)
+                //{
+                //    _fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
+                //}
             },(obj) => 
             {
                 if (obj == null) return false;
-                var mech = obj as Mechanism;
-                //bool SensorsNotNull = mech!.SensorsAssig != null && mech.SensorsAssig.Any();
-                bool FilesNotNull = mech.Files != null && mech.Files.Any();
-                if (/*SensorsNotNull && */FilesNotNull) return true;
-                return false;
+                else return true;
             });
 
                 _service.WhenAnyValue(x => x.IsEditMode)

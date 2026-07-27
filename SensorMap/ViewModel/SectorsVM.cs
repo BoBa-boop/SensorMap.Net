@@ -45,12 +45,21 @@ namespace SensorMap.ViewModel
             get => _sect;
             set => this.RaiseAndSetIfChanged(ref _sect, value);
         }
+        [Reactive]
+        public bool IsDetailOpen
+        {
+            get => _isDetailOpen;
+            set => this.RaiseAndSetIfChanged(ref _isDetailOpen, value);
+        }
+        private bool _isDetailOpen;
+        public ICommand ClosePanelCommand { get; }
         public SectorsVM(INavigation _nav, IDataBaseProvider provider, IAppDbContextFactory cxFactory, IDataService data)
         {            
             navigation = _nav;
             _data = data;
             _appDbContextFactory = cxFactory;
             GoToMech = new RelayCommand<Mechanism>((mech) => navigation.NavigateTo<MechanismVM>(mech),(mech) => { return mech != null; });
+            ClosePanelCommand = new RelayCommand(() => SelectedSector = null);
             _provider = provider;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
@@ -72,6 +81,8 @@ namespace SensorMap.ViewModel
                     }
                     else Sectors = tempCollection;
                 });
+                this.WhenAnyValue(x => x.SelectedSector)
+                    .Subscribe(sector => IsDetailOpen = sector != null);
             }
         }
         public ICommand GoToMech { get; set; }

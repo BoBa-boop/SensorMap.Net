@@ -241,6 +241,13 @@
                                                                     </Setter.Value>
                                                                 </Setter>
                                                             </Trigger>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter Property="Background">
+                                                                    <Setter.Value>
+                                                                        <SolidColorBrush Color="{StaticResource TitleColor}" Opacity="0.5"/>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
                                                 </Setter.Value>

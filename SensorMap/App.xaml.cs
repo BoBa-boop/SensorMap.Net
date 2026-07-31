@@ -140,9 +140,9 @@ namespace SensorMap
 
             NLog.LogManager.Setup().LoadConfiguration(builder => {
                 builder.ForLogger().FilterMinLevel(LogLevel.Info).FilterMaxLevel(LogLevel.Warn)
-                    .WriteToFile(fileName: "LogDb.txt");
+                    .WriteToFile(fileName: "LogDb.txt", archiveAboveSize: 1048576, maxArchiveFiles: 5);
                 builder.ForLogger().FilterMinLevel(LogLevel.Error)
-                    .WriteToFile(fileName: "LogError.txt");
+                    .WriteToFile(fileName: "LogError.txt", archiveAboveSize: 1048576, maxArchiveFiles: 5);
             });
         }
 

@@ -79,17 +79,22 @@
                 </hc:FlexPanel>
             </StackPanel>
         </StackPanel>
-            <DataGrid Grid.Column="1" Name="SQL_Journal"
-                      ItemsSource="{Binding Logs}"
-                      CanUserAddRows="False" CanUserDeleteRows="False"
-                      CanUserReorderColumns="False" AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      Style="{StaticResource DataGrid.Small}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Дата" Binding="{Binding Timestamp, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" Width="140"/>
-                    <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
-                </DataGrid.Columns>
-            </DataGrid>
+            <StackPanel Grid.Column="1">
+                <DataGrid Name="SQL_Journal"
+                          ItemsSource="{Binding Logs}"
+                          CanUserAddRows="False" CanUserDeleteRows="False"
+                          CanUserReorderColumns="False" AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          Style="{StaticResource DataGrid.Small}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Дата" Binding="{Binding Timestamp, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" Width="140"/>
+                        <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <Button Content="Загрузить еще" Margin="0,5,0,0" HorizontalAlignment="Center"
+                        Command="{Binding LoadMoreLogs}"
+                        Visibility="{Binding CanLoadMore, Converter={StaticResource Bool2VisOrHidden}}"/>
+            </StackPanel>
         </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

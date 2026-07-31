@@ -41,7 +41,9 @@ namespace SensorMap.ViewModel
         }
 
         public ObservableCollection<DbActionLogs> Logs => _logService.Logs;
-        
+        public bool CanLoadMore => _logService.CanLoadMore;
+
+        public ICommand LoadMoreLogs { get; }
         public SettingsVM(IAuthorization authorization, IDataService data, IDataBaseProvider dbProvider, ILogEntryService logService)
         {
             _dbProvider = dbProvider;
@@ -51,6 +53,11 @@ namespace SensorMap.ViewModel
             DbName = Path.GetFileName(Settings.Default.ConnectionString);
             DbPath = Path.GetFullPath(Settings.Default.ConnectionString.Replace("DataSource=", ""));
             ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
+            LoadMoreLogs = new RelayCommand(() =>
+            {
+                _logService.LoadMore();
+                this.RaisePropertyChanged(nameof(CanLoadMore));
+            });
 
             ChangeDataBase = new RelayCommand(() =>
             {

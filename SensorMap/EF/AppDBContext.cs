@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -6,14 +7,37 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace SensorMap.EF
 {
     public class AppDBContext : DbContext
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        internal static event Action<DbActionLogs>? OnLogEntry;
+
+        private static readonly Dictionary<Type, string> EntityRussianNames = new()
+        {
+            [typeof(Sector)] = "Сектор",
+            [typeof(Mechanism)] = "Оборудование",
+            [typeof(Sensor)] = "Датчик",
+            [typeof(SensorType)] = "Тип датчика",
+            [typeof(Device)] = "Устройство",
+            [typeof(DeviceType)] = "Тип устройства",
+            [typeof(HelpfulFile)] = "Файл",
+            [typeof(SensorCharacteristic)] = "Характеристика датчика",
+            [typeof(DeviceCharacteristic)] = "Характеристика устройства",
+            [typeof(SensorAssignments)] = "Назначение датчика",
+            [typeof(DeviceAssignment)] = "Назначение устройства",
+            [typeof(MapObject)] = "Объект карты",
+        };
+
+        private static readonly string[] EntityNameProperties = { "Name", "Title", "Description", "NameFile" };
+
         public AppDBContext(DbContextOptions options) : base(options) 
         {
             
@@ -50,29 +74,110 @@ namespace SensorMap.EF
 
         public override int SaveChanges()
         {
-            
-            var changesEntities = ChangeTracker.Entries().
-                Where(x=>x.State == EntityState.Modified ||
-                        x.State == EntityState.Added||
-                        x.State == EntityState.Deleted)
-                .ToList();
-            var s = base.SaveChanges();
-            foreach (var entity in changesEntities)
+            var logEntries = GetLogEntries();
+            var result = base.SaveChanges();
+            foreach (var log in logEntries)
             {
-                foreach (var prop in entity.Properties.Where(p=>p.IsModified))
-                {
-                    Logger.Info(prop.Metadata.DeclaringType.ClrType.Name + $" |{entity.State.ToString()}| "+ "Id:" + entity.CurrentValues.GetValue<int>("Id") + prop.OriginalValue + "->" + prop.CurrentValue);                    
-                }
-                if(entity.State == EntityState.Deleted)
-                {
-                    Logger.Info(entity.Metadata.DisplayName()+$" |{entity.State.ToString()}| " + "Id:"+ entity.CurrentValues.GetValue<int>("Id"));
-                }
-                if (entity.State == EntityState.Added)
-                {
-                    Logger.Info(entity.Metadata.DisplayName() + $" |{entity.State.ToString()}| " + "Id:" + entity.CurrentValues.GetValue<int>("Id"));
-                }
+                Logger.Info(log.Description);
+                OnLogEntry?.Invoke(log);
             }
-            return s;
+            return result;
+        }
+
+        private List<DbActionLogs> GetLogEntries()
+        {
+            var logEntries = new List<DbActionLogs>();
+            var now = DateTime.Now;
+            var entries = ChangeTracker.Entries()
+                .Where(x => x.State == EntityState.Modified ||
+                            x.State == EntityState.Added ||
+                            x.State == EntityState.Deleted)
+                .ToList();
+
+            foreach (var entry in entries)
+            {
+                var typeName = GetEntityRussianName(entry.Metadata.ClrType);
+                var entityName = GetEntityName(entry);
+
+                string description;
+                if (entry.State == EntityState.Added && entry.Entity is HelpfulFile file)
+                {
+                    var parentInfo = GetHelpfulFileParentInfo(file);
+                    if (parentInfo != null)
+                        description = $"{parentInfo.Value.TypeName} \"{parentInfo.Value.EntityName}\" добавлен файл \"{entityName}\"";
+                    else
+                        description = $"{typeName} \"Добавление\" \"{entityName}\"";
+                }
+                else if (entry.State == EntityState.Added)
+                {
+                    description = $"{typeName} \"Добавление\" \"{entityName}\"";
+                }
+                else if (entry.State == EntityState.Deleted)
+                {
+                    description = $"{typeName} \"Удаление\" \"{entityName}\"";
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    var changes = new List<string>();
+                    foreach (var prop in entry.Properties.Where(p => p.IsModified))
+                    {
+                        var oldVal = prop.OriginalValue?.ToString() ?? "";
+                        var newVal = prop.CurrentValue?.ToString() ?? "";
+                        changes.Add($"{prop.Metadata.Name} \"{oldVal}\" -> \"{newVal}\"");
+                    }
+                    description = $"{typeName} \"Изменение\": {string.Join("; ", changes)}";
+                }
+                else continue;
+
+                logEntries.Add(new DbActionLogs { Timestamp = now, Description = description });
+            }
+
+            return logEntries;
+        }
+
+        private static string GetEntityRussianName(Type type)
+        {
+            if (EntityRussianNames.TryGetValue(type, out var name))
+                return name;
+            if (type.BaseType != null && EntityRussianNames.TryGetValue(type.BaseType, out var baseName))
+                return baseName;
+            return type.Name;
+        }
+
+        private static string GetEntityName(EntityEntry entry)
+        {
+            var currentValues = entry.CurrentValues;
+            foreach (var propName in EntityNameProperties)
+            {
+                var value = TryGetStringValue(currentValues, propName);
+                if (!string.IsNullOrEmpty(value))
+                    return value;
+            }
+            return "";
+        }
+
+        private static string? TryGetStringValue(PropertyValues values, string propertyName)
+        {
+            var prop = values.Properties.FirstOrDefault(p => p.Name == propertyName);
+            if (prop == null) return null;
+            var value = values[prop]?.ToString();
+            return string.IsNullOrEmpty(value) ? null : value;
+        }
+
+        private (string TypeName, string EntityName)? GetHelpfulFileParentInfo(HelpfulFile file)
+        {
+            int? parentId = file.SensorId ?? file.DeviceId ?? (int?)file.MechanismId;
+            Type? parentType = file.SensorId != null ? typeof(Sensor)
+                             : file.DeviceId != null ? typeof(Device)
+                             : typeof(Mechanism);
+            if (parentId == null) return null;
+
+            var parentEntry = ChangeTracker.Entries()
+                .FirstOrDefault(e => e.Entity.GetType() == parentType &&
+                                     e.CurrentValues.GetValue<int>("Id") == parentId.Value);
+            if (parentEntry == null) return null;
+
+            return (GetEntityRussianName(parentType), GetEntityName(parentEntry));
         }
     }
 

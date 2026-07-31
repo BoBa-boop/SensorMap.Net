@@ -136,8 +136,13 @@ namespace SensorMap
                 }
                 throw new InvalidOperationException("Конструктор не найден");
             });
+            services.AddSingleton<ILogEntryService, LogEntryService>();
+
             NLog.LogManager.Setup().LoadConfiguration(builder => {
-                builder.ForLogger().FilterMinLevel(LogLevel.Info).WriteToFile(fileName: "LogDb.txt");
+                builder.ForLogger().FilterMinLevel(LogLevel.Info).FilterMaxLevel(LogLevel.Warn)
+                    .WriteToFile(fileName: "LogDb.txt");
+                builder.ForLogger().FilterMinLevel(LogLevel.Error)
+                    .WriteToFile(fileName: "LogError.txt");
             });
         }
 

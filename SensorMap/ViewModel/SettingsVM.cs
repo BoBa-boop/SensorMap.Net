@@ -2,11 +2,11 @@
 using HandyControl.Controls;
 using HandyControl.Data;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualBasic.Logging;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.EF;
 using SensorMap.Interfaces;
+using SensorMap.Model;
 using SensorMap.Properties;
 using System;
 using System.Collections.Generic;
@@ -25,6 +25,7 @@ namespace SensorMap.ViewModel
         private IAuthorization _auth;
         private IDataBaseProvider _dbProvider;
         private IDataService _data;
+        private ILogEntryService _logService;
         private string _dbName = string.Empty;
         private string _dbPath;
 
@@ -38,13 +39,15 @@ namespace SensorMap.ViewModel
             get { return _dbPath; }
             set { this.RaiseAndSetIfChanged(ref _dbPath, value); }
         }
+
+        public ObservableCollection<DbActionLogs> Logs => _logService.Logs;
         
-        public SettingsVM(IAuthorization authorization, IDataService data, IDataBaseProvider dbProvider)
+        public SettingsVM(IAuthorization authorization, IDataService data, IDataBaseProvider dbProvider, ILogEntryService logService)
         {
             _dbProvider = dbProvider;
             _data = data;
             _auth = authorization;
-            //Logs = ReadLogFile("LogDb.txt");
+            _logService = logService;
             DbName = Path.GetFileName(Settings.Default.ConnectionString);
             DbPath = Path.GetFullPath(Settings.Default.ConnectionString.Replace("DataSource=", ""));
             ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
@@ -80,11 +83,6 @@ namespace SensorMap.ViewModel
                 }
             });
         }
-
-        //private static ObservableCollection<DbActionLogs> ReadLogFile(string path)
-        //{
-        //    return new(File.ReadAllText(path));
-        //}
 
         public ICommand ChangeEditorPassword { get;private set; }
         public ICommand ChangeDataBase { get; private set; }

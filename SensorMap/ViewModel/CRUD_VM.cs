@@ -40,6 +40,17 @@ namespace SensorMap.ViewModel
         private ICollectionView mechanisms;
         private ICollectionView devices;
         private ICollectionView sensors;
+        private readonly AppDBContext _dbContext;
+        private bool _loadInProgress;
+        private int _pendingTabIndex = -1;
+        private bool _sectorsLoaded;
+        private bool _mechanismsLoaded;
+        private bool _sensorsLoaded;
+        private bool _devicesLoaded;
+        private bool _typesLoaded;
+        private int _loadingTabs;
+        private int selectedTabIndex;
+        private bool isLoading;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
@@ -52,6 +63,8 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<DeviceType> DeviceTypes { get; set; }
         [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
         [Reactive] public ICollectionView Mechanisms { get => mechanisms; set => this.RaiseAndSetIfChanged(ref mechanisms, value); }
+        [Reactive] public int SelectedTabIndex { get => selectedTabIndex; set => this.RaiseAndSetIfChanged(ref selectedTabIndex, value); }
+        [Reactive] public bool IsLoading { get => isLoading; set => this.RaiseAndSetIfChanged(ref isLoading,value); }
 
         public CRUD_VM(IDataBaseProvider provider, IDataService service, IAppDbContextFactory cxFactory,
             IJsonSerialization json, INavigation nav, ITempImage tempImage, IFileManagment _fileManagment)
@@ -63,33 +76,8 @@ namespace SensorMap.ViewModel
             fileManagment = _fileManagment;
             _appDbContextFactory = cxFactory;
             _service = service;
-            using (var dBContext = _appDbContextFactory.CreateDbContext())
-            {
-                Sectors = new(dBContext.Sectors.ToList());
-                Mechanisms = CollectionViewSource.GetDefaultView(dBContext.Mechanisms.Include(m => m.Files).ToList());
-                Devices = CollectionViewSource.GetDefaultView(dBContext.Devices.ToList());
-                Sensors = CollectionViewSource.GetDefaultView(dBContext.Sensors.ToList());
-                SensorTypes = new(dBContext.SensorTypes.Include(x => x.Characteristics).ToList());
-                DeviceTypes = new(dBContext.DeviceTypes.Include(x => x.Characteristics).ToList());
-            }
-            using (Mechanisms.DeferRefresh())
-            {
-                Mechanisms.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
-                Mechanisms.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
-                var groupDescription = new PropertyGroupDescription("Name", new EqualMechGroup());
-                Mechanisms.GroupDescriptions.Add(groupDescription);
-            }
-            using (Devices.DeferRefresh())
-            {
-                Devices.SortDescriptions.Add(new SortDescription("DeviceType.Name", ListSortDirection.Ascending));
-                Devices.GroupDescriptions.Add(new PropertyGroupDescription("DeviceType.Name"));
-            }
-            using (Sensors.DeferRefresh())
-            {
-                Sensors.SortDescriptions.Add(new SortDescription("SensorType.Name", ListSortDirection.Ascending));
-                Sensors.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
-            }
-
+            _dbContext = _appDbContextFactory.CreateDbContext();
+            #region Commands
             ShowCommand = new RelayCommand<object>((obj) =>
             {
                 if (obj is Sensor)
@@ -113,6 +101,11 @@ namespace SensorMap.ViewModel
                             if(original!=null)
                                 dBContext.Entry(original).State = EntityState.Detached;
                             dBContext.Update(arg);
+                        }
+                        foreach (var fileEntry in dBContext.ChangeTracker.Entries<HelpfulFile>())
+                        {
+                            if (fileEntry.State != EntityState.Added)
+                                fileEntry.Property(f => f.ImageFile).IsModified = false;
                         }
                         dBContext.SaveChanges();
                         arg.GetType()?.GetProperty("IsModified")?.SetValue(arg, false);
@@ -378,7 +371,7 @@ namespace SensorMap.ViewModel
             });
             UndoCommand = new RelayCommand(_undoRedoManager!.Undo);
             RedoCommand = new RelayCommand(_undoRedoManager.Redo);
-
+            #endregion
             _service.WhenAnyValue(x => x.IsEditMode)
                 .BindTo(this, x => x.IsEditMode);
 
@@ -387,6 +380,165 @@ namespace SensorMap.ViewModel
 
             _undoRedoManager.WhenAnyValue(x => x.CanRedo)
                 .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
+
+            this.WhenAnyValue(x => x.SelectedTabIndex)
+                .Subscribe(RequestLoad);
+
+            //RequestLoad(0);
+        }
+
+        private void RequestLoad(int index)
+        {
+            _pendingTabIndex = index;
+            if (_loadInProgress) return;
+            _ = RunLoadLoopAsync();
+        }
+
+        private async Task RunLoadLoopAsync()
+        {
+            _loadInProgress = true;
+            try
+            {
+                while (_pendingTabIndex >= 0)
+                {
+                    var index = _pendingTabIndex;
+                    _pendingTabIndex = -1;
+                    await LoadTabAsync(index);
+                }
+            }
+            finally
+            {
+                _loadInProgress = false;
+            }
+        }
+
+        private void SetLoading(bool add)
+        {
+            _loadingTabs = Math.Max(0, _loadingTabs + (add ? 1 : -1));
+            IsLoading = _loadingTabs > 0;
+        }
+
+        private async Task LoadTabAsync(int index)
+        {
+            SetLoading(true);
+            try
+            {
+                switch (index)
+                {
+                    case 0:
+                        await LoadSectorsAsync();
+                        await LoadMechanismsAsync();
+                        break;
+                    case 1:
+                        await LoadSectorsAsync();
+                        await LoadDevicesAsync();
+                        await LoadMechanismsAsync();
+                        break;
+                    case 2:
+                        await LoadTypesAsync();
+                        await LoadSensorsAsync();
+                        break;
+                    case 3:
+                        await LoadTypesAsync();
+                        await LoadDevicesAsync();
+                        await LoadMechanismsAsync();
+                        break;
+                    case 4:
+                        await LoadTypesAsync();
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Ошибка загрузки данных вкладки {0}", index);
+                Growl.Error("Ошибка при загрузке данных из БД");
+            }
+            finally
+            {
+                SetLoading(false);
+            }
+        }
+
+        private async Task LoadTypesAsync()
+        {
+            if (_typesLoaded) return;
+            var sensorTypes = await _dbContext.SensorTypes.Include(x => x.Characteristics).ToListAsync();
+            var deviceTypes = await _dbContext.DeviceTypes.Include(x => x.Characteristics).ToListAsync();
+            SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
+            DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
+            _typesLoaded = true;
+        }
+
+        private async Task LoadSectorsAsync()
+        {
+            if (_sectorsLoaded) return;
+            var sectors = await _dbContext.Sectors.ToListAsync();
+            Sectors = new ObservableCollection<Sector>(sectors);
+            _sectorsLoaded = true;
+        }
+
+        private async Task LoadDevicesAsync()
+        {
+            if (_devicesLoaded) return;
+            var devices = await _dbContext.Devices.ToListAsync();
+            Devices = CollectionViewSource.GetDefaultView(devices);
+            ConfigureDevicesView();
+            _devicesLoaded = true;
+        }
+
+        private async Task LoadSensorsAsync()
+        {
+            if (_sensorsLoaded) return;
+            var sensors = await _dbContext.Sensors.ToListAsync();
+            Sensors = CollectionViewSource.GetDefaultView(sensors);
+            ConfigureSensorsView();
+            _sensorsLoaded = true;
+        }
+
+        private async Task LoadMechanismsAsync()
+        {
+            if (_mechanismsLoaded) return;
+            var mechanisms = await _dbContext.Mechanisms.ToListAsync();
+            var files = await _dbContext.HelpfulFiles.AsNoTracking()
+                .Where(f => f.MechanismId != null)
+                .Select(f => new HelpfulFile { Id = f.Id, NameFile = f.NameFile, MechanismId = f.MechanismId })
+                .ToListAsync();
+            foreach (var m in mechanisms)
+            {
+                m.Files = new ObservableCollection<HelpfulFile>(files.Where(f => f.MechanismId == m.Id));
+            }
+            Mechanisms = CollectionViewSource.GetDefaultView(mechanisms);
+            ConfigureMechanismsView();
+            _mechanismsLoaded = true;
+        }
+
+        private void ConfigureMechanismsView()
+        {
+            using (Mechanisms.DeferRefresh())
+            {
+                Mechanisms.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
+                Mechanisms.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
+                var groupDescription = new PropertyGroupDescription("Name", new EqualMechGroup());
+                Mechanisms.GroupDescriptions.Add(groupDescription);
+            }
+        }
+
+        private void ConfigureDevicesView()
+        {
+            using (Devices.DeferRefresh())
+            {
+                Devices.SortDescriptions.Add(new SortDescription("DeviceType.Name", ListSortDirection.Ascending));
+                Devices.GroupDescriptions.Add(new PropertyGroupDescription("DeviceType.Name"));
+            }
+        }
+
+        private void ConfigureSensorsView()
+        {
+            using (Sensors.DeferRefresh())
+            {
+                Sensors.SortDescriptions.Add(new SortDescription("SensorType.Name", ListSortDirection.Ascending));
+                Sensors.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
+            }
         }
 
         private void DeleteFromFile(object characteristic)

@@ -50,10 +50,11 @@ namespace SensorMap.Commands.SensorCommands
                     mapElement.MapData.Width = uv.Width;
                     mapElement.MapData.Height = uv.Height;
                     mapElement.SetCustomBounds(new Rect(uv.X, uv.Y, uv.Width, uv.Height));
+                    mapElement.MapData.IsModified = true;
                 }
                 Canvas.SetLeft(item, uv.X);
                 Canvas.SetTop(item, uv.Y);
-                uv.IsModified = true;
+                
             }
         }
 

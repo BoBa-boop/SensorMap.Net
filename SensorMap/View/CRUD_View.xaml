@@ -190,7 +190,8 @@
         </DockPanel>
         <hc:TabControl Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                Style="{StaticResource TabControlSliding}"
-               Background="Transparent" BorderThickness="0" IsAnimationEnabled="False">
+               Background="Transparent" BorderThickness="0" IsAnimationEnabled="False"
+               SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
 
             <!--SECTION FOR SECTORS-->
             <hc:TabItem Tag="Участки">
@@ -1179,5 +1180,14 @@
                 </Grid>
             </hc:TabItem>
         </hc:TabControl>
+        <Grid Grid.Row="1" Panel.ZIndex="10"
+              Visibility="{Binding IsLoading,UpdateSourceTrigger=PropertyChanged, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <Border Background="#66FFFFFF"/>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <hc:LoadingCircle IsRunning="{Binding IsLoading}" Width="60" Height="60"
+                                  Foreground="{StaticResource AccentBrush}"/>
+                <TextBlock Text="Загрузка данных..." FontSize="16" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

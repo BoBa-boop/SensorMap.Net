@@ -54,7 +54,7 @@ namespace SensorMap
             }
         }
 
-        private void AnalyzeDataBase()
+        private  void AnalyzeDataBase()
         {
             IAppDbContextFactory dbContextFactory = _serviceProvider.GetRequiredService<IAppDbContextFactory>();
             var data = _serviceProvider.GetRequiredService<IDataService>();
@@ -65,7 +65,7 @@ namespace SensorMap
                     dBContext.Database.MigrateAsync();
                     data.IsDataBaseConnect = true;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     MessageBox.Show(ex.ToString());
                     data.IsDataBaseConnect = false;

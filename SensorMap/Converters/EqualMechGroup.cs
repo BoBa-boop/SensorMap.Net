@@ -12,7 +12,10 @@ namespace SensorMap.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {            
-            return ((string)value).ToString().Split([' ','-','.',',']).FirstOrDefault().ToUpper();
+            if (value is not string s || string.IsNullOrWhiteSpace(s))
+                return string.Empty;
+            return s.Split([' ','-','.',','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .FirstOrDefault()?.ToUpper() ?? string.Empty;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

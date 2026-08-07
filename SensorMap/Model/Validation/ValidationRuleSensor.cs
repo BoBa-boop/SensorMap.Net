@@ -16,33 +16,26 @@ namespace SensorMap.Model.Validation
         {
             if (value == null) return new ValidationResult(false,"Отсутствует значение");
             var sensor = (value as BindingGroup).Items[0] as Sensor;
-            if (sensor != null)
+            if (sensor == null) return ValidationResult.ValidResult;
+            if (ValidationHelper.IsEmptyName(sensor.Name))
             {
-                if (string.IsNullOrWhiteSpace(sensor!.Name))
-                {
-                    return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
-                }
-                else sensor.IsModified = true;
-
-                object type = sensor!.SensorType;
-                if (type == null)
-                {
-                    return new ValidationResult(false, "Тип обязателен для выбора");
-                }
-                else sensor.IsModified = true;
-
-                if (type.GetType().IsEnum)
-                {
-                    var defaultValue = Activator.CreateInstance(type.GetType());
-                    if (type.Equals(defaultValue))
-                    {
-                        return new ValidationResult(false, "Выберите тип датчика");
-                    }
-                }
-                else sensor.IsModified = true;
+                return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
             }
+            if (ValidationHelper.ExceedsMaxLength(sensor.Name, 250))
+            {
+                return new ValidationResult(false, "Название не может быть длиннее 250 символов");
+            }
+            if (ValidationHelper.ContainsControlChars(sensor.Name))
+            {
+                return new ValidationResult(false, "Название не должно содержать служебные символы");
+            }
+            if (sensor.SensorType == null)
+            {
+                return new ValidationResult(false, "Тип обязателен для выбора");
+            }
+            sensor.IsModified = true;
 
-            return null;
+            return ValidationResult.ValidResult;
         }
     }
 }

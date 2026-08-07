@@ -357,9 +357,9 @@
 
                             </GroupStyle>
                         </DataGrid.GroupStyle>
-                        <!--<DataGrid.RowValidationRules>
-                    <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
-                </DataGrid.RowValidationRules>-->
+                        <DataGrid.RowValidationRules>
+                            <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>
                         <DataGrid.Columns>                            
                             <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MinWidth="100" Header="Название"/>
 
@@ -465,9 +465,9 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
-                        <!--<DataGrid.RowValidationRules>
-                    <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
-                </DataGrid.RowValidationRules>-->
+                        <DataGrid.RowValidationRules>
+                            <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>
@@ -594,9 +594,9 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior ViewModel="{Binding }"/>
                         </i:Interaction.Behaviors>
-                        <!--<DataGrid.RowValidationRules>
-        <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
-    </DataGrid.RowValidationRules>-->
+                        <DataGrid.RowValidationRules>
+                            <valid:ValidationRuleDevice ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>

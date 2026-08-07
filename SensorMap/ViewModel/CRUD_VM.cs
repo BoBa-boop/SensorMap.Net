@@ -12,6 +12,7 @@ using SensorMap.Converters;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using SensorMap.Model.Validation;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -89,6 +90,71 @@ namespace SensorMap.ViewModel
             {
                 if (arg is null) return;
                 var name = arg.GetType()?.GetProperty("Name")?.GetValue(arg);
+                arg.GetType()?.GetProperty("Name")?.SetValue(arg, (name as string)?.Trim());
+
+                if (arg is Sector sector && Sectors.Any(s => !ReferenceEquals(s, sector) &&
+                        string.Equals(s.Name, sector.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Growl.Error("Участок с таким названием уже существует");
+                    return;
+                }
+                if (arg is Mechanism mechanism && Mechanisms.SourceCollection is IEnumerable<Mechanism> mechs &&
+                        mechs.Any(m => !ReferenceEquals(m, mechanism) &&
+                        string.Equals(m.Name, mechanism.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Growl.Error("Механизм с таким названием уже существует");
+                    return;
+                }
+                if (arg is Sensor sensor && Sensors.SourceCollection is IEnumerable<Sensor> sens &&
+                        sens.Any(s => !ReferenceEquals(s, sensor) &&
+                        string.Equals(s.Name, sensor.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Growl.Error("Датчик с таким названием уже существует");
+                    return;
+                }
+                if (arg is Device device && Devices.SourceCollection is IEnumerable<Device> devs &&
+                        devs.Any(d => !ReferenceEquals(d, device) &&
+                        string.Equals(d.Name, device.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Growl.Error("Устройство с таким названием уже существует");
+                    return;
+                }
+                if (arg is SensorType sensorType)
+                {
+                    if (SensorTypes.Any(t => !ReferenceEquals(t, sensorType) &&
+                            string.Equals(t.Name, sensorType.Name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        Growl.Error("Тип датчика с таким названием уже существует");
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(sensorType.Color))
+                    {
+                        Growl.Error("Выберите цвет для типа датчика");
+                        return;
+                    }
+                    if (sensorType.Characteristics?.Any(c => ValidationHelper.IsEmptyName(c.Title) ||
+                            string.Equals(c.Title, "Новая характеристика", StringComparison.Ordinal)) == true)
+                    {
+                        Growl.Error("Названия характеристик не могут быть пустыми или 'Новая характеристика'");
+                        return;
+                    }
+                }
+                if (arg is DeviceType deviceType)
+                {
+                    if (DeviceTypes.Any(t => !ReferenceEquals(t, deviceType) &&
+                            string.Equals(t.Name, deviceType.Name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        Growl.Error("Тип устройства с таким названием уже существует");
+                        return;
+                    }
+                    if (deviceType.Characteristics?.Any(c => ValidationHelper.IsEmptyName(c.Title) ||
+                            string.Equals(c.Title, "Новая характеристика", StringComparison.Ordinal)) == true)
+                    {
+                        Growl.Error("Названия характеристик не могут быть пустыми или 'Новая характеристика'");
+                        return;
+                    }
+                }
+
                 using (var dBContext = _appDbContextFactory.CreateDbContext())
                 {
                     try

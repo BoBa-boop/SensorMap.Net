@@ -160,7 +160,7 @@ namespace SensorMap.ViewModel
             _fileManagment = fileManagment;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
-                GetDataFromDB(_dbContext);
+                //GetDataFromDB(_dbContext);
             }
             var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;
             CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
@@ -266,7 +266,7 @@ namespace SensorMap.ViewModel
                         return CanExecuteAddDevice(device);
                 return false;
             });
-            SaveSensorPlace = new RelayCommand(SaveCoordinates);
+            SaveCommand = new RelayCommand(Save);
             ShowSensorMechanism = new RelayCommand(()=>
             {
                 if (CurrentMech!=null)
@@ -287,12 +287,9 @@ namespace SensorMap.ViewModel
                 var dc = new FilesWindowVM(_fileManagment, imageControl, mech.Files,mech);
                 fsWindow.DataContext = dc;
                 dc.IsEditMode = IsEditMode;
+                mech.IsModified = true;
                 fsWindow.ShowDialog();
-                if (dc.HasChanges) HasChanges = true;
-                //if (obj is Mechanism mech)
-                //{
-                //    _fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
-                //}
+                HasChanges = dc.HasChanges ? true : HasChanges;
             },(obj) => 
             {
                 if (obj == null) return false;
@@ -312,6 +309,39 @@ namespace SensorMap.ViewModel
                 }
             });
 
+        }
+
+        private async void Save()
+        {
+            bool hasAnySuccess = false;
+            //Механизм изменен
+            var modifiedMechanisms = (CurrentSector?.Mechanisms ?? Enumerable.Empty<Mechanism>()).Where(x => x.IsModified).ToList();
+            if (modifiedMechanisms.Count > 0)
+            {
+                using var dbC = _appDbContextFactory.CreateDbContext(); 
+                foreach (var mechanism in modifiedMechanisms) 
+                { 
+                    dbC.Attach(mechanism).State = EntityState.Modified;
+                    mechanism.IsModified = false;
+                }
+                int affectedRows = await dbC.SaveChangesAsync();
+                hasAnySuccess = affectedRows > 0;
+            }
+            //Проверка изменение координат устройств
+            try
+            {
+                bool coordsSaved = await SaveCoordinates();
+                hasAnySuccess = hasAnySuccess || coordsSaved;
+            }
+            catch
+            { 
+                //logger
+            }
+            if (hasAnySuccess)
+            { 
+                HasChanges = false; Growl.Success("Данные сохранены"); 
+            }
+            else { Growl.Info("Нет изменений для сохранения"); }
         }
 
         private void SubscribeToCurrentStack()
@@ -334,14 +364,6 @@ namespace SensorMap.ViewModel
 
         private async void GetDataFromDB(EF.AppDBContext _dbContext)
         {
-            //var queryMech = await _dbContext.Mechanisms
-            //    .Include(m => m.Files)
-            //    .Include(m => m.MapObjects)
-            //        .ThenInclude(o => ((SensorAssignments)o).Sensor)
-            //            .ThenInclude(s => s!.SensorType)
-            //    .Include(m => m.MapObjects)
-            //        .ThenInclude(o => ((DeviceAssignment)o).Device)
-            //    .AsSplitQuery().ToListAsync();
             var querySector = await _dbContext.Sectors.ToListAsync();
             var queryMech = await _dbContext.Mechanisms.Include(m => m.Files)
                 .Include(m=>m.MapObjects).AsSplitQuery().ToListAsync();
@@ -407,20 +429,25 @@ namespace SensorMap.ViewModel
             }
             return true;
         }
-        private async void SaveCoordinates()
+        private async Task<bool> SaveCoordinates()
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
          //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
          //разобраться с сохранением
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
-                if (CurrentMech?.MapObjects == null) return;
-
-                // 1. Загружаем актуальное состояние из БД для поиска оригиналов
-                var existingMech = await dbContext.Mechanisms
-                    .Include(m => m.MapObjects)
-                    .FirstOrDefaultAsync(m => m.Id == CurrentMech.Id);
-
-                if (existingMech == null) return;
+                if (CurrentMech?.MapObjects == null) return false; 
+                // Собираем Id измененных объектов
+                var changedIds = CurrentMech.MapObjects
+                    .Where(x => x.IsModified || x.IsNew || x.ToDelete)
+                    .Select(x => x.Id).ToList();
+                if (!changedIds.Any())
+                {
+                    return false;
+                }
+                List<MapObject> currentMapObjects = await dbContext.MapObjects
+                                                                   .AsNoTracking()
+                                                                   .Where(x => changedIds.Contains(x.Id))
+                                                                   .ToListAsync();
 
                 int changesCount = 0;
 
@@ -429,7 +456,7 @@ namespace SensorMap.ViewModel
                     if (!IsValidData(mapObj)) break; // Или continue, если хотите пропустить только битую строку
 
                     // Ищем оригинал по Id для сравнения или обновления
-                    MapObject? originalObj = existingMech.MapObjects?
+                    MapObject? originalObj = currentMapObjects
                         .FirstOrDefault(x => x.Id == mapObj.Id);
 
                     if (mapObj.ToDelete)
@@ -486,19 +513,17 @@ namespace SensorMap.ViewModel
                 {
                     try
                     {
-                        int affectedRows = await dbContext.SaveChangesAsync();
-                        HasChanges = false;
-                        Growl.Success("Данные сохранены");
+                        int rows = await dbContext.SaveChangesAsync();
+                        if (rows > 0) return true;
+                        else throw new DbUpdateException();
                     }
-                    catch (DbUpdateConcurrencyException)
+                    catch (Exception ex)
                     {
-                        Growl.Error("Данные были изменены другим пользователем. Попробуйте снова.");
+                        //logger
+                        return false;
                     }
                 }
-                else
-                {
-                    Growl.Error("Нет изменений для сохранения");
-                }
+                return false;
             }
         }
 
@@ -508,7 +533,6 @@ namespace SensorMap.ViewModel
             if(sensor.X <=0 || sensor.Y <=0) return false;
             return true;
         }
-        public ICommand SaveSensorPlace { get; }
         public ICommand ShowSensorMechanism { get; }
         public ICommand ShowScheme { get; }
         public ICommand NavigateToSectors { get; }
@@ -529,6 +553,7 @@ namespace SensorMap.ViewModel
         public ICommand DragDeviceCommand { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
+        public ICommand SaveCommand { get; }
         public ICommand SetCurrentSensorCommand { get; }
     }
 }

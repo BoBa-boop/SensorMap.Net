@@ -1,6 +1,7 @@
 ﻿using Azure;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.EF.Entity;
 using SensorMap.Model.Validation;
 using System;
 using System.Collections.Generic;

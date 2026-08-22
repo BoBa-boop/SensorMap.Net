@@ -24,7 +24,7 @@ namespace SensorMap.Interfaces
         /// <returns>Картинка иконки</returns>
         ImageSource GetIconFile(string path);
 
-        bool AddHelpfulFile(ITempImage imgManag,object Entity, bool multiselect = false);
+        bool AddHelpfulFile(string[] paths, object ownerType);
         bool OpenFileInExplorer(string path);
         
     }

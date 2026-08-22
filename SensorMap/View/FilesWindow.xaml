@@ -63,19 +63,19 @@
                             Style="{StaticResource ButtonDefault}"
                             Content="Удалить" 
                             Padding="10,5"
-                            Command="{Binding RemoveFiles}"/>
+                            Command="{Binding RemoveFiles}" CommandParameter="{Binding ElementName=Fileslb,Path=SelectedItem}"/>
                 </StackPanel>
                 <!-- Кнопки управления видом справа -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                    <RadioButton x:Name="BtnList" Style="{StaticResource {x:Type ToggleButton}}" Content="📝 Список" IsChecked="True" Padding="10,5" Margin="0,0,5,0"/>
-                    <RadioButton x:Name="BtnTile" Style="{StaticResource {x:Type ToggleButton}}" Content="📱 Плитка" Padding="10,5"/>
+                    <RadioButton x:Name="BtnList" Style="{StaticResource {x:Type ToggleButton}}" Content="📝 Список"  Padding="10,5" Margin="0,0,5,0"/>
+                    <RadioButton x:Name="BtnTile" Style="{StaticResource {x:Type ToggleButton}}" Content="📱 Плитка" IsChecked="True" Padding="10,5"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
         <!-- 2. ДИНАМИЧЕСКИЙ СПИСОК ФАЙЛОВ -->
         <Border Grid.Row="1" Background="White" CornerRadius="6" BorderBrush="#E0E0E0" BorderThickness="1">
-            <ListBox x:Name="Fileslb" ItemsSource="{Binding Files}"
+            <ListBox x:Name="Fileslb" ItemsSource="{Binding Files,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
                       BorderThickness="0"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <i:Interaction.Behaviors>
@@ -134,7 +134,7 @@
                     <Style TargetType="{x:Type ListBox}">
                         <Setter Property="ItemTemplate" Value="{StaticResource Plitka}"/>
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsChecked, ElementName=BtnTile}" Value="True">
+                            <DataTrigger Binding="{Binding IsChecked, ElementName=BtnList}" Value="True">
                                 <Setter Property="ItemTemplate" Value="{StaticResource List}"/>
                             </DataTrigger>
                         </Style.Triggers>

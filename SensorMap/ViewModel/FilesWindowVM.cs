@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using DynamicData;
 using HandyControl.Controls;
 using HandyControl.Data;
 using ReactiveUI;
@@ -23,9 +24,10 @@ namespace SensorMap.ViewModel
         private readonly IFileManagment _fileManagment;
         private bool isEditMode;
         private bool _hasChanges;
+        private ObservableCollection<HelpfulFile> files;
 
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        [Reactive]public ObservableCollection<HelpfulFile> Files {  get; set; }
+        [Reactive] public ObservableCollection<HelpfulFile> Files { get => files; set { this.RaiseAndSetIfChanged(ref files, value); } }
         [Reactive] public bool HasChanges
         {
             get { return _hasChanges; }
@@ -35,11 +37,11 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref _hasChanges, value);
             }
         }
-        public FilesWindowVM(IFileManagment fileManagment,ITempImage tempImage,IEnumerable<HelpfulFile> files,object sender)
+        public FilesWindowVM(IFileManagment fileManagment,ITempImage tempImage,ObservableCollection<HelpfulFile> files,object sender)
         {
             _tempImage = tempImage;
             _fileManagment = fileManagment;
-            Files = new(files);
+            Files = files;
             OpenFile = new RelayCommand<HelpfulFile>((file) =>
             {
                 if (file == null) return;
@@ -55,7 +57,8 @@ namespace SensorMap.ViewModel
             });
             AddFiles = new RelayCommand(() =>
             {
-                fileManagment.AddHelpfulFile(tempImage, sender, true);///не обновляет источник
+                string[] paths = fileManagment.OpenFileDialog(true);
+                bool IsSuccess = fileManagment.AddHelpfulFile(paths, sender);
                 HasChanges = true;
             },()=>
             {
@@ -67,7 +70,7 @@ namespace SensorMap.ViewModel
             {
                 try
                 {
-                    Files.Remove(file);///не обновляет источник
+                    Files.Remove(file);
                     HasChanges = true;
                     Growl.Success(new GrowlInfo
                     {

@@ -53,7 +53,7 @@
                               HorizontalContentAlignment="Right"
                               Style="{StaticResource BadgeDanger}"
                               ShowBadge="{Binding HasChanges,UpdateSourceTrigger=PropertyChanged}">
-                        <Button ToolTip="Сохранить" Command="{Binding SaveSensorPlace}"
+                            <Button ToolTip="Сохранить" Command="{Binding SaveCommand}"
                                 IsEnabled="{Binding IsEditMode}" Padding="3">
                             <Button.Content>
                                 <Image Source="{StaticResource SaveImage}"/>

@@ -16,6 +16,12 @@ namespace SensorMap.Services
     public class FileManagmentService : IFileManagment
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        private readonly ITempImage imgService;
+
+        public FileManagmentService(ITempImage imgService)
+        {
+            this.imgService = imgService;
+        }
         public string[] OpenFileDialog(bool multiselect = false)
         {
             OpenFileDialog fileDialog = new OpenFileDialog();
@@ -50,9 +56,8 @@ namespace SensorMap.Services
             }
         }
 
-        public bool AddHelpfulFile(ITempImage imgManag,object Entity, bool multiselect = false)
+        public bool AddHelpfulFile(string[] paths,object Entity)
         {
-            string[] paths = OpenFileDialog(multiselect);
             if (paths.Length <= 0) return false;
             foreach (var path in paths)
             {
@@ -62,7 +67,7 @@ namespace SensorMap.Services
                     {
                         DeviceId = device.Id,
                         NameFile = path,
-                        ImageFile = imgManag.ConvertToByte(GetIconFile(path)),
+                        ImageFile = imgService.ConvertToByte(GetIconFile(path)),
                         IsNew = true
                     });
                 }
@@ -73,7 +78,7 @@ namespace SensorMap.Services
                     {
                         MechanismId = mechanism.Id,
                         NameFile = path,
-                        ImageFile = imgManag.ConvertToByte(GetIconFile(path))
+                        ImageFile = imgService.ConvertToByte(GetIconFile(path))
                     });
                 }
                 if (Entity is Sensor sensor)
@@ -82,7 +87,7 @@ namespace SensorMap.Services
                     {
                         SensorId = sensor.Id,
                         NameFile = path,
-                        ImageFile = imgManag.ConvertToByte(GetIconFile(path)),
+                        ImageFile = imgService.ConvertToByte(GetIconFile(path)),
                         IsNew = true
                     });
                 }

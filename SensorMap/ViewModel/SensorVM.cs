@@ -110,7 +110,11 @@ namespace SensorMap.ViewModel
                 if (mech == null) return;
                 _navigation.NavigateTo<MechanismVM>(mech);
             });
-            AddFiles = new RelayCommand<Sensor>((s) => { fileManagment.AddHelpfulFile(imgManag, s,true);  });
+            AddFiles = new RelayCommand<Sensor>((s) => 
+            {
+                string[] paths = fileManagment.OpenFileDialog(true);
+                fileManagment.AddHelpfulFile(paths, s);
+            });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
                 

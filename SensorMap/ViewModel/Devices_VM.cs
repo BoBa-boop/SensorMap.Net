@@ -121,7 +121,11 @@ namespace SensorMap.ViewModel
             
             _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode);
-            AddFiles = new RelayCommand<Device>((d) => { fileManagment.AddHelpfulFile(_imgManag,d,true); });
+            AddFiles = new RelayCommand<Device>((d) => 
+            {
+                string[]paths = fileManagment.OpenFileDialog(true);
+                fileManagment.AddHelpfulFile(paths,d); 
+            });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
                 try

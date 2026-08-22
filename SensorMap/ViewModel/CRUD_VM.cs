@@ -358,7 +358,8 @@ namespace SensorMap.ViewModel
             {
                 if (obj is Mechanism mech)
                 {
-                    mech.IsModified = fileManagment.AddHelpfulFile(tempImage, obj, false);
+                    string[] paths = fileManagment.OpenFileDialog(true);
+                    mech.IsModified = fileManagment.AddHelpfulFile(paths, obj);
                 }
             });
             ShowHelpfulFile = new RelayCommand<object>((obj) => 

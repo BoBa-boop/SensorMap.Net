@@ -13,16 +13,14 @@ using UserControl = System.Windows.Controls.UserControl;
 namespace SensorMap.View
 {
     /// <summary>
-    /// Логика взаимодействия для test.xaml
+    /// Логика взаимодействия для DeviceInfo.xaml
     /// </summary>
-    public partial class SensorAddInfo : UserControl
+    public partial class DeviceInfo : UserControl
     {
-
-        public SensorAddInfo()
+        public DeviceInfo()
         {
             InitializeComponent();
         }
-
         private void Button_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             if (sender is Button button)
@@ -53,7 +51,6 @@ namespace SensorMap.View
             {
                 return new BitmapImage();
             }
-
         }
     }
 }

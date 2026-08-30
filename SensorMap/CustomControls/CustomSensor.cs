@@ -223,9 +223,10 @@ namespace SensorMap.CustomControls
 
         private void ChangeStateActions()
         {
+            this.MouseDown += OnMouseDown;
             if (IsEditMode)
             {
-                this.MouseDown += OnMouseDown;
+                
                 this.MouseMove += OnSensorMouseMove;
                 _canvas.MouseMove += OnMouseMove;
                 _canvas.MouseUp += OnMouseUp;
@@ -234,7 +235,7 @@ namespace SensorMap.CustomControls
             else
             {
                 this.IsSelected = false;
-                this.MouseDown -= OnMouseDown;
+                //this.MouseDown -= OnMouseDown;
                 this.MouseMove -= OnSensorMouseMove;
                 _canvas.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;
@@ -388,20 +389,30 @@ namespace SensorMap.CustomControls
         }
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
+            if(IsEditMode)
             {
-                _memorySelectedSensor.IsSelected = false;
-                _memorySelectedSensor = null;
-                if (SelectedSensor != null)
+                if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
                 {
-                    SelectedSensor.IsSelected = false;
-                    SelectedSensor.CustBorderBrush = Brushes.Black;
+                    _memorySelectedSensor.IsSelected = false;
+                    _memorySelectedSensor = null;
+                    if (SelectedSensor != null)
+                    {
+                        SelectedSensor.IsSelected = false;
+                        SelectedSensor.CustBorderBrush = Brushes.Black;
+                    }
                 }
-            }
-            if (MouseHitType != HitType.None)
-            {
-                LastPoint = Mouse.GetPosition(_canvas);
-                IsDragging = true;
+                if (MouseHitType != HitType.None)
+                {
+                    LastPoint = Mouse.GetPosition(_canvas);
+                    IsDragging = true;
+                }
+                SelectedSensor = this;
+                _memorySelectedSensor = this;
+                IsSelected = true;
+                this.Focus();
+
+                if (_image.Source != null)
+                    Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
             }
             if(e.RightButton == MouseButtonState.Pressed)
             {
@@ -421,13 +432,7 @@ namespace SensorMap.CustomControls
                 window.Show(this, false);
                 e.Handled = true;
             }
-            SelectedSensor = this;
-            _memorySelectedSensor = this;
-            IsSelected = true;
-            this.Focus();
-
-            if (_image.Source != null)
-                Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
+            
         }
 
         private void SelectedChanged()
@@ -441,7 +446,7 @@ namespace SensorMap.CustomControls
 
         public object Clone()
         {
-            var clone = new CustomSensor
+            var clone = new CustomSensor()
             {
                 SensorData = SensorData,
                 CustomBounds = CustomBounds

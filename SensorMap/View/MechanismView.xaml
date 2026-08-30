@@ -286,7 +286,6 @@
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="10,0,10,10" ClipToBounds="True"
                         Grid.Row="1">
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
-                                         SaveSensorsCommand="{Binding SaveSensorPlace}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorEvent="{Binding DeleteSensorCommand}"
                                          SelectedMapObject="{Binding SelectedMapObject,UpdateSourceTrigger=PropertyChanged}"

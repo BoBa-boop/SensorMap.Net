@@ -43,7 +43,7 @@ namespace SensorMap.CustomControls
     /// </summary>
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
-    public class SensorDragDrop : Control
+    public class SensorDragDrop : Control,IDisposable
     {
         static Cursor Grab = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grab.cur")).Stream);
         static Cursor Grabbing = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grabbing.cur")).Stream);
@@ -171,13 +171,6 @@ namespace SensorMap.CustomControls
 
         #region add-remove sensor
 
-        public static readonly DependencyProperty SaveSensorsCommandProperty =
-            DependencyProperty.Register("SaveSensorsCommand", typeof(ICommand), typeof(SensorDragDrop));
-        public ICommand SaveSensorsCommand
-        {
-            get { return (ICommand)GetValue(SaveSensorsCommandProperty); }
-            set { SetValue(SaveSensorsCommandProperty, value); }
-        }
 
         public static readonly DependencyProperty AddSensorsCommandProperty =
             DependencyProperty.Register("AddSensorsCommand", typeof(ICommand), typeof(SensorDragDrop), new PropertyMetadata(null));
@@ -312,9 +305,15 @@ namespace SensorMap.CustomControls
                 //_canvas.KeyDown += _canvas_KeyDown;
                 //_canvas.KeyUp += _canvas_KeyUp;
                 _image.PreviewMouseDown += (s,e)=>ClearSelectedSensors();
+                this.Unloaded += SensorDragDrop_Unloaded;
                 
             }
             
+        }
+
+        private void SensorDragDrop_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Dispose();
         }
 
         private void _canvas_MouseLeave(object sender, MouseEventArgs e)
@@ -964,6 +963,19 @@ namespace SensorMap.CustomControls
             }
             tempSelectedMapObjects.Clear();
             IsMultiSelection = false;
+        }
+
+        public void Dispose()
+        {
+            
+            _canvas.PreviewMouseMove -= _canvas_MouseMove;
+            _canvas.MouseDown -= _canvas_MouseDown;
+            _canvas.MouseUp -= _canvas_MouseUp;
+            _canvas.MouseWheel -= _canvas_MouseWheel;
+            _canvas.Drop -= _canvas_Drop;
+            _canvas.MouseLeave -= _canvas_MouseLeave;
+            _image.PreviewMouseDown -= (s, e) => ClearSelectedSensors();
+            this.Unloaded -= SensorDragDrop_Unloaded;
         }
     }
 }

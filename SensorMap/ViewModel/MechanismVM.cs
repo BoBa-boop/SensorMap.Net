@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using DynamicData;
 using HandyControl.Controls;
 using HandyControl.Data;
 using HandyControl.Expression.Shapes;
@@ -13,6 +14,7 @@ using SensorMap.Services;
 using SensorMap.View;
 using System.Collections.ObjectModel;
 using System.Net.WebSockets;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -87,8 +89,18 @@ namespace SensorMap.ViewModel
             {
                 if (value != null)
                 {
+                    using (var dbContext = _appDbContextFactory.CreateDbContext())
+                    {
+                        if (value?.MapObjects?.Count() == 0)
+                            value.MapObjects.AddRange(dbContext.MapObjects.Where(x => x.MechanismId == value.Id)
+                                .Include(x => ((DeviceAssignment)x).Device).ThenInclude(x => x.DeviceType).Include(x => ((SensorAssignments)x).Sensor)
+                                .ThenInclude(x => x.SensorType).AsSplitQuery().ToList());
+                        if (value?.Files?.Count() == 0)
+                        {
+                            value.Files.AddRange(dbContext.HelpfulFiles.Where(x => x.MechanismId == value.Id).AsNoTracking());
+                        }
+                    }
                     this.RaiseAndSetIfChanged(ref currentMech, value);
-                    currentMech = value;
                     SubscribeToCurrentStack();
                 }
             }
@@ -147,6 +159,8 @@ namespace SensorMap.ViewModel
         [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors { get; set; }
         [Reactive] private ObservableCollection<Sensor>? SensorsList { get; set; }
         [Reactive] private ObservableCollection<Device>? DevicesList { get; set; }
+
+        private readonly CompositeDisposable _disposables = new();
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
             IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
             IFileManagment fileManagment,
@@ -160,7 +174,7 @@ namespace SensorMap.ViewModel
             _fileManagment = fileManagment;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
-                //GetDataFromDB(_dbContext);
+                GetDataFromDB(_dbContext);
             }
             var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;
             CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
@@ -308,7 +322,29 @@ namespace SensorMap.ViewModel
                     CurrentStack?.Do(command);
                 }
             });
-
+            this.WhenAnyValue(x => x.CurrentSector)
+                .Subscribe(curSector =>
+                {
+                    if (curSector != null)
+                        using (var dbContext = _appDbContextFactory.CreateDbContext())
+                        {
+                            if (curSector.Mechanisms?.Count() == 0)
+                                curSector.Mechanisms?.AddRange(dbContext.Mechanisms.Where(x => x.SectorID == curSector.Id).AsNoTracking()
+                                    .Select(x => new Mechanism()
+                                    {
+                                        Name = x.Name,
+                                        SectorID = x.SectorID,
+                                        Id = x.Id,
+                                        Image = x.Image,
+                                    }).ToList());
+                        }
+                });
+            //this.WhenAnyValue(x => x.CurrentMech)
+            //    .Subscribe(curMech =>
+            //    {
+            //        if (curMech != null)
+                        
+            //    });
         }
 
         private async void Save()
@@ -364,13 +400,22 @@ namespace SensorMap.ViewModel
 
         private async void GetDataFromDB(EF.AppDBContext _dbContext)
         {
-            var querySector = await _dbContext.Sectors.ToListAsync();
-            var queryMech = await _dbContext.Mechanisms.Include(m => m.Files)
-                .Include(m=>m.MapObjects).AsSplitQuery().ToListAsync();
-            var queryTypes = await _dbContext.SensorTypes.ToListAsync();
-            var queryDevice = await _dbContext.Devices.ToListAsync();
-            var querySensors = await _dbContext.Sensors.Include(x=>x.SensorType).ToListAsync();
-            var queryDevTypes = await _dbContext.DeviceTypes.ToListAsync();
+            //var querySector = await _dbContext.Sectors.ToListAsync();
+            //var queryMech = await _dbContext.Mechanisms.Include(m => m.Files)
+            //    .Include(m => m.MapObjects).AsSplitQuery().ToListAsync();
+            //var queryTypes = await _dbContext.SensorTypes.ToListAsync();
+            //var queryDevice = await _dbContext.Devices.ToListAsync();
+            //var querySensors = await _dbContext.Sensors.Include(x => x.SensorType).ToListAsync();
+            //var queryDevTypes = await _dbContext.DeviceTypes.ToListAsync();
+
+            var querySector = await _dbContext.Sectors.Select(x => new Sector() { Id = x.Id, Name = x.Name }).ToListAsync();
+
+            var queryTypes = await _dbContext.SensorTypes.Select(x => new SensorType() { Id = x.Id, Name = x.Name }).ToListAsync();
+            var queryDevice = await _dbContext.Devices
+                .Select(x => new Device() { Id = x.Id, Image = x.Image, Name = x.Name, DeviceTypeId = x.DeviceTypeId, DeviceType = x.DeviceType }).ToListAsync();
+            var querySensors = await _dbContext.Sensors
+                .Select(x => new Sensor() { Id = x.Id, Image = x.Image, Name = x.Name, SensorTypeID = x.SensorTypeID, SensorType = x.SensorType }).ToListAsync();
+            var queryDevTypes = await _dbContext.DeviceTypes.Select(x => new DeviceType() { Id = x.Id, Name = x.Name }).ToListAsync();
 
             sensorTypes = new ObservableCollection<SensorType>(queryTypes);
             SensorsList = new ObservableCollection<Sensor>(querySensors);
@@ -436,14 +481,14 @@ namespace SensorMap.ViewModel
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
                 if (CurrentMech?.MapObjects == null) return false; 
-                // Собираем Id измененных объектов
-                var changedIds = CurrentMech.MapObjects
-                    .Where(x => x.IsModified || x.IsNew || x.ToDelete)
-                    .Select(x => x.Id).ToList();
-                if (!changedIds.Any())
+                
+                var changedMapObjects = CurrentMech.MapObjects
+                    .Where(x => x.IsModified || x.IsNew || x.ToDelete).ToList();
+                if (!changedMapObjects.Any())
                 {
                     return false;
                 }
+                var changedIds = changedMapObjects.Select(x => x.Id).ToList();
                 List<MapObject> currentMapObjects = await dbContext.MapObjects
                                                                    .AsNoTracking()
                                                                    .Where(x => changedIds.Contains(x.Id))
@@ -451,7 +496,7 @@ namespace SensorMap.ViewModel
 
                 int changesCount = 0;
 
-                foreach (var mapObj in CurrentMech.MapObjects)
+                foreach (var mapObj in changedMapObjects)
                 {
                     if (!IsValidData(mapObj)) break; // Или continue, если хотите пропустить только битую строку
 
@@ -464,13 +509,7 @@ namespace SensorMap.ViewModel
                         // Удаление
                         if (originalObj != null)
                         {
-                            // Вариант А: Жесткое удаление из БД
-                            //dbContext.SensorAssignments.Remove(originalSa);
-
-                            // Вариант Б: Мягкое удаление (если есть поле IsDeleted), тогда State = Modified + флаг
-                            //originalSa.ToDelete = true;
                             dbContext.Entry(originalObj).State = EntityState.Deleted;
-
                             changesCount++;
                         }
                     }
@@ -487,18 +526,20 @@ namespace SensorMap.ViewModel
                     }
                     else if (mapObj.IsModified)
                     {
+                        var entry = dbContext.Attach(mapObj);
                         // Обновление существующей записи
                         if (originalObj != null)
                         {
-                            // Оптимальный способ: обновит только измененные поля
-                            dbContext.Entry(originalObj).CurrentValues.SetValues(mapObj);
-                            changesCount++;
-                        }
-                        else
-                        {
+                            //    // Оптимальный способ: обновит только измененные поля
+                            dbContext.Entry(originalObj).CurrentValues.SetValues(entry);
+                            entry.OriginalValues.SetValues((object)originalObj);
+                            //    changesCount++;
+                            //}
+                            //else
+                            //{
                             // Запись должна быть в базе, но ее нет в загруженном графе (например, сработал QueryFilter)
                             // Присоединяем как модифицированную
-                            dbContext.Attach(mapObj).State = EntityState.Modified;
+
                             changesCount++;
                         }
                     }
@@ -513,9 +554,9 @@ namespace SensorMap.ViewModel
                 {
                     try
                     {
-                        int rows = await dbContext.SaveChangesAsync();
+                        int rows =  dbContext.SaveChanges();
                         if (rows > 0) return true;
-                        else throw new DbUpdateException();
+                        //else throw new DbUpdateException();
                     }
                     catch (Exception ex)
                     {

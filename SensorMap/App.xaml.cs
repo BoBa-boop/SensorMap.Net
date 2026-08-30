@@ -85,7 +85,8 @@ namespace SensorMap
             });
             //Регистрация окон
             services.AddTransient<AuthorizationWindow>();
-
+            services.AddTransient<DeviceInfo>();
+            services.AddTransient<SensorAddInfo>();
             //Регистрация VM
             services.AddSingleton<MainWindowVM>();
             services.AddSingleton<MainMenuVM>();

@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using ReactiveUI;
 using SensorMap.Commands.SensorCommands;
 using SensorMap.Interfaces;
@@ -8,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Image = System.Windows.Controls.Image;
@@ -176,7 +178,6 @@ namespace SensorMap.CustomControls
         Rect Map;
         private Image _image;
         private bool IsMoving;
-
         static CustomDevice()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomDevice), new FrameworkPropertyMetadata(typeof(CustomDevice)));
@@ -195,6 +196,7 @@ namespace SensorMap.CustomControls
             if (_canvas != null)
             {
                 ChangeStateActions();
+
             }
         }
 
@@ -211,7 +213,7 @@ namespace SensorMap.CustomControls
             else
             {
                 this.IsSelected = false;
-                this.MouseDown -= OnMouseDown;
+                //this.MouseDown -= OnMouseDown;
                 this.MouseMove -= OnDeviceMouseMove;
                 _canvas.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;
@@ -353,29 +355,50 @@ namespace SensorMap.CustomControls
         
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (_memorySelectedDevice != null && _memorySelectedDevice != this && !IsMultiSelection)
+            if(IsEditMode)
             {
-                _memorySelectedDevice.IsSelected = false;
-                _memorySelectedDevice = null;
-                if (SelectedDevice != null)
+                if (_memorySelectedDevice != null && _memorySelectedDevice != this && !IsMultiSelection)
                 {
-                    SelectedDevice.IsSelected = false;
-                    SelectedDevice.CustBorderBrush = Brushes.Black;
+                    _memorySelectedDevice.IsSelected = false;
+                    _memorySelectedDevice = null;
+                    if (SelectedDevice != null)
+                    {
+                        SelectedDevice.IsSelected = false;
+                        SelectedDevice.CustBorderBrush = Brushes.Black;
+                    }
                 }
+                if (MouseHitType != HitType.None)
+                {
+                    LastPoint = Mouse.GetPosition(_canvas);
+                    IsDragging = true;
+                }
+                SelectedDevice = this;
+                _memorySelectedDevice = this;
+                IsSelected = true;
+                this.Focus();
+
+                if (_image.Source != null)
+                    Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
             }
-            if (MouseHitType != HitType.None)
+            if (e.RightButton == MouseButtonState.Pressed)
             {
-                LastPoint = Mouse.GetPosition(_canvas);
-                IsDragging = true;
+                var pop = new View.DeviceInfo();
+                var window = new PopupWindow()
+                {
+                    PopupElement = pop,
+                    DataContext = this.DeviceData
+                };
+                Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
+
+                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
+                {
+                    window.Close();
+                    Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
+                }
+                window.Show(this, false);
+                e.Handled = true;
             }
-
-            SelectedDevice = this;
-            _memorySelectedDevice = this;
-            IsSelected = true;
-            this.Focus();
-
-            if (_image.Source != null)
-                Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
+           
         }
 
         private void SelectedChanged()

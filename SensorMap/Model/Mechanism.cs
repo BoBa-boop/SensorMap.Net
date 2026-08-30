@@ -71,7 +71,7 @@ namespace SensorMap.Model
             }
         }
 
-        public virtual ObservableCollection<MapObject>? MapObjects { get; set; }
+        public virtual ObservableCollection<MapObject>? MapObjects { get; set; } = new();
         public virtual ObservableCollection<HelpfulFile> Files { get => files; set => files = value; }
         public virtual int SectorID { get; set; }
         public virtual int? DeviceID { get; set; }

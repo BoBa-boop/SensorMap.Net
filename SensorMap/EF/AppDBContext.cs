@@ -74,13 +74,13 @@ namespace SensorMap.EF
 
         public override int SaveChanges()
         {
-            var logEntries = GetLogEntries();
+            //var logEntries = GetLogEntries();
             var result = base.SaveChanges();
-            foreach (var log in logEntries)
-            {
-                Logger.Info(log.Description);
-                OnLogEntry?.Invoke(log);
-            }
+            //foreach (var log in logEntries)
+            //{
+            //    Logger.Info(log.Description);
+            //    OnLogEntry?.Invoke(log);
+            //}
             return result;
         }
 
@@ -121,7 +121,7 @@ namespace SensorMap.EF
                     var changes = new List<string>();
                     foreach (var prop in entry.Properties.Where(p => p.IsModified))
                     {
-                        var oldVal = prop.OriginalValue?.ToString() ?? "";
+                        var oldVal = entityName?.ToString() ?? "";
                         var newVal = prop.CurrentValue?.ToString() ?? "";
                         changes.Add($"{prop.Metadata.Name} \"{oldVal}\" -> \"{newVal}\"");
                     }

@@ -51,6 +51,8 @@ namespace SensorMap.ViewModel
         private int _loadingTabs;
         private int selectedTabIndex;
         private bool isLoading;
+        private ObservableCollection<SensorType> sensorTypes;
+        private ObservableCollection<DeviceType> deviceTypes;
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
@@ -59,9 +61,8 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Sector> Sectors { get; set; }
         [Reactive] public ICollectionView Sensors { get => sensors; set => this.RaiseAndSetIfChanged(ref sensors, value); }
         [Reactive] public ICollectionView Devices { get => devices; set => this.RaiseAndSetIfChanged(ref devices, value); }
-        [Reactive] public ObservableCollection<SensorType> SensorTypes { get; set; }
-        [Reactive] public ObservableCollection<DeviceType> DeviceTypes { get; set; }
-        [Reactive] public ObservableCollection<string> Manufacturers { get; set; }
+        [Reactive] public ObservableCollection<SensorType> SensorTypes { get => sensorTypes; set => this.RaiseAndSetIfChanged(ref sensorTypes,value); }
+        [Reactive] public ObservableCollection<DeviceType> DeviceTypes { get => deviceTypes; set => this.RaiseAndSetIfChanged(ref deviceTypes,value); }
         [Reactive] public ICollectionView Mechanisms { get => mechanisms; set => this.RaiseAndSetIfChanged(ref mechanisms, value); }
         [Reactive] public int SelectedTabIndex { get => selectedTabIndex; set => this.RaiseAndSetIfChanged(ref selectedTabIndex, value); }
         [Reactive] public bool IsLoading { get => isLoading; set => this.RaiseAndSetIfChanged(ref isLoading,value); }

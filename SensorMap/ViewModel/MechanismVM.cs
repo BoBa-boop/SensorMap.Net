@@ -92,7 +92,7 @@ namespace SensorMap.ViewModel
                     using (var dbContext = _appDbContextFactory.CreateDbContext())
                     {
                         if (value?.MapObjects?.Count() == 0)
-                            value.MapObjects.AddRange(dbContext.MapObjects.Where(x => x.MechanismId == value.Id)
+                            value.MapObjects.AddRange(dbContext.MapObjects.Where(x => x.MechanismId == value.Id).AsNoTracking()
                                 .Include(x => ((DeviceAssignment)x).Device).ThenInclude(x => x.DeviceType).Include(x => ((SensorAssignments)x).Sensor)
                                 .ThenInclude(x => x.SensorType).AsSplitQuery().ToList());
                         if (value?.Files?.Count() == 0)
@@ -377,7 +377,7 @@ namespace SensorMap.ViewModel
             { 
                 HasChanges = false; Growl.Success("Данные сохранены"); 
             }
-            else { Growl.Info("Нет изменений для сохранения"); }
+            else { Growl.Info("Нет изменений для сохранения в БД"); }
         }
 
         private void SubscribeToCurrentStack()
@@ -478,12 +478,13 @@ namespace SensorMap.ViewModel
         {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
          //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
          //разобраться с сохранением
+            var changedMapObjects = CurrentMech.MapObjects
+                       .Where(x => x.IsModified || x.IsNew || x.ToDelete).ToList();
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
                 if (CurrentMech?.MapObjects == null) return false; 
                 
-                var changedMapObjects = CurrentMech.MapObjects
-                    .Where(x => x.IsModified || x.IsNew || x.ToDelete).ToList();
+                
                 if (!changedMapObjects.Any())
                 {
                     return false;
@@ -510,8 +511,9 @@ namespace SensorMap.ViewModel
                         if (originalObj != null)
                         {
                             dbContext.Entry(originalObj).State = EntityState.Deleted;
-                            changesCount++;
                         }
+                            changesCount++;
+                        CurrentMech.MapObjects.Remove(mapObj);
                     }
                     else if (mapObj.IsNew || mapObj.Id == 0)
                     {
@@ -545,9 +547,9 @@ namespace SensorMap.ViewModel
                     }
 
                     // Сброс локальных флагов UI-модели, чтобы следующий клик "Сохранить" не делал лишнего
-                    mapObj.IsNew = false;
-                    mapObj.IsModified = false;
-                    mapObj.ToDelete = false;
+                    //mapObj.IsNew = false;
+                    //mapObj.IsModified = false;
+                    //mapObj.ToDelete = false;
                 }
 
                 if (changesCount > 0)
@@ -555,8 +557,19 @@ namespace SensorMap.ViewModel
                     try
                     {
                         int rows =  dbContext.SaveChanges();
+                        foreach (var item in changedMapObjects)
+                        {
+                            item.IsNew = false;
+                            item.IsModified = false;
+                            item.ToDelete = false;
+                        }
                         if (rows > 0) return true;
-                        //else throw new DbUpdateException();
+                        else
+                        {
+                            Growl.Info("Выполнено изменение не затронувшее данные в БД");
+                            HasChanges = false;
+                        }
+
                     }
                     catch (Exception ex)
                     {

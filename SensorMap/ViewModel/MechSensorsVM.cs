@@ -80,12 +80,13 @@ namespace SensorMap.ViewModel
         public MechSensorsVM(ITempImage imageControl,Mechanism currentMech,IEnumerable<Sensor> sensorsList, IEnumerable<Device> deviceList)
         {
             Mechanism = (Mechanism)currentMech.Clone();
+            if (Mechanism != null && Mechanism.MapObjects != null)
+                Mechanism.MapObjects.RemoveMany(Mechanism.MapObjects.Where(x => x.ToDelete == true).ToList());
             SensorList = new (sensorsList);
             DeviceList = new(deviceList);
             Sensors = Mechanism.MapObjects.OfType<SensorAssignments>().ToList();
             Devices = Mechanism.MapObjects.OfType<DeviceAssignment>().ToList();
-            if (Mechanism!=null && Mechanism.MapObjects!=null)
-                Mechanism.MapObjects.RemoveMany(Mechanism.MapObjects.Where(x => x.ToDelete == true).ToList());
+            
             _imageControl = imageControl;
             AddImage = new RelayCommand<MapObject>((obj) =>
             {

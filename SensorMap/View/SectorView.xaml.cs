@@ -25,6 +25,7 @@ namespace SensorMap.View
         public SectorView()
         {
             InitializeComponent();
+            DataContextChanged += (_, _) => ViewModel = DataContext as SectorsVM;
             this.WhenActivated(disposables =>
             { // Здесь можно подписываться на команды самого Окна, если они нужны 
               // Например: this.BindCommand(ViewModel, vm => vm.SomeCmd, v => v.FindName<Button>("MyBtn"))

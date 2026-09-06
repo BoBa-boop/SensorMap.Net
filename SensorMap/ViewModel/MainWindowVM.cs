@@ -51,6 +51,7 @@ namespace SensorMap.ViewModel
             NavigateToMechanisms = new RelayCommand(() => Navigation.NavigateTo<MechanismVM>());
             NavigateToDevices = new RelayCommand(()=>Navigation.NavigateTo<Devices_VM>());
             TurnOnEditMode = new RelayCommand(() => OpenAuthWindow());
+            SetViewMode = new RelayCommand(() => _dataService.IsEditMode = false);
             CreateBackupDB = new RelayCommand(() => 
             {
                 FolderBrowserDialog folderBrowser = new FolderBrowserDialog();
@@ -63,18 +64,6 @@ namespace SensorMap.ViewModel
                 .ToProperty(this, x => x.IsConnectedDB);
             this.WhenActivated(disposables =>
             {
-                this.WhenAnyValue(x => x.IsEditMode)
-                .BindTo(_dataService, x => x.IsEditMode)
-                .DisposeWith(disposables);
-
-                _dataService.WhenAnyValue(x => x.IsEditMode)
-                    .BindTo(this, x => x.IsEditMode)
-                    .DisposeWith(disposables);
-
-                _dataService.WhenAnyValue(x => x.IsDataBaseConnect)
-                   .BindTo(this, x => x.IsConnectedDB)
-                   .DisposeWith(disposables);
-
                 this.WhenAnyValue(x => x.IsEditMode).Subscribe((mode) =>
                 {
                     if (mode == false) NavigateToMenu.Execute(null);
@@ -90,6 +79,7 @@ namespace SensorMap.ViewModel
         }
 
         public ICommand TurnOnEditMode { get; }
+        public ICommand SetViewMode { get; }
         public ICommand NavigateToDB { get; set; }
         public ICommand NavigateToSectors { get; set; }
         public ICommand NavigateToSensors { get; set; }

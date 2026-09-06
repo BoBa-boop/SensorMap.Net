@@ -341,9 +341,6 @@ namespace SensorMap.ViewModel
                             }
                     })
                     .DisposeWith(disposables);
-                _service.WhenAnyValue(x => x.IsEditMode)
-                    .BindTo(this, x => x.IsEditMode)
-                    .DisposeWith(disposables);
             });
         }
 
@@ -592,6 +589,6 @@ namespace SensorMap.ViewModel
         public ICommand SaveCommand { get; }
         public ICommand SetCurrentSensorCommand { get; }
 
-        public ViewModelActivator Activator => new ViewModelActivator();
+        public ViewModelActivator Activator { get; } = new ViewModelActivator();
     }
 }

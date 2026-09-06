@@ -74,7 +74,7 @@
                         </MenuItem.Icon>
                         <i:Interaction.Triggers>
                             <i:EventTrigger EventName="Click">
-                                <i:ChangePropertyAction TargetObject="{Binding}" PropertyName="IsEditMode" Value="False"/>
+                                <i:InvokeCommandAction Command="{Binding SetViewMode}"/>
                             </i:EventTrigger>
                         </i:Interaction.Triggers>
                     </MenuItem>

@@ -24,9 +24,8 @@ namespace SensorMap.View
         } 
         object? IViewFor.ViewModel { get => ViewModel; set => ViewModel = (MainWindowVM?)value; } 
         public MainWindow() 
-        { InitializeComponent(); 
-            // Это стандартный шаблон IViewFor. 
-            // Он свяжет DataContext со свойством ViewModel и запустит WhenActivated.
+        { InitializeComponent();
+            DataContextChanged += (_, _) => ViewModel = DataContext as MainWindowVM;
             this.WhenActivated(disposables => 
             { // Здесь можно подписываться на команды самого Окна, если они нужны 
               // Например: this.BindCommand(ViewModel, vm => vm.SomeCmd, v => v.FindName<Button>("MyBtn"))

@@ -83,7 +83,8 @@ namespace SensorMap.ViewModel
                         Sectors = new(result);
                     }
                     else Sectors = new(_allSectors);
-                });
+                })
+                .DisposeWith(disposables);
                 this.WhenAnyValue(x => x.SelectedSector)
                     .Subscribe(sector => IsDetailOpen = sector != null)
                     .DisposeWith(disposables);
@@ -91,6 +92,6 @@ namespace SensorMap.ViewModel
         }
         public ICommand GoToMech { get; set; }
 
-        public ViewModelActivator Activator => new ViewModelActivator();
+        public ViewModelActivator Activator { get; } = new ViewModelActivator();
     }
 }

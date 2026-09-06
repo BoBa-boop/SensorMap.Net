@@ -29,7 +29,7 @@ namespace SensorMap.View
         public MechanismView()
         {
             InitializeComponent();
-            
+            DataContextChanged += (_, _) => ViewModel = DataContext as MechanismVM;
             this.WhenActivated(disposables =>
             { // Здесь можно подписываться на команды самого Окна, если они нужны 
               // Например: this.BindCommand(ViewModel, vm => vm.SomeCmd, v => v.FindName<Button>("MyBtn"))

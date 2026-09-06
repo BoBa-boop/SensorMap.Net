@@ -1,4 +1,7 @@
-﻿using SensorMap.Model;
+﻿using ReactiveUI;
+using SensorMap.Model;
+using SensorMap.ViewModel;
+using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -9,12 +12,32 @@ namespace SensorMap.View
     /// <summary>
     /// Логика взаимодействия для MechanismView.xaml
     /// </summary>
-    public partial class MechanismView : UserControl
+    public partial class MechanismView : UserControl,IViewFor<MechanismVM>
     {
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register
+           (
+           nameof(ViewModel),
+           typeof(MechanismVM),
+           typeof(MechanismView),
+           new PropertyMetadata(null));
+        public MechanismVM? ViewModel
+        {
+            get => (MechanismVM?)GetValue(ViewModelProperty);
+            set => SetValue(ViewModelProperty, value);
+        }
+        object? IViewFor.ViewModel { get => ViewModel; set => ViewModel = (MechanismVM?)value; }
         public MechanismView()
         {
             InitializeComponent();
+            
+            this.WhenActivated(disposables =>
+            { // Здесь можно подписываться на команды самого Окна, если они нужны 
+              // Например: this.BindCommand(ViewModel, vm => vm.SomeCmd, v => v.FindName<Button>("MyBtn"))
+              // .DisposeWith(disposables);
+            });
         }
+
+       
 
         private void ScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {

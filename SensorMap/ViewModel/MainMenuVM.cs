@@ -2,7 +2,7 @@
 
 namespace SensorMap.ViewModel
 {
-    class MainMenuVM:ReactiveObject
+    public class MainMenuVM:ReactiveObject
     {
         public MainMenuVM()
         {

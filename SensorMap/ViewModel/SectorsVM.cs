@@ -12,10 +12,11 @@ using System.Windows.Documents;
 using DynamicData;
 using System.Reactive.Linq;
 using System.Windows;
+using System.Reactive.Disposables;
 
 namespace SensorMap.ViewModel
 {
-    public class SectorsVM:ReactiveObject
+    public class SectorsVM: ReactiveObject, IActivatableViewModel
     {
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _data;
@@ -25,7 +26,7 @@ namespace SensorMap.ViewModel
         private string _searchText = string.Empty;
         private Sector _sect;
         private Mechanism _mech;
-
+        private List<Sector> _allSectors = new();
         [Reactive]
         public string SearchText
         {
@@ -63,8 +64,10 @@ namespace SensorMap.ViewModel
             _provider = provider;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
-                Sectors = new(_dbContext.Sectors.Include(x => x.Mechanisms).AsNoTracking().ToList());
-                var tempCollection = Sectors;
+                _allSectors = new(_dbContext.Sectors.Include(x => x.Mechanisms).AsNoTracking().ToList());
+                Sectors = new(_allSectors);
+            }
+            this.WhenActivated(disposables => {
                 this.WhenAnyValue(x => x.SearchText)
                 .Throttle(TimeSpan.FromMilliseconds(300))
                 .DistinctUntilChanged()
@@ -73,18 +76,21 @@ namespace SensorMap.ViewModel
                 {
                     if (!string.IsNullOrWhiteSpace(SearchText))
                     {
-                        var result = from sector in tempCollection
+                        var result = from sector in _allSectors
                                      where sector.Name.ToLower().Contains(SearchText.ToLower()) ||
                                      sector.Mechanisms != null && sector.Mechanisms.Any(m => m.Name.ToLower().Contains(SearchText))
                                      select sector;
                         Sectors = new(result);
                     }
-                    else Sectors = tempCollection;
+                    else Sectors = new(_allSectors);
                 });
                 this.WhenAnyValue(x => x.SelectedSector)
-                    .Subscribe(sector => IsDetailOpen = sector != null);
-            }
+                    .Subscribe(sector => IsDetailOpen = sector != null)
+                    .DisposeWith(disposables);
+            });
         }
         public ICommand GoToMech { get; set; }
+
+        public ViewModelActivator Activator => new ViewModelActivator();
     }
 }

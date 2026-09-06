@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ReactiveUI;
+using SensorMap.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,11 +20,15 @@ namespace SensorMap.View
     /// <summary>
     /// Логика взаимодействия для MainMenu.xaml
     /// </summary>
-    public partial class MainMenu : System.Windows.Controls.UserControl
+    public partial class MainMenu : System.Windows.Controls.UserControl,IViewFor<MainMenuVM>
     {
+        public MainMenuVM? ViewModel { get; set; }
+        object? IViewFor.ViewModel { get => ViewModel; set => ViewModel = (MainMenuVM?)value; }
         public MainMenu()
         {
             InitializeComponent();
         }
+
+        
     }
 }

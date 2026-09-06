@@ -6,47 +6,41 @@ using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Services;
 using SensorMap.View;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Input;
 
 namespace SensorMap.ViewModel
 {
-    public class MainWindowVM:ReactiveObject
+    public class MainWindowVM:ReactiveObject,IActivatableViewModel
     {
         private readonly IDataBaseProvider _provider;
         private readonly IDataService _dataService;
         [Reactive] public INavigation Navigation { get; set; }
-        private bool _isEdit = false;
         private bool _activeWindow=true;
-        private bool _isConnected = false;
 
-        [Reactive]
-        public bool IsEditMode
-        {
-            get => _isEdit;
-            set => this.RaiseAndSetIfChanged(ref _isEdit, value);
-        }
-        [Reactive]
-        public bool IsConnectedDB
-        {
-            get => _isConnected;
-            set => this.RaiseAndSetIfChanged(ref _isConnected, value);
-        }
-        [Reactive]
+        private readonly ObservableAsPropertyHelper<bool> _isConnectedDbHelper; 
+        public bool IsConnectedDB => _isConnectedDbHelper.Value;
+
+        private readonly ObservableAsPropertyHelper<bool> _isEditMode;
+        public bool IsEditMode => _isEditMode.Value;
         public bool ActiveWindow
         {
             get => _activeWindow;
             set => this.RaiseAndSetIfChanged(ref _activeWindow, value);
         }
+        public ViewModelActivator Activator { get; }
         public MainWindowVM(INavigation _nav, IDataService service, IDataBaseProvider provider)
         {
+            Activator = new ViewModelActivator();
             _provider = provider;
             _dataService = service;
             Navigation = _nav;
-            IsEditMode = _dataService.IsEditMode;
+            _isEditMode = _dataService.WhenAnyValue(x => x.IsEditMode)
+                .ToProperty(this, x => x.IsEditMode);
 #if DEBUG==true
-            IsEditMode = true;
+            _dataService.IsEditMode = true;
 #endif
             
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
@@ -65,18 +59,27 @@ namespace SensorMap.ViewModel
                 if(!string.IsNullOrEmpty(folderBrowser.SelectedPath))
                     _provider.CreateBackupDB(folderBrowser.SelectedPath);
             });
+            _isConnectedDbHelper = _dataService.WhenAnyValue(x => x.IsDataBaseConnect)
+                .ToProperty(this, x => x.IsConnectedDB);
+            this.WhenActivated(disposables =>
+            {
+                this.WhenAnyValue(x => x.IsEditMode)
+                .BindTo(_dataService, x => x.IsEditMode)
+                .DisposeWith(disposables);
 
-            this.WhenAnyValue(x => x.IsEditMode)
-                .BindTo(_dataService, x => x.IsEditMode);
+                _dataService.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode)
+                    .DisposeWith(disposables);
 
-            _dataService.WhenAnyValue(x => x.IsEditMode)
-                .BindTo(this, x => x.IsEditMode);
+                _dataService.WhenAnyValue(x => x.IsDataBaseConnect)
+                   .BindTo(this, x => x.IsConnectedDB)
+                   .DisposeWith(disposables);
 
-            _dataService.WhenAnyValue(x => x.IsDataBaseConnect)
-               .BindTo(this, x => x.IsConnectedDB);
-
-            this.WhenAnyValue(x => x.IsEditMode).Subscribe((mode) => {
-                if (mode == false) NavigateToMenu.Execute(null); });
+                this.WhenAnyValue(x => x.IsEditMode).Subscribe((mode) =>
+                {
+                    if (mode == false) NavigateToMenu.Execute(null);
+                }).DisposeWith(disposables);
+            });
         }
 
         private void OpenAuthWindow()
@@ -95,5 +98,7 @@ namespace SensorMap.ViewModel
         public ICommand NavigateToDevices { get; set; }
         public ICommand NavigateToMechanisms { get; set; }
         public ICommand CreateBackupDB { get; set; }
+
+        
     }
 }

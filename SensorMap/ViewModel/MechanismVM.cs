@@ -30,7 +30,7 @@ namespace SensorMap.ViewModel
     /// <summary>
     /// ПУСТОЙ Mechanisms у секторов
     /// </summary>
-    public class MechanismVM : ReactiveObject
+    public class MechanismVM : ReactiveObject, IActivatableViewModel
     {
         private IAppDbContextFactory _appDbContextFactory;
         private readonly IDataBaseProvider _provider;
@@ -61,7 +61,8 @@ namespace SensorMap.ViewModel
             }
         }
 
-        [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
+        private readonly ObservableAsPropertyHelper<bool> _isEditModeHelper;
+        public bool IsEditMode => _isEditModeHelper.Value;
         [Reactive] public INavigation? Navigation { get; set; }
         /// <summary>
         /// Переменная хранит значение из TreeView выбранного участка
@@ -159,8 +160,6 @@ namespace SensorMap.ViewModel
         [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors { get; set; }
         [Reactive] private ObservableCollection<Sensor>? SensorsList { get; set; }
         [Reactive] private ObservableCollection<Device>? DevicesList { get; set; }
-
-        private readonly CompositeDisposable _disposables = new();
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
             IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
             IFileManagment fileManagment,
@@ -172,6 +171,7 @@ namespace SensorMap.ViewModel
             _imgControl = imageControl;
             _appDbContextFactory = appDbContextFactory;
             _fileManagment = fileManagment;
+            _isEditModeHelper = _service.WhenAnyValue(x => x.IsEditMode).ToProperty(this, x => x.IsEditMode);
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
                 GetDataFromDB(_dbContext);
@@ -309,9 +309,8 @@ namespace SensorMap.ViewModel
                 if (obj == null) return false;
                 else return true;
             });
-
-                _service.WhenAnyValue(x => x.IsEditMode)
-               .BindTo(this, x => x.IsEditMode);
+            
+            
 
             UndoCommand = new RelayCommand(() => CurrentStack?.Undo());
             RedoCommand = new RelayCommand(() => CurrentStack?.Redo());
@@ -322,29 +321,30 @@ namespace SensorMap.ViewModel
                     CurrentStack?.Do(command);
                 }
             });
-            this.WhenAnyValue(x => x.CurrentSector)
-                .Subscribe(curSector =>
-                {
-                    if (curSector != null)
-                        using (var dbContext = _appDbContextFactory.CreateDbContext())
-                        {
-                            if (curSector.Mechanisms?.Count() == 0)
-                                curSector.Mechanisms?.AddRange(dbContext.Mechanisms.Where(x => x.SectorID == curSector.Id).AsNoTracking()
-                                    .Select(x => new Mechanism()
-                                    {
-                                        Name = x.Name,
-                                        SectorID = x.SectorID,
-                                        Id = x.Id,
-                                        Image = x.Image,
-                                    }).ToList());
-                        }
-                });
-            //this.WhenAnyValue(x => x.CurrentMech)
-            //    .Subscribe(curMech =>
-            //    {
-            //        if (curMech != null)
-                        
-            //    });
+            this.WhenActivated(disposables =>
+            {
+                this.WhenAnyValue(x => x.CurrentSector)
+                    .Subscribe(curSector =>
+                    {
+                        if (curSector != null)
+                            using (var dbContext = _appDbContextFactory.CreateDbContext())
+                            {
+                                if (curSector.Mechanisms?.Count() == 0)
+                                    curSector.Mechanisms?.AddRange(dbContext.Mechanisms.Where(x => x.SectorID == curSector.Id).AsNoTracking()
+                                        .Select(x => new Mechanism()
+                                        {
+                                            Name = x.Name,
+                                            SectorID = x.SectorID,
+                                            Id = x.Id,
+                                            Image = x.Image,
+                                        }).ToList());
+                            }
+                    })
+                    .DisposeWith(disposables);
+                _service.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode)
+                    .DisposeWith(disposables);
+            });
         }
 
         private async void Save()
@@ -475,9 +475,7 @@ namespace SensorMap.ViewModel
             return true;
         }
         private async Task<bool> SaveCoordinates()
-        {//user работает с картой. У него заполняется стэк Undo. Когда он уходит с рабочей вкладки и у него отсутсвует флаг сохранения, необходимо 
-         //выдавать предупреждение о не сохраненных данных. Здесь будет даваться флаг, но когда происходит новое изменение стэка флаг сбрасывается
-         //разобраться с сохранением
+        {
             var changedMapObjects = CurrentMech.MapObjects
                        .Where(x => x.IsModified || x.IsNew || x.ToDelete).ToList();
             using (var dbContext = _appDbContextFactory.CreateDbContext())
@@ -490,37 +488,31 @@ namespace SensorMap.ViewModel
                     return false;
                 }
                 var changedIds = changedMapObjects.Select(x => x.Id).ToList();
-                List<MapObject> currentMapObjects = await dbContext.MapObjects
+                List<MapObject> currentMapObjects = dbContext.MapObjects
                                                                    .AsNoTracking()
                                                                    .Where(x => changedIds.Contains(x.Id))
-                                                                   .ToListAsync();
+                                                                   .ToList();
 
                 int changesCount = 0;
 
                 foreach (var mapObj in changedMapObjects)
                 {
-                    if (!IsValidData(mapObj)) break; // Или continue, если хотите пропустить только битую строку
-
-                    // Ищем оригинал по Id для сравнения или обновления
+                    if (!IsValidData(mapObj)) break; 
+                    
                     MapObject? originalObj = currentMapObjects
                         .FirstOrDefault(x => x.Id == mapObj.Id);
 
                     if (mapObj.ToDelete)
                     {
-                        // Удаление
                         if (originalObj != null)
                         {
                             dbContext.Entry(originalObj).State = EntityState.Deleted;
                         }
-                            changesCount++;
+                        changesCount++;
                         CurrentMech.MapObjects.Remove(mapObj);
                     }
                     else if (mapObj.IsNew || mapObj.Id == 0)
                     {
-                        // Добавление новой записи
-                        // Важно: убедитесь, что у нового объекта сброшена навигация обратно к родителю,
-                        // иначе возникнет ошибка ссылающегося ключа (Foreign Key constraint).
-
                         var temp = mapObj;
                         temp.Id = 0;
                         dbContext.Entry(temp).State = EntityState.Added;
@@ -528,20 +520,10 @@ namespace SensorMap.ViewModel
                     }
                     else if (mapObj.IsModified)
                     {
-                        var entry = dbContext.Attach(mapObj);
-                        // Обновление существующей записи
                         if (originalObj != null)
                         {
-                            //    // Оптимальный способ: обновит только измененные поля
-                            dbContext.Entry(originalObj).CurrentValues.SetValues(entry);
-                            entry.OriginalValues.SetValues((object)originalObj);
-                            //    changesCount++;
-                            //}
-                            //else
-                            //{
-                            // Запись должна быть в базе, но ее нет в загруженном графе (например, сработал QueryFilter)
-                            // Присоединяем как модифицированную
-
+                            dbContext.Entry(originalObj).CurrentValues.SetValues(mapObj);
+                            dbContext.Entry(originalObj).State = EntityState.Modified;
                             changesCount++;
                         }
                     }
@@ -609,5 +591,7 @@ namespace SensorMap.ViewModel
         public ICommand RedoCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand SetCurrentSensorCommand { get; }
+
+        public ViewModelActivator Activator => new ViewModelActivator();
     }
 }

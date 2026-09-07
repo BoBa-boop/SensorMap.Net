@@ -61,8 +61,7 @@ namespace SensorMap.ViewModel
             }
         }
 
-        private readonly ObservableAsPropertyHelper<bool> _isEditModeHelper;
-        public bool IsEditMode => _isEditModeHelper.Value;
+        [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public INavigation? Navigation { get; set; }
         /// <summary>
         /// Переменная хранит значение из TreeView выбранного участка
@@ -171,7 +170,6 @@ namespace SensorMap.ViewModel
             _imgControl = imageControl;
             _appDbContextFactory = appDbContextFactory;
             _fileManagment = fileManagment;
-            _isEditModeHelper = _service.WhenAnyValue(x => x.IsEditMode).ToProperty(this, x => x.IsEditMode);
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
                 GetDataFromDB(_dbContext);
@@ -323,6 +321,9 @@ namespace SensorMap.ViewModel
             });
             this.WhenActivated(disposables =>
             {
+                _service.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode)
+                    .DisposeWith(disposables);
                 this.WhenAnyValue(x => x.CurrentSector)
                     .Subscribe(curSector =>
                     {

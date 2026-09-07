@@ -11,6 +11,7 @@ using SensorMap.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -18,7 +19,7 @@ using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace SensorMap.ViewModel
 {
-    public class Devices_VM : ReactiveObject
+    public class Devices_VM : ReactiveObject, IActivatableViewModel
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IDataBaseProvider _provider;
@@ -119,8 +120,6 @@ namespace SensorMap.ViewModel
 
             SaveMoreData = new RelayCommand(SaveDataFileds);
             
-            _service.WhenAnyValue(x => x.IsEditMode)
-                    .BindTo(this, x => x.IsEditMode);
             AddFiles = new RelayCommand<Device>((d) => 
             {
                 string[]paths = fileManagment.OpenFileDialog(true);
@@ -200,6 +199,12 @@ namespace SensorMap.ViewModel
                     Logger.Error(ex.Message);
                 }
 
+            });
+            this.WhenActivated(disposables =>
+            {
+                _service.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode)
+                    .DisposeWith(disposables);
             });
         }
 
@@ -295,6 +300,8 @@ namespace SensorMap.ViewModel
         public ICommand AddFiles {get;}
         public ICommand OpenFullScreen { get; }
         public ICommand ShowAllFiles { get; }
+
+        public ViewModelActivator Activator { get; } = new ViewModelActivator();
 
         private void UnSetIsNew(IEnumerable<HelpfulFile> files)
         {

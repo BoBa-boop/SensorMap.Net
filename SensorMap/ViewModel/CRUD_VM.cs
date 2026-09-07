@@ -16,6 +16,7 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Windows;
@@ -27,7 +28,7 @@ using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace SensorMap.ViewModel
 {
-    public class CRUD_VM:ReactiveObject
+    public class CRUD_VM : ReactiveObject, IActivatableViewModel
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IDataBaseProvider _provider;
@@ -40,7 +41,6 @@ namespace SensorMap.ViewModel
         private ICollectionView mechanisms;
         private ICollectionView devices;
         private ICollectionView sensors;
-        private readonly AppDBContext _dbContext;
         private bool _loadInProgress;
         private int _pendingTabIndex = -1;
         private bool _sectorsLoaded;
@@ -67,6 +67,8 @@ namespace SensorMap.ViewModel
         [Reactive] public int SelectedTabIndex { get => selectedTabIndex; set => this.RaiseAndSetIfChanged(ref selectedTabIndex, value); }
         [Reactive] public bool IsLoading { get => isLoading; set => this.RaiseAndSetIfChanged(ref isLoading,value); }
 
+        public ViewModelActivator Activator { get; } = new ViewModelActivator();
+
         public CRUD_VM(IDataBaseProvider provider, IDataService service, IAppDbContextFactory cxFactory,
             IJsonSerialization json, INavigation nav, ITempImage tempImage, IFileManagment _fileManagment)
         {
@@ -77,7 +79,6 @@ namespace SensorMap.ViewModel
             fileManagment = _fileManagment;
             _appDbContextFactory = cxFactory;
             _service = service;
-            _dbContext = _appDbContextFactory.CreateDbContext();
             #region Commands
             ShowCommand = new RelayCommand<object>((obj) =>
             {
@@ -374,8 +375,6 @@ namespace SensorMap.ViewModel
             UndoCommand = new RelayCommand(_undoRedoManager!.Undo);
             RedoCommand = new RelayCommand(_undoRedoManager.Redo);
             #endregion
-            _service.WhenAnyValue(x => x.IsEditMode)
-                .BindTo(this, x => x.IsEditMode);
 
             _undoRedoManager.WhenAnyValue(x => x.CanUndo)
             .Subscribe(_ => this.RaisePropertyChanged(nameof(CanUndo)));
@@ -385,6 +384,13 @@ namespace SensorMap.ViewModel
 
             this.WhenAnyValue(x => x.SelectedTabIndex)
                 .Subscribe(RequestLoad);
+
+            this.WhenActivated(disposables =>
+            {
+                _service.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode)
+                    .DisposeWith(disposables);
+            });
 
             //RequestLoad(0);
         }
@@ -464,8 +470,9 @@ namespace SensorMap.ViewModel
         private async Task LoadTypesAsync()
         {
             if (_typesLoaded) return;
-            var sensorTypes = await _dbContext.SensorTypes.Include(x => x.Characteristics).ToListAsync();
-            var deviceTypes = await _dbContext.DeviceTypes.Include(x => x.Characteristics).ToListAsync();
+            using var dbContext = _appDbContextFactory.CreateDbContext();
+            var sensorTypes = await dbContext.SensorTypes.Include(x => x.Characteristics).ToListAsync();
+            var deviceTypes = await dbContext.DeviceTypes.Include(x => x.Characteristics).ToListAsync();
             SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
             DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
             _typesLoaded = true;
@@ -474,7 +481,8 @@ namespace SensorMap.ViewModel
         private async Task LoadSectorsAsync()
         {
             if (_sectorsLoaded) return;
-            var sectors = await _dbContext.Sectors.ToListAsync();
+            using var dbContext = _appDbContextFactory.CreateDbContext();
+            var sectors = await dbContext.Sectors.ToListAsync();
             Sectors = new ObservableCollection<Sector>(sectors);
             _sectorsLoaded = true;
         }
@@ -482,7 +490,8 @@ namespace SensorMap.ViewModel
         private async Task LoadDevicesAsync()
         {
             if (_devicesLoaded) return;
-            var devices = await _dbContext.Devices.ToListAsync();
+            using var dbContext = _appDbContextFactory.CreateDbContext();
+            var devices = await dbContext.Devices.ToListAsync();
             Devices = CollectionViewSource.GetDefaultView(devices);
             ConfigureDevicesView();
             _devicesLoaded = true;
@@ -491,7 +500,8 @@ namespace SensorMap.ViewModel
         private async Task LoadSensorsAsync()
         {
             if (_sensorsLoaded) return;
-            var sensors = await _dbContext.Sensors.ToListAsync();
+            using var dbContext = _appDbContextFactory.CreateDbContext();
+            var sensors = await dbContext.Sensors.ToListAsync();
             Sensors = CollectionViewSource.GetDefaultView(sensors);
             ConfigureSensorsView();
             _sensorsLoaded = true;
@@ -500,8 +510,9 @@ namespace SensorMap.ViewModel
         private async Task LoadMechanismsAsync()
         {
             if (_mechanismsLoaded) return;
-            var mechanisms = await _dbContext.Mechanisms.ToListAsync();
-            var files = await _dbContext.HelpfulFiles.AsNoTracking()
+            using var dbContext = _appDbContextFactory.CreateDbContext();
+            var mechanisms = await dbContext.Mechanisms.ToListAsync();
+            var files = await dbContext.HelpfulFiles.AsNoTracking()
                 .Where(f => f.MechanismId != null)
                 .Select(f => new HelpfulFile { Id = f.Id, NameFile = f.NameFile, MechanismId = f.MechanismId })
                 .ToListAsync();

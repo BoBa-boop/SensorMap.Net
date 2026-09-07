@@ -12,6 +12,7 @@ using SensorMap.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -19,7 +20,7 @@ using System.Windows.Media.Imaging;
 
 namespace SensorMap.ViewModel
 {
-    public class SensorVM:ReactiveObject
+    public class SensorVM : ReactiveObject, IActivatableViewModel
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly INavigation _navigation;
@@ -214,8 +215,12 @@ namespace SensorMap.ViewModel
                     FilteredMechanisms = new(filteredMechanisms); 
                 });
             
-            _service.WhenAnyValue(x => x.IsEditMode)
-                .BindTo(this, x => x.IsEditMode);
+            this.WhenActivated(disposables =>
+            {
+                _service.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode)
+                    .DisposeWith(disposables);
+            });
         }
 
         private List<AdditionalData> LoadMoreData()
@@ -277,6 +282,8 @@ namespace SensorMap.ViewModel
         public ICommand OpenFile { get; }
         public ICommand NavigateToMech {  get; }
         public ICommand OpenFullScreen { get; }
+
+        public ViewModelActivator Activator { get; } = new ViewModelActivator();
 
         private void SaveDataFileds()
         {

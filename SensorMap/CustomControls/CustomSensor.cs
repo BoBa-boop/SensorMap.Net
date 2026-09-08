@@ -38,7 +38,7 @@ namespace SensorMap.CustomControls
             set { SetValue(SensorProperty, value); }
         }
         public static readonly DependencyProperty SensorProperty =
-            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor), new PropertyMetadata(null, SensorDataChanged));
+            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor), new PropertyMetadata(null, null));
 
         private static void SensorDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -87,7 +87,7 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsEditModeProperty =
             DependencyProperty.Register("IsEditMode", typeof(bool), typeof(CustomSensor),
-                new PropertyMetadata(false, OnIsEditPropertyChanged));
+                new PropertyMetadata(false, null));
 
         public bool IsMultiSelection
         {

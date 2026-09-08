@@ -162,7 +162,7 @@
                             <TextBlock Text="Датчики" FontSize="16" FontWeight="Medium"/>
                         </Expander.Header>
                         <TreeView Name="twSensors" IsEnabled="{Binding IsEditMode,UpdateSourceTrigger=PropertyChanged}"
-                                      ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}">
+                                      ItemsSource="{Binding ElementName=root, Path=DataContext.Sensors.Nodes}" >
                             <i:Interaction.Behaviors>
                                 <beh:TreeViewBehavior SelectedItem="{Binding CurrentSensor,Mode=OneWayToSource,UpdateSourceTrigger=PropertyChanged}"
                                                       SelectedItemType="Sensor"/>

@@ -381,9 +381,14 @@ namespace SensorMap.CustomControls
 
         private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
+           
             var control = (SensorDragDrop)d;
             if (control._canvas == null) return;
-            control._viewMatrixTransform!.Matrix = Matrix.Identity;            
+            control._viewMatrixTransform!.Matrix = Matrix.Identity;    
+            if(e.OldValue != null)
+            {
+                if (e.OldValue is INotifyCollectionChanged notify) notify.CollectionChanged -= control.OnCollectionChanged;
+            }
             if (e.NewValue != null)
             {
                 if (e.NewValue is INotifyCollectionChanged notify) notify.CollectionChanged += control.OnCollectionChanged;

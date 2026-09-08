@@ -49,6 +49,12 @@ namespace SensorMap.ViewModel
         private IDisposable? _redoSub;
         private Sensor _curDevice;
         private MapObject _selectMapObject;
+        private ObservableCollection<Device>? devicesList;
+        private ObservableCollection<Sensor>? sensorsList;
+        private ObservableCollection<SensorType>? sensorTypes1;
+        private TreeViewCollection<DeviceType, Device> devices;
+        private TreeViewCollection<SensorType, Sensor>? sensors;
+        private ObservableCollection<Sector>? sectors = new();
 
         private UndoRedoStack CurrentStack
         {
@@ -153,12 +159,55 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref _hasChanges, value);
             }
         }
-        [Reactive] public ObservableCollection<Sector>? Sectors { get; set; } = new();
-        [Reactive] public ObservableCollection<SensorType>? sensorTypes { get; private set; }
-        [Reactive] public TreeViewCollection<DeviceType, Device> Devices { get; set; }
-        [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors { get; set; }
-        [Reactive] private ObservableCollection<Sensor>? SensorsList { get; set; }
-        [Reactive] private ObservableCollection<Device>? DevicesList { get; set; }
+        [Reactive]
+        public ObservableCollection<Sector>? Sectors
+        {
+            get { return sectors; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref sectors, value);
+            }
+        } 
+        [Reactive] public ObservableCollection<SensorType>? sensorTypes 
+        {
+            get { return sensorTypes1; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref sensorTypes1, value);
+            }
+        }
+        [Reactive] public TreeViewCollection<DeviceType, Device> Devices 
+        {
+            get { return devices; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref devices, value);
+            }
+        }
+        [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors 
+        {
+            get { return sensors; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref sensors, value);
+            }
+        }
+        [Reactive] private ObservableCollection<Sensor>? SensorsList 
+        {
+            get { return sensorsList; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref sensorsList, value);
+            }
+        }
+        [Reactive] private ObservableCollection<Device>? DevicesList 
+        {
+            get { return devicesList; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref devicesList, value);
+            }
+        }
         public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
             IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
             IFileManagment fileManagment,
@@ -170,10 +219,6 @@ namespace SensorMap.ViewModel
             _imgControl = imageControl;
             _appDbContextFactory = appDbContextFactory;
             _fileManagment = fileManagment;
-            using (var _dbContext = _appDbContextFactory.CreateDbContext())
-            {
-                GetDataFromDB(_dbContext);
-            }
             var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;
             CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
             if (curMechanism!=null && CurrentSector!=null)
@@ -321,6 +366,7 @@ namespace SensorMap.ViewModel
             });
             this.WhenActivated(disposables =>
             {
+                
                 _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode)
                     .DisposeWith(disposables);
@@ -342,6 +388,19 @@ namespace SensorMap.ViewModel
                             }
                     })
                     .DisposeWith(disposables);
+                using (var dbContext = _appDbContextFactory.CreateDbContext())
+                {
+                    GetDataFromDB(dbContext);
+                }
+                Disposable.Create(() =>
+                {
+                    Sensors = null;
+                    Devices = null;
+                    SensorsList?.Clear();
+                    DevicesList?.Clear();
+                    sensorTypes?.Clear(); 
+                    Sectors?.Clear();
+                }).DisposeWith(disposables);
             });
         }
 
@@ -398,31 +457,25 @@ namespace SensorMap.ViewModel
 
         private async void GetDataFromDB(EF.AppDBContext _dbContext)
         {
-            //var querySector = await _dbContext.Sectors.ToListAsync();
-            //var queryMech = await _dbContext.Mechanisms.Include(m => m.Files)
-            //    .Include(m => m.MapObjects).AsSplitQuery().ToListAsync();
-            //var queryTypes = await _dbContext.SensorTypes.ToListAsync();
-            //var queryDevice = await _dbContext.Devices.ToListAsync();
-            //var querySensors = await _dbContext.Sensors.Include(x => x.SensorType).ToListAsync();
-            //var queryDevTypes = await _dbContext.DeviceTypes.ToListAsync();
+            var querySector = await _dbContext.Sectors.AsNoTracking().Select(x => new Sector() { Id = x.Id, Name = x.Name }).ToListAsync();
 
-            var querySector = await _dbContext.Sectors.Select(x => new Sector() { Id = x.Id, Name = x.Name }).ToListAsync();
-
-            var queryTypes = await _dbContext.SensorTypes.Select(x => new SensorType() { Id = x.Id, Name = x.Name }).ToListAsync();
-            var queryDevice = await _dbContext.Devices
+            var queryTypes = await _dbContext.SensorTypes.AsNoTracking().Select(x => new SensorType() { Id = x.Id, Name = x.Name }).ToListAsync();
+            var queryDevice = await _dbContext.Devices.AsNoTracking()
                 .Select(x => new Device() { Id = x.Id, Image = x.Image, Name = x.Name, DeviceTypeId = x.DeviceTypeId, DeviceType = x.DeviceType }).ToListAsync();
-            var querySensors = await _dbContext.Sensors
+            var querySensors = await _dbContext.Sensors.AsNoTracking()
                 .Select(x => new Sensor() { Id = x.Id, Image = x.Image, Name = x.Name, SensorTypeID = x.SensorTypeID, SensorType = x.SensorType }).ToListAsync();
-            var queryDevTypes = await _dbContext.DeviceTypes.Select(x => new DeviceType() { Id = x.Id, Name = x.Name }).ToListAsync();
+            var queryDevTypes = await _dbContext.DeviceTypes.AsNoTracking().Select(x => new DeviceType() { Id = x.Id, Name = x.Name }).ToListAsync();
 
             sensorTypes = new ObservableCollection<SensorType>(queryTypes);
             SensorsList = new ObservableCollection<Sensor>(querySensors);
             DevicesList = new ObservableCollection<Device>(queryDevice);
 
-            Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-            Func<DeviceType, Device, bool> filter2 = (type, devce) => devce.DeviceTypeId == type.Id;
-            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorsList, filter);
-            Devices = new TreeViewCollection<DeviceType, Device>("Name", new(queryDevTypes), new(queryDevice), filter2);
+            Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id; 
+            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, sensorsList, filter);
+            Func<DeviceType, Device, bool> filter2 = (type, devce) => devce.DeviceTypeId == type.Id; 
+            Devices = new TreeViewCollection<DeviceType, Device>("Name", new ObservableCollection<DeviceType>(queryDevTypes), devicesList, filter2);
+            //Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorsList, filter);
+            //Devices = new TreeViewCollection<DeviceType, Device>("Name", new(queryDevTypes), new(queryDevice), filter2);
             Sectors = new ObservableCollection<Sector>(querySector);
         }
 

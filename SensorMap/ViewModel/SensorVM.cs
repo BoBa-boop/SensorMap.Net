@@ -36,6 +36,8 @@ namespace SensorMap.ViewModel
         private ObservableCollection<SensorCharacteristic> _sensorCharacteristics;
 
         private bool isEditMode;
+        private TreeViewCollection<SensorType, Sensor> sensorsTree;
+        private ObservableCollection<Sensor> sensors;
 
         [Reactive]public Sensor SelectedNode
         {
@@ -47,14 +49,28 @@ namespace SensorMap.ViewModel
             }
             
         }
-        [Reactive]public ObservableCollection<Sensor> Sensors {  get; set; }
-        
+        [Reactive] public ObservableCollection<Sensor> Sensors 
+        {
+            get { return sensors; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref sensors, value);
+            }
+        }
+
         [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms 
         {
             get => _FilteredMechanisms;
             set { this.RaiseAndSetIfChanged(ref _FilteredMechanisms, value); }
         }
-        [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree { get; set; }
+        [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree 
+        {
+            get { return sensorsTree; }
+            set
+            {
+                this.RaiseAndSetIfChanged(ref sensorsTree, value);
+            }
+        }
         private List<SensorType> sensorTypes {  get; set; }
         
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
@@ -71,36 +87,8 @@ namespace SensorMap.ViewModel
             _service = service;
             _appDbContextFactory = appDbContextFactory;
             _fileManagment = fileManagment;
-            using (var _dbContext = _appDbContextFactory.CreateDbContext())
-            {
-                // Загружаем датчики вместе с их типами и характеристиками одним пакетом
-                var sensorsWithDetails = _dbContext.Sensors
-                    .AsNoTracking()
-                    .Include(s => s.Files)
-                    .Include(s => s.SensorType)
-                        .ThenInclude(st => st.Characteristics)
-                    .ToList();
-
-                Sensors = new(sensorsWithDetails);
-
-                // Извлекаем уникальные типы датчиков из уже полученной коллекции
-                sensorTypes = new(sensorsWithDetails
-                    .Select(s => s.SensorType!)
-                    .Where(st => st != null)
-                    .DistinctBy(st => st.Id)
-                    .ToList());
-                Mechanisms = _dbContext.Mechanisms.AsNoTracking().Select(x=> new Mechanism 
-                    {
-                        Id=x.Id,
-                        Name=x.Name,
-                        SectorID = x.SectorID,
-                        MapObjects = new(x.MapObjects.OfType<SensorAssignments>().Select(x => new SensorAssignments { SensorId = x.SensorId }).ToList())
-
-                    }).ToList();
-                Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-                SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", new(sensorTypes), Sensors, filter);
-            }
-            _additionalData = new(LoadMoreData());
+            
+            
 
             SaveMoreData = new RelayCommand<Sensor>((_)=>SaveDataFileds(),
                 (_node) => { if (_node == null || _node.AdditionalData==null) return false;
@@ -205,21 +193,55 @@ namespace SensorMap.ViewModel
                 imgManag.OpenFullScreen(imgManag.CreateImageFromBytes(image!)); 
             }, (image) => { return image != null; });
 
-            this.WhenAnyValue(x => x.SelectedNode)
-                .Where(sensor => sensor != null)
-                .Select(sensor => Mechanisms.Where(mech =>mech.MapObjects!=null)
-                .Where(x=>x.MapObjects!.OfType<SensorAssignments>().Any(sa => sa.SensorId == sensor.Id)))
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(filteredMechanisms =>
-                { 
-                    FilteredMechanisms = new(filteredMechanisms); 
-                });
             
-            this.WhenActivated(disposables =>
+            
+            this.WhenActivated(async disposables =>
             {
                 _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode)
                     .DisposeWith(disposables);
+
+                using (var _dbContext = _appDbContextFactory.CreateDbContext())
+                {
+                    
+                        var queryTypes = await _dbContext.SensorTypes
+                        .AsNoTracking()
+                        .Select(x => new SensorType() { Id = x.Id, Name = x.Name }).ToListAsync();
+
+                        var querySensors = await _dbContext.Sensors.AsNoTracking()
+                        .Select(x => new Sensor()
+                        {
+                            Id = x.Id,
+                            Image = x.Image,
+                            Name = x.Name,
+                            SensorTypeID = x.SensorTypeID,
+                            SensorType = x.SensorType
+                        }).ToListAsync();
+                    sensorTypes = new(queryTypes);
+                        Sensors = new(querySensors);
+
+
+                        Mechanisms = _dbContext.Mechanisms.AsNoTracking().Select(x => new Mechanism
+                        {
+                            Id = x.Id,
+                            Name = x.Name,
+                            SectorID = x.SectorID
+
+                        }).ToList();
+                        Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
+                        SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", new(sensorTypes), Sensors, filter);
+                        _additionalData = new(LoadMoreData());
+                }
+
+                this.WhenAnyValue(x => x.SelectedNode)
+                .Where(sensor => sensor != null)
+                .Select(sensor => Mechanisms.Where(mech => mech.MapObjects != null)
+                .Where(x => x.MapObjects!.OfType<SensorAssignments>().Any(sa => sa.SensorId == sensor.Id)))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(filteredMechanisms =>
+                {
+                    FilteredMechanisms = new(filteredMechanisms);
+                }).DisposeWith(disposables);
             });
         }
 

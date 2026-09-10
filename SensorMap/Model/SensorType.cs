@@ -28,7 +28,6 @@ namespace SensorMap.Model
                 if (!string.IsNullOrWhiteSpace(value))
                 {
                     this.RaiseAndSetIfChanged(ref _name, value);
-                    IsNew = true;
                 }
             } 
         }
@@ -40,7 +39,6 @@ namespace SensorMap.Model
                 if (value != _color)
                 {
                     this.RaiseAndSetIfChanged(ref _color, value);
-                    IsNew = true;
                 }
             }
         }
@@ -58,6 +56,5 @@ namespace SensorMap.Model
         
         public virtual ObservableCollection<Sensor>? Sensors { get; set; }
         public virtual ObservableCollection<SensorCharacteristic>? Characteristics { get; set; } = new ObservableCollection<SensorCharacteristic>();
-
     }
 }

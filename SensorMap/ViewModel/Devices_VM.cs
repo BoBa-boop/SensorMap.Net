@@ -90,15 +90,7 @@ namespace SensorMap.ViewModel
             }
             SelectedDevice = device;
             LoadAddData();
-            this.WhenAnyValue(x => x.SelectedDevice)
-                .Where(device => device != null)
-                .Select(device => _mechs.Where(mech => mech.MapObjects != null)
-                .Where(x => x.MapObjects!.OfType<DeviceAssignment>().Any(da => da.DeviceId == device.Id)))
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(filteredMechanisms =>
-                {
-                    FilteredMechanisms = new(filteredMechanisms);
-                });
+            
             NavigateToMech = new RelayCommand<Mechanism>((mech) =>
             {
                 if (mech == null) return;
@@ -205,6 +197,16 @@ namespace SensorMap.ViewModel
                 _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode)
                     .DisposeWith(disposables);
+
+                this.WhenAnyValue(x => x.SelectedDevice)
+                .Where(device => device != null)
+                .Select(device => _mechs.Where(mech => mech.MapObjects != null)
+                .Where(x => x.MapObjects!.OfType<DeviceAssignment>().Any(da => da.DeviceId == device.Id)))
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(filteredMechanisms =>
+                {
+                    FilteredMechanisms = new(filteredMechanisms);
+                }).DisposeWith(disposables);
             });
         }
 

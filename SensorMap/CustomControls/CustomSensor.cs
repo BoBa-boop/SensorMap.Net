@@ -7,6 +7,7 @@ using SensorMap.Model;
 using SensorMap.Services;
 using SensorMap.ViewModel;
 using System.Net;
+using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -38,7 +39,7 @@ namespace SensorMap.CustomControls
             set { SetValue(SensorProperty, value); }
         }
         public static readonly DependencyProperty SensorProperty =
-            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor), new PropertyMetadata(null, null));
+            DependencyProperty.Register("Sensor", typeof(SensorAssignments), typeof(CustomSensor), new PropertyMetadata(null, SensorDataChanged));
 
         private static void SensorDataChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -180,6 +181,7 @@ namespace SensorMap.CustomControls
         private bool IsTransformed = false;
         private Canvas _canvas;
         private TextBlock _textBlock;
+        private CompositeDisposable disposables = new CompositeDisposable();
         Rect addressRect;
         Rect Map;
         private System.Windows.Controls.Image _image;
@@ -203,10 +205,10 @@ namespace SensorMap.CustomControls
             _canvas = _transformService.GetParentCanvas(this);
             _image = _canvas.Children.OfType<Image>().First();
             _textBlock = (TextBlock)GetTemplateChild("PART_Address");
+            this.Unloaded += CustomSensor_Unloaded;
             if (_canvas != null)
             {
                 ChangeStateActions();
-                _sensorSubscription?.Dispose();
                 _sensorSubscription = SensorData.WhenAnyValue(x => x.Sensor)
                     .Subscribe(_ =>
                     {
@@ -214,11 +216,20 @@ namespace SensorMap.CustomControls
                         {
                             CustomBackground = (SolidColorBrush)new BrushConverter().ConvertFrom(SensorData.Sensor.SensorType.Color);
                         }
-                    });
+                    }).DisposeWith(disposables);
                 System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
                     System.Windows.Threading.DispatcherPriority.Loaded,
                     new Action(() => UpdateAddressPosition()));
             }
+        }
+
+        private void CustomSensor_Unloaded(object sender, RoutedEventArgs e)
+        {
+            this.MouseDown -= OnMouseDown;
+            this.MouseMove -= OnSensorMouseMove;
+            _canvas.MouseMove -= OnMouseMove;
+            _canvas.MouseUp -= OnMouseUp;
+            disposables.Dispose();
         }
 
         private void ChangeStateActions()

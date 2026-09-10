@@ -291,7 +291,10 @@ namespace SensorMap.ViewModel
             AddCharacteristic = new RelayCommand<object>((type) =>
             {
                 if (type is SensorType sensorType)
+                {
                     sensorType.Characteristics.Add(new SensorCharacteristic() { Title = "Новая характеристика", SensorTypeId = sensorType.Id });
+                    sensorType.IsNew = true;
+                }
                 if (type is DeviceType deviceType)
                     deviceType.Characteristics.Add(new DeviceCharacteristic() { Title = "Новая характеристика", DeviceTypeId = deviceType.Id });
             }, (type) => { return type != null; });
@@ -350,7 +353,7 @@ namespace SensorMap.ViewModel
                         WindowStyle = WindowStyle.None
 
                     };
-                    picker.SelectedColorChanged += delegate { sensorType.Color = picker.SelectedBrush.ToString(); };
+                    picker.SelectedColorChanged += delegate { sensorType.Color = picker.SelectedBrush.ToString(); sensorType.IsNew = true; };
                     picker.Confirmed += delegate { sensorType.Color = picker.SelectedBrush.ToString(); window.Close(); };
                     picker.Canceled += delegate { window.Close(); };
                     window.Show();

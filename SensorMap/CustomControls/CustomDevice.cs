@@ -198,6 +198,15 @@ namespace SensorMap.CustomControls
                 ChangeStateActions();
 
             }
+            this.Unloaded += CustomDevice_Unloaded;
+        }
+
+        private void CustomDevice_Unloaded(object sender, RoutedEventArgs e)
+        {
+            this.MouseDown -= OnMouseDown;
+            this.MouseMove -= OnDeviceMouseMove;
+            _canvas.MouseMove -= OnMouseMove;
+            _canvas.MouseUp -= OnMouseUp;
         }
 
         private void ChangeStateActions()

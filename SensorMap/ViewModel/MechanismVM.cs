@@ -53,9 +53,9 @@ namespace SensorMap.ViewModel
         private ObservableCollection<Sensor>? sensorsList;
         private ObservableCollection<SensorType>? sensorTypes1;
         private TreeViewCollection<DeviceType, Device> devices;
-        private TreeViewCollection<SensorType, Sensor>? sensors;
+        private TreeViewCollection<SensorType, Sensor> sensors;
         private ObservableCollection<Sector>? sectors = new();
-
+        
         private UndoRedoStack CurrentStack
         {
             get

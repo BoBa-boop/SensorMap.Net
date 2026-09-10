@@ -1,29 +1,16 @@
 using CommunityToolkit.Mvvm.Input;
-using HandyControl.Controls;
-using ReactiveUI;
-using SensorMap.Behaviors;
 using SensorMap.Commands.SensorCommands;
-using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using SensorMap.Properties;
 using SensorMap.Services;
-using SensorMap.View;
-using SensorMap.ViewModel;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Drawing;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Xml.Linq;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
@@ -45,8 +32,8 @@ namespace SensorMap.CustomControls
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control,IDisposable
     {
-        static Cursor Grab = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grab.cur")).Stream);
-        static Cursor Grabbing = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grabbing.cur")).Stream);
+        Cursor Grab = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grab.cur")).Stream);
+        Cursor Grabbing = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grabbing.cur")).Stream);
         static SensorDragDrop()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SensorDragDrop),
@@ -244,9 +231,10 @@ namespace SensorMap.CustomControls
         #endregion
 
         #region Source Props
-        public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
+        public static readonly DependencyProperty ItemsSourceProperty = 
+            DependencyProperty.Register("ItemsSource",
             typeof(ObservableCollection<MapObject>), typeof(SensorDragDrop),
-            new PropertyMetadata(new ObservableCollection<MapObject>(), OnItemsSourceChanged));
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnItemsSourceChanged));
 
         public ObservableCollection<MapObject> ItemsSource
         {
@@ -417,7 +405,8 @@ namespace SensorMap.CustomControls
                     mapObj.Y = mapObj.Y < 0 ? 50 : mapObj.Y;
                     
                     FrameworkElement element = CreateMapObject(mapObj, new Point(mapObj.X,mapObj.Y));
-                    _canvas.Children.Add(element);
+                    if(element!=null)
+                        _canvas.Children.Add(element);
 
                     if (element is FrameworkElement fe) fe.Tag = mapObj.Id;
                 }
@@ -973,6 +962,7 @@ namespace SensorMap.CustomControls
         public void Dispose()
         {
             
+            //ImageSource = null;
             _canvas.PreviewMouseMove -= _canvas_MouseMove;
             _canvas.MouseDown -= _canvas_MouseDown;
             _canvas.MouseUp -= _canvas_MouseUp;

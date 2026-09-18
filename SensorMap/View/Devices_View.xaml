@@ -71,8 +71,10 @@
                                           Margin="90"/>
                                 </Button>
                             </Border>
-                            <TextBlock Text="{Binding SelectedDevice.Name}"
-                                   Style="{StaticResource TextBlockTitle}"
+                            <TextBox Text="{Binding SelectedDevice.Name}"
+                                   FontFamily="Bahnschrift" IsReadOnly="True"
+                                       Style="{StaticResource ComboBoxEditableTextBox}"
+                                       FontSize="20"
                                    HorizontalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Grid.Row="1">
@@ -240,7 +242,7 @@
                                 </GroupBox.Header>
                                 <StackPanel Orientation="Vertical">
                                     <ListBox x:Name="dInfo"  ItemsSource="{Binding SelectedDevice.AdditionalData.Data}"
-                                             BorderThickness="0">
+                                             BorderThickness="0" Background="Transparent">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <hc:TextBox hc:TitleElement.Title="{Binding Parameter}"

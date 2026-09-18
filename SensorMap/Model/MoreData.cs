@@ -18,7 +18,8 @@ namespace SensorMap.Model
 
         [Reactive]
         [JsonProperty("Название")]
-        public string Name { get => _name; set => this.RaiseAndSetIfChanged(ref _name, value); }
+        public string Name { get => _name; 
+            set => this.RaiseAndSetIfChanged(ref _name, value); }
         [Reactive]
         [JsonProperty("Данные")]
         public ObservableCollection<MoreData> Data {
@@ -59,7 +60,8 @@ namespace SensorMap.Model
         public string Parameter { get => _parameter; set => this.RaiseAndSetIfChanged(ref _parameter, value); }
         [Reactive]
         [JsonProperty("Значение")]
-        public string Value { get => _value; set => this.RaiseAndSetIfChanged(ref _value, value); }
+        public string Value { get => _value;
+            set => this.RaiseAndSetIfChanged(ref _value, value); }
 
     }
     

@@ -25,5 +25,12 @@ namespace SensorMap.View
         {
             InitializeComponent();
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            if(!hintPopup.IsOpen)
+                hintPopup.IsOpen = true;
+            else hintPopup.IsOpen = false;
+        }
     }
 }

@@ -21,6 +21,7 @@ namespace SensorMap.Behaviors
     public class DataGridBahavior : Behavior<DataGrid>
     {
         private bool hasChangesBeenMade;
+        private Window window;
         private Dictionary<string, object> originalFieldValues;
 
 
@@ -45,7 +46,7 @@ namespace SensorMap.Behaviors
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            var window = HandyControl.Controls.Window.GetWindow(AssociatedObject);
+            window = HandyControl.Controls.Window.GetWindow(AssociatedObject);
             if (window != null)
             {
                 window.PreviewMouseDown += OnWindowPreviewMouseDown;
@@ -98,6 +99,7 @@ namespace SensorMap.Behaviors
             AssociatedObject.BeginningEdit -= OnBeginningEdit;
             AssociatedObject.CellEditEnding -= OnCellEditEnding;
             AssociatedObject.Loaded -= OnLoaded;
+            if (window != null) window.PreviewMouseDown -= OnWindowPreviewMouseDown;
         }
 
 

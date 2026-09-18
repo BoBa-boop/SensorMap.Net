@@ -90,11 +90,12 @@ namespace SensorMap.ViewModel
 
 
 
-            SaveMoreData = new RelayCommand<Sensor>((_) => SaveDataFileds(),
-                (_node) =>
+            SaveMoreData = new RelayCommand<AdditionalData>((_) => SaveDataFileds(),
+                (data) =>
                 {
-                    if (_node == null || _node.AdditionalData == null) return false;
-                    return _node.AdditionalData.HasData() && IsEditMode;
+                    if (data == null||!data.HasData()) return false;
+                    
+                    return IsEditMode;
                 });
             NavigateToMech = new RelayCommand<Mechanism>((mech) =>
             {
@@ -351,16 +352,17 @@ namespace SensorMap.ViewModel
             try
             {
                 SelectedNode.AdditionalData.Name = SelectedNode.Name;
-                var editableObject = _additionalData.Where(x => x.Name == SelectedNode.Name).FirstOrDefault();
-                if (editableObject != null)
+                
+                var editableObject = _jsonMoreDataCache.TryGetValue(SelectedNode.Name, out var additionalData);
+                if (additionalData != null)
                 {
-                    editableObject.Data = SelectedNode.AdditionalData.Data;
+                    additionalData.Data = SelectedNode.AdditionalData.Data;
                 }
                 else
                 {
-                    _additionalData.Add(SelectedNode.AdditionalData);
+                    _jsonMoreDataCache.TryAdd(SelectedNode.Name,SelectedNode.AdditionalData);
                 }
-                _json.WriteToJsonFile<ObservableCollection<AdditionalData>>(FILE_PATH, _additionalData);
+                _json.WriteToJsonFile<ObservableCollection<AdditionalData>>(FILE_PATH, new(_jsonMoreDataCache.Values.ToList()));
                 Growl.Success(new GrowlInfo
                 {
                     Message = "Дополнительные данные сохранены!",

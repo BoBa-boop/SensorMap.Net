@@ -19,6 +19,7 @@ namespace SensorMap.Model
         private SensorType? _sensorType;
         private byte[]? _image;
         private ObservableCollection<HelpfulFile> files = new ObservableCollection<HelpfulFile>();
+        private AdditionalData additionalData;
 
         [Key]
         [Reactive] public int Id { get; set; }
@@ -66,6 +67,6 @@ namespace SensorMap.Model
             set => this.RaiseAndSetIfChanged(ref _isModified, value);
         }
 
-        [NotMapped] public AdditionalData AdditionalData { get; set; }
+        [NotMapped] public AdditionalData AdditionalData { get => additionalData; set => this.RaiseAndSetIfChanged(ref additionalData, value); }
     }
 }

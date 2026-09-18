@@ -414,14 +414,16 @@ namespace SensorMap.ViewModel
             var modifiedMechanisms = (CurrentSector?.Mechanisms ?? Enumerable.Empty<Mechanism>()).Where(x => x.IsModified).ToList();
             if (modifiedMechanisms.Count > 0)
             {
-                using var dbC = _appDbContextFactory.CreateDbContext(); 
-                foreach (var mechanism in modifiedMechanisms) 
-                { 
-                    dbC.Attach(mechanism).State = EntityState.Modified;
-                    mechanism.IsModified = false;
+                using (var dbC = _appDbContextFactory.CreateDbContext())
+                {
+                    foreach (var mechanism in modifiedMechanisms)
+                    {
+                        dbC.Attach(mechanism).State = EntityState.Modified;
+                        mechanism.IsModified = false;
+                    }
+                    int affectedRows = await dbC.SaveChangesAsync();
+                    hasAnySuccess = affectedRows > 0;
                 }
-                int affectedRows = await dbC.SaveChangesAsync();
-                hasAnySuccess = affectedRows > 0;
             }
             //Проверка изменение координат устройств
             try

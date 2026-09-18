@@ -73,8 +73,10 @@
                                 </Button>
                             </Border>
 
-                            <TextBlock Text="{Binding SelectedNode.Name}"
-                                       Style="{StaticResource TextBlockTitle}"
+                            <TextBox Text="{Binding SelectedNode.Name}"
+                                     FontFamily="Bahnschrift" IsReadOnly="True"
+                                       Style="{StaticResource ComboBoxEditableTextBox}"
+                                     FontSize="20" 
                                        HorizontalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Grid.Row="1">
@@ -234,7 +236,7 @@
                                                    FontFamily="Bahnschrift" FontSize="17" Margin="0,0,5,0"/>
                                         <Button Command="{Binding SaveMoreData}"
                                                 Style="{StaticResource ButtonPrimary.Small}"
-                                                CommandParameter="{Binding SelectedNode}"
+                                                CommandParameter="{Binding SelectedNode.AdditionalData}"
                                                 hc:IconElement.Geometry="{StaticResource SaveGeometry}" Padding="1"
                                                 hc:IconElement.Width="15" hc:IconElement.Height="15"
                                                 Cursor="Hand"
@@ -247,10 +249,11 @@
                                              BorderThickness="0">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <hc:TextBox hc:TitleElement.Title="{Binding Parameter}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}"
-                                            MaxLength="50" Width="150"
-                                            IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,
-                                                        Converter={StaticResource Boolean2BooleanReConverter}}"/>
+                                                <hc:TextBox hc:TitleElement.Title="{Binding Parameter}"
+                                                            Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}"
+                                                            MaxLength="50" Width="150"
+                                                            IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,
+                                                    Converter={StaticResource Boolean2BooleanReConverter}}"/>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                         <ListBox.ItemContainerStyle>
@@ -258,7 +261,7 @@
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                                            <Border Margin="10,0">
+                                                            <Border Margin="10">
                                                                 <ContentPresenter/>
                                                             </Border>
                                                         </ControlTemplate>

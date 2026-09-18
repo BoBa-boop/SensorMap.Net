@@ -292,11 +292,16 @@ namespace SensorMap.CustomControls
                 _canvas.MouseLeave += _canvas_MouseLeave;
                 //_canvas.KeyDown += _canvas_KeyDown;
                 //_canvas.KeyUp += _canvas_KeyUp;
-                _image.PreviewMouseDown += (s,e)=>ClearSelectedSensors();
+                _image.PreviewMouseDown += _image_PreviewMouseDown; ;
                 this.Unloaded += SensorDragDrop_Unloaded;
                 
             }
             
+        }
+
+        private void _image_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            ClearSelectedSensors();
         }
 
         private void SensorDragDrop_Unloaded(object sender, RoutedEventArgs e)
@@ -469,7 +474,8 @@ namespace SensorMap.CustomControls
                 mapObj.X = mapObj.X < 0 ? 50 : mapObj.X;
                 mapObj.Y = mapObj.Y < 0 ? 50 : mapObj.Y;
                 double offsetX=0, offsetY =0;
-                //GetLeftTopPoint(out offsetX, out offsetY);
+                if(IsPasting==false)
+                    GetLeftTopPoint(out offsetX, out offsetY);
                 if (mapObj.Id == 0)
                 {
                     var existingIds = GetAllMapElements().Select(e => e.MapData.Id).ToList();
@@ -480,6 +486,7 @@ namespace SensorMap.CustomControls
                 AddSensorsCommand.Execute(command);
                 Canvas.SetZIndex(element, 0);
                 if (element is FrameworkElement fe1) fe1.Tag = mapObj.Id;
+                IsPasting = false;
             }
         }
         
@@ -488,6 +495,7 @@ namespace SensorMap.CustomControls
             var selectedElements = GetAllMapElements().Where(x => IsElementSelected(x)).ToList();
             _clipboard.Copy<List<IMapElement>>(selectedElements);
         }
+        private bool IsPasting;
         private void PasteSensors()
         {
             var collection = _clipboard.Paste<List<IMapElement>>();
@@ -508,6 +516,7 @@ namespace SensorMap.CustomControls
                     newObj.IsNew = true;
                     newObj.Description = "Копия";
                     if (newObj is SensorAssignments sa) sa.Address = string.Empty;
+                    IsPasting = true;
                     ItemsSource.Add(newObj);
                     var uiElement = GetAllMapElements()
                                    .FirstOrDefault(x => x.MapData == newObj);
@@ -962,7 +971,8 @@ namespace SensorMap.CustomControls
 
         public void Dispose()
         {
-            
+            if (ItemsSource != null && ItemsSource is INotifyCollectionChanged notify) 
+                notify.CollectionChanged -= OnCollectionChanged;
             //ImageSource = null;
             _canvas.PreviewMouseMove -= _canvas_MouseMove;
             _canvas.MouseDown -= _canvas_MouseDown;
@@ -970,7 +980,7 @@ namespace SensorMap.CustomControls
             _canvas.MouseWheel -= _canvas_MouseWheel;
             _canvas.Drop -= _canvas_Drop;
             _canvas.MouseLeave -= _canvas_MouseLeave;
-            _image.PreviewMouseDown -= (s, e) => ClearSelectedSensors();
+            _image.PreviewMouseDown -= _image_PreviewMouseDown;
             this.Unloaded -= SensorDragDrop_Unloaded;
         }
     }

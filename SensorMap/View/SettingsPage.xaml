@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:SensorMap.View"
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
+             xmlns:System="clr-namespace:System;assembly=System.Runtime"
              xmlns:vm="clr-namespace:SensorMap.ViewModel"
              xmlns:hc="https://handyorg.github.io/handycontrol"
              d:DesignHeight="450" d:DesignWidth="800"
@@ -16,85 +17,156 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
             <StackPanel HorizontalAlignment="Left">
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
-                <TextBlock Text="Вход в 'Редактор'" HorizontalAlignment="Left"  Margin="0,5" 
-               Style="{StaticResource TextBlockSubTitle}"/>
-                <StackPanel Orientation="Horizontal">
-                    <hc:TextBox Name="txtEditorPass"
-                                Width="200"
-                                hc:InfoElement.Placeholder="Новый пароль"/>
-                    <Button Width="35" Style="{StaticResource ButtonInfo}"
-                            Cursor="Hand"
-                            hc:IconElement.Geometry="{StaticResource ChangeData}"
-                            Command="{Binding ChangeEditorPassword}" 
-                            CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
-                </StackPanel>
+                <GroupBox Style="{StaticResource GroupBoxOriginal}"
+                          BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
+                    <GroupBox.Header>
+                        <TextBlock Text="Режим работы" Style="{StaticResource TextBlockDefault}"
+                                   FontFamily="Bahnschrift" FontSize="17"/>
+                    </GroupBox.Header>
+                    <WrapPanel>
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
+                        <TextBlock Text="Вход в 'Редактор'" HorizontalAlignment="Left"  Margin="0,5" 
+                       Style="{StaticResource TextBlockSubTitle}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <hc:TextBox Name="txtEditorPass"
+                                        Width="200"
+                                        hc:InfoElement.Placeholder="Новый пароль"/>
+                            <Button Width="35" Style="{StaticResource ButtonInfo}"
+                                    Cursor="Hand"
+                                    hc:IconElement.Geometry="{StaticResource ChangeData}"
+                                    Command="{Binding ChangeEditorPassword}" 
+                                    CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
+                        </StackPanel>
+                
+                    </StackPanel>
+                        <StackPanel Orientation="Vertical">
+                            <Button x:Name="btnCodes" 
+                                    Style="{StaticResource ButtonDefault}"
+                                    hc:IconElement.Geometry="{StaticResource AskGeometry}"
+                                    HorizontalAlignment="Left" Margin="0,5" Click="Button_Click">
+                                <Button.Content>
+                                    <TextBlock Text="Коды" Style="{StaticResource TextBlockSubTitle}"/>
+                                </Button.Content>
+                            </Button>
+                            <Popup Name="hintPopup" PopupAnimation="Scroll"
+                                   PlacementTarget="{Binding ElementName=btnCodes}"
+                                   Placement="Bottom" Width="250" IsOpen="False">
+                                <StackPanel Margin="2">
+                                    <TextBlock TextWrapping="Wrap" Background="White" Margin="0,5,0,0" FontSize="12">
+                                        Подробная текстовая подсказка, которая появляется только при нажатии на кнопку. 
+                                        В отличие от стандартного ToolTip, сюда можно вставить любые элементы управления.
+                                    </TextBlock>
+                                </StackPanel>
+                            </Popup>
+                            <ListBox x:Name="listCodes" MaxHeight="250" Width="307">
+                                <ListBox.Items>
+                                    <!-- Вместо жестких ListBoxItem задаем строки -->
+                                    <System:String>SampleText 1</System:String>
+                                    <System:String>SampleText 2</System:String>
+                                    <System:String>SampleText 3</System:String>
+                                    <System:String>SampleText 4</System:String>
+                                    <System:String>SampleText 5</System:String>
+                                </ListBox.Items>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- Убираем ContentPresenter -->
+                                        <TextBlock Text="{Binding}" Margin="2"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                            </ListBox>
+                        </StackPanel>
+                    </WrapPanel>
+                </GroupBox>
+                <GroupBox Style="{StaticResource GroupBoxOriginal}"
+                          BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
+                    <GroupBox.Header>
+                        <TextBlock Text="База данных" Style="{StaticResource TextBlockDefault}"
+                                   FontFamily="Bahnschrift" FontSize="17"/>
+                    </GroupBox.Header>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="10">
+                        <TextBlock Text="Загрузить новую БД"
+                                   HorizontalAlignment="Left"
+                                   Margin="0,5"
+                                   Style="{StaticResource TextBlockSubTitle}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Name="txtDB_Name"
+                                       Text="{Binding DbName}"
+                                       Width="200"
+                                       Padding="7,5"
+                                       Background="WhiteSmoke"/>
+                            <Button Width="35" Style="{StaticResource ButtonInfo}"
+                                    Cursor="Hand"
+                                    hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
+                                    Command="{Binding ChangeDataBase}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
+                                   TextTrimming="WordEllipsis"
+                                   Cursor="Hand"
+                                   ToolTip="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
+                                   Padding="7,5"
+                                   MaxWidth="240"                           
+                                   Background="Transparent">
+                            <TextBlock.InputBindings>
+                                <MouseBinding Gesture="LeftClick" Command="{Binding NavigateToPathDB}"/>
+                            </TextBlock.InputBindings>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="TextBlock.IsMouseOver" Value="True">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Style="{StaticResource GroupBoxOriginal}"
+                          BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
+                    <GroupBox.Header>
+                        <TextBlock Text="Главное меню" Style="{StaticResource TextBlockDefault}"
+                                   FontFamily="Bahnschrift" FontSize="17"/>
+                    </GroupBox.Header>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="10,0">
+                        <TextBlock Text="Изображения в Меню" HorizontalAlignment="Left" Margin="0,5" Style="{StaticResource TextBlockSubTitle}"/>
+                        <hc:FlexPanel >
+                            <hc:ImageSelector Height="70" Width="70"/>
+                            <hc:ImageSelector Height="70" Width="70"/>
+                            <hc:ImageSelector Height="70" Width="70"/>
+                        </hc:FlexPanel>
+                    </StackPanel>
+                </GroupBox>
             </StackPanel>
-
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
-                <TextBlock Text="Загрузить новую БД"
-                           HorizontalAlignment="Left"
-                           Margin="0,5"
-                           Style="{StaticResource TextBlockSubTitle}"/>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Name="txtDB_Name"
-                               Text="{Binding DbName}"
-                               Width="200"
-                               Padding="7,5"
-                               Background="WhiteSmoke"/>
-                    <Button Width="35" Style="{StaticResource ButtonInfo}"
-                            Cursor="Hand"
-                            hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
-                            Command="{Binding ChangeDataBase}"/>
-                </StackPanel>
-                <TextBlock Text="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
-                           TextTrimming="WordEllipsis"
-                           Cursor="Hand"
-                           ToolTip="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
-                           Padding="7,5"
-                           MaxWidth="240"                           
-                           Background="Transparent">
-                    <TextBlock.InputBindings>
-                        <MouseBinding Gesture="LeftClick" Command="{Binding NavigateToPathDB}"/>
-                    </TextBlock.InputBindings>
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Style.Triggers>
-                                <Trigger Property="TextBlock.IsMouseOver" Value="True">
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </StackPanel>
-
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
-                <TextBlock Text="Изображения в Меню" HorizontalAlignment="Left" Margin="0,5" Style="{StaticResource TextBlockSubTitle}"/>
-                <hc:FlexPanel >
-                    <hc:ImageSelector Height="70" Width="70"/>
-                    <hc:ImageSelector Height="70" Width="70"/>
-                    <hc:ImageSelector Height="70" Width="70"/>
-                </hc:FlexPanel>
-            </StackPanel>
-        </StackPanel>
-            <StackPanel Grid.Column="1">
-                <DataGrid Name="SQL_Journal"
+            <Grid Grid.Column="1" Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="30"/>
+                </Grid.RowDefinitions>
+                <DataGrid Name="SQL_Journal" Grid.Row="0" 
                           ItemsSource="{Binding Logs}"
-                          CanUserAddRows="False" CanUserDeleteRows="False"
-                          CanUserReorderColumns="False" AutoGenerateColumns="False"
-                          IsReadOnly="True"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True" VerticalScrollBarVisibility="Visible"
                           Style="{StaticResource DataGrid.Small}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Дата" Binding="{Binding Timestamp, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" Width="140"/>
                         <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <Button Content="Загрузить еще" Margin="0,5,0,0" HorizontalAlignment="Center"
+                <Button Content="Загрузить еще" Grid.Row="1"
+                        VerticalAlignment="Bottom"
                         Command="{Binding LoadMoreLogs}"
                         Visibility="{Binding CanLoadMore, Converter={StaticResource Bool2VisOrHidden}}"/>
-            </StackPanel>
+           
+            </Grid>
         </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

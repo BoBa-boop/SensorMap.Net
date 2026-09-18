@@ -208,7 +208,7 @@
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                       IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior ViewModel="{Binding }"/>
+                            <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
                         <DataGrid.RowValidationRules>
                             <valid:ValidationRuleSector ValidationStep="UpdatedValue"/>
@@ -296,7 +296,7 @@
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                       IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior ViewModel="{Binding }"/>
+                            <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
@@ -463,7 +463,7 @@
                        IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
 
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior ViewModel="{Binding }"/>
+                            <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
                         <!--<DataGrid.RowValidationRules>
                     <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
@@ -592,7 +592,7 @@
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                       IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior ViewModel="{Binding }"/>
+                            <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
                         <!--<DataGrid.RowValidationRules>
         <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
@@ -953,24 +953,62 @@
                                         </MenuItem>
                                         <MenuItem Style="{StaticResource IconOnlyMenuItem}" 
                                                   ToolTip="Удалить строку"
-                                                  Command="{Binding DeleteCharacteristic}"
-                                                  CommandParameter="{Binding ElementName=sCharacteristics,Path=SelectedItem}">
+                                                  Command="{Binding DeleteCharacteristic}">
+                                            <MenuItem.CommandParameter>
+                                                <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                                    <Binding ElementName="lbSensors" Path="SelectedItem"/>
+                                                    <Binding ElementName="sCharacteristics" Path="SelectedItem"/>
+                                                </MultiBinding>
+                                            </MenuItem.CommandParameter>
                                             <MenuItem.Icon>
                                                 <Image Source="{StaticResource DeleteImage}" Width="20" Height="20"/>
                                             </MenuItem.Icon>
                                         </MenuItem>
                                     </Menu>
                                     <ListBox Name="sCharacteristics" Grid.Row="1" Margin="5"
-                                             ItemsSource="{Binding ElementName=lbSensors,Path=SelectedItem.Characteristics}">
+                                             ItemsSource="{Binding ElementName=lbSensors,Path=SelectedItem.Characteristics}"
+                                             Style="{StaticResource WrapPanelHorizontalListBox}">
                                         <i:Interaction.Behaviors>
                                             <beh:CollectionChangeBehavior TargetButton="{Binding ElementName=sSave}"/>
                                         </i:Interaction.Behaviors>
 
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBox Name="ActualText" Text="{Binding Title}" BorderThickness="0"/>
+                                                <TextBox Name="ActualText" 
+                                                         Background="{StaticResource BackgroundBrush}"
+                                                         Text="{Binding Title}"
+                                                         BorderThickness="0"/>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="{x:Type ListBoxItem}">
+                                                <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="brd"
+                                                                    Margin="3"
+                                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="5"
+                                                                    Cursor="Hand"
+                                                                    Background="{TemplateBinding Background}">
+                                                                
+                                                                <ContentPresenter ToolTip="{Binding Name}"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsSelected}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                                </DataTrigger>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#e3e3e3"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
                                     </ListBox>
 
                                 </Grid>
@@ -1154,8 +1192,13 @@
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <MenuItem Style="{StaticResource IconOnlyMenuItem}" ToolTip="Удалить строку"
-                                                  Command="{Binding DeleteCharacteristic}"
-                                                  CommandParameter="{Binding ElementName=dCharacteristics,Path=SelectedItem}">
+                                                  Command="{Binding DeleteCharacteristic}">
+                                            <MenuItem.CommandParameter>
+                                                <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                                    <Binding ElementName="lbDevices" Path="SelectedItem"/>
+                                                    <Binding ElementName="dCharacteristics" Path="SelectedItem"/>
+                                                </MultiBinding>
+                                            </MenuItem.CommandParameter>
                                             <MenuItem.Icon>
                                                 <Image Source="{StaticResource DeleteImage}" Width="20" Height="20"/>
                                             </MenuItem.Icon>
@@ -1180,14 +1223,6 @@
                 </Grid>
             </hc:TabItem>
         </hc:TabControl>
-        <Grid Grid.Row="1" Panel.ZIndex="10"
-              Visibility="{Binding IsLoading,UpdateSourceTrigger=PropertyChanged, Converter={StaticResource Boolean2VisibilityConverter}}">
-            <Border Background="#66FFFFFF"/>
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <hc:LoadingCircle IsRunning="{Binding IsLoading}" Width="60" Height="60"
-                                  Foreground="{StaticResource AccentBrush}"/>
-                <TextBlock Text="Загрузка данных..." FontSize="16" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-            </StackPanel>
-        </Grid>
+        
     </Grid>
 </UserControl>

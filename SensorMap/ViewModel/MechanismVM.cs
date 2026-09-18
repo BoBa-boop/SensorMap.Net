@@ -67,12 +67,12 @@ namespace SensorMap.ViewModel
             }
         }
 
-        [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        [Reactive] public INavigation? Navigation { get; set; }
+         public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
+         public INavigation? Navigation { get; set; }
         /// <summary>
         /// Переменная хранит значение из TreeView выбранного участка
         /// </summary>
-        [Reactive] public Sector? CurrentSector
+         public Sector? CurrentSector
         {
             get => currentSector;
             set
@@ -88,7 +88,7 @@ namespace SensorMap.ViewModel
         /// <summary>
          /// Переменная хранит значение из TreeView выбранной механизации
          /// </summary>
-        [Reactive] public Mechanism? CurrentMech
+         public Mechanism? CurrentMech
         {
             get => currentMech;
             set
@@ -107,14 +107,14 @@ namespace SensorMap.ViewModel
                         }
                     }
                     this.RaiseAndSetIfChanged(ref currentMech, value);
-                    SubscribeToCurrentStack();
+                    //SubscribeToCurrentStack();
                 }
             }
         }
         /// <summary>
          /// Переменная хранит значение из TreeView выбранного датчика
          /// </summary>
-        [Reactive] public Sensor CurrentSensor
+         public Sensor CurrentSensor
         {
             get => _curSensor;
             set
@@ -122,7 +122,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref _curSensor, value);
             }
         }
-        [Reactive]
+        
         public Sensor CurrentDevice
         {
             get => _curDevice;
@@ -134,16 +134,15 @@ namespace SensorMap.ViewModel
         /// <summary>
         /// Объект (датчик или устройство) выбранный на карте или из списка
         /// </summary>
-        [Reactive]
-        public MapObject SelectedMapObject
+         public MapObject SelectedMapObject
         {
             get { return _selectMapObject; }
             set { this.RaiseAndSetIfChanged(ref _selectMapObject, value); }
         }
 
-        [Reactive] public bool CanUndo => CurrentStack?.CanUndo ?? false;
-        [Reactive] public bool CanRedo => CurrentStack?.CanRedo ?? false;
-        [Reactive] public bool IsShowSensors
+         public bool CanUndo => CurrentStack?.CanUndo ?? false;
+         public bool CanRedo => CurrentStack?.CanRedo ?? false;
+         public bool IsShowSensors
         {
             get => _isShowSensors;
             set
@@ -151,7 +150,7 @@ namespace SensorMap.ViewModel
                 _isShowSensors = value; this.RaiseAndSetIfChanged(ref _isShowSensors, value);
             }
         }
-        [Reactive] public bool HasChanges
+         public bool HasChanges
         {
             get { return _hasChanges; }
             set
@@ -159,8 +158,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref _hasChanges, value);
             }
         }
-        [Reactive]
-        public ObservableCollection<Sector>? Sectors
+         public ObservableCollection<Sector>? Sectors
         {
             get { return sectors; }
             set
@@ -168,7 +166,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref sectors, value);
             }
         } 
-        [Reactive] public ObservableCollection<SensorType>? sensorTypes 
+         public ObservableCollection<SensorType>? sensorTypes 
         {
             get { return sensorTypes1; }
             set
@@ -176,7 +174,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref sensorTypes1, value);
             }
         }
-        [Reactive] public TreeViewCollection<DeviceType, Device> Devices 
+         public TreeViewCollection<DeviceType, Device> Devices 
         {
             get { return devices; }
             set
@@ -184,7 +182,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref devices, value);
             }
         }
-        [Reactive] public TreeViewCollection<SensorType, Sensor>? Sensors 
+         public TreeViewCollection<SensorType, Sensor>? Sensors 
         {
             get { return sensors; }
             set
@@ -192,7 +190,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref sensors, value);
             }
         }
-        [Reactive] private ObservableCollection<Sensor>? SensorsList 
+         private ObservableCollection<Sensor>? SensorsList 
         {
             get { return sensorsList; }
             set
@@ -200,7 +198,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref sensorsList, value);
             }
         }
-        [Reactive] private ObservableCollection<Device>? DevicesList 
+         private ObservableCollection<Device>? DevicesList 
         {
             get { return devicesList; }
             set
@@ -219,12 +217,7 @@ namespace SensorMap.ViewModel
             _imgControl = imageControl;
             _appDbContextFactory = appDbContextFactory;
             _fileManagment = fileManagment;
-            var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;
-            CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
-            if (curMechanism!=null && CurrentSector!=null)
-            {
-                CurrentMech = CurrentSector?.Mechanisms?.Where(x => x.Id == curMechanism.Id).FirstOrDefault();
-            }
+            
 
             NavigateToSectors = new RelayCommand(() => Navigation.NavigateTo<SectorsVM>());
             
@@ -401,6 +394,16 @@ namespace SensorMap.ViewModel
                     sensorTypes?.Clear(); 
                     Sectors?.Clear();
                 }).DisposeWith(disposables);
+
+                var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;
+                if (transferDataSector != null && Sectors != null && Sectors.Count() > 0)
+                {
+                    CurrentSector = Sectors.Where(x => x.Id == transferDataSector).FirstOrDefault();
+                    if (curMechanism != null && CurrentSector != null)
+                    {
+                        CurrentMech = CurrentSector?.Mechanisms?.Where(x => x.Id == curMechanism.Id).FirstOrDefault();
+                    }
+                }
             });
         }
 

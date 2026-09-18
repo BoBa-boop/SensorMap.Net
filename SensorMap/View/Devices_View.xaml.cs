@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ReactiveUI;
+using SensorMap.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,11 +21,27 @@ namespace SensorMap.View
     /// <summary>
     /// Логика взаимодействия для PLC_View.xaml
     /// </summary>
-    public partial class Devices_View : UserControl
+    public partial class Devices_View : UserControl, IViewFor<Devices_VM>
     {
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register
+           (
+           nameof(ViewModel),
+           typeof(Devices_VM),
+           typeof(Devices_View),
+           new PropertyMetadata(null));
+        public Devices_VM? ViewModel
+        {
+            get => (Devices_VM?)GetValue(ViewModelProperty);
+            set => SetValue(ViewModelProperty, value);
+        }
+        object? IViewFor.ViewModel { get => ViewModel; set => ViewModel = (Devices_VM?)value; }
         public Devices_View()
         {
-            InitializeComponent();
+            InitializeComponent(); 
+            DataContextChanged += (_, _) => ViewModel = DataContext as Devices_VM;
+            this.WhenActivated(disposables =>
+            { 
+            });
         }
     }
 }

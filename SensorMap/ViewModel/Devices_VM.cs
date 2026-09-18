@@ -4,30 +4,30 @@ using HandyControl.Data;
 using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
-using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Services;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Input;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace SensorMap.ViewModel
 {
     public class Devices_VM : ReactiveObject, IActivatableViewModel
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        private readonly IDataBaseProvider _provider;
         private readonly INavigation _nav;
         private readonly IJsonSerialization _json;
         private readonly IDataService _service;
         private readonly ITempImage _imgManag;
         private readonly IFileManagment _fileManagment;
+        private Dictionary<string, AdditionalData> _jsonMoreDataCache = new();
+        private List<AdditionalData> addDataList;
+        private TreeViewCollection<DeviceType, Device> deviceTree;
+        private ObservableCollection<Device> devices;
         private IAppDbContextFactory _appDbContextFactory;
         private Device _selectedDevice;
         private ObservableCollection<Mechanism> _FilteredMechanisms = new ObservableCollection<Mechanism>();
@@ -37,59 +37,35 @@ namespace SensorMap.ViewModel
             get => _selectedDevice;
             set { if (value != null) this.RaiseAndSetIfChanged(ref _selectedDevice, value); }
         }
-        [Reactive] public ObservableCollection<Device> Devices { get; set; }
+        [Reactive] public ObservableCollection<Device> Devices {
+            get => devices;
+            set { this.RaiseAndSetIfChanged(ref devices, value); }
+        }
         private ObservableCollection<DeviceType> _deviceTypes { get; set; }
-        [Reactive] public TreeViewCollection<string, Device> DeviceTree { get; set; }
+        [Reactive] public TreeViewCollection<DeviceType, Device> DeviceTree {
+            get => deviceTree;
+            set { this.RaiseAndSetIfChanged(ref deviceTree, value); }
+        }
         [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms
         {
             get => _FilteredMechanisms;
             set { this.RaiseAndSetIfChanged(ref _FilteredMechanisms, value); }
         }
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        private List<Mechanism> _mechs = new List<Mechanism>();
-        private List<AdditionalData> addDataList = new List<AdditionalData>();
+        
 
-        public Devices_VM(IDataBaseProvider provider, INavigation nav, IJsonSerialization json,
+        public Devices_VM(INavigation nav, IJsonSerialization json,
             IDataService service, IAppDbContextFactory appDbContextFactory,
             IFileManagment fileManagment, ITempImage imgMang, Device device = null)
         {
             _service = service;
             _nav = nav;
             _imgManag = imgMang;
-            _provider = provider;
             _fileManagment = fileManagment;
             _json = json;
             _appDbContextFactory = appDbContextFactory;
             
-            using (var _dbContext = _appDbContextFactory.CreateDbContext())
-            {
-                var devicesWithDetails = _dbContext.Devices
-                    .AsNoTracking()
-                    .Include(s => s.Files)
-                    .Include(s => s.DeviceType)
-                        .ThenInclude(st => st.Characteristics).AsSplitQuery()
-                    .ToList();
-
-                Devices = new(devicesWithDetails);
-
-                _deviceTypes = new(devicesWithDetails
-                    .Select(s => s.DeviceType!)
-                    .Where(st => st != null)
-                    .DistinctBy(st => st.Id)
-                    .ToList());
-                _mechs = _dbContext.Mechanisms.AsNoTracking().Select(x => new Mechanism
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    SectorID = x.SectorID,
-                    MapObjects = new(x.MapObjects.OfType<DeviceAssignment>().Select(x => new DeviceAssignment { DeviceId = x.DeviceId }).ToList())
-
-                }).ToList(); 
-                Func<string, Device, bool> filter = (m, p) => p.DeviceType.Name == m;
-                DeviceTree = new TreeViewCollection<string, Device>("DeviceType.Name", new(_deviceTypes.Select(x => x.Name).ToList()), Devices, filter);
-            }
             SelectedDevice = device;
-            LoadAddData();
             
             NavigateToMech = new RelayCommand<Mechanism>((mech) =>
             {
@@ -114,8 +90,8 @@ namespace SensorMap.ViewModel
             
             AddFiles = new RelayCommand<Device>((d) => 
             {
-                string[]paths = fileManagment.OpenFileDialog(true);
-                fileManagment.AddHelpfulFile(paths,d); 
+                string[]paths = _fileManagment.OpenFileDialog(true);
+                _fileManagment.AddHelpfulFile(paths,d); 
             });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
@@ -148,7 +124,7 @@ namespace SensorMap.ViewModel
             }, (f) => { return f != null; });
             OpenFile = new RelayCommand<HelpfulFile>((file) => 
             {
-                if (!fileManagment.OpenFileInExplorer(file.NameFile))
+                if (!_fileManagment.OpenFileInExplorer(file.NameFile))
                 {
                     MessageBoxResult res = HandyControl.Controls.MessageBox.Show(
                         new MessageBoxInfo
@@ -192,78 +168,150 @@ namespace SensorMap.ViewModel
                 }
 
             });
-            this.WhenActivated(disposables =>
+            this.WhenActivated(async disposables =>
             {
                 _service.WhenAnyValue(x => x.IsEditMode)
                     .BindTo(this, x => x.IsEditMode)
                     .DisposeWith(disposables);
 
-                this.WhenAnyValue(x => x.SelectedDevice)
-                .Where(device => device != null)
-                .Select(device => _mechs.Where(mech => mech.MapObjects != null)
-                .Where(x => x.MapObjects!.OfType<DeviceAssignment>().Any(da => da.DeviceId == device.Id)))
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(filteredMechanisms =>
-                {
-                    FilteredMechanisms = new(filteredMechanisms);
-                }).DisposeWith(disposables);
-            });
-        }
+                    _service.WhenAnyValue(x => x.IsEditMode)
+                        .BindTo(this, x => x.IsEditMode)
+                        .DisposeWith(disposables);
 
-        private void LoadAddData()
-        {
-
-            if (File.Exists("DevicesMoreData.json"))
-            {
-                //заполнение данными из файла
-                foreach (var item in _json.ReadFromJsonFile<List<AdditionalData>>("DevicesMoreData.json"))
-                {
-                    var device = Devices.FirstOrDefault((Func<Device, bool>)(x => x.Name == item.Name));
-                    if (device != null)
+                    //Этап заполнения словаря с доп информацией
+                    if (File.Exists("DevicesMoreData.json"))
                     {
-                        if (item.HasData())
-                        {
-                            device.AdditionalData = item;
-                        }
-                        addDataList.Add(device.AdditionalData);
+                        var list = _json.ReadFromJsonFile<List<AdditionalData>>("DevicesMoreData.json");
+                        _jsonMoreDataCache = list?.Where(x => x.Name != null).ToDictionary(x => x.Name, x => x) ?? new();
                     }
-                }
-            }
+                    //Этап заполнения древовидной структуры названиями
+                    using (var _dbContext = _appDbContextFactory.CreateDbContext())
+                    {
+                        var queryTypes = await _dbContext.DeviceTypes
+                                .AsNoTracking()
+                                .Select(x => new DeviceType()
+                                {
+                                    Id = x.Id,
+                                    Name = x.Name,
+                                    Characteristics = x.Characteristics
+                                })
+                                .ToListAsync();
 
-            foreach (var deviceType in _deviceTypes.Where(d => d.Characteristics.Any()))
-            {
-                var currentDevices = Devices.Where(x => x.DeviceTypeId == deviceType.Id);
-                foreach (var device in currentDevices)
-                {
-                    if (device != null && !addDataList.Contains(device.AdditionalData))
-                    {
-                        device.AdditionalData = AdditionalData.CreateRecord(device.Name, deviceType.Characteristics!);
-                        addDataList.Add(device.AdditionalData);
-                    }
-                    if (addDataList.Contains(device.AdditionalData))
-                    {
-                        if (device.AdditionalData == null)
-                        {
-                            device.AdditionalData = AdditionalData.CreateRecord(device.Name, deviceType.Characteristics!);
-                            break;
-                        }
-                        device.AdditionalData.Data = new(deviceType.Characteristics!
-                            .Select(c => new MoreData
+                        var queryDevices = await _dbContext.Devices
+                            .AsNoTracking()
+                            .Select(x => new Device()
                             {
-                                Parameter = c.Title,
-                                Value = device.AdditionalData.Data
-                                .FirstOrDefault(d => d.Parameter == c.Title)?.Value ?? string.Empty
-                            }).ToList());
-                    }
-                }
+                                Id = x.Id,
+                                Name = x.Name,
+                                DeviceTypeId = x.DeviceTypeId
+                            })
+                            .ToListAsync();
 
-            }
+                        _deviceTypes = new(queryTypes);
+                        Devices = new(queryDevices);
+
+                        Func<DeviceType, Device, bool> filter = (type, device) => device.DeviceTypeId == type.Id;
+                        DeviceTree = new TreeViewCollection<DeviceType, Device>("Name", new(_deviceTypes), Devices, filter);
+
+                    }
+
+                    //Этап фильтрации механизмов
+                    this.WhenAnyValue(x => x.SelectedDevice)
+                        .Where(device => device != null)
+                        .SelectMany(async device =>
+                        {
+                            // Создаем временный контекст ИМЕННО на время выполнения этого запроса
+                            using var dbContext = appDbContextFactory.CreateDbContext();
+
+                            // Все запросы делаем через локальный dbContext
+                            return await dbContext.Mechanisms
+                                .AsNoTracking()
+                                .Where(mech => mech.MapObjects
+                                    .OfType<DeviceAssignment>()
+                                    .Any(da => da.DeviceId == device.Id))
+                                .Select(x => new Mechanism
+                                {
+                                    Id = x.Id,
+                                    Name = x.Name,
+                                    SectorID = x.SectorID,
+                                    MapObjects = new(x.MapObjects
+                                    .Select(k => new SensorAssignments() { MechanismId = k.MechanismId }).ToList())
+                                })
+                                .ToListAsync(); // Асинхронное выполнение
+                        })
+                        .ObserveOn(RxApp.MainThreadScheduler)
+                        .Subscribe(filteredList =>
+                        {
+                            FilteredMechanisms = new(filteredList);
+                        })
+                        .DisposeWith(disposables);
+
+
+                    this.WhenAnyValue(x => x.SelectedDevice)
+                        .Where(device => device != null)
+                        .SelectMany(async selectedDevice =>
+                        {
+                            // 1. Сначала подготавливаем AdditionalData (синхронно в фоновом таске)
+                            if (selectedDevice.AdditionalData == null)
+                            {
+                                if (_jsonMoreDataCache.TryGetValue(selectedDevice.Name, out var cachedData) && cachedData.HasData())
+                                {
+                                    selectedDevice.AdditionalData = cachedData;
+                                }
+                                else
+                                {
+                                    var sType = _deviceTypes.FirstOrDefault(t => t.Id == selectedDevice.DeviceTypeId);
+                                    if (sType != null && sType.Characteristics?.Any() == true)
+                                    {
+                                        selectedDevice.AdditionalData = AdditionalData.CreateRecord(selectedDevice.Name, sType.Characteristics);
+                                        selectedDevice.AdditionalData.Data = new(sType.Characteristics.Select(c => new MoreData
+                                        {
+                                            Parameter = c.Title,
+                                            Value = string.Empty
+                                        }));
+                                    }
+                                }
+                            }
+
+                            // 2. Проверяем, нужно ли лезть в БД за тяжелыми данными
+                            if (selectedDevice.Image != null || selectedDevice.Files?.Any() == true)
+                            {
+                                return selectedDevice; // Данные уже есть, возвращаем датчик
+                            }
+
+                            // 3. Догружаем тяжелые данные из БД
+                            using var dbContext = _appDbContextFactory.CreateDbContext();
+                            var heavyData = await dbContext.Devices
+                                .AsNoTracking()
+                                .Where(s => s.Id == selectedDevice.Id)
+                                .Select(s => new { s.Image, s.Files, s.DeviceType })
+                                .FirstOrDefaultAsync();
+
+                            if (heavyData != null)
+                            {
+                                selectedDevice.Image = heavyData.Image;
+                                selectedDevice.Files = heavyData.Files;
+                                selectedDevice.DeviceType = heavyData.DeviceType;
+                            }
+                            return selectedDevice;
+                        })
+                        .ObserveOn(RxApp.MainThreadScheduler)
+                        .Subscribe(sensor =>
+                        {
+                            this.RaisePropertyChanged(nameof(SelectedDevice));
+                        })
+                        .DisposeWith(disposables);
+                });
         }
+
+        
         private void SaveDataFileds()
         {
             string FILE_PATH = "DevicesMoreData.json";
             try
             {
+                if (SelectedDevice.AdditionalData == null) return;
+
                 SelectedDevice.AdditionalData.Name = SelectedDevice.Name;
                 var editableObject = addDataList.Where(x => x.Name == SelectedDevice.Name).FirstOrDefault();
                 if (editableObject != null)

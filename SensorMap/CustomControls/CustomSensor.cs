@@ -151,6 +151,8 @@ namespace SensorMap.CustomControls
             get { return (bool)GetValue(IsDraggingProperty); }
             set { SetValue(IsDraggingProperty, value); }
         }
+
+        private bool IsContextOpen;
         public static readonly DependencyProperty IsDraggingProperty =
             DependencyProperty.Register("IsDragging", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
 
@@ -229,6 +231,7 @@ namespace SensorMap.CustomControls
             this.MouseMove -= OnSensorMouseMove;
             _canvas.MouseMove -= OnMouseMove;
             _canvas.MouseUp -= OnMouseUp;
+            this.Unloaded -= CustomSensor_Unloaded;
             disposables.Dispose();
         }
 
@@ -264,7 +267,7 @@ namespace SensorMap.CustomControls
 
         private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (this.IsSelected && !IsDragging && !IsSelectionRectActive)
+            if (this.IsSelected && !IsDragging && !IsSelectionRectActive && !IsContextOpen)
             {
                 if (IsMultiSelection) MouseHitType = HitType.Body;
                 else
@@ -274,6 +277,8 @@ namespace SensorMap.CustomControls
                 }
                 this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
             }
+            else this.Cursor = _transformService.GetCursorForHitType(HitType.None);
+
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -400,7 +405,7 @@ namespace SensorMap.CustomControls
         }
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(IsEditMode)
+            if(IsEditMode && e.LeftButton==MouseButtonState.Pressed)
             {
                 if (_memorySelectedSensor != null && _memorySelectedSensor != this && !IsMultiSelection)
                 {
@@ -427,6 +432,8 @@ namespace SensorMap.CustomControls
             }
             if(e.RightButton == MouseButtonState.Pressed)
             {
+                IsDragging = false;
+                IsContextOpen = true;                
                 var pop = new View.SensorAddInfo();
                 var window = new PopupWindow()
                 {
@@ -438,10 +445,10 @@ namespace SensorMap.CustomControls
                 void OnMainWindowClick(object sender, MouseButtonEventArgs e)
                 {
                     window.Close();
+                    IsContextOpen = false;
                     Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
                 }
                 window.Show(this, false);
-                e.Handled = true;
             }
             
         }

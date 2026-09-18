@@ -468,8 +468,8 @@ namespace SensorMap.CustomControls
             {
                 mapObj.X = mapObj.X < 0 ? 50 : mapObj.X;
                 mapObj.Y = mapObj.Y < 0 ? 50 : mapObj.Y;
-                double offsetX, offsetY;
-                GetLeftTopPoint(out offsetX, out offsetY);
+                double offsetX=0, offsetY =0;
+                //GetLeftTopPoint(out offsetX, out offsetY);
                 if (mapObj.Id == 0)
                 {
                     var existingIds = GetAllMapElements().Select(e => e.MapData.Id).ToList();
@@ -533,6 +533,7 @@ namespace SensorMap.CustomControls
         {
             var selectedElements = GetAllMapElements().Where(x => IsElementSelected(x)).ToList();
             _clipboard.Copy(selectedElements);
+            RemoveSensor();
         }
 
 

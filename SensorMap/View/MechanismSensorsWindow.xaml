@@ -32,7 +32,7 @@
           SelectedItem="{Binding SelectedMapObject}" Grid.Row="1"
           IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior ViewModel="{Binding }"/>
+                            <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
                         <DataGrid.Columns>
                             <DataGridComboBoxColumn DisplayMemberPath="Name"
@@ -81,7 +81,7 @@
 SelectedItem="{Binding SelectedMapObject}" Grid.Row="1"
 IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior ViewModel="{Binding }"/>
+                            <beh:DataGridBahavior/>
                         </i:Interaction.Behaviors>
                         <DataGrid.Columns>
                             <DataGridComboBoxColumn DisplayMemberPath="Name"

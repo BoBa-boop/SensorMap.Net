@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xaml.Behaviors;
+using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.ViewModel;
 using System;
@@ -23,13 +24,13 @@ namespace SensorMap.Behaviors
         private Dictionary<string, object> originalFieldValues;
 
 
-        public object ViewModel
+        public ICommand Command
         {
-            get { return (object)GetValue(ViewModelProperty); }
-            set { SetValue(ViewModelProperty, value); }
+            get { return (ICommand)GetValue(CommandProperty); }
+            set { SetValue(CommandProperty, value); }
         }
-        public static readonly DependencyProperty ViewModelProperty =
-            DependencyProperty.Register("ViewModel", typeof(object), typeof(DataGridBahavior), new PropertyMetadata(null));
+        public static readonly DependencyProperty CommandProperty =
+            DependencyProperty.Register("Command", typeof(ICommand), typeof(DataGridBahavior), new PropertyMetadata(null));
 
         protected override void OnAttached()
         {
@@ -66,8 +67,9 @@ namespace SensorMap.Behaviors
                         {
                             prop!.SetValue(e.Row.Item, true);
 
-                            if (ViewModel is CRUD_VM vm)
-                                vm.RecordEdit(e.Row.Item, kvp.Key, kvp.Value, currentValue);
+                            
+                            var command=new Commands.DataGridCommands.EditCell<object>(e.Row.Item, kvp.Key, kvp.Value, currentValue);
+                            Command.Execute(command);
                         }
                         break;
                     }
@@ -95,6 +97,7 @@ namespace SensorMap.Behaviors
             #endregion
             AssociatedObject.BeginningEdit -= OnBeginningEdit;
             AssociatedObject.CellEditEnding -= OnCellEditEnding;
+            AssociatedObject.Loaded -= OnLoaded;
         }
 
 

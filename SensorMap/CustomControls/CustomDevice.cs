@@ -178,6 +178,8 @@ namespace SensorMap.CustomControls
         Rect Map;
         private Image _image;
         private bool IsMoving;
+        private bool IsContextOpen;
+
         static CustomDevice()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(CustomDevice), new FrameworkPropertyMetadata(typeof(CustomDevice)));
@@ -240,7 +242,7 @@ namespace SensorMap.CustomControls
 
         private void OnDeviceMouseMove(object sender, MouseEventArgs e)
         {
-            if (this.IsSelected && !IsDragging && !IsSelectionRectActive)
+            if (this.IsSelected && !IsDragging && !IsSelectionRectActive && !IsContextOpen)
             {
                 if (IsMultiSelection) MouseHitType = HitType.Body;
                 else
@@ -250,6 +252,7 @@ namespace SensorMap.CustomControls
                 }
                 this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
             }
+            else this.Cursor = _transformService.GetCursorForHitType(HitType.None);
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -364,7 +367,7 @@ namespace SensorMap.CustomControls
         
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if(IsEditMode)
+            if(IsEditMode && e.LeftButton == MouseButtonState.Pressed)
             {
                 if (_memorySelectedDevice != null && _memorySelectedDevice != this && !IsMultiSelection)
                 {
@@ -391,7 +394,8 @@ namespace SensorMap.CustomControls
             }
             if (e.RightButton == MouseButtonState.Pressed)
             {
-                var pop = new View.DeviceInfo();
+                var pop = new View.DeviceInfo(); 
+                IsContextOpen = true;
                 var window = new PopupWindow()
                 {
                     PopupElement = pop,
@@ -402,6 +406,7 @@ namespace SensorMap.CustomControls
                 void OnMainWindowClick(object sender, MouseButtonEventArgs e)
                 {
                     window.Close();
+                    IsContextOpen = false;
                     Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
                 }
                 window.Show(this, false);

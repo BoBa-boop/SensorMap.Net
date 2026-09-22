@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DynamicData;
+using DynamicData.Binding;
 using HandyControl.Controls;
 using HandyControl.Data;
 using HandyControl.Properties.Langs;
@@ -12,6 +13,7 @@ using SensorMap.Converters;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
+using System;
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -52,6 +54,7 @@ namespace SensorMap.ViewModel
         private ObservableCollection<SensorType> sensorTypes;
         private ObservableCollection<DeviceType> deviceTypes;
         private ObservableCollection<Sector> sectors;
+        private SerialDisposable serialDisposable = new();
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
@@ -103,7 +106,7 @@ namespace SensorMap.ViewModel
                             dBContext.Entry(original).CurrentValues.SetValues(arg);
                         else
                         {
-                            if(original!=null)
+                            if (original != null)
                                 dBContext.Entry(original).State = EntityState.Detached;
                             dBContext.Update(arg);
                         }
@@ -136,7 +139,7 @@ namespace SensorMap.ViewModel
                 object[] values = (object[])arg;
                 var entityType = values[0].GetType();
                 var collection = values[1];
-                
+
                 try
                 {
                     using (var dBContext = _appDbContextFactory.CreateDbContext())
@@ -164,7 +167,7 @@ namespace SensorMap.ViewModel
                                     list?.Remove(values[0]);
                                 collectionView.Refresh();
                             }
-                            else if(collection is IList list)
+                            else if (collection is IList list)
                                 list?.Remove(values[0]);
 
 
@@ -305,10 +308,10 @@ namespace SensorMap.ViewModel
             {
                 if (obj[0] is SensorType sensorType && sensorType != null)
                 {
-                    SensorCharacteristic characteristic = obj[1] as SensorCharacteristic??new SensorCharacteristic();
+                    SensorCharacteristic characteristic = obj[1] as SensorCharacteristic ?? new SensorCharacteristic();
                     using (var dBContext = _appDbContextFactory.CreateDbContext())
                     {
-                        if(characteristic.Id!=0)
+                        if (characteristic.Id != 0)
                         {
                             var res = System.Windows.MessageBox.Show("Операция включает в себя удаление записанных данных в выбранный параметр.\r" +
                             $"Датчики имеющий тип {sensorType.Name} также утратят параметр и данные! Подтвердите действие.",
@@ -339,7 +342,7 @@ namespace SensorMap.ViewModel
                         "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
                         if (res == MessageBoxResult.OK)
                         {
-                        
+
                             if (deviceType.Id != 0)
                             {
                                 dBContext.DeviceCharacteristic.Remove(characteristic);
@@ -385,9 +388,9 @@ namespace SensorMap.ViewModel
                     mech.IsModified = fileManagment.AddHelpfulFile(paths, obj);
                 }
             });
-            ShowHelpfulFile = new RelayCommand<object>((obj) => 
+            ShowHelpfulFile = new RelayCommand<object>((obj) =>
             {
-                if(obj is Mechanism mech)
+                if (obj is Mechanism mech)
                 {
                     if (mech == null || mech.Files == null || !mech.Files.Any()) return;
                     fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
@@ -397,8 +400,11 @@ namespace SensorMap.ViewModel
             RedoCommand = new RelayCommand(_undoRedoManager.Redo);
             RecordEditCommand = new RelayCommand<IUndoRedoCommand>(command =>
             {
-                if(command!=null)
+                if (command != null)
+                {
                     _undoRedoManager.Do(command);
+                    //Mechanisms.Refresh();
+                }
             });
             #endregion
 
@@ -406,21 +412,23 @@ namespace SensorMap.ViewModel
 
             this.WhenActivated(disposables =>
             {
-                _service.WhenAnyValue(x => x.IsEditMode)
-                    .BindTo(this, x => x.IsEditMode)
-                    .DisposeWith(disposables);
-
-                _undoRedoManager.WhenAnyValue(x => x.CanUndo)
-                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanUndo)))
+            _service.WhenAnyValue(x => x.IsEditMode)
+                .BindTo(this, x => x.IsEditMode)
                 .DisposeWith(disposables);
 
-                _undoRedoManager.WhenAnyValue(x => x.CanRedo)
-                    .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)))
-                    .DisposeWith(disposables);
+            _undoRedoManager.WhenAnyValue(x => x.CanUndo)
+            .Subscribe(_ => this.RaisePropertyChanged(nameof(CanUndo)))
+            .DisposeWith(disposables);
 
-                this.WhenAnyValue(x => x.SelectedTabIndex)
-                    .Subscribe(RequestLoad)
-                    .DisposeWith(disposables);
+            _undoRedoManager.WhenAnyValue(x => x.CanRedo)
+                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)))
+                .DisposeWith(disposables);
+
+            this.WhenAnyValue(x => x.SelectedTabIndex)
+                .Subscribe(RequestLoad)
+                .DisposeWith(disposables);
+
+           
             });
         }
         #region LoadData
@@ -461,6 +469,7 @@ namespace SensorMap.ViewModel
                         break;
                     case 1:
                         await LoadSecondAsync();
+                        await LoadFourthPageAsync();
                         break;
                     case 2:
                         await LoadThirdAsync();
@@ -504,6 +513,23 @@ namespace SensorMap.ViewModel
             Mechanisms = CollectionViewSource.GetDefaultView(mechanisms);
             ConfigureMechanismsView();
             _secondPageLoaded = true;
+            serialDisposable.Disposable = mechanisms.Select(m => m.WhenAnyValue(x => x.IsModified).Skip(1))
+                .Merge()
+                .Subscribe(_ => 
+                {
+                    if (Mechanisms is IEditableCollectionView editableView)
+                    {
+                        if (editableView.IsEditingItem)
+                        {
+                            editableView.CommitEdit(); // Завершаем транзакцию редактирования ячейки
+                        }
+                        if (editableView.IsAddingNew)
+                        {
+                            editableView.CommitNew();  // Завершаем транзакцию добавления строки
+                        }
+                    }
+                    //Mechanisms.Refresh();
+                });
         }
         
 
@@ -539,6 +565,7 @@ namespace SensorMap.ViewModel
         #region GroupView
         private void ConfigureMechanismsView()
         {
+            
             using (Mechanisms.DeferRefresh())
             {
                 Mechanisms.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
@@ -610,6 +637,5 @@ namespace SensorMap.ViewModel
         public ICommand AddCharacteristic { get; set; }
         public ICommand DeleteCharacteristic { get; set; }
         public ICommand RecordEditCommand { get; }
-        
     }
 }

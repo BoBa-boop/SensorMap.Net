@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xaml.Behaviors;
+using SensorMap.Commands.DataGridCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.ViewModel;
@@ -22,6 +23,7 @@ namespace SensorMap.Behaviors
     {
         private bool hasChangesBeenMade;
         private Window window;
+        private EditCell<object> command;
         private Dictionary<string, object> originalFieldValues;
 
 
@@ -42,6 +44,16 @@ namespace SensorMap.Behaviors
             AssociatedObject.Loaded += OnLoaded;
             AssociatedObject.BeginningEdit += OnBeginningEdit;
             AssociatedObject.CellEditEnding += OnCellEditEnding;
+            AssociatedObject.RowEditEnding += AssociatedObject_RowEditEnding;
+        }
+
+        private void AssociatedObject_RowEditEnding(object? sender, DataGridRowEditEndingEventArgs e)
+        {
+            if (hasChangesBeenMade)
+            {
+                Command.Execute(command);
+            }
+            ResetStates();
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -55,27 +67,23 @@ namespace SensorMap.Behaviors
 
         private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
         {
+            var dataGrid = sender as DataGrid;
             if (e.Row.Item != null)
             {
-                var prop = e.Row.Item!.GetType().GetProperty("IsModified");
                 if (originalFieldValues != null)
                 {
                     foreach (var kvp in originalFieldValues)
                     {
                         var currentValue = GetPropertyValue(e.Row.Item, kvp.Key);
+                        int columnIndex = e.Column.DisplayIndex;
                         hasChangesBeenMade = !Equals(currentValue, kvp.Value);
-                        if (hasChangesBeenMade)
-                        {
-                            prop!.SetValue(e.Row.Item, true);
-
-                            
-                            var command=new Commands.DataGridCommands.EditCell<object>(e.Row.Item, kvp.Key, kvp.Value, currentValue);
-                            Command.Execute(command);
-                        }
+                        if(hasChangesBeenMade)
+                            command = new Commands.DataGridCommands.EditCell<object>
+                                (e.Row.Item, kvp.Key, kvp.Value, currentValue, dataGrid, columnIndex);
                         break;
                     }
 
-                    ResetStates();
+                    
                 }
             }
         }

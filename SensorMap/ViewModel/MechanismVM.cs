@@ -107,7 +107,7 @@ namespace SensorMap.ViewModel
                         }
                     }
                     this.RaiseAndSetIfChanged(ref currentMech, value);
-                    //SubscribeToCurrentStack();
+                    SubscribeToCurrentStack();
                 }
             }
         }
@@ -411,14 +411,30 @@ namespace SensorMap.ViewModel
         {
             bool hasAnySuccess = false;
             //Механизм изменен
-            var modifiedMechanisms = (CurrentSector?.Mechanisms ?? Enumerable.Empty<Mechanism>()).Where(x => x.IsModified).ToList();
+
+            var modifiedMechanisms = (CurrentSector?.Mechanisms ?? Enumerable.Empty<Mechanism>())
+                .Where(x => x.IsModified)
+                .ToList();
+            var changedIds = modifiedMechanisms.Select(x => x.Id).ToList();
+            
             if (modifiedMechanisms.Count > 0)
             {
                 using (var dbC = _appDbContextFactory.CreateDbContext())
                 {
+                    List<Mechanism> currentMechObjects = dbC.Mechanisms
+                                                               .AsNoTracking()
+                                                               .Where(x => changedIds.Contains(x.Id))
+                                                               .ToList();
+                    
                     foreach (var mechanism in modifiedMechanisms)
                     {
-                        dbC.Attach(mechanism).State = EntityState.Modified;
+                        Mechanism? originalObj = currentMechObjects
+                       .FirstOrDefault(x => x.Id == mechanism.Id);
+                        if (originalObj != null)
+                        {
+                            dbC.Entry(originalObj).CurrentValues.SetValues(mechanism);
+                            dbC.Entry(originalObj).State = EntityState.Modified;
+                        }
                         mechanism.IsModified = false;
                     }
                     int affectedRows = await dbC.SaveChangesAsync();

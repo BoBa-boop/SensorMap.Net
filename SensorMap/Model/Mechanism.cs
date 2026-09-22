@@ -51,7 +51,7 @@ namespace SensorMap.Model
             get => sector;
             set
             {
-                if (value!=null)
+                if (value!=null && sector!=value)
                 {
                     this.RaiseAndSetIfChanged(ref sector, value);
                     SectorID = sector!.Id;

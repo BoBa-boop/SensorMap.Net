@@ -309,9 +309,8 @@
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
-                                                                <TextBlock Text="{Binding ItemCount}" Margin="10,0,0,0"
-                                           Foreground="Gray" FontWeight="Normal"/>
-                                                                
+                                                                <TextBlock Text="{Binding ItemCount}" Margin="10,0"
+                                                                           Foreground="Gray" FontWeight="Normal"/>
                                                             </DockPanel>
                                                         </Expander.Header>
                                                         <ItemsPresenter />
@@ -357,6 +356,10 @@
 
                             </GroupStyle>
                         </DataGrid.GroupStyle>
+                        <DataGrid.Resources>
+                            <CollectionViewSource x:Key="SectorsSource" Source="{Binding Sectors}"/>
+                            <CollectionViewSource x:Key="DevicesSource" Source="{Binding Devices}"/>
+                        </DataGrid.Resources>
                         <!--<DataGrid.RowValidationRules>
                     <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
                 </DataGrid.RowValidationRules>-->
@@ -365,14 +368,13 @@
 
                             <DataGridComboBoxColumn Header="Участок" Width="auto"
                                                     DisplayMemberPath="Name"
-                                                    TextBinding="{Binding Sector.Name}">
+                                                    ItemsSource="{Binding Source={StaticResource SectorsSource}}"
+                                                    SelectedValuePath="Id"
+                                                    SelectedValueBinding="{Binding Sector.Id,Mode=TwoWay}">
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
                                         <Setter Property="SelectedItem" Value="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"/>
-                                        <Setter Property="SelectedValue" Value="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"/>
-                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.Sectors}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
@@ -380,14 +382,13 @@
                             <DataGridComboBoxColumn Header="Контроллер"
                                                     Width="auto"
                                                     DisplayMemberPath="Name"
-                                                    TextBinding="{Binding Device.Name}">
+                                                    ItemsSource="{Binding Source={StaticResource DevicesSource}}"
+                                                    SelectedValueBinding="{Binding Device.Id,Mode=TwoWay}"
+                                                    SelectedValuePath="Id">
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
                                         <Setter Property="SelectedItem" Value="{Binding Device,UpdateSourceTrigger=PropertyChanged}"/>
-                                        <Setter Property="SelectedValue" Value="{Binding Device,UpdateSourceTrigger=PropertyChanged}"/>
-                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.Devices}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
@@ -522,8 +523,6 @@
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
-                                        <Setter Property="SelectedItem" Value="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"/>
                                         <Setter Property="SelectedValue" Value="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"/>
                                         <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.SensorTypes}"/>
                                     </Style>
@@ -643,8 +642,6 @@
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="IsSynchronizedWithCurrentItem" Value="True"/>
-                                        <Setter Property="SelectedItem" Value="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}"/>
                                         <Setter Property="SelectedValue" Value="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}"/>
                                         <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.DeviceTypes}"/>
                                     </Style>

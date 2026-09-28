@@ -123,12 +123,12 @@
                         </MultiTrigger.Conditions>
                         <Setter Property="Background" Value="LightPink"/>
                     </MultiTrigger>
+                    
                     <Trigger Property="Validation.HasError" Value="True">
                         <Setter Property="Background" Value="LightPink"/>
                         <Setter Property="ToolTip"
                                 Value="{Binding RelativeSource={RelativeSource Self},
                     Path=(Validation.Errors)[0].ErrorContent}"/>
-
                     </Trigger>
                     <DataTrigger Binding="{Binding ElementName=root, Path=DataContext.IsEditMode}" Value="False">
                         <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
@@ -288,13 +288,43 @@
                 </hc:TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid Name="Mech" ItemsSource="{Binding Mechanisms, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
-                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
-                      ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
-                      RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
-                      IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
+
+                    <Menu Grid.Row="0">
+                        <MenuItem Header="Свернуть">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Click">
+                                    <i:ChangePropertyAction 
+                                        TargetObject="{Binding }"
+                                        PropertyName="IsExpanded" Value="False"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </MenuItem>
+                        <MenuItem Header="Развернуть">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Click">
+                                    <i:ChangePropertyAction
+                                        TargetObject="{Binding }"
+                                        PropertyName="IsExpanded" Value="True"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </MenuItem>
+                    </Menu>
+                    <DataGrid Name="Mech" 
+                              ItemsSource="{Binding Mechanisms, UpdateSourceTrigger=PropertyChanged}"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="True" CanUserSortColumns="False"
+                              ColumnWidth="auto"
+                              Unloaded="DataGrid_Unloaded"
+                              CanUserResizeColumns="False"
+                              
+                              RowStyle="{StaticResource rowStyle}"
+                              CellStyle="{StaticResource cellStyle}"
+                              IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,
+                                                    Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
@@ -305,7 +335,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate>
-                                                    <Expander IsExpanded="True">
+                                                    <Expander IsExpanded="{Binding ElementName=root,Path=DataContext.IsExpanded,UpdateSourceTrigger=PropertyChanged}" x:Name="dgExpander">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
@@ -325,7 +355,7 @@
                                         <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
                                     </ItemsPanelTemplate>
                                 </GroupStyle.Panel>
-                                
+
                             </GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>
@@ -363,28 +393,29 @@
                         <!--<DataGrid.RowValidationRules>
                     <valid:ValidationRuleMechanism ValidationStep="UpdatedValue"/>
                 </DataGrid.RowValidationRules>-->
-                        <DataGrid.Columns>                            
+                        <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MinWidth="100" Header="Название"/>
 
                             <DataGridComboBoxColumn Header="Участок" Width="auto"
                                                     DisplayMemberPath="Name"
                                                     ItemsSource="{Binding Source={StaticResource SectorsSource}}"
-                                                    SelectedValuePath="Id"
-                                                    SelectedValueBinding="{Binding Sector.Id,Mode=TwoWay}">
+                                                    SelectedValuePath="Name"
+                                                    SelectedValueBinding="{Binding Sector.Name,Mode=TwoWay}">
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
                                         <Setter Property="SelectedItem" Value="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
+
                             </DataGridComboBoxColumn>
 
                             <DataGridComboBoxColumn Header="Контроллер"
                                                     Width="auto"
                                                     DisplayMemberPath="Name"
                                                     ItemsSource="{Binding Source={StaticResource DevicesSource}}"
-                                                    SelectedValueBinding="{Binding Device.Id,Mode=TwoWay}"
-                                                    SelectedValuePath="Id">
+                                                    SelectedValueBinding="{Binding Device.Name,Mode=TwoWay}"
+                                                    SelectedValuePath="Name">
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
@@ -396,7 +427,7 @@
                             <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
                             <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
-                                            Width="*" MaxWidth="1600">
+                                            Width="*" >
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack"
@@ -417,7 +448,7 @@
                                                         Command="{Binding ElementName=root,Path=DataContext.ShowHelpfulFile}"
                                                         CommandParameter="{Binding }"
                                                         ToolTip="Показать электросхему">
-                                                
+
                                             </Button>
                                             <Button Name="loadScheme" Padding="2" Width="40"
                                                         Command="{Binding ElementName=root,Path=DataContext.AddHelpfulFile}"
@@ -455,9 +486,30 @@
                 </hc:TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
+                    <Menu Grid.Row="0" VerticalAlignment="Top">
+                        <MenuItem Header="Свернуть">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Click">
+                                    <i:ChangePropertyAction 
+                    TargetObject="{Binding }"
+                    PropertyName="IsExpanded" Value="False"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </MenuItem>
+                        <MenuItem Header="Развернуть">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Click">
+                                    <i:ChangePropertyAction
+                    TargetObject="{Binding }"
+                    PropertyName="IsExpanded" Value="True"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </MenuItem>
+                    </Menu>
+                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="1"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -466,6 +518,9 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
+                        <DataGrid.Resources>
+                            <CollectionViewSource x:Key="SensorTypesSource" Source="{Binding SensorTypes}"/>
+                        </DataGrid.Resources>
                         <!--<DataGrid.RowValidationRules>
                     <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
                 </DataGrid.RowValidationRules>-->
@@ -477,7 +532,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                    <Expander IsExpanded="True">
+                                                    <Expander IsExpanded="{Binding ElementName=root,Path=DataContext.IsExpanded}">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="10,0"/>
@@ -519,12 +574,13 @@
                             <DataGridComboBoxColumn Header="Тип" 
                                                     Width="auto"
                                                     DisplayMemberPath="Name"
-                                                    TextBinding="{Binding SensorType.Name}">
+                                                    ItemsSource="{Binding Source={StaticResource SensorTypesSource}}"
+                                                    SelectedValueBinding="{Binding SensorType.Name,Mode=TwoWay}"
+                                                    SelectedValuePath="Name">
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="SelectedValue" Value="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"/>
-                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.SensorTypes}"/>
+                                        <Setter Property="SelectedItem" Value="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
@@ -533,7 +589,7 @@
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True"  CellTemplate="{StaticResource imgView_Button}"/>
 
                             <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
-                                            Width="*" MaxWidth="1700">
+                                            Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
@@ -583,9 +639,30 @@
                 </hc:TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DataGrid ItemsSource="{Binding Devices}" Grid.Row="0"
+                    <Menu Grid.Row="0">
+                        <MenuItem Header="Свернуть">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Click">
+                                    <i:ChangePropertyAction 
+                    TargetObject="{Binding }"
+                    PropertyName="IsExpanded" Value="False"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </MenuItem>
+                        <MenuItem Header="Развернуть">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="Click">
+                                    <i:ChangePropertyAction
+                    TargetObject="{Binding }"
+                    PropertyName="IsExpanded" Value="True"/>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </MenuItem>
+                    </Menu>
+                    <DataGrid ItemsSource="{Binding Devices}" Grid.Row="1"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
@@ -593,6 +670,9 @@
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
+                        <DataGrid.Resources>
+                            <CollectionViewSource x:Key="DeviceTypesView" Source="{Binding DeviceTypes}"/>
+                        </DataGrid.Resources>
                         <!--<DataGrid.RowValidationRules>
         <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
     </DataGrid.RowValidationRules>-->
@@ -603,7 +683,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate>
-                                                    <Expander IsExpanded="True">
+                                                    <Expander IsExpanded="{Binding ElementName=root,Path=DataContext.IsExpanded}">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
@@ -637,13 +717,14 @@
                             
                             <DataGridComboBoxColumn Header="Тип" 
                                                     Width="auto"
+                                                    ItemsSource="{Binding Source={StaticResource DeviceTypesView}}"
                                                     DisplayMemberPath="Name"
-                                                    TextBinding="{Binding DeviceType.Name}">
+                                                    SelectedValueBinding="{Binding DeviceType.Name,Mode=TwoWay}"
+                                                    SelectedValuePath="Name">
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="SelectedValue" Value="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}"/>
-                                        <Setter Property="ItemsSource" Value="{Binding ElementName=root,Path=DataContext.DeviceTypes}"/>
+                                        <Setter Property="SelectedItem" Value="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
@@ -690,7 +771,7 @@
                             </DataGridTemplateColumn>
 
                             <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
-                                            Width="*" MaxWidth="1700">
+                                            Width="*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <hc:ElementGroup Orientation="Horizontal" Layout="Stack" Name="btnGroup">
@@ -882,7 +963,7 @@
                                                Orientation="Horizontal" Grid.Row="1"
                                                Margin="0,15" HorizontalAlignment="Center"
                                                ItemWidth="55">
-                                        <Button ToolTip="Выбрать цвет" 
+                                        <Button ToolTip="Выбрать цвет"
                                                 Cursor="Hand" Width="40"
                                                 Padding="1"
                                                 Background="{Binding ElementName=lbSensors,Path=SelectedItem.Color,TargetNullValue={StaticResource BackgroundBrush}}"                                        
@@ -898,7 +979,6 @@
                                             <Button.CommandParameter>
                                                 <MultiBinding Converter="{StaticResource CreateMultiParams}">
                                                     <Binding Path="Text" ElementName="tbSensorType"/>
-                                                    <Binding Path="SelectedBrush" ElementName="colorPicker" FallbackValue="{StaticResource AccentBrush}"/>
                                                 </MultiBinding>
                                             </Button.CommandParameter>
                                         </Button>

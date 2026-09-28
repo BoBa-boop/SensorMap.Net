@@ -1,10 +1,12 @@
 ﻿using Microsoft.Xaml.Behaviors;
+using Newtonsoft.Json.Linq;
 using SensorMap.Commands.DataGridCommands;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -13,9 +15,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using ComboBox = System.Windows.Controls.ComboBox;
 using Point = System.Windows.Point;
+using TextBox = System.Windows.Controls.TextBox;
 
 namespace SensorMap.Behaviors
 {
@@ -25,6 +30,7 @@ namespace SensorMap.Behaviors
         private Window window;
         private EditCell<object> command;
         private Dictionary<string, object> originalFieldValues;
+        private ICollectionView collectionView;
 
 
         public ICommand Command
@@ -38,23 +44,15 @@ namespace SensorMap.Behaviors
         protected override void OnAttached()
         {
             base.OnAttached();
+            
             #region -UnSel
-           
+
             #endregion
             AssociatedObject.Loaded += OnLoaded;
             AssociatedObject.BeginningEdit += OnBeginningEdit;
             AssociatedObject.CellEditEnding += OnCellEditEnding;
-            AssociatedObject.RowEditEnding += AssociatedObject_RowEditEnding;
         }
 
-        private void AssociatedObject_RowEditEnding(object? sender, DataGridRowEditEndingEventArgs e)
-        {
-            if (hasChangesBeenMade)
-            {
-                Command.Execute(command);
-            }
-            ResetStates();
-        }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
@@ -72,19 +70,22 @@ namespace SensorMap.Behaviors
             {
                 if (originalFieldValues != null)
                 {
-                    foreach (var kvp in originalFieldValues)
+                    var originalObject = originalFieldValues.First();
+                    var objectAfterEdit = GetPropertyValue(e.Row.Item, originalObject.Key);
+                    string originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1))?? originalObject.Value).ToString();
+                    string EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))?? objectAfterEdit).ToString();
+                    int columnIndex = e.Column.DisplayIndex;
+                    hasChangesBeenMade = originalProp!=EditProp;
+                    if (hasChangesBeenMade)
                     {
-                        var currentValue = GetPropertyValue(e.Row.Item, kvp.Key);
-                        int columnIndex = e.Column.DisplayIndex;
-                        hasChangesBeenMade = !Equals(currentValue, kvp.Value);
-                        if(hasChangesBeenMade)
-                            command = new Commands.DataGridCommands.EditCell<object>
-                                (e.Row.Item, kvp.Key, kvp.Value, currentValue, dataGrid, columnIndex);
-                        break;
+                        bool actualModify = (bool)originalFieldValues["Modify"];
+                        command = new Commands.DataGridCommands.EditCell<object>
+                            (e.Row.Item, originalObject.Key, originalObject.Value, objectAfterEdit, dataGrid, columnIndex, actualModify);
+                        Command.Execute(command);
                     }
-
-                    
+                    ResetStates();
                 }
+                collectionView.CollectionChanged -= CollectionView_CurrentChanged;
             }
         }
 
@@ -156,11 +157,42 @@ namespace SensorMap.Behaviors
         #endregion
         private void OnBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
         {
+            var _dataGrid = AssociatedObject as DataGrid;
             if (e.Row.Item != null)
             {
-                // Определяем, какая колонка редактируется
+                var dataGrid = AssociatedObject as DataGrid;
+                collectionView = CollectionViewSource.GetDefaultView(dataGrid.ItemsSource);
                 GetEditColumnValue(e);
+                collectionView.CollectionChanged += CollectionView_CurrentChanged;
             }
+        }
+
+        private void CollectionView_CurrentChanged(object? sender, EventArgs e)
+        {
+            var dataGrid = AssociatedObject as DataGrid;
+            if (AssociatedObject.SelectedItem != null)
+            {
+                if (originalFieldValues != null&&originalFieldValues.Count()>0)
+                {
+                    var originalObject = originalFieldValues.First();
+                    var objectAfterEdit = GetPropertyValue(AssociatedObject.SelectedItem, originalObject.Key);
+                    string originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1))).ToString();
+                    string EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))).ToString();
+                    int columnIndex = AssociatedObject.CurrentColumn.DisplayIndex;
+                    hasChangesBeenMade = originalProp != EditProp;
+                    if (hasChangesBeenMade)
+                    {
+                        bool actualModify = (bool)originalFieldValues["Modify"];
+                        command = new Commands.DataGridCommands.EditCell<object>
+                            (AssociatedObject.SelectedItem, originalObject.Key, originalObject.Value, objectAfterEdit, dataGrid, columnIndex, actualModify);
+                        Command.Execute(command);
+                    }
+                    ResetStates();
+                }
+                collectionView.CollectionChanged -= CollectionView_CurrentChanged;
+            }
+            
+
         }
         #region Helpers
         private void GetEditColumnValue(DataGridBeginningEditEventArgs e)
@@ -170,9 +202,12 @@ namespace SensorMap.Behaviors
 
             if(propertyPath!=null)
             {
+                var editPropKey = propertyPath.Length > 1 ? propertyPath[1] : propertyPath[0];
                 originalFieldValues = new Dictionary<string, object>
                 {
-                    [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0])
+                    [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0]),
+                    ["EditProp"] = editPropKey,
+                    ["Modify"] = GetPropertyValue(e.Row.Item, "IsModified")
                 };
             }
         }

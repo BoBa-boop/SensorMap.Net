@@ -40,38 +40,44 @@ namespace SensorMap.ViewModel
         private readonly ITempImage _tempImage;
         private IAppDbContextFactory _appDbContextFactory;
         private bool isEditMode;
-        private ICollectionView mechanisms;
-        private ICollectionView devices;
-        private ICollectionView sensors;
+        private ICollectionView mechView;
+        private ICollectionView devicesView;
+        private ICollectionView sensorsView;
         private bool _loadInProgress;
         private int _pendingTabIndex = -1;
         private bool _firstPageLoaded;
         private bool _secondPageLoaded;
         private bool _thirdPageLoaded;
-        private bool _fourthLoaded;
+        private bool _devicesLoaded;
         private int selectedTabIndex;
-        private bool isLoading;
+        private bool isExpanded = true;
         private ObservableCollection<SensorType> sensorTypes;
         private ObservableCollection<DeviceType> deviceTypes;
         private ObservableCollection<Sector> sectors;
-        private SerialDisposable serialDisposable = new();
+        private ObservableCollection<Mechanism> mechanisms;
+        private ObservableCollection<Sensor> sensors;
+        private ObservableCollection<Device> devices;
+        
         public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
         [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
         [Reactive] public bool CanRedo=>_undoRedoManager.CanRedo;
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get => sectors; set => this.RaiseAndSetIfChanged(ref sectors, value); }
-        [Reactive] public ICollectionView Sensors { get => sensors; set => this.RaiseAndSetIfChanged(ref sensors, value); }
-        [Reactive] public ICollectionView Devices { get => devices; set => this.RaiseAndSetIfChanged(ref devices, value); }
+        [Reactive] public ObservableCollection<Mechanism> Mechanisms { get => mechanisms; set => this.RaiseAndSetIfChanged(ref mechanisms, value); }
+        [Reactive] public ObservableCollection<Sensor> Sensors { get => sensors; set => this.RaiseAndSetIfChanged(ref sensors, value); }
+        [Reactive] public ObservableCollection<Device> Devices { get => devices; set => this.RaiseAndSetIfChanged(ref devices, value); }
+        [Reactive] public ICollectionView SensorsView { get => sensorsView; set => this.RaiseAndSetIfChanged(ref sensorsView, value); }
+        [Reactive] public ICollectionView DevicesView { get => devicesView; set => this.RaiseAndSetIfChanged(ref devicesView, value); }
         [Reactive] public ObservableCollection<SensorType> SensorTypes 
         { 
             get => sensorTypes; 
             set => this.RaiseAndSetIfChanged(ref sensorTypes,value); 
         }
         [Reactive] public ObservableCollection<DeviceType> DeviceTypes { get => deviceTypes; set => this.RaiseAndSetIfChanged(ref deviceTypes,value); }
-        [Reactive] public ICollectionView Mechanisms { get => mechanisms; set => this.RaiseAndSetIfChanged(ref mechanisms, value); }
+        [Reactive] public ICollectionView MechanismsView { get => mechView; set => this.RaiseAndSetIfChanged(ref mechView, value); }
         [Reactive] public int SelectedTabIndex { get => selectedTabIndex; set => this.RaiseAndSetIfChanged(ref selectedTabIndex, value); }
-        [Reactive] public bool IsLoading { get => isLoading; set => this.RaiseAndSetIfChanged(ref isLoading,value); }
+        [Reactive] public bool IsExpanded { get => isExpanded; set => this.RaiseAndSetIfChanged(ref isExpanded, value); }
 
         public ViewModelActivator Activator { get; } = new ViewModelActivator();
 
@@ -221,10 +227,8 @@ namespace SensorMap.ViewModel
 
                 var values = (object[])param;
                 var name = (string)values[0];
-                var color = (string)values[1].ToString();
                 SensorType sType = new SensorType();
                 sType.Name = name;
-                sType.Color = color;
 
                 if (!SensorTypes.Where(x => x.Name == sType.Name).Any())
                 {
@@ -403,7 +407,6 @@ namespace SensorMap.ViewModel
                 if (command != null)
                 {
                     _undoRedoManager.Do(command);
-                    //Mechanisms.Refresh();
                 }
             });
             #endregion
@@ -466,20 +469,25 @@ namespace SensorMap.ViewModel
                 {
                     case 0:
                         await LoadFirstPageAsync();
+                        IsExpanded = true;
                         break;
                     case 1:
                         await LoadSecondAsync();
-                        await LoadFourthPageAsync();
+                        await LoadDevices();
+                        IsExpanded = true;
                         break;
                     case 2:
                         await LoadThirdAsync();
+                        IsExpanded = true;
                         break;
                     case 3:
-                        await LoadFourthPageAsync();
+                        await LoadDevices();
+                        IsExpanded = true;
                         break;
                     case 4:
                         await LoadThirdAsync();
-                        await LoadFourthPageAsync();
+                        await LoadDevices();
+                        IsExpanded = true;
                         break;
                 }
             }
@@ -509,30 +517,12 @@ namespace SensorMap.ViewModel
                 .Include(x=>x.Files)
                 .Include(x=>x.Sector)
                 .Include(x=>x.Device).ToListAsync();
-            
-            Mechanisms = CollectionViewSource.GetDefaultView(mechanisms);
+            Mechanisms = new(mechanisms);
+            MechanismsView = CollectionViewSource.GetDefaultView(Mechanisms);
             ConfigureMechanismsView();
             _secondPageLoaded = true;
-            serialDisposable.Disposable = mechanisms.Select(m => m.WhenAnyValue(x => x.IsModified).Skip(1))
-                .Merge()
-                .Subscribe(_ => 
-                {
-                    if (Mechanisms is IEditableCollectionView editableView)
-                    {
-                        if (editableView.IsEditingItem)
-                        {
-                            editableView.CommitEdit(); // Завершаем транзакцию редактирования ячейки
-                        }
-                        if (editableView.IsAddingNew)
-                        {
-                            editableView.CommitNew();  // Завершаем транзакцию добавления строки
-                        }
-                    }
-                    //Mechanisms.Refresh();
-                });
+            
         }
-        
-
         private async Task LoadThirdAsync()
         {
             if (_thirdPageLoaded) return;
@@ -541,55 +531,94 @@ namespace SensorMap.ViewModel
                 .Include(x=>x.SensorType).ToListAsync();
             var sensorTypes = await dbContext.SensorTypes.AsNoTracking()
                 .Include(x => x.Characteristics).ToListAsync();
+            Sensors = new(sensors);
             SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
-            Sensors = CollectionViewSource.GetDefaultView(sensors);
+            SensorsView = CollectionViewSource.GetDefaultView(Sensors);
             ConfigureSensorsView();
             _thirdPageLoaded = true;
         }
-        private async Task LoadFourthPageAsync()
+        private async Task LoadDevices()
         {
-            if (_fourthLoaded) return;
+            if (_devicesLoaded) return;
             using var dbContext = _appDbContextFactory.CreateDbContext();
             var devices = await dbContext.Devices
-                .Include(x=>x.DeviceType).ToListAsync();
+                .Include(x => x.DeviceType).ToListAsync();
             var deviceTypes = await dbContext.DeviceTypes.AsNoTracking()
                 .Include(x => x.Characteristics).ToListAsync();
 
+            Devices = new(devices);
             DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
-            Devices = CollectionViewSource.GetDefaultView(devices);
-
+            DevicesView = CollectionViewSource.GetDefaultView(Devices);
+            
             ConfigureDevicesView();
-            _fourthLoaded = true;
+            _devicesLoaded = true;
         }
         #endregion
         #region GroupView
         private void ConfigureMechanismsView()
         {
-            
-            using (Mechanisms.DeferRefresh())
+            if(MechanismsView is ICollectionViewLiveShaping liveColl)
             {
-                Mechanisms.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
-                Mechanisms.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
+                liveColl.IsLiveSorting = true;
+                liveColl.IsLiveGrouping = true;
+                liveColl.LiveSortingProperties.Clear();
+                liveColl.LiveGroupingProperties.Clear();
+                //отслеживаемые свойства
+                liveColl.LiveSortingProperties.Add(nameof(Mechanism.Sector));
+                liveColl.LiveSortingProperties.Add(nameof(Mechanism.Device));
+                //
+                liveColl.LiveGroupingProperties.Add(nameof(Mechanism.Sector));
+                liveColl.LiveGroupingProperties.Add(nameof(Mechanism.Device));
+                
+            }
+            using (MechanismsView.DeferRefresh())
+            {
+                MechanismsView.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
+                MechanismsView.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
                 var groupDescription = new PropertyGroupDescription("Name", new EqualMechGroup());
-                Mechanisms.GroupDescriptions.Add(groupDescription);
+                MechanismsView.GroupDescriptions.Add(groupDescription);
             }
         }
 
         private void ConfigureDevicesView()
         {
-            using (Devices.DeferRefresh())
+            if (DevicesView is ICollectionViewLiveShaping liveColl)
             {
-                Devices.SortDescriptions.Add(new SortDescription("DeviceType.Name", ListSortDirection.Ascending));
-                Devices.GroupDescriptions.Add(new PropertyGroupDescription("DeviceType.Name"));
+                liveColl.IsLiveSorting = true;
+                liveColl.IsLiveGrouping = true;
+                liveColl.LiveSortingProperties.Clear();
+                liveColl.LiveGroupingProperties.Clear();
+                //отслеживаемые свойства
+                liveColl.LiveSortingProperties.Add(nameof(Device.DeviceType));
+                //
+                liveColl.LiveGroupingProperties.Add(nameof(Device.DeviceType));
+
+            }
+            using (DevicesView.DeferRefresh())
+            {
+                DevicesView.SortDescriptions.Add(new SortDescription("DeviceType.Name", ListSortDirection.Ascending));
+                DevicesView.GroupDescriptions.Add(new PropertyGroupDescription("DeviceType.Name"));
             }
         }
 
         private void ConfigureSensorsView()
         {
-            using (Sensors.DeferRefresh())
+            if (SensorsView is ICollectionViewLiveShaping liveColl)
             {
-                Sensors.SortDescriptions.Add(new SortDescription("SensorType.Name", ListSortDirection.Ascending));
-                Sensors.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
+                liveColl.IsLiveSorting = true;
+                liveColl.IsLiveGrouping = true;
+                liveColl.LiveSortingProperties.Clear();
+                liveColl.LiveGroupingProperties.Clear();
+                //отслеживаемые свойства
+                liveColl.LiveSortingProperties.Add(nameof(Sensor.SensorType));
+                //
+                liveColl.LiveGroupingProperties.Add(nameof(Sensor.SensorType));
+
+            }
+            using (SensorsView.DeferRefresh())
+            {
+                SensorsView.SortDescriptions.Add(new SortDescription("SensorType.Name", ListSortDirection.Ascending));
+                SensorsView.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
             }
         }
         #endregion
@@ -637,5 +666,6 @@ namespace SensorMap.ViewModel
         public ICommand AddCharacteristic { get; set; }
         public ICommand DeleteCharacteristic { get; set; }
         public ICommand RecordEditCommand { get; }
+        public ICommand AddRowCommand { get; }
     }
 }

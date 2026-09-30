@@ -18,12 +18,14 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using ComboBox = System.Windows.Controls.ComboBox;
 using Point = System.Windows.Point;
 using TextBox = System.Windows.Controls.TextBox;
 
 namespace SensorMap.Behaviors
 {
+    
     public class DataGridBahavior : Behavior<DataGrid>
     {
         private bool hasChangesBeenMade;
@@ -41,6 +43,9 @@ namespace SensorMap.Behaviors
         public static readonly DependencyProperty CommandProperty =
             DependencyProperty.Register("Command", typeof(ICommand), typeof(DataGridBahavior), new PropertyMetadata(null));
 
+
+        
+
         protected override void OnAttached()
         {
             base.OnAttached();
@@ -51,8 +56,21 @@ namespace SensorMap.Behaviors
             AssociatedObject.Loaded += OnLoaded;
             AssociatedObject.BeginningEdit += OnBeginningEdit;
             AssociatedObject.CellEditEnding += OnCellEditEnding;
+            AssociatedObject.CommandBindings.Add(new CommandBinding(GroupCommands.ExpandAll,(_,_)=>SetAll(true)));
+            AssociatedObject.CommandBindings.Add(new CommandBinding(GroupCommands.CollapseAll, (_, _) => SetAll(false)));
         }
 
+        private void SetAll(bool expand)
+        {
+            var grid = AssociatedObject;
+            grid.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                foreach (var exp in FindChildren<Expander>(grid))
+                {
+                    exp.IsExpanded = expand;
+                }
+            }), DispatcherPriority.Loaded);
+        }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
@@ -70,8 +88,18 @@ namespace SensorMap.Behaviors
             {
                 if (originalFieldValues != null)
                 {
+                    object objectAfterEdit;
                     var originalObject = originalFieldValues.First();
-                    var objectAfterEdit = GetPropertyValue(e.Row.Item, originalObject.Key);
+                    if (e.EditingElement is ComboBox cb)
+                    {
+                        objectAfterEdit = cb.SelectedItem;
+                    }
+                    else if(e.EditingElement is TextBox tb)
+                    {
+                        objectAfterEdit = tb.Text;
+                    }
+                    else objectAfterEdit = GetPropertyValue(e.Row.Item, originalObject.Key);
+                    
                     string originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1))?? originalObject.Value).ToString();
                     string EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))?? objectAfterEdit).ToString();
                     int columnIndex = e.Column.DisplayIndex;
@@ -79,13 +107,12 @@ namespace SensorMap.Behaviors
                     if (hasChangesBeenMade)
                     {
                         bool actualModify = (bool)originalFieldValues["Modify"];
-                        command = new Commands.DataGridCommands.EditCell<object>
+                        command = new EditCell<object>
                             (e.Row.Item, originalObject.Key, originalObject.Value, objectAfterEdit, dataGrid, columnIndex, actualModify);
                         Command.Execute(command);
                     }
                     ResetStates();
                 }
-                collectionView.CollectionChanged -= CollectionView_CurrentChanged;
             }
         }
 
@@ -160,40 +187,10 @@ namespace SensorMap.Behaviors
             var _dataGrid = AssociatedObject as DataGrid;
             if (e.Row.Item != null)
             {
-                var dataGrid = AssociatedObject as DataGrid;
-                collectionView = CollectionViewSource.GetDefaultView(dataGrid.ItemsSource);
                 GetEditColumnValue(e);
-                collectionView.CollectionChanged += CollectionView_CurrentChanged;
             }
         }
 
-        private void CollectionView_CurrentChanged(object? sender, EventArgs e)
-        {
-            var dataGrid = AssociatedObject as DataGrid;
-            if (AssociatedObject.SelectedItem != null)
-            {
-                if (originalFieldValues != null&&originalFieldValues.Count()>0)
-                {
-                    var originalObject = originalFieldValues.First();
-                    var objectAfterEdit = GetPropertyValue(AssociatedObject.SelectedItem, originalObject.Key);
-                    string originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1))).ToString();
-                    string EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))).ToString();
-                    int columnIndex = AssociatedObject.CurrentColumn.DisplayIndex;
-                    hasChangesBeenMade = originalProp != EditProp;
-                    if (hasChangesBeenMade)
-                    {
-                        bool actualModify = (bool)originalFieldValues["Modify"];
-                        command = new Commands.DataGridCommands.EditCell<object>
-                            (AssociatedObject.SelectedItem, originalObject.Key, originalObject.Value, objectAfterEdit, dataGrid, columnIndex, actualModify);
-                        Command.Execute(command);
-                    }
-                    ResetStates();
-                }
-                collectionView.CollectionChanged -= CollectionView_CurrentChanged;
-            }
-            
-
-        }
         #region Helpers
         private void GetEditColumnValue(DataGridBeginningEditEventArgs e)
         {
@@ -226,6 +223,19 @@ namespace SensorMap.Behaviors
             }
 
             return current;
+        }
+        private static IEnumerable<T> FindChildren<T>(DependencyObject parent)
+        {
+            int count = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T t) yield return t;
+                foreach (var nested in FindChildren<T>(child))
+                {
+                    yield return nested;
+                }
+            }
         }
         #endregion
     }

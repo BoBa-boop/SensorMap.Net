@@ -58,10 +58,21 @@ namespace SensorMap.ViewModel
         private ObservableCollection<Sensor> sensors;
         private ObservableCollection<Device> devices;
         
-        public readonly UndoRedoStack _undoRedoManager = new UndoRedoStack();
+        private readonly Dictionary<int, UndoRedoStack> _undoRedoStacks = new();
+        private IDisposable? _undoSub;
+        private IDisposable? _redoSub;
+        private UndoRedoStack CurrentStack
+        {
+            get
+            {
+                if (!_undoRedoStacks.ContainsKey(SelectedTabIndex))
+                    _undoRedoStacks[SelectedTabIndex] = new UndoRedoStack();
+                return _undoRedoStacks[SelectedTabIndex];
+            }
+        }
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
-        [Reactive] public bool CanUndo => _undoRedoManager.CanUndo;
-        [Reactive] public bool CanRedo=>_undoRedoManager.CanRedo;
+        public bool CanUndo => CurrentStack?.CanUndo ?? false;
+        public bool CanRedo=> CurrentStack?.CanRedo ?? false;
         [Reactive] public INavigation Navigation { get; set; }
         [Reactive] public ObservableCollection<Sector> Sectors { get => sectors; set => this.RaiseAndSetIfChanged(ref sectors, value); }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get => mechanisms; set => this.RaiseAndSetIfChanged(ref mechanisms, value); }
@@ -400,13 +411,13 @@ namespace SensorMap.ViewModel
                     fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
                 }
             });
-            UndoCommand = new RelayCommand(_undoRedoManager!.Undo);
-            RedoCommand = new RelayCommand(_undoRedoManager.Redo);
+            UndoCommand = new RelayCommand(()=>CurrentStack?.Undo());
+            RedoCommand = new RelayCommand(()=>CurrentStack?.Redo());
             RecordEditCommand = new RelayCommand<IUndoRedoCommand>(command =>
             {
                 if (command != null)
                 {
-                    _undoRedoManager.Do(command);
+                    CurrentStack.Do(command);
                 }
             });
             #endregion
@@ -419,13 +430,7 @@ namespace SensorMap.ViewModel
                 .BindTo(this, x => x.IsEditMode)
                 .DisposeWith(disposables);
 
-            _undoRedoManager.WhenAnyValue(x => x.CanUndo)
-            .Subscribe(_ => this.RaisePropertyChanged(nameof(CanUndo)))
-            .DisposeWith(disposables);
-
-            _undoRedoManager.WhenAnyValue(x => x.CanRedo)
-                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)))
-                .DisposeWith(disposables);
+            
 
             this.WhenAnyValue(x => x.SelectedTabIndex)
                 .Subscribe(RequestLoad)
@@ -433,6 +438,22 @@ namespace SensorMap.ViewModel
 
            
             });
+        }
+        private void SubscribeToCurrentStack()
+        {
+            _undoSub?.Dispose();
+            _redoSub?.Dispose();
+            var stack = CurrentStack;
+            if (stack == null) return;
+            _undoSub = stack.WhenAnyValue(x => x.CanUndo)
+                .Subscribe(_ =>
+                {
+                    this.RaisePropertyChanged(nameof(CanUndo));
+                });
+            _redoSub = stack.WhenAnyValue(x => x.CanRedo)
+                .Subscribe(_ => this.RaisePropertyChanged(nameof(CanRedo)));
+            this.RaisePropertyChanged(nameof(CanUndo));
+            this.RaisePropertyChanged(nameof(CanRedo));
         }
         #region LoadData
         private void RequestLoad(int index)
@@ -468,23 +489,29 @@ namespace SensorMap.ViewModel
                 switch (index)
                 {
                     case 0:
+                        SubscribeToCurrentStack();
                         await LoadFirstPageAsync();
                         IsExpanded = true;
+                        
                         break;
                     case 1:
+                        SubscribeToCurrentStack();
                         await LoadSecondAsync();
                         await LoadDevices();
                         IsExpanded = true;
                         break;
                     case 2:
+                        SubscribeToCurrentStack();
                         await LoadThirdAsync();
                         IsExpanded = true;
                         break;
                     case 3:
+                        SubscribeToCurrentStack();
                         await LoadDevices();
                         IsExpanded = true;
                         break;
                     case 4:
+                        SubscribeToCurrentStack();
                         await LoadThirdAsync();
                         await LoadDevices();
                         IsExpanded = true;

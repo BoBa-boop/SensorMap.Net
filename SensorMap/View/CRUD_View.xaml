@@ -10,6 +10,7 @@
              xmlns:model="clr-namespace:SensorMap.Model"
              xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
              xmlns:cmnd="clr-namespace:SensorMap.Commands"
+             xmlns:dgCMD="clr-namespace:SensorMap.Commands.DataGridCommands"
              xmlns:valid="clr-namespace:SensorMap.Model.Validation"
              xmlns:beh="clr-namespace:SensorMap.Behaviors"
              xmlns:ext="http://schemas.xceed.com/wpf/xaml/toolkit"
@@ -178,11 +179,13 @@
             
         </Grid.Resources>
         <DockPanel Grid.Row="0" HorizontalAlignment="Left">
-            <Button Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo,UpdateSourceTrigger=PropertyChanged}"
+            <Button Command="{Binding UndoCommand}"
+                    IsEnabled="{Binding CanUndo,UpdateSourceTrigger=PropertyChanged}"
                         hc:IconElement.Geometry="{StaticResource RotateLeftGeometry}">
                     <Button.ToolTip>Отменить последнее действие</Button.ToolTip>
                 </Button>
-            <Button Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo,UpdateSourceTrigger=PropertyChanged}"
+            <Button Command="{Binding RedoCommand}"
+                    IsEnabled="{Binding CanRedo,UpdateSourceTrigger=PropertyChanged}"
                     hc:IconElement.Geometry="{StaticResource RotateRightGeometry}">
                 <Button.ToolTip>Повторить отмененное действие</Button.ToolTip>
             </Button>
@@ -293,24 +296,12 @@
                     </Grid.RowDefinitions>
 
                     <Menu Grid.Row="0">
-                        <MenuItem Header="Свернуть">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="Click">
-                                    <i:ChangePropertyAction 
-                                        TargetObject="{Binding }"
-                                        PropertyName="IsExpanded" Value="False"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </MenuItem>
-                        <MenuItem Header="Развернуть">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="Click">
-                                    <i:ChangePropertyAction
-                                        TargetObject="{Binding }"
-                                        PropertyName="IsExpanded" Value="True"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </MenuItem>
+                        <MenuItem Header="Свернуть"
+                                  Command="{x:Static dgCMD:GroupCommands.CollapseAll}"
+                                  CommandTarget="{Binding ElementName=Mech}"/>
+                        <MenuItem Header="Развернуть"
+                                  Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
+                                  CommandTarget="{Binding ElementName=Mech}"/>
                     </Menu>
                     <DataGrid Name="Mech" 
                               ItemsSource="{Binding Mechanisms, UpdateSourceTrigger=PropertyChanged}"
@@ -326,7 +317,8 @@
                               IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,
                                                     Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
+                            <beh:DataGridBahavior Command="{Binding RecordEditCommand}"
+                                                  />
                         </i:Interaction.Behaviors>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
@@ -335,7 +327,8 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate>
-                                                    <Expander IsExpanded="{Binding ElementName=root,Path=DataContext.IsExpanded,UpdateSourceTrigger=PropertyChanged}" x:Name="dgExpander">
+                                                    <Expander IsExpanded="True"
+                                                        x:Name="dgExpander">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
@@ -344,6 +337,7 @@
                                                             </DockPanel>
                                                         </Expander.Header>
                                                         <ItemsPresenter />
+                                                        
                                                     </Expander>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -404,7 +398,6 @@
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="SelectedItem" Value="{Binding Sector,UpdateSourceTrigger=PropertyChanged}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
 
@@ -419,7 +412,6 @@
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="SelectedItem" Value="{Binding Device,UpdateSourceTrigger=PropertyChanged}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
@@ -580,7 +572,6 @@
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="SelectedItem" Value="{Binding SensorType,UpdateSourceTrigger=PropertyChanged}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
@@ -724,7 +715,6 @@
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="SelectedItem" Value="{Binding DeviceType,UpdateSourceTrigger=PropertyChanged}"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>

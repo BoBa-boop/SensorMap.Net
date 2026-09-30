@@ -209,7 +209,10 @@
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
-                      IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
+                      IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
+                              EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              ScrollViewer.CanContentScroll="True">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
@@ -311,11 +314,15 @@
                               ColumnWidth="auto"
                               Unloaded="DataGrid_Unloaded"
                               CanUserResizeColumns="False"
-                              
                               RowStyle="{StaticResource rowStyle}"
                               CellStyle="{StaticResource cellStyle}"
                               IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,
-                                                    Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
+                                                    Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
+                              EnableRowVirtualization="True"
+                              VirtualizingPanel.VirtualizationMode="Standard"
+                              VirtualizingPanel.ScrollUnit="Pixel" 
+                              VirtualizingPanel.CacheLength="1,1" VirtualizingPanel.CacheLengthUnit="Page"
+                              ScrollViewer.PanningRatio="2">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"
                                                   />
@@ -337,35 +344,7 @@
                                                             </DockPanel>
                                                         </Expander.Header>
                                                         <ItemsPresenter />
-                                                        
-                                                    </Expander>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </GroupStyle.ContainerStyle>
-                                <GroupStyle.Panel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
-                                    </ItemsPanelTemplate>
-                                </GroupStyle.Panel>
 
-                            </GroupStyle>
-                            <GroupStyle>
-                                <GroupStyle.ContainerStyle>
-                                    <Style TargetType="GroupItem">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate>
-                                                    <Expander IsExpanded="True">
-                                                        <Expander.Header>
-                                                            <DockPanel>
-                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
-                                                                <TextBlock Text="{Binding ItemCount}" Margin="10,0,0,0"
-                                                                           Foreground="Gray" FontWeight="Normal"/>
-                                                            </DockPanel>
-                                                        </Expander.Header>
-                                                        <ItemsPresenter />
                                                     </Expander>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -374,7 +353,7 @@
                                 </GroupStyle.ContainerStyle>
                                 <GroupStyle.Panel>
                                     <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
+                                        <VirtualizingStackPanel Orientation="Vertical" Margin="20,0,0,5"/>
                                     </ItemsPanelTemplate>
                                 </GroupStyle.Panel>
 
@@ -390,7 +369,7 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MinWidth="100" Header="Название"/>
 
-                            <DataGridComboBoxColumn Header="Участок" Width="auto"
+                            <DataGridComboBoxColumn Header="Участок" Width="180"
                                                     DisplayMemberPath="Name"
                                                     ItemsSource="{Binding Source={StaticResource SectorsSource}}"
                                                     SelectedValuePath="Name"
@@ -404,7 +383,7 @@
                             </DataGridComboBoxColumn>
 
                             <DataGridComboBoxColumn Header="Контроллер"
-                                                    Width="auto"
+                                                    Width="180"
                                                     DisplayMemberPath="Name"
                                                     ItemsSource="{Binding Source={StaticResource DevicesSource}}"
                                                     SelectedValueBinding="{Binding Device.Name,Mode=TwoWay}"
@@ -505,8 +484,9 @@
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
-                       IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
-
+                       IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
+                              EnableRowVirtualization="True"
+                              VirtualizingPanel.VirtualizationMode="Standard" VirtualizingPanel.ScrollUnit="Pixel">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
@@ -657,7 +637,12 @@
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
-                      IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}">
+                      IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
+                              EnableRowVirtualization="True"
+                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling" 
+                              ScrollViewer.CanContentScroll="True"
+                              VirtualizingPanel.ScrollUnit="Pixel">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
@@ -691,7 +676,7 @@
                                 </GroupStyle.ContainerStyle>
                                 <GroupStyle.Panel>
                                     <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Vertical" Margin="20,0,0,5"/>
+                                        <VirtualizingStackPanel Orientation="Vertical" Margin="20,0,0,5"/>
                                     </ItemsPanelTemplate>
                                 </GroupStyle.Panel>
                             </GroupStyle>

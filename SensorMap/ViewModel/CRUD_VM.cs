@@ -532,7 +532,8 @@ namespace SensorMap.ViewModel
             if (_firstPageLoaded) return;
             using var dbContext = _appDbContextFactory.CreateDbContext();
             var sectors = await dbContext.Sectors.AsNoTracking()
-                .Include(x=>x.Mechanisms).ToListAsync();
+                .Include(x => x.Mechanisms).ToListAsync();
+            
             Sectors = new ObservableCollection<Sector>(sectors);
             _firstPageLoaded = true;
         }
@@ -541,12 +542,17 @@ namespace SensorMap.ViewModel
             if (_secondPageLoaded) return;
             using var dbContext = _appDbContextFactory.CreateDbContext();
             var mechanisms = await dbContext.Mechanisms.AsNoTracking()
-                .Include(x=>x.Files)
-                .Include(x=>x.Sector)
-                .Include(x=>x.Device).ToListAsync();
-            Mechanisms = new(mechanisms);
-            MechanismsView = CollectionViewSource.GetDefaultView(Mechanisms);
-            ConfigureMechanismsView();
+                .Include(x => x.Files)
+                .Include(x => x.Sector)
+                .Include(x => x.Device)
+                .AsSplitQuery()
+                .ToListAsync();
+            
+            var collection = new ObservableCollection<Mechanism>(mechanisms);
+            var view = CollectionViewSource.GetDefaultView(collection);
+            ConfigureMechanismsView(view);
+            Mechanisms = collection;
+            MechanismsView = view;
             _secondPageLoaded = true;
             
         }
@@ -558,10 +564,12 @@ namespace SensorMap.ViewModel
                 .Include(x=>x.SensorType).ToListAsync();
             var sensorTypes = await dbContext.SensorTypes.AsNoTracking()
                 .Include(x => x.Characteristics).ToListAsync();
-            Sensors = new(sensors);
+            var collection = new ObservableCollection<Sensor>(sensors);
+            var view = CollectionViewSource.GetDefaultView(collection);
+            ConfigureSensorsView(view);
+            Sensors = collection;
             SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
-            SensorsView = CollectionViewSource.GetDefaultView(Sensors);
-            ConfigureSensorsView();
+            SensorsView = view;
             _thirdPageLoaded = true;
         }
         private async Task LoadDevices()
@@ -572,19 +580,19 @@ namespace SensorMap.ViewModel
                 .Include(x => x.DeviceType).ToListAsync();
             var deviceTypes = await dbContext.DeviceTypes.AsNoTracking()
                 .Include(x => x.Characteristics).ToListAsync();
-
-            Devices = new(devices);
+            var collection = new ObservableCollection<Device>(devices);
+            var view = CollectionViewSource.GetDefaultView(collection);
+            ConfigureDevicesView(view);
+            Devices = collection;
             DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
-            DevicesView = CollectionViewSource.GetDefaultView(Devices);
-            
-            ConfigureDevicesView();
+            DevicesView = view;
             _devicesLoaded = true;
         }
         #endregion
         #region GroupView
-        private void ConfigureMechanismsView()
+        private void ConfigureMechanismsView(ICollectionView view)
         {
-            if(MechanismsView is ICollectionViewLiveShaping liveColl)
+            if(view is ICollectionViewLiveShaping liveColl)
             {
                 liveColl.IsLiveSorting = true;
                 liveColl.IsLiveGrouping = true;
@@ -598,18 +606,16 @@ namespace SensorMap.ViewModel
                 liveColl.LiveGroupingProperties.Add(nameof(Mechanism.Device));
                 
             }
-            using (MechanismsView.DeferRefresh())
+            using (view.DeferRefresh())
             {
-                MechanismsView.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
-                MechanismsView.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
-                var groupDescription = new PropertyGroupDescription("Name", new EqualMechGroup());
-                MechanismsView.GroupDescriptions.Add(groupDescription);
+                view.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
+                view.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
             }
         }
 
-        private void ConfigureDevicesView()
+        private void ConfigureDevicesView(ICollectionView view)
         {
-            if (DevicesView is ICollectionViewLiveShaping liveColl)
+            if (view is ICollectionViewLiveShaping liveColl)
             {
                 liveColl.IsLiveSorting = true;
                 liveColl.IsLiveGrouping = true;
@@ -621,16 +627,16 @@ namespace SensorMap.ViewModel
                 liveColl.LiveGroupingProperties.Add(nameof(Device.DeviceType));
 
             }
-            using (DevicesView.DeferRefresh())
+            using (view.DeferRefresh())
             {
-                DevicesView.SortDescriptions.Add(new SortDescription("DeviceType.Name", ListSortDirection.Ascending));
-                DevicesView.GroupDescriptions.Add(new PropertyGroupDescription("DeviceType.Name"));
+                view.SortDescriptions.Add(new SortDescription("DeviceType.Name", ListSortDirection.Ascending));
+                view.GroupDescriptions.Add(new PropertyGroupDescription("DeviceType.Name"));
             }
         }
 
-        private void ConfigureSensorsView()
+        private void ConfigureSensorsView(ICollectionView view)
         {
-            if (SensorsView is ICollectionViewLiveShaping liveColl)
+            if (view is ICollectionViewLiveShaping liveColl)
             {
                 liveColl.IsLiveSorting = true;
                 liveColl.IsLiveGrouping = true;
@@ -642,10 +648,10 @@ namespace SensorMap.ViewModel
                 liveColl.LiveGroupingProperties.Add(nameof(Sensor.SensorType));
 
             }
-            using (SensorsView.DeferRefresh())
+            using (view.DeferRefresh())
             {
-                SensorsView.SortDescriptions.Add(new SortDescription("SensorType.Name", ListSortDirection.Ascending));
-                SensorsView.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
+                view.SortDescriptions.Add(new SortDescription("SensorType.Name", ListSortDirection.Ascending));
+                view.GroupDescriptions.Add(new PropertyGroupDescription("SensorType.Name"));
             }
         }
         #endregion

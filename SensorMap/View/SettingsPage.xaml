@@ -103,27 +103,7 @@
                     </StackPanel>
                 </GroupBox>
             </StackPanel>
-            <Grid Grid.Column="1" Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="30"/>
-                </Grid.RowDefinitions>
-                <DataGrid Name="SQL_Journal" Grid.Row="0" 
-                          ItemsSource="{Binding Logs}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True" VerticalScrollBarVisibility="Visible"
-                          Style="{StaticResource DataGrid.Small}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Дата" Binding="{Binding Timestamp, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" Width="140"/>
-                        <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-                <Button Content="Загрузить еще" Grid.Row="1"
-                        VerticalAlignment="Bottom"
-                        Command="{Binding LoadMoreLogs}"
-                        Visibility="{Binding CanLoadMore, Converter={StaticResource Bool2VisOrHidden}}"/>
-           
-            </Grid>
+            
         </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

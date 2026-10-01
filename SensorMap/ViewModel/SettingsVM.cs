@@ -25,30 +25,13 @@ namespace SensorMap.ViewModel
         private IAuthorization _auth;
         private IDataBaseProvider _dbProvider;
         private IDataService _data;
-        private ILogEntryService _logService;
-        
-
-        
-
-        public ObservableCollection<DbActionLogs> Logs => _logService.Logs;
-        public bool CanLoadMore => _logService.CanLoadMore;
-
-        public ICommand LoadMoreLogs { get; }
         public SettingsVM(IAuthorization authorization, IDataService data, IDataBaseProvider dbProvider, ILogEntryService logService)
         {
             _dbProvider = dbProvider;
             _data = data;
             _auth = authorization;
-            _logService = logService;
             
             ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
-            LoadMoreLogs = new RelayCommand(() =>
-            {
-                _logService.LoadMore();
-                this.RaisePropertyChanged(nameof(CanLoadMore));
-            });
-
-            
         }
 
         public ICommand ChangeEditorPassword { get;private set; }

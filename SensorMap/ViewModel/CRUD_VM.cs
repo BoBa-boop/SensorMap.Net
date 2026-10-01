@@ -21,11 +21,13 @@ using System.IO;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
+using System.Windows.Threading;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace SensorMap.ViewModel
@@ -61,6 +63,8 @@ namespace SensorMap.ViewModel
         private readonly Dictionary<int, UndoRedoStack> _undoRedoStacks = new();
         private IDisposable? _undoSub;
         private IDisposable? _redoSub;
+        private bool _isLoaded;
+
         private UndoRedoStack CurrentStack
         {
             get
@@ -89,6 +93,7 @@ namespace SensorMap.ViewModel
         [Reactive] public ICollectionView MechanismsView { get => mechView; set => this.RaiseAndSetIfChanged(ref mechView, value); }
         [Reactive] public int SelectedTabIndex { get => selectedTabIndex; set => this.RaiseAndSetIfChanged(ref selectedTabIndex, value); }
         [Reactive] public bool IsExpanded { get => isExpanded; set => this.RaiseAndSetIfChanged(ref isExpanded, value); }
+        public bool IsLoading { get => _isLoaded; set => this.RaiseAndSetIfChanged(ref _isLoaded, value); }
 
         public ViewModelActivator Activator { get; } = new ViewModelActivator();
 
@@ -153,10 +158,11 @@ namespace SensorMap.ViewModel
             DeleteCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
+                
                 object[] values = (object[])arg;
                 var entityType = values[0].GetType();
                 var collection = values[1];
-
+                var name = values[0].GetType()?.GetProperty("Name")?.GetValue(values[0]);
                 try
                 {
                     using (var dBContext = _appDbContextFactory.CreateDbContext())
@@ -200,6 +206,7 @@ namespace SensorMap.ViewModel
                         ShowDateTime = false,
                         WaitTime = 2
                     });
+                    Logger.Error("Ошибка при удаление {0} {1} в БД", entityType,name);
                 }
 
 
@@ -459,6 +466,7 @@ namespace SensorMap.ViewModel
         private void RequestLoad(int index)
         {
             _pendingTabIndex = index;
+            IsLoading = true;
             if (_loadInProgress) return;
             _ = RunLoadLoopAsync();
         }
@@ -470,17 +478,19 @@ namespace SensorMap.ViewModel
             {
                 while (_pendingTabIndex >= 0)
                 {
+                    
                     var index = _pendingTabIndex;
                     _pendingTabIndex = -1;
                     await LoadTabAsync(index);
+                    await Dispatcher.Yield(DispatcherPriority.ContextIdle);
                 }
             }
             finally
             {
+                IsLoading = false;
                 _loadInProgress = false;
             }
         }
-
 
         private async Task LoadTabAsync(int index)
         {

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using SensorMap.EF;
 using SensorMap.Interfaces;
+using SensorMap.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,7 @@ namespace SensorMap.Services
         {
             DbContextOptions options = new DbContextOptionsBuilder()
                 .UseSqlite(_connectionString)
+                .AddInterceptors(new AuditInterceptor())
                 .Options;
             return new AppDBContext(options);
         }

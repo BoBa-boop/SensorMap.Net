@@ -202,7 +202,7 @@ namespace SensorMap.Behaviors
                 var editPropKey = propertyPath.Length > 1 ? propertyPath[1] : propertyPath[0];
                 originalFieldValues = new Dictionary<string, object>
                 {
-                    [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0]),
+                    [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0])??string.Empty,
                     ["EditProp"] = editPropKey,
                     ["Modify"] = GetPropertyValue(e.Row.Item, "IsModified")
                 };

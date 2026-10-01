@@ -141,10 +141,8 @@ namespace SensorMap
             services.AddSingleton<ILogEntryService, LogEntryService>();
 
             NLog.LogManager.Setup().LoadConfiguration(builder => {
-                builder.ForLogger().FilterMinLevel(LogLevel.Info).FilterMaxLevel(LogLevel.Warn)
+                builder.ForLogger().FilterMinLevel(LogLevel.Info).FilterMaxLevel(LogLevel.Fatal)
                     .WriteToFile(fileName: "LogDb.txt", archiveAboveSize: 1048576, maxArchiveFiles: 5);
-                builder.ForLogger().FilterMinLevel(LogLevel.Error)
-                    .WriteToFile(fileName: "LogError.txt", archiveAboveSize: 1048576, maxArchiveFiles: 5);
             });
         }
 

@@ -638,11 +638,7 @@
                       ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                       IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
-                              EnableRowVirtualization="True"
-                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                              VirtualizingPanel.VirtualizationMode="Recycling" 
-                              ScrollViewer.CanContentScroll="True"
-                              VirtualizingPanel.ScrollUnit="Pixel">
+                              >
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
@@ -659,7 +655,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate>
-                                                    <Expander IsExpanded="{Binding ElementName=root,Path=DataContext.IsExpanded}">
+                                                    <Expander IsExpanded="True">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>

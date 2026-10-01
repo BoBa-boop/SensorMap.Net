@@ -489,31 +489,32 @@ namespace SensorMap.ViewModel
                 switch (index)
                 {
                     case 0:
-                        SubscribeToCurrentStack();
                         await LoadFirstPageAsync();
+                        SubscribeToCurrentStack();
                         IsExpanded = true;
-                        
                         break;
                     case 1:
-                        SubscribeToCurrentStack();
+                        
                         await LoadSecondAsync();
                         await LoadDevices();
+                        SubscribeToCurrentStack();
                         IsExpanded = true;
                         break;
                     case 2:
-                        SubscribeToCurrentStack();
                         await LoadThirdAsync();
+                        SubscribeToCurrentStack();
                         IsExpanded = true;
                         break;
                     case 3:
-                        SubscribeToCurrentStack();
                         await LoadDevices();
+                        SubscribeToCurrentStack();
                         IsExpanded = true;
                         break;
                     case 4:
-                        SubscribeToCurrentStack();
+                        
                         await LoadThirdAsync();
                         await LoadDevices();
+                        SubscribeToCurrentStack();
                         IsExpanded = true;
                         break;
                 }

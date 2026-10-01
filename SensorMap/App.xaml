@@ -28,6 +28,9 @@
             <DataTemplate DataType="{x:Type menuView:Devices_VM}">
                 <view:Devices_View/>
             </DataTemplate>
+            <DataTemplate DataType="{x:Type menuView:DataBasePageVM}">
+                <view:DataBasePage/>
+            </DataTemplate>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Resources/style/AppConverters.xaml"/>
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>

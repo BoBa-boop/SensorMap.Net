@@ -26,19 +26,9 @@ namespace SensorMap.ViewModel
         private IDataBaseProvider _dbProvider;
         private IDataService _data;
         private ILogEntryService _logService;
-        private string _dbName = string.Empty;
-        private string _dbPath;
+        
 
-        [Reactive]public string DbName
-        {
-            get { return _dbName; }
-            set { this.RaiseAndSetIfChanged(ref _dbName, value); }
-        }
-        [Reactive]public string DbPath
-        {
-            get { return _dbPath; }
-            set { this.RaiseAndSetIfChanged(ref _dbPath, value); }
-        }
+        
 
         public ObservableCollection<DbActionLogs> Logs => _logService.Logs;
         public bool CanLoadMore => _logService.CanLoadMore;
@@ -50,8 +40,7 @@ namespace SensorMap.ViewModel
             _data = data;
             _auth = authorization;
             _logService = logService;
-            DbName = Path.GetFileName(Settings.Default.ConnectionString);
-            DbPath = Path.GetFullPath(Settings.Default.ConnectionString.Replace("DataSource=", ""));
+            
             ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
             LoadMoreLogs = new RelayCommand(() =>
             {
@@ -59,41 +48,11 @@ namespace SensorMap.ViewModel
                 this.RaisePropertyChanged(nameof(CanLoadMore));
             });
 
-            ChangeDataBase = new RelayCommand(() =>
-            {
-                OpenFileDialog fileBrowser = new OpenFileDialog();
-                fileBrowser.Multiselect = false;
-                fileBrowser.ShowDialog();
-                if (!string.IsNullOrEmpty(fileBrowser.FileName))
-                {
-                    try
-                    {
-                        _dbProvider.ChangeDataBase(fileBrowser.FileName);
-                        DbPath = fileBrowser.FileName;
-                        DbName = Path.GetFileName(Settings.Default.ConnectionString);
-                        Growl.Success("Выбрана новая База Данных");
-                        _data.IsDataBaseConnect = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.MessageBox.Show(ex.Message, "Ошибка при изменение БД", System.Windows.MessageBoxButton.OK);
-                        _data.IsDataBaseConnect = false;
-                    }
-                }
-
-            });
-            NavigateToPathDB = new RelayCommand(() =>
-            {
-                if (Directory.Exists(Path.GetDirectoryName(DbPath)))
-                {
-                    Process.Start("explorer.exe", Path.GetDirectoryName(DbPath));
-                }
-            });
+            
         }
 
         public ICommand ChangeEditorPassword { get;private set; }
-        public ICommand ChangeDataBase { get; private set; }
-        public ICommand NavigateToPathDB { get; }
+        
         
     }
 }

@@ -86,50 +86,7 @@
                         </StackPanel>
                     </WrapPanel>
                 </GroupBox>
-                <GroupBox Style="{StaticResource GroupBoxOriginal}"
-                          BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
-                    <GroupBox.Header>
-                        <TextBlock Text="База данных" Style="{StaticResource TextBlockDefault}"
-                                   FontFamily="Bahnschrift" FontSize="17"/>
-                    </GroupBox.Header>
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="10">
-                        <TextBlock Text="Загрузить новую БД"
-                                   HorizontalAlignment="Left"
-                                   Margin="0,5"
-                                   Style="{StaticResource TextBlockSubTitle}"/>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Name="txtDB_Name"
-                                       Text="{Binding DbName}"
-                                       Width="200"
-                                       Padding="7,5"
-                                       Background="WhiteSmoke"/>
-                            <Button Width="35" Style="{StaticResource ButtonInfo}"
-                                    Cursor="Hand"
-                                    hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
-                                    Command="{Binding ChangeDataBase}"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
-                                   TextTrimming="WordEllipsis"
-                                   Cursor="Hand"
-                                   ToolTip="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
-                                   Padding="7,5"
-                                   MaxWidth="240"                           
-                                   Background="Transparent">
-                            <TextBlock.InputBindings>
-                                <MouseBinding Gesture="LeftClick" Command="{Binding NavigateToPathDB}"/>
-                            </TextBlock.InputBindings>
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <Trigger Property="TextBlock.IsMouseOver" Value="True">
-                                            <Setter Property="FontWeight" Value="Bold"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
-                </GroupBox>
+                
                 <GroupBox Style="{StaticResource GroupBoxOriginal}"
                           BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
                     <GroupBox.Header>

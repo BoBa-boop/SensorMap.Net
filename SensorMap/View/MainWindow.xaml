@@ -31,7 +31,11 @@
                 </Button.Style>
             </Button>
             <Menu Background="Transparent">
-                <MenuItem Header="Данные" Command="{Binding NavigateToDB}" IsEnabled="{Binding IsConnectedDB}"/>
+                <MenuItem Header="Данные">
+                    <MenuItem Header="Просмотр данных" Command="{Binding NavigateToDB}" IsEnabled="{Binding IsConnectedDB}"/>
+                    <MenuItem Header="Взаимодействие с Базой Данных" Command="{Binding NavigateToDataBasePage}"/>
+                    <MenuItem Header="Резервная копия БД" Command="{Binding CreateBackupDB}" IsEnabled="{Binding IsConnectedDB}"/>
+                </MenuItem>
             </Menu>
             <Menu Background="Transparent">
                 <MenuItem Header="Окна" IsEnabled="{Binding IsConnectedDB}">
@@ -64,7 +68,7 @@
             </Menu>
             <Menu Background="Transparent" Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <MenuItem Header="Настройки" Command="{Binding NavigateToSettings}"/>
-                <MenuItem Header="Резервная копия БД" Command="{Binding CreateBackupDB}" IsEnabled="{Binding IsConnectedDB}"/>
+                
             </Menu>
             <Menu Background="Transparent">
                 <MenuItem Header="Режим работы">

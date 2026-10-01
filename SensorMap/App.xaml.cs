@@ -92,6 +92,7 @@ namespace SensorMap
             services.AddSingleton<MainMenuVM>();
             services.AddTransient<MechanismVM>();
             services.AddTransient<SensorVM>();
+            services.AddTransient<DataBasePageVM>();
             services.AddTransient<SectorsVM>();
             services.AddTransient<CRUD_VM>();
             services.AddTransient<Devices_VM>();

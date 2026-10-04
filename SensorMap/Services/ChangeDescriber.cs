@@ -175,7 +175,7 @@ namespace SensorMap.Logging
             return parent;
         }
 
-        private static string NameOf(object entity)
+        internal static string NameOf(object entity)
         {
             var direct = ReadName(entity);
             if (direct.Length > 0)
@@ -204,7 +204,7 @@ namespace SensorMap.Logging
             return "";
         }
 
-        private static string TypeName(Type type)
+        internal static string TypeName(Type type)
         {
             // Идём вверх по иерархии: покрывает и EF-прокси, и наследников
             for (var t = type; t != null; t = t.BaseType)

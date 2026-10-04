@@ -23,9 +23,10 @@ namespace SensorMap.Services
             private set => this.RaiseAndSetIfChanged(ref messageState, value);
         }
 
+        public bool IsPasswordSet => !string.IsNullOrEmpty(Settings.Default.EditorPassword);
+
         public bool Authorization(string password)
         {
-            ErrorMessages();
             if (passwordHash.Verify(password, Settings.Default.EditorPassword)) return true;
             else
             {
@@ -35,21 +36,6 @@ namespace SensorMap.Services
             }
         }
 
-        private void ErrorMessages()
-        {
-            if (string.IsNullOrEmpty(Settings.Default.EditorPassword))
-            {
-                Growl.Warning(new GrowlInfo
-                {
-                    Message = "Создайте пароль в Настройках!",
-                    CancelStr = "Ignore",
-                    ShowDateTime = false,
-                    WaitTime = 2
-                });
-                return;
-            }
-        }
-        
 
         public void ChangePassword(string password)
         {
@@ -62,6 +48,31 @@ namespace SensorMap.Services
                 ShowDateTime = false,
                 WaitTime = 2
             });
+        }
+
+        public IReadOnlyList<string> GenerateRecoveryCodes()
+        {
+            var codes = Enumerable.Range(0, 10)
+                .Select(_ => Convert.ToHexString(RandomNumberGenerator.GetBytes(6))
+                ).ToList();
+            Settings.Default.RecoveryCodes = string.Join(";", codes.Select(passwordHash.Hash));
+            Settings.Default.Save();
+            return codes;
+        }
+
+        public bool VerifyRecoveryCode(string code)
+        {
+            var normalized = code.Replace("-", "").Replace(" ", "").ToUpperInvariant();
+            var hashes = Settings.Default.RecoveryCodes
+                .Split(";",StringSplitOptions.RemoveEmptyEntries).ToList();
+            var hit = hashes.FirstOrDefault(h => passwordHash.Verify(normalized, h));
+            if(hit is null) return false;
+
+            hashes.Remove(hit);
+            Settings.Default.RecoveryCodes = string.Join(";",hashes);
+            Settings.Default.Save();
+            return true;
+
         }
     }
 }

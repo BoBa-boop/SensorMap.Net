@@ -12,7 +12,9 @@ using SensorMap.Behaviors;
 using SensorMap.Converters;
 using SensorMap.EF;
 using SensorMap.Interfaces;
+using SensorMap.Logging;
 using SensorMap.Model;
+using SensorMap.Services;
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;
@@ -155,25 +157,38 @@ namespace SensorMap.ViewModel
                 }
 
             });
-            DeleteCommand = new RelayCommand<object>((arg) =>
+            DeleteCommand = new RelayCommand<object>(async (arg) =>
             {
                 if (arg is null) return;
                 
                 object[] values = (object[])arg;
-                var entityType = values[0].GetType();
+                var type = ChangeDescriber.TypeName(values[0].GetType());
                 var collection = values[1];
-                var name = values[0].GetType()?.GetProperty("Name")?.GetValue(values[0]);
-                try
+                var name = ChangeDescriber.NameOf(values[0]);
+                using (var dBContext = _appDbContextFactory.CreateDbContext())
                 {
-                    using (var dBContext = _appDbContextFactory.CreateDbContext())
+                    var blocked = await DeletionGuard.CheckAsync(dBContext, values[0]);
+                    if (blocked != null)
                     {
+                        DbLog.Write(new DbActionLogs
+                        {
+                            Timestamp = DateTime.Now,
+                            Kind = DbActionKind.Error,
+                            EntityType = type,
+                            Description = blocked
+                        });
+                        return;
+                    }
+                    try
+                    {
+
                         var result = System.Windows.MessageBox.Show("Вы действительно хотите удалить строчку?", "Подтверждение",
                                 MessageBoxButton.YesNo, MessageBoxImage.Question);
                         if (result == MessageBoxResult.Yes)
                         {
                             if (dBContext.Entry(values[0]).IsKeySet)
                             {
-                                dBContext.Remove(values[0]);
+                                dBContext.Entry(values[0]).State = EntityState.Deleted;
                                 dBContext.SaveChanges();
                                 Growl.Success(new GrowlInfo
                                 {
@@ -192,23 +207,25 @@ namespace SensorMap.ViewModel
                             }
                             else if (collection is IList list)
                                 list?.Remove(values[0]);
-
+                            _firstPageLoaded = false;
 
                         }
+
+                    }
+                    catch(Exception ex)
+                    {
+                        DeletionGuard.RevertPendingChanges(dBContext);
+                        var reason = SaveErrorExplainer.Explain(ex);
+                        Growl.Error(new GrowlInfo
+                        {
+                            Message = "Ошибка при удаление!",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            WaitTime = 2
+                        });
+                        Logger.Error(ex,$"Не удалось удалить {type} \"{name}\". Причина: {reason}");
                     }
                 }
-                catch
-                {
-                    Growl.Error(new GrowlInfo
-                    {
-                        Message = "Ошибка при удаление!",
-                        CancelStr = "Ignore",
-                        ShowDateTime = false,
-                        WaitTime = 2
-                    });
-                    Logger.Error("Ошибка при удаление {0} {1} в БД", entityType,name);
-                }
-
 
             });
 

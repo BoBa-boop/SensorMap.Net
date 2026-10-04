@@ -138,10 +138,17 @@
                         </Style>
                     </Button.Style>
                 </Button>
-                <TextBlock Text="Забыли пароль?" HorizontalAlignment="Center"
-                           Focusable="False"
-                       FontSize="10" FontWeight="DemiBold" Cursor="Hand"
-                       Foreground="{StaticResource DarkPrimaryBrush}" Style="{StaticResource TextBlockDefaultInfo}"/>
+                <Button Content="Забыли пароль?" HorizontalAlignment="Center"
+                           Focusable="False" Style="{StaticResource ButtonCustom}"
+                           Visibility="{Binding IsLoginMode,Converter={StaticResource Bool2VisOrHidden}}"
+                           FontSize="10" FontWeight="DemiBold" Cursor="Hand"
+                           Foreground="{StaticResource DarkPrimaryBrush}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Click">
+                            <i:InvokeCommandAction Command="{Binding ForgotCommand}" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </Button>
 
             </StackPanel>
         </Grid>

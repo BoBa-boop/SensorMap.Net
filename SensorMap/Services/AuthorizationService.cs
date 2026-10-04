@@ -63,7 +63,7 @@ namespace SensorMap.Services
         public bool VerifyRecoveryCode(string code)
         {
             var normalized = code.Replace("-", "").Replace(" ", "").ToUpperInvariant();
-            var hashes = Settings.Default.RecoveryCodes
+            var hashes = (Settings.Default.RecoveryCodes??"")
                 .Split(";",StringSplitOptions.RemoveEmptyEntries).ToList();
             var hit = hashes.FirstOrDefault(h => passwordHash.Verify(normalized, h));
             if(hit is null) return false;

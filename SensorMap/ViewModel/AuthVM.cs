@@ -90,11 +90,7 @@ namespace SensorMap.ViewModel
                             break;
                         }
                         _authorization.ChangePassword(text);
-                        var codes = _authorization.GenerateRecoveryCodes();
-                        var res = HandyControl.Controls.MessageBox.Show("Сохраните коды восстановления. Нажмите 'Подтвердить', чтобы " +
-                            "скопировать коды. Каждый действует один раз:\n\n"+string.Join("\n", codes.Select(c => $"{c[..6]}-{c[..6]}"))
-                            ,"Коды восстановления");
-                        if (res == MessageBoxResult.OK) System.Windows.Clipboard.SetText(string.Join("\n", codes.Select(c => $"{c[..6]}-{c[..6]}")));
+                        ShowRecoveryCodes();
                         Succeed();
                         break;
                     case AuthMode.EnterRecoveryCode:
@@ -107,25 +103,38 @@ namespace SensorMap.ViewModel
                         break;
                 }
                 
-                void Succeed() { IsAuth = true;dataService.IsEditMode = true; }
-                if (obj is System.Windows.Controls.TextBox pBox)
-                {
-                    IsAuth = _authorization.Authorization(pBox.Text);
-                    if (IsAuth) _data.IsEditMode = true;
-                    if (IsAuth == false) pBox.Text = string.Empty;
-                }
+                
             });
+            void Succeed() 
+            { 
+                IsAuth = true;
+                dataService.IsEditMode = true;
+                if (string.IsNullOrEmpty(Settings.Default.RecoveryCodes))
+                {
+                    var ask = HandyControl.Controls.MessageBox.Show("Коды восстановления пароля не созданы. Создать сейчас?",
+                        "Восстановление пароля",MessageBoxButton.YesNo);
+                    if (ask == MessageBoxResult.Yes) ShowRecoveryCodes();
+                }
+            }
             ForgotCommand = ReactiveCommand.Create(() =>
             {
-                if (Settings.Default.RecoveryCodes == string.Empty)
+                if (string.IsNullOrEmpty(Settings.Default.RecoveryCodes))
                 {
-                    Mode = AuthMode.CreatePassword;
-                    UIMessageState = "Введите новый пароль";
+                    UIMessageState = _authorization.IsPasswordSet? "Коды восстановления не созданы":"Создайте новый пароль";
                     return;
                 }
                 Mode = AuthMode.EnterRecoveryCode;
                 UIMessageState = "Введите код восстановления";
             });
+            void ShowRecoveryCodes()
+            {
+                var codes = _authorization.GenerateRecoveryCodes();
+                var shown = string.Join("\n", codes.Select(c => $"{c[..6]}-{c[6..]}"));
+                var res = HandyControl.Controls.MessageBox.Show("Сохраните коды восстановления. Нажмите 'Подтвердить', чтобы " +
+                    "скопировать коды. Каждый действует один раз:\n\n" + shown
+                    , "Коды восстановления");
+                if (res == MessageBoxResult.OK) System.Windows.Clipboard.SetText(shown);
+            }
         }
         public ICommand VerifyCommand { get; set; }
         public ICommand ForgotCommand { get; set; }

@@ -14,6 +14,7 @@ namespace SensorMap.Interfaces
         bool IsPasswordSet { get; }
         IReadOnlyList<string> GenerateRecoveryCodes();
         bool VerifyRecoveryCode(string code);
+        int CountRecoveryCode();
     }
 
 }

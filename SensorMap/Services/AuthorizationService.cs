@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace SensorMap.Services
 {
@@ -50,11 +51,22 @@ namespace SensorMap.Services
             });
         }
 
+        public int CountRecoveryCode()
+        {
+            return (Settings.Default.RecoveryCodes ?? "").Split(";", StringSplitOptions.RemoveEmptyEntries).Count();
+        }
+
         public IReadOnlyList<string> GenerateRecoveryCodes()
         {
             var codes = Enumerable.Range(0, 10)
                 .Select(_ => Convert.ToHexString(RandomNumberGenerator.GetBytes(6))
                 ).ToList();
+
+            var shown = string.Join("\n", codes.Select(c => $"{c[..6]}-{c[6..]}"));
+            var res = HandyControl.Controls.MessageBox.Show("Сохраните коды восстановления. Нажмите 'Подтвердить', чтобы " +
+                "скопировать коды. Каждый действует один раз:\n\n" + shown, "Коды восстановления");
+            if (res == MessageBoxResult.OK) System.Windows.Clipboard.SetText(shown);
+
             Settings.Default.RecoveryCodes = string.Join(";", codes.Select(passwordHash.Hash));
             Settings.Default.Save();
             return codes;

@@ -88,7 +88,7 @@ namespace SensorMap.CustomControls
         }
         public static readonly DependencyProperty IsEditModeProperty =
             DependencyProperty.Register("IsEditMode", typeof(bool), typeof(CustomSensor),
-                new PropertyMetadata(false, null));
+                new PropertyMetadata(false, OnIsEditPropertyChanged));
 
         public bool IsMultiSelection
         {
@@ -249,7 +249,6 @@ namespace SensorMap.CustomControls
             else
             {
                 this.IsSelected = false;
-                //this.MouseDown -= OnMouseDown;
                 this.MouseMove -= OnSensorMouseMove;
                 _canvas.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;

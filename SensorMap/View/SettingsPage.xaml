@@ -24,65 +24,17 @@
                 <GroupBox Style="{StaticResource GroupBoxOriginal}"
                           BorderThickness="1.5" Margin="0,10,20,0" BorderBrush="LightGray">
                     <GroupBox.Header>
-                        <TextBlock Text="Режим работы" Style="{StaticResource TextBlockDefault}"
+                        <TextBlock Text="Безопасность" Style="{StaticResource TextBlockDefault}"
                                    FontFamily="Bahnschrift" FontSize="17"/>
                     </GroupBox.Header>
                     <WrapPanel>
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
-                        <TextBlock Text="Вход в 'Редактор'" HorizontalAlignment="Left"  Margin="0,5" 
-                       Style="{StaticResource TextBlockSubTitle}"/>
-                        <StackPanel Orientation="Horizontal">
-                            <hc:TextBox Name="txtEditorPass"
-                                        Width="200"
-                                        hc:InfoElement.Placeholder="Новый пароль"/>
-                            <Button Width="35" Style="{StaticResource ButtonInfo}"
-                                    Cursor="Hand"
-                                    hc:IconElement.Geometry="{StaticResource ChangeData}"
-                                    Command="{Binding ChangeEditorPassword}" 
-                                    CommandParameter="{Binding ElementName=txtEditorPass,Path=Text}"/>
-                        </StackPanel>
-                
-                    </StackPanel>
-                        <StackPanel Orientation="Vertical">
-                            <Button x:Name="btnCodes" 
-                                    Style="{StaticResource ButtonDefault}"
-                                    hc:IconElement.Geometry="{StaticResource AskGeometry}"
-                                    HorizontalAlignment="Left" Margin="0,5" Click="Button_Click">
-                                <Button.Content>
-                                    <TextBlock Text="Коды" Style="{StaticResource TextBlockSubTitle}"/>
-                                </Button.Content>
-                            </Button>
-                            <Popup Name="hintPopup" PopupAnimation="Scroll"
-                                   PlacementTarget="{Binding ElementName=btnCodes}"
-                                   Placement="Bottom" Width="250" IsOpen="False">
-                                <StackPanel Margin="2">
-                                    <TextBlock TextWrapping="Wrap" Background="White" Margin="0,5,0,0" FontSize="12">
-                                        Подробная текстовая подсказка, которая появляется только при нажатии на кнопку. 
-                                        В отличие от стандартного ToolTip, сюда можно вставить любые элементы управления.
-                                    </TextBlock>
-                                </StackPanel>
-                            </Popup>
-                            <ListBox x:Name="listCodes" MaxHeight="250" Width="307">
-                                <ListBox.Items>
-                                    <!-- Вместо жестких ListBoxItem задаем строки -->
-                                    <System:String>SampleText 1</System:String>
-                                    <System:String>SampleText 2</System:String>
-                                    <System:String>SampleText 3</System:String>
-                                    <System:String>SampleText 4</System:String>
-                                    <System:String>SampleText 5</System:String>
-                                </ListBox.Items>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <!-- Убираем ContentPresenter -->
-                                        <TextBlock Text="{Binding}" Margin="2"/>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                            </ListBox>
+
+                            <Button Width="auto" Style="{StaticResource ButtonInfo}"
+                                    Cursor="Hand" Content="Создать коды восстановления"
+                                    hc:IconElement.Geometry="{StaticResource AllGeometry}"
+                                    Command="{Binding CreateRecoveryCodes}" />
+
                         </StackPanel>
                     </WrapPanel>
                 </GroupBox>
@@ -95,11 +47,42 @@
                     </GroupBox.Header>
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="10,0">
                         <TextBlock Text="Изображения в Меню" HorizontalAlignment="Left" Margin="0,5" Style="{StaticResource TextBlockSubTitle}"/>
-                        <hc:FlexPanel >
-                            <hc:ImageSelector Height="70" Width="70"/>
-                            <hc:ImageSelector Height="70" Width="70"/>
-                            <hc:ImageSelector Height="70" Width="70"/>
-                        </hc:FlexPanel>
+                        <ListView ItemsSource="{Binding MySettings.MenuImages,UpdateSourceTrigger=PropertyChanged}"
+                                  x:Name="lv"
+                                  BorderThickness="0"
+                                  AlternationCount="4"
+                                  Background="Transparent"
+                                  Style="{x:Null}">
+                            <!-- Отключаем выделение и клики на уровне ListViewItem -->
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <ContentPresenter />
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <hc:FlexPanel/>
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <hc:ImageSelector 
+                    Height="70" Width="70"
+                    ImageSelected="ImageSelector_ImageSelected"
+                    Tag="{Binding (ItemsControl.AlternationIndex), 
+                               RelativeSource={RelativeSource AncestorType=ListViewItem}}">
+                                    </hc:ImageSelector>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

@@ -17,25 +17,38 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Shapes;
+using Path = System.IO.Path;
 
 namespace SensorMap.ViewModel
 {
     public class SettingsVM:ReactiveObject
     {
         private IAuthorization _auth;
-        private IDataBaseProvider _dbProvider;
-        private IDataService _data;
-        public SettingsVM(IAuthorization authorization, IDataService data, IDataBaseProvider dbProvider, ILogEntryService logService)
+        private IJsonSerialization _json;
+        private SettingsApp settings;
+
+        [Reactive]public SettingsApp MySettings { get => settings; set => settings = value; }
+        public SettingsVM(IAuthorization authorization, IJsonSerialization jsonSerialization)
         {
-            _dbProvider = dbProvider;
-            _data = data;
             _auth = authorization;
+            _json = jsonSerialization;
+
+            if (Path.Exists("SettingsApp.json")) MySettings = _json.ReadFromJsonFile<SettingsApp>("SettingsApp.json");
+            else 
+            {
+                MySettings = new SettingsApp();
+                MySettings.MenuImages = new(new[] { "", "", "" });
+                _json.WriteToJsonFile<SettingsApp>("SettingsApp.json", MySettings);
+            }
+
+            CreateRecoveryCodes = new RelayCommand(() => _auth.GenerateRecoveryCodes());
+            ChangeMenuImages = new RelayCommand<ObservableCollection<string>>((paths) => _json.WriteToJsonFile("SettingsApp.json",new SettingsApp { MenuImages = paths},true));
             
-            ChangeEditorPassword = new RelayCommand<string>((newPass) => _auth.ChangePassword(newPass), (newPass) => !string.IsNullOrEmpty(newPass));
         }
 
-        public ICommand ChangeEditorPassword { get;private set; }
-        
-        
+        public ICommand CreateRecoveryCodes { get;private set; }
+        public ICommand ChangeMenuImages { get; }
+
     }
 }

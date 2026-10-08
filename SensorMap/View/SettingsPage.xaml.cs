@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -15,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 using UserControl = System.Windows.Controls.UserControl;
 
 namespace SensorMap.View
@@ -40,14 +42,26 @@ namespace SensorMap.View
         {
             InitializeComponent();
             DataContextChanged += (_, _) => ViewModel = DataContext as SettingsVM;
+
         }
 
         private void ImageSelector_ImageSelected(object sender, RoutedEventArgs e)
         {
-            var selector = sender as ImageSelector;
-            int index = int.Parse(selector.Tag.ToString());
-            string pathImage = selector.Uri.OriginalString;
-            ViewModel.MySettings.MenuImages[index] = pathImage;
+            if(sender is System.Windows.Controls.Button button)
+            {
+            int index = int.Parse(button.Tag.ToString());
+            OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.SelectReadOnly = true;
+            fileDialog.Multiselect = false;
+            fileDialog.ShowDialog();
+                if (fileDialog.FileName.Any())
+                {
+                    string pathImage = fileDialog.FileName;
+                    ViewModel.MySettings.MenuImages[index] = pathImage;
+                }
+            }
+           
+            
         }
     }
 }

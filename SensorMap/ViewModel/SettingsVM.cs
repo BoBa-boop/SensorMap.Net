@@ -43,12 +43,10 @@ namespace SensorMap.ViewModel
             }
 
             CreateRecoveryCodes = new RelayCommand(() => _auth.GenerateRecoveryCodes());
-            ChangeMenuImages = new RelayCommand<ObservableCollection<string>>((paths) => _json.WriteToJsonFile("SettingsApp.json",new SettingsApp { MenuImages = paths},true));
-            
+            SaveMenuImages = new RelayCommand(() => _json.WriteToJsonFile("SettingsApp.json", MySettings));
         }
 
         public ICommand CreateRecoveryCodes { get;private set; }
-        public ICommand ChangeMenuImages { get; }
-
+        public ICommand SaveMenuImages { get; }
     }
 }

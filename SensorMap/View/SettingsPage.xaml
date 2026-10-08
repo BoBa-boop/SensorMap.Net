@@ -74,15 +74,21 @@
 
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <hc:ImageSelector 
-                    Height="70" Width="70"
-                    ImageSelected="ImageSelector_ImageSelected"
-                    Tag="{Binding (ItemsControl.AlternationIndex), 
-                               RelativeSource={RelativeSource AncestorType=ListViewItem}}">
-                                    </hc:ImageSelector>
+                                    <Grid  Width="90" Height="90">
+                                        <Border Background="{StaticResource BackgroundBrush}"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1"/>
+                                        <Image Source="{Binding }" Stretch="UniformToFill"/>
+                                        <Button BorderThickness="0" Height="80" Width="80"
+                                                Background="Transparent"
+                                                Tag="{Binding (ItemsControl.AlternationIndex),
+                                            RelativeSource={RelativeSource AncestorType=ListViewItem}}"
+                                                Cursor="Hand" Click="ImageSelector_ImageSelected"/>
+                                    </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
+                        <Button Content="Сохранить" Command="{Binding SaveMenuImages}"/>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

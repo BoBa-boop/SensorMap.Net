@@ -22,11 +22,34 @@ namespace SensorMap.View
     /// </summary>
     public partial class MainMenu : System.Windows.Controls.UserControl,IViewFor<MainMenuVM>
     {
-        public MainMenuVM? ViewModel { get; set; }
+        public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register
+           (
+           nameof(ViewModel),
+           typeof(MainMenuVM),
+           typeof(MainMenu),
+           new PropertyMetadata(null));
+        public MainMenuVM? ViewModel
+        {
+            get => (MainMenuVM?)GetValue(ViewModelProperty);
+            set => SetValue(ViewModelProperty, value);
+        }
         object? IViewFor.ViewModel { get => ViewModel; set => ViewModel = (MainMenuVM?)value; }
         public MainMenu()
         {
             InitializeComponent();
+            DataContextChanged += (_, _) => ViewModel = DataContext as MainMenuVM;
+            carousel.Loaded += (s, e) =>
+            {
+                carousel.Items.Clear();
+                foreach (var item in ViewModel.MySettings.MenuImages)
+                {
+                    carousel.Items.Add(new HandyControl.Controls.CarouselItem()
+                    {
+                        DataContext = item,
+                        Content = item
+                    });
+                }
+            };
         }
 
     }

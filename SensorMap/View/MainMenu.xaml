@@ -11,7 +11,7 @@
     <hc:TransitioningContentControl TransitionMode="Fade">
         <Grid>
             <hc:Carousel x:Name="carousel" AutoRun="True" HorizontalAlignment="Center" Width="1200" Height="650"
-                         ItemsSource="{Binding MySettings.MenuImages}">
+                         ItemsSource="{Binding MenuImages}">
                 <hc:Carousel.ItemTemplate>
                     <DataTemplate>
                         <Image Source="{Binding }" Stretch="UniformToFill" Width="1200"/>

@@ -1,8 +1,10 @@
 ﻿using ReactiveUI;
+using SensorMap.Services.UpdateService;
 using SensorMap.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,6 +24,9 @@ namespace SensorMap.View
     /// </summary>
     public partial class MainMenu : System.Windows.Controls.UserControl,IViewFor<MainMenuVM>
     {
+        private readonly Updater _updater = new();
+        private bool isChecked = false;
+        private CompositeDisposable? _activationDisposables = new CompositeDisposable();
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register
            (
            nameof(ViewModel),
@@ -38,18 +43,14 @@ namespace SensorMap.View
         {
             InitializeComponent();
             DataContextChanged += (_, _) => ViewModel = DataContext as MainMenuVM;
-            carousel.Loaded += (s, e) =>
+            this.WhenActivated(async disposables =>
             {
-                carousel.Items.Clear();
-                foreach (var item in ViewModel.MySettings.MenuImages)
+                if(!isChecked)
                 {
-                    carousel.Items.Add(new HandyControl.Controls.CarouselItem()
-                    {
-                        DataContext = item,
-                        Content = item
-                    });
+                    await Task.Delay(TimeSpan.FromSeconds(3));
+                    isChecked = await _updater.CheckAsync();
                 }
-            };
+            }).DisposeWith(_activationDisposables);
         }
 
     }

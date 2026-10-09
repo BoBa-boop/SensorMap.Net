@@ -15,7 +15,6 @@
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -92,7 +91,26 @@
                     </StackPanel>
                 </GroupBox>
             </StackPanel>
-            
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <TextBlock Text="{Binding VersionText}" Foreground="{StaticResource AccentBrush}"/>
+                <TextBlock Text="{Binding UpdateStatus}" Margin="0,4,0,0"/>
+
+                <ProgressBar Value="{Binding Progress}" Maximum="100" Height="6" Margin="0,4,0,0">
+                    <ProgressBar.Style>
+                        <Style TargetType="ProgressBar" BasedOn="{StaticResource BaseStyle}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ProgressBar.Style>
+                </ProgressBar>
+                <Button Content="Проверить обновления" Margin="0,8,0,0"
+            Command="{Binding CheckUpdateCommand}"
+            IsEnabled="{Binding IsBusy,Converter={StaticResource Boolean2BooleanReConverter}}"/>
+            </StackPanel>
         </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

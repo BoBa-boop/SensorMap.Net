@@ -13,6 +13,7 @@ using SensorMap.ViewModel;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using Velopack;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
@@ -38,7 +39,8 @@ namespace SensorMap
                 MessageBox.Show($"UI error: {args.Exception.Message}");
                 args.Handled = true;
             };
-            #endif
+#endif
+            VelopackApp.Build().Run();
             IServiceCollection services = new ServiceCollection();
             ConfigurationServiceces(services);
             _serviceProvider = services.BuildServiceProvider();

@@ -6,6 +6,7 @@ using NLog;
 using ReactiveUI;
 using SensorMap.EF;
 using SensorMap.Interfaces;
+using SensorMap.Model;
 using SensorMap.Properties;
 using SensorMap.Services;
 using SensorMap.View;
@@ -28,7 +29,8 @@ namespace SensorMap
         private ServiceProvider _serviceProvider = null!;
         protected override void OnStartup(StartupEventArgs e)
         {
-            #if DEBUG==true
+            Directory.CreateDirectory(Path.GetDirectoryName(SettingsApp.SettingsPath)!);
+#if DEBUG == true
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
             {
                 MessageBox.Show($"Fatal error: {args.ExceptionObject}");

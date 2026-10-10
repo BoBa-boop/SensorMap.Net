@@ -58,16 +58,16 @@ namespace SensorMap.ViewModel
             _auth = authorization;
             _json = jsonSerialization;
 
-            if (Path.Exists("SettingsApp.json")) MySettings = _json.ReadFromJsonFile<SettingsApp>("SettingsApp.json");
+            if (Path.Exists(SettingsApp.SettingsPath)) MySettings = _json.ReadFromJsonFile<SettingsApp>(SettingsApp.SettingsPath);
             else 
             {
                 MySettings = new SettingsApp();
                 MySettings.MenuImages = new(new[] { "", "", "" });
-                _json.WriteToJsonFile<SettingsApp>("SettingsApp.json", MySettings);
+                _json.WriteToJsonFile<SettingsApp>(SettingsApp.SettingsPath, MySettings);
             }
 
             CreateRecoveryCodes = new RelayCommand(() => _auth.GenerateRecoveryCodes());
-            SaveMenuImages = new RelayCommand(() => _json.WriteToJsonFile("SettingsApp.json", MySettings));
+            SaveMenuImages = new RelayCommand(() => _json.WriteToJsonFile(SettingsApp.SettingsPath, MySettings));
             CheckUpdateCommand = new RelayCommand(async () => await CheckForUpdates(askUser: true));
         }
 

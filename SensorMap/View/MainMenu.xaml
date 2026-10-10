@@ -9,7 +9,7 @@
              d:DataContext="{d:DesignInstance vm:MainMenuVM }"
              mc:Ignorable="d" >
     <hc:TransitioningContentControl TransitionMode="Fade">
-        <Grid>
+        <Grid Background="Red">
             <hc:Carousel x:Name="carousel" AutoRun="True" HorizontalAlignment="Center" Width="1200" Height="650"
                          ItemsSource="{Binding MenuImages}">
                 <hc:Carousel.ItemTemplate>

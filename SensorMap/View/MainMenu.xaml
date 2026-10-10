@@ -5,12 +5,18 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SensorMap.View"
              xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:vm="clr-namespace:SensorMap.ViewModel"
+             d:DataContext="{d:DesignInstance vm:MainMenuVM }"
              mc:Ignorable="d" >
     <hc:TransitioningContentControl TransitionMode="Fade">
         <Grid>
-            <hc:Carousel AutoRun="True" IsCenter="True" HorizontalAlignment="Center" Width="1200" Height="650">
-                <Image Name="ds" Source="/Resources/MenuImages/menuImage2.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
-                <Image Source="/Resources/MenuImages/menuImage3.jpg" Stretch="UniformToFill" Width="1200" Height="650"/>
+            <hc:Carousel x:Name="carousel" AutoRun="True" HorizontalAlignment="Center" Width="1200" Height="650"
+                         ItemsSource="{Binding MenuImages}">
+                <hc:Carousel.ItemTemplate>
+                    <DataTemplate>
+                        <Image Source="{Binding }" Stretch="UniformToFill" Width="1200"/>
+                    </DataTemplate>
+                </hc:Carousel.ItemTemplate>
             </hc:Carousel>
         </Grid>
     </hc:TransitioningContentControl>

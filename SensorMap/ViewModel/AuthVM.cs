@@ -90,7 +90,7 @@ namespace SensorMap.ViewModel
                             break;
                         }
                         _authorization.ChangePassword(text);
-                        ShowRecoveryCodes();
+                        _authorization.GenerateRecoveryCodes();
                         Succeed();
                         break;
                     case AuthMode.EnterRecoveryCode:
@@ -113,7 +113,13 @@ namespace SensorMap.ViewModel
                 {
                     var ask = HandyControl.Controls.MessageBox.Show("Коды восстановления пароля не созданы. Создать сейчас?",
                         "Восстановление пароля",MessageBoxButton.YesNo);
-                    if (ask == MessageBoxResult.Yes) ShowRecoveryCodes();
+                    if (ask == MessageBoxResult.Yes) _authorization.GenerateRecoveryCodes();
+                }
+                if (_authorization.CountRecoveryCode() < 2) 
+                {
+                    var ask = HandyControl.Controls.MessageBox.Show("Осталось мало кодов восстановления пароля. Создать новые коды?",
+                        "Пароль", MessageBoxButton.YesNo);
+                    if (ask == MessageBoxResult.Yes) _authorization.GenerateRecoveryCodes();
                 }
             }
             ForgotCommand = ReactiveCommand.Create(() =>
@@ -126,15 +132,7 @@ namespace SensorMap.ViewModel
                 Mode = AuthMode.EnterRecoveryCode;
                 UIMessageState = "Введите код восстановления";
             });
-            void ShowRecoveryCodes()
-            {
-                var codes = _authorization.GenerateRecoveryCodes();
-                var shown = string.Join("\n", codes.Select(c => $"{c[..6]}-{c[6..]}"));
-                var res = HandyControl.Controls.MessageBox.Show("Сохраните коды восстановления. Нажмите 'Подтвердить', чтобы " +
-                    "скопировать коды. Каждый действует один раз:\n\n" + shown
-                    , "Коды восстановления");
-                if (res == MessageBoxResult.OK) System.Windows.Clipboard.SetText(shown);
-            }
+            
         }
         public ICommand VerifyCommand { get; set; }
         public ICommand ForgotCommand { get; set; }

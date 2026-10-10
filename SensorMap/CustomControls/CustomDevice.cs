@@ -213,9 +213,10 @@ namespace SensorMap.CustomControls
 
         private void ChangeStateActions()
         {
+            this.MouseDown += OnMouseDown;
             if (IsEditMode)
             {
-                this.MouseDown += OnMouseDown;
+                
                 this.MouseMove += OnDeviceMouseMove;
                 _canvas.MouseMove += OnMouseMove;
                 _canvas.MouseUp += OnMouseUp;

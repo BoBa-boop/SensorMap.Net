@@ -289,9 +289,6 @@ namespace SensorMap.CustomControls
                 _canvas.MouseUp += _canvas_MouseUp;
                 _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
-                _canvas.MouseLeave += _canvas_MouseLeave;
-                //_canvas.KeyDown += _canvas_KeyDown;
-                //_canvas.KeyUp += _canvas_KeyUp;
                 _image.PreviewMouseDown += _image_PreviewMouseDown; ;
                 this.Unloaded += SensorDragDrop_Unloaded;
                 
@@ -309,26 +306,7 @@ namespace SensorMap.CustomControls
             Dispose();
         }
 
-        private void _canvas_MouseLeave(object sender, MouseEventArgs e)
-        {
-            
-        }
-
-        //private void _canvas_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
-        //{
-        //    if (e.Key == Key.LeftShift && _canvas.Children.OfType<CustomSensor>().Where(x=>x.IsSelected == true).Count()<2)
-        //    {
-        //        IsMultiSelection = false;
-        //    }
-        //}
-
-        //private void _canvas_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        //{
-        //    if((e.IsToggled) && e.Key == Key.LeftShift)
-        //    {
-        //        IsMultiSelection = true;
-        //    }
-        //}
+      
 
         private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
@@ -979,7 +957,6 @@ namespace SensorMap.CustomControls
             _canvas.MouseUp -= _canvas_MouseUp;
             _canvas.MouseWheel -= _canvas_MouseWheel;
             _canvas.Drop -= _canvas_Drop;
-            _canvas.MouseLeave -= _canvas_MouseLeave;
             _image.PreviewMouseDown -= _image_PreviewMouseDown;
             this.Unloaded -= SensorDragDrop_Unloaded;
         }

@@ -415,22 +415,8 @@
                                                 </Button.Content>
                                             </Button>
                                             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
-                                            <Button Name="showScheme"
-                                                        hc:IconElement.Geometry="{StaticResource EyeOpenGeometry}"
-                                                        hc:IconElement.Width="20" hc:IconElement.Height="13"
-                                                        Command="{Binding ElementName=root,Path=DataContext.ShowHelpfulFile}"
-                                                        CommandParameter="{Binding }"
-                                                        ToolTip="Показать электросхему">
-
-                                            </Button>
-                                            <Button Name="loadScheme" Padding="2" Width="40"
-                                                        Command="{Binding ElementName=root,Path=DataContext.AddHelpfulFile}"
-                                                        CommandParameter="{Binding }"
-                                                        ToolTip="Добавить электросхему">
-                                                <Button.Content>
-                                                    <Image Source="{StaticResource FileAddImage}"/>
-                                                </Button.Content>
-                                            </Button>
+                                            
+                                           
                                         </hc:ElementGroup>
                                         <DataTemplate.Triggers>
                                             <!--Триггер для скрытия кнопок из последней добавленной строки-->
@@ -439,9 +425,6 @@
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding}" Value="{x:Static CollectionView.NewItemPlaceholder}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding Files.Count}" Value="0">
-                                                <Setter Property="Visibility" Value="Collapsed" TargetName="showScheme"/>
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>

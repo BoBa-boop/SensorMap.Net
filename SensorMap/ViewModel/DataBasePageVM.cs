@@ -74,11 +74,15 @@ namespace SensorMap.ViewModel
                 {
                     try
                     {
-                        _dbProvider.ChangeDataBase(fileBrowser.FileName);
-                        DbPath = fileBrowser.FileName;
-                        DbName = Path.GetFileName(Settings.Default.ConnectionString);
-                        Growl.Success("Выбрана новая База Данных");
-                        _data.IsDataBaseConnect = true;
+                        bool result = _dbProvider.ChangeDataBase(fileBrowser.FileName);
+                        if(result)
+                        {
+                            DbPath = fileBrowser.FileName;
+                            DbName = Path.GetFileName(Settings.Default.ConnectionString);
+                            Growl.Success("Выбрана новая База Данных");
+                            _data.IsDataBaseConnect = true;
+                        }
+                        
                     }
                     catch (Exception ex)
                     {

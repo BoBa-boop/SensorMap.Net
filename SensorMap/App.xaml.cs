@@ -48,6 +48,12 @@ namespace SensorMap
             AnalyzeDataBase();
             if (IsStartOneApp(e))
             {
+                if (Settings.Default.UpgradeRequired)
+                {
+                    Settings.Default.Upgrade();
+                    Settings.Default.UpgradeRequired = false;
+                    Settings.Default.Save();
+                }
                 ConfigHelper.Instance.SetLang("ru");
                 var menuApp = _serviceProvider.GetRequiredService<MainWindow>();
                 var navigation = _serviceProvider.GetRequiredService<INavigation>();
@@ -60,21 +66,19 @@ namespace SensorMap
         {
             IAppDbContextFactory dbContextFactory = _serviceProvider.GetRequiredService<IAppDbContextFactory>();
             var data = _serviceProvider.GetRequiredService<IDataService>();
-            using (AppDBContext dBContext = dbContextFactory.CreateDbContext())
+            try
             {
-                try
+                using (AppDBContext dBContext = dbContextFactory.CreateDbContext())
                 {
                     dBContext.Database.MigrateAsync();
                     data.IsDataBaseConnect = true;
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString());
-                    data.IsDataBaseConnect = false;
-                }
             }
-
-
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+                data.IsDataBaseConnect = false;
+            }
         }
 
         private static void ConfigurationServiceces(IServiceCollection services)
@@ -102,7 +106,7 @@ namespace SensorMap
             services.AddTransient<AuthVM>();
 
             //Регистрация сервисы
-            ConfigurationDataBase(services);
+            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(AppPaths.GetDbPath()));
             services.AddSingleton<IDataService, DataService>();
             services.AddSingleton<IDataBaseProvider, DataBaseProvider>();
             services.AddSingleton<INavigation, NavigationService>();
@@ -148,28 +152,7 @@ namespace SensorMap
             });
         }
 
-        private static void ConfigurationDataBase(IServiceCollection services)
-        {
-            string? connection_string = Settings.Default.ConnectionString;
-            IConfigurationRoot config = AppSettingBuilder();
-            if(string.IsNullOrEmpty(connection_string)) connection_string= config.GetConnectionString("DefaultConnection");
-
-            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(connection_string));
-            Settings.Default.ConnectionString = connection_string;
-            Settings.Default.Save();
-        }
-
-        private static IConfigurationRoot AppSettingBuilder()
-        {
-            var builder = new ConfigurationBuilder();
-            // установка пути к текущему каталогу
-            builder.SetBasePath(Directory.GetCurrentDirectory());
-            // получаем конфигурацию из файла appsettings.json
-            builder.AddJsonFile("appsettings.json");
-            // создаем конфигурацию
-            var config = builder.Build();
-            return config;
-        }
+        
 
         private bool IsStartOneApp(StartupEventArgs e)
         {

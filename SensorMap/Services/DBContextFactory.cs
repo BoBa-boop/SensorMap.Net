@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using HandyControl.Controls;
+using HandyControl.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
@@ -23,6 +25,11 @@ namespace SensorMap.Services
 
         public AppDBContext CreateDbContext()
         {
+            if (string.IsNullOrEmpty(_connectionString))
+            {
+                Growl.Warning("Просмотр данных недоступен. Загрузите БД в приложение!");
+                throw new Exception("Строка подключения не может быть пустой");
+            }
             DbContextOptions options = new DbContextOptionsBuilder()
                 .UseSqlite(_connectionString)
                 .AddInterceptors(new AuditInterceptor())

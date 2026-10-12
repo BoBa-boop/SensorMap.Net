@@ -419,22 +419,7 @@ namespace SensorMap.ViewModel
                     window.Show();
                 }
             }, (s) => { return s != null; });
-            AddHelpfulFile = new RelayCommand<object>((obj) =>
-            {
-                if (obj is Mechanism mech)
-                {
-                    string[] paths = fileManagment.OpenFileDialog(true);
-                    mech.IsModified = fileManagment.AddHelpfulFile(paths, obj);
-                }
-            });
-            ShowHelpfulFile = new RelayCommand<object>((obj) =>
-            {
-                if (obj is Mechanism mech)
-                {
-                    if (mech == null || mech.Files == null || !mech.Files.Any()) return;
-                    fileManagment.OpenFileInExplorer(mech.Files.First().NameFile);
-                }
-            });
+            
             UndoCommand = new RelayCommand(()=>CurrentStack?.Undo());
             RedoCommand = new RelayCommand(()=>CurrentStack?.Redo());
             RecordEditCommand = new RelayCommand<IUndoRedoCommand>(command =>
@@ -722,8 +707,6 @@ namespace SensorMap.ViewModel
         public ICommand DeleteNodeTitleType { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
-        public ICommand AddHelpfulFile { get; }
-        public ICommand ShowHelpfulFile { get; }
         public ICommand AddCharacteristic { get; set; }
         public ICommand DeleteCharacteristic { get; set; }
         public ICommand RecordEditCommand { get; }

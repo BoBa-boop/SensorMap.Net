@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml.Linq;
 using Application = System.Windows.Application;
+using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Image = System.Windows.Controls.Image;
@@ -172,7 +173,7 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty IsSelectionRectActiveProperty =
             DependencyProperty.Register("IsSelectionRectActive", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
 
-        private static CustomSensor _memorySelectedSensor;
+        private static CustomSensor? _memorySelectedSensor;
 
         #endregion
 
@@ -181,12 +182,12 @@ namespace SensorMap.CustomControls
         private readonly ITransformObject _transformService;
         private Point LastPoint;
         private bool IsTransformed = false;
-        private Canvas _canvas;
-        private TextBlock _textBlock;
+        private Canvas? _canvas;
+        private TextBlock? _textBlock;
         private CompositeDisposable disposables = new CompositeDisposable();
         Rect addressRect;
         Rect Map;
-        private System.Windows.Controls.Image _image;
+        private System.Windows.Controls.Image? _image;
         private bool IsMoving;
         private AddressPlacement _addressPlacement = AddressPlacement.Right;
         private IDisposable? _sensorSubscription;
@@ -207,16 +208,23 @@ namespace SensorMap.CustomControls
             _canvas = _transformService.GetParentCanvas(this);
             _image = _canvas.Children.OfType<Image>().First();
             _textBlock = (TextBlock)GetTemplateChild("PART_Address");
-            this.Unloaded += CustomSensor_Unloaded;
+            
             if (_canvas != null)
             {
+                this.Unloaded += CustomSensor_Unloaded;
                 ChangeStateActions();
-                _sensorSubscription = SensorData.WhenAnyValue(x => x.Sensor)
+                _sensorSubscription = SensorData.WhenAnyValue(x => x.Sensor)                    
                     .Subscribe(_ =>
                     {
-                        if (SensorData?.Sensor?.SensorType?.Color != null && SensorData.Description != "Копия")
+                        if (SensorData == null || SensorData.Sensor == null || SensorData.Sensor.SensorType == null) return;
+                        
+                        if (SensorData.Sensor.SensorType.Color != null && SensorData.Description != "Копия")
                         {
-                            CustomBackground = (SolidColorBrush)new BrushConverter().ConvertFrom(SensorData.Sensor.SensorType.Color);
+                            Brush? currentColor = new BrushConverter().ConvertFrom(SensorData.Sensor.SensorType.Color) as Brush;
+                            if (currentColor is SolidColorBrush solidBrush)
+                                CustomBackground = solidBrush;
+                            else
+                                CustomBackground = new SolidColorBrush(Colors.LightGray);
                         }
                     }).DisposeWith(disposables);
                 System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
@@ -227,6 +235,7 @@ namespace SensorMap.CustomControls
 
         private void CustomSensor_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (_canvas == null) return;
             this.MouseDown -= OnMouseDown;
             this.MouseMove -= OnSensorMouseMove;
             _canvas.MouseMove -= OnMouseMove;
@@ -237,6 +246,7 @@ namespace SensorMap.CustomControls
 
         private void ChangeStateActions()
         {
+            if (_canvas == null) return;
             this.MouseDown += OnMouseDown;
             if (IsEditMode)
             {
@@ -250,7 +260,7 @@ namespace SensorMap.CustomControls
             {
                 this.IsSelected = false;
                 this.MouseMove -= OnSensorMouseMove;
-                _canvas.MouseMove -= OnMouseMove;
+                _canvas!.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;
             }
         }
@@ -283,6 +293,7 @@ namespace SensorMap.CustomControls
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
         {
             if (IsDragging == false) return;
+            if(_canvas == null) return;
             double screenX = Canvas.GetLeft(this);
             double screenY = Canvas.GetTop(this);
 
@@ -303,6 +314,8 @@ namespace SensorMap.CustomControls
 
         private void OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (_canvas == null) return;
+
             if (SelectedSensor != null)
             {
                 if (IsDragging)
@@ -372,6 +385,7 @@ namespace SensorMap.CustomControls
                                     break;
                             }
                         }
+                        if (_image == null) return;
                         if ((new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
                             if ((new_width > 17) && (new_height > 17))
@@ -425,8 +439,7 @@ namespace SensorMap.CustomControls
                 _memorySelectedSensor = this;
                 IsSelected = true;
                 this.Focus();
-
-                if (_image.Source != null)
+                if (_image != null && _image.Source != null)
                     Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
             }
             if(e.RightButton == MouseButtonState.Pressed)
@@ -457,7 +470,8 @@ namespace SensorMap.CustomControls
             SelectedSensor = this.IsSelected ? this : null;
             if (this.IsSelected) Canvas.SetZIndex(this, 1); else Canvas.SetZIndex(this, 0);
             CustBorderBrush = IsSelected ? Brushes.DarkGreen : Brushes.Black;
-            _textBlock.Background = IsSelected ? Brushes.Lavender : Brushes.WhiteSmoke;
+            if(_textBlock!=null)
+                _textBlock.Background = IsSelected ? Brushes.Lavender : Brushes.WhiteSmoke;
             Mouse.OverrideCursor = IsSelected ? _transformService.GetCursorForHitType(MouseHitType) : null;
         }
 
@@ -503,22 +517,21 @@ namespace SensorMap.CustomControls
                     addrW, addrH))
             };
 
-            Rect searchArea = Rect.Union(addressRect, CustomBounds);//���� ��� ������� ����� ��������� ����� � ���������
+            Rect searchArea = Rect.Union(addressRect, CustomBounds);
             searchArea.Inflate(20, 20);
-            bool isPositionFixed = false;
             addressRect = candidates.Where(pos =>pos.placement == _addressPlacement).Select(pos=>pos.addrRect).First();
             var sensorsInSearchArea = _canvas.Children.OfType<CustomSensor>()
                 .Where(s => s != this)
                 .Select(s =>
                 {
-                    // ��� ������� �������� ����������, ����� ������������� ������������ ��� ��������
-                    var rectToCheck = s._textBlock.Visibility != Visibility.Collapsed
+                    
+                    var rectToCheck = s._textBlock?.Visibility != Visibility.Collapsed
                         ? Rect.Union(s.GetAddressRectOnCanvas(), s.CustomBounds)
                         : s.CustomBounds;
 
                     return new { Sensor = s, CheckRect = rectToCheck };
                 })
-    .Where(x => x.CheckRect.IntersectsWith(searchArea)) // ��������� �������� ��������
+    .Where(x => x.CheckRect.IntersectsWith(searchArea))
     .Select(x => x.CheckRect).ToList();
 
             var nearestSensor = sensorsInSearchArea
@@ -529,7 +542,7 @@ namespace SensorMap.CustomControls
             {
                 foreach (var nearSensor in sensorsInSearchArea)
                 {
-                    //�������� ����������� � ��������
+                    
                     if (addrRect.IntersectsWith(nearSensor))
                         return true;
                 }
@@ -562,9 +575,6 @@ namespace SensorMap.CustomControls
 
             _addressPlacement = AddressPlacement.Center;
         }
-        /// <summary>
-        /// ��������� ������ �� ������ ������ �� ������������
-        /// </summary>
         private void ApplyAddressPlacement()
         {
             if (_textBlock == null) return;

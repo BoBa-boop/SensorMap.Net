@@ -25,14 +25,14 @@ namespace SensorMap.ViewModel
         private readonly ITempImage _imgManag;
         private readonly IFileManagment _fileManagment;
         private Dictionary<string, AdditionalData> _jsonMoreDataCache = new();
-        private List<AdditionalData> addDataList;
-        private TreeViewCollection<DeviceType, Device> deviceTree;
-        private ObservableCollection<Device> devices;
-        private IAppDbContextFactory _appDbContextFactory;
-        private Device _selectedDevice;
-        private ObservableCollection<Mechanism> _FilteredMechanisms = new ObservableCollection<Mechanism>();
+        private List<AdditionalData> addDataList = new();
+        private TreeViewCollection<DeviceType, Device>? deviceTree;
+        private ObservableCollection<Device> devices = new();
+        private readonly IAppDbContextFactory _appDbContextFactory;
+        private Device? _selectedDevice;
+        private ObservableCollection<Mechanism> _FilteredMechanisms = new();
         private bool isEditMode;
-        [Reactive] public Device SelectedDevice
+        [Reactive] public Device? SelectedDevice
         {
             get => _selectedDevice;
             set { if (value != null) this.RaiseAndSetIfChanged(ref _selectedDevice, value); }
@@ -41,8 +41,8 @@ namespace SensorMap.ViewModel
             get => devices;
             set { this.RaiseAndSetIfChanged(ref devices, value); }
         }
-        private ObservableCollection<DeviceType> _deviceTypes { get; set; }
-        [Reactive] public TreeViewCollection<DeviceType, Device> DeviceTree {
+        private ObservableCollection<DeviceType>? _deviceTypes { get; set; }
+        [Reactive] public TreeViewCollection<DeviceType, Device>? DeviceTree {
             get => deviceTree;
             set { this.RaiseAndSetIfChanged(ref deviceTree, value); }
         }
@@ -56,7 +56,7 @@ namespace SensorMap.ViewModel
 
         public Devices_VM(INavigation nav, IJsonSerialization json,
             IDataService service, IAppDbContextFactory appDbContextFactory,
-            IFileManagment fileManagment, ITempImage imgMang, Device device = null)
+            IFileManagment fileManagment, ITempImage imgMang, Device? device = null)
         {
             _service = service;
             _nav = nav;
@@ -80,21 +80,26 @@ namespace SensorMap.ViewModel
 
             ShowAllFiles = new RelayCommand(() =>
             {
-                foreach (var item in SelectedDevice.Files)
-                {
-                    item.IsHide = false;
-                }
+                if (SelectedDevice!=null)
+                    foreach (var item in SelectedDevice.Files)
+                    {
+                        item.IsHide = false;
+                    }
             });
 
             SaveMoreData = new RelayCommand(SaveDataFileds);
             
-            AddFiles = new RelayCommand<Device>((d) => 
+            AddFiles = new RelayCommand<Device?>((d) => 
             {
-                string[]paths = _fileManagment.OpenFileDialog(true);
-                _fileManagment.AddHelpfulFile(paths,d); 
+                if(d!=null)
+                {
+                    string[]paths = _fileManagment.OpenFileDialog(true);
+                    _fileManagment.AddHelpfulFile(paths, d); 
+                }
             });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
+                if (SelectedDevice == null) return;
                 try
                 {
                     using (var _dbContext = _appDbContextFactory.CreateDbContext())
@@ -124,7 +129,7 @@ namespace SensorMap.ViewModel
             }, (f) => { return f != null; });
             OpenFile = new RelayCommand<HelpfulFile>((file) => 
             {
-                if (!_fileManagment.OpenFileInExplorer(file.NameFile))
+                if (file!=null && !_fileManagment.OpenFileInExplorer(file.NameFile))
                 {
                     MessageBoxResult res = HandyControl.Controls.MessageBox.Show(
                         new MessageBoxInfo
@@ -138,12 +143,12 @@ namespace SensorMap.ViewModel
                         file.IsHide = true;
                     }
                 }
-            });
+            }, (f) => { return f != null; });
             SaveFiles = new RelayCommand(() =>
             {
                 try
                 {
-                    
+                    if (SelectedDevice == null) return;
                     using (var _dbContext = _appDbContextFactory.CreateDbContext())
                     {
                         _dbContext.Attach(SelectedDevice);
@@ -220,15 +225,13 @@ namespace SensorMap.ViewModel
                         .Where(device => device != null)
                         .SelectMany(async device =>
                         {
-                            // Создаем временный контекст ИМЕННО на время выполнения этого запроса
+                            
                             using var dbContext = appDbContextFactory.CreateDbContext();
-
-                            // Все запросы делаем через локальный dbContext
                             return await dbContext.Mechanisms
                                 .AsNoTracking()
-                                .Where(mech => mech.MapObjects
+                                .Where(mech => mech.MapObjects!=null && mech.MapObjects
                                     .OfType<DeviceAssignment>()
-                                    .Any(da => da.DeviceId == device.Id))
+                                    .Any(da => da.DeviceId == device!.Id))
                                 .Select(x => new Mechanism
                                 {
                                     Id = x.Id,
@@ -252,9 +255,9 @@ namespace SensorMap.ViewModel
                         .SelectMany(async selectedDevice =>
                         {
                             // 1. Сначала подготавливаем AdditionalData (синхронно в фоновом таске)
-                            if (selectedDevice.AdditionalData == null)
+                            if (selectedDevice?.AdditionalData == null)
                             {
-                                if (_jsonMoreDataCache.TryGetValue(selectedDevice.Name, out var cachedData) && cachedData.HasData())
+                                if (_jsonMoreDataCache.TryGetValue(selectedDevice?.Name??"", out var cachedData) && cachedData.HasData())
                                 {
                                     selectedDevice.AdditionalData = cachedData;
                                 }

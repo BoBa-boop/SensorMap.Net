@@ -260,7 +260,6 @@ namespace SensorMap.CustomControls
         private MatrixTransform? _viewMatrixTransform;
         private Matrix _viewMatrix = Matrix.Identity;
         private Point _initialMousePosition;
-        private double scaleLevel = 1;
         private bool _isDropAdd = false;
         private bool _isDragging;
         private Rect movingObject;  // Границы нашего объекта
@@ -289,9 +288,10 @@ namespace SensorMap.CustomControls
                 _canvas.MouseUp += _canvas_MouseUp;
                 _canvas.MouseWheel += _canvas_MouseWheel;
                 _canvas.Drop += _canvas_Drop;
-                _image.PreviewMouseDown += _image_PreviewMouseDown; ;
-                this.Unloaded += SensorDragDrop_Unloaded;
                 
+                this.Unloaded += SensorDragDrop_Unloaded;
+                if(_image != null)
+                    _image.PreviewMouseDown += _image_PreviewMouseDown; 
             }
             
         }
@@ -310,6 +310,7 @@ namespace SensorMap.CustomControls
 
         private void _canvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
+            if (_canvas == null) return;
             _initialMousePosition = new Point();
             Mouse.OverrideCursor = null;
             Cursor = Grab;
@@ -949,16 +950,18 @@ namespace SensorMap.CustomControls
 
         public void Dispose()
         {
+            if(_canvas != null && _image!=null)
+            {
             if (ItemsSource != null && ItemsSource is INotifyCollectionChanged notify) 
-                notify.CollectionChanged -= OnCollectionChanged;
-            //ImageSource = null;
-            _canvas.PreviewMouseMove -= _canvas_MouseMove;
-            _canvas.MouseDown -= _canvas_MouseDown;
-            _canvas.MouseUp -= _canvas_MouseUp;
-            _canvas.MouseWheel -= _canvas_MouseWheel;
-            _canvas.Drop -= _canvas_Drop;
-            _image.PreviewMouseDown -= _image_PreviewMouseDown;
-            this.Unloaded -= SensorDragDrop_Unloaded;
+                    notify.CollectionChanged -= OnCollectionChanged;
+                    _canvas.PreviewMouseMove -= _canvas_MouseMove;
+                    _canvas.MouseDown -= _canvas_MouseDown;
+                    _canvas.MouseUp -= _canvas_MouseUp;
+                    _canvas.MouseWheel -= _canvas_MouseWheel;
+                    _canvas.Drop -= _canvas_Drop;
+                    _image.PreviewMouseDown -= _image_PreviewMouseDown;
+                    this.Unloaded -= SensorDragDrop_Unloaded;
+            }
         }
     }
 }

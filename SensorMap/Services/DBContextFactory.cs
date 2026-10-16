@@ -1,17 +1,8 @@
 ﻿using HandyControl.Controls;
-using HandyControl.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Logging;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SensorMap.Services
 {

@@ -16,7 +16,7 @@ namespace SensorMap.ViewModel
     public class DataBasePageVM : ReactiveObject, IActivatableViewModel
     {
         private string _dbName = string.Empty;
-        private string _dbPath;
+        private string _dbPath = string.Empty;
         private readonly IDataBaseProvider _dbProvider;
         private readonly IDataService _data;
         private ILogEntryService _logService;
@@ -94,9 +94,10 @@ namespace SensorMap.ViewModel
             });
             NavigateToPathDB = new RelayCommand(() =>
             {
-                if (Directory.Exists(Path.GetDirectoryName(DbPath)))
+                string? directoryPath = Path.GetDirectoryName(DbPath);
+                if (Directory.Exists(directoryPath))
                 {
-                    Process.Start("explorer.exe", Path.GetDirectoryName(DbPath));
+                    Process.Start("explorer.exe", directoryPath);
                 }
             });
             LoadMoreLogs = new RelayCommand(() =>

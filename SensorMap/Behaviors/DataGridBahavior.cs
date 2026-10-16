@@ -29,10 +29,9 @@ namespace SensorMap.Behaviors
     public class DataGridBahavior : Behavior<DataGrid>
     {
         private bool hasChangesBeenMade;
-        private Window window;
-        private EditCell<object> command;
-        private Dictionary<string, object> originalFieldValues;
-        private ICollectionView collectionView;
+        private Window? window;
+        private EditCell<object>? command;
+        private Dictionary<string, object>? originalFieldValues;
 
 
         public ICommand Command
@@ -84,7 +83,7 @@ namespace SensorMap.Behaviors
         private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
         {
             var dataGrid = sender as DataGrid;
-            if (e.Row.Item != null)
+            if (e.Row.Item != null && dataGrid!=null)
             {
                 if (originalFieldValues != null)
                 {
@@ -100,9 +99,12 @@ namespace SensorMap.Behaviors
                     }
                     else objectAfterEdit = GetPropertyValue(e.Row.Item, originalObject.Key);
                     
-                    string originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1))?? originalObject.Value).ToString();
-                    string EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))?? objectAfterEdit).ToString();
+                    string? originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1)) ?? originalObject.Value).ToString();
+                    string? EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))?? objectAfterEdit).ToString();
                     int columnIndex = e.Column.DisplayIndex;
+
+                    if (string.IsNullOrEmpty(originalProp) && string.IsNullOrEmpty(EditProp)) return;
+
                     hasChangesBeenMade = originalProp!=EditProp;
                     if (hasChangesBeenMade)
                     {
@@ -119,7 +121,7 @@ namespace SensorMap.Behaviors
         private void ResetStates()
         {
             hasChangesBeenMade = false;
-            originalFieldValues.Clear();
+            if(originalFieldValues!=null) originalFieldValues.Clear();
         }
 
         protected override void OnDetaching()
@@ -195,14 +197,14 @@ namespace SensorMap.Behaviors
         private void GetEditColumnValue(DataGridBeginningEditEventArgs e)
         {
             var binding = e.Column.ClipboardContentBinding as System.Windows.Data.Binding;
-            var propertyPath = binding?.Path?.Path.Split('.');
+            string[]? propertyPath = binding?.Path?.Path.Split('.');
 
-            if(propertyPath!=null)
+            if(propertyPath!=null && e.Row.Item!=null)
             {
                 var editPropKey = propertyPath.Length > 1 ? propertyPath[1] : propertyPath[0];
                 originalFieldValues = new Dictionary<string, object>
                 {
-                    [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0])??string.Empty,
+                    [propertyPath[0]] = GetPropertyValue(e.Row.Item, propertyPath[0]),
                     ["EditProp"] = editPropKey,
                     ["Modify"] = GetPropertyValue(e.Row.Item, "IsModified")
                 };
@@ -212,17 +214,17 @@ namespace SensorMap.Behaviors
         private object GetPropertyValue(object obj, string propertyPath)
         {
             var parts = propertyPath.Split('.');
-            object current = obj;
+            object? current = obj;
 
             foreach (var part in parts)
             {
-                if (current == null) return null;
+                if (current == null) return string.Empty;
                 var prop = current.GetType().GetProperty(part);
-                if (prop == null) return null;
+                if (prop == null) return string.Empty;
                 current = prop.GetValue(current);
             }
 
-            return current;
+            return current!;
         }
         private static IEnumerable<T> FindChildren<T>(DependencyObject parent)
         {

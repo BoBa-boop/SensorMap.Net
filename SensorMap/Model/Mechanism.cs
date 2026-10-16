@@ -19,7 +19,6 @@ namespace SensorMap.Model
         private Device? _device;
         private Sector? sector;
         private ObservableCollection<HelpfulFile> files = new ObservableCollection<HelpfulFile>();
-        private string _nameGroup;
 
         [Key] public int Id { get; set; }
         [MaxLength(250)]

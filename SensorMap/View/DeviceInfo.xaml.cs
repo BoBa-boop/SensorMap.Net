@@ -25,13 +25,13 @@ namespace SensorMap.View
         {
             if (sender is Button button)
             {
-                var sensor = button.DataContext as SensorAssignments;
-                var image = sensor?.Image;
+                var device = button.DataContext as DeviceAssignment;
+                byte[]? image = device?.Image;
                 var browser = new CustomImageBrowser(CreateImageFromBytes(image)) { Title = "Реальное расположение" };
                 browser.ShowDialog();
             }
         }
-        private ImageSource CreateImageFromBytes(byte[] imageData)
+        private ImageSource CreateImageFromBytes(byte[]? imageData)
         {
             if (imageData == null || imageData.Length == 0) return null;
             try

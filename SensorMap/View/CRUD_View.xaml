@@ -171,9 +171,6 @@
                     <Trigger Property="Validation.HasError" Value="True">
                         <Setter Property="Background" Value="HotPink"/>
                     </Trigger>
-                    <DataTrigger Binding="{Binding ElementName=root, Path=DataContext.IsEditMode}" Value="False">
-                        <Setter Property="Foreground" Value="Black"/>
-                    </DataTrigger>
                 </Style.Triggers>
             </Style>
             
@@ -207,7 +204,7 @@
                     </Grid.RowDefinitions>
                     <DataGrid ItemsSource="{Binding Sectors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="0"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
-                      ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
+                      ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="True"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                       IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
                               EnableRowVirtualization="True" 
@@ -313,7 +310,7 @@
                               CanUserAddRows="True" CanUserSortColumns="False"
                               ColumnWidth="auto"
                               Unloaded="DataGrid_Unloaded"
-                              CanUserResizeColumns="False"
+                              CanUserResizeColumns="True"
                               RowStyle="{StaticResource rowStyle}"
                               CellStyle="{StaticResource cellStyle}"
                               IsReadOnly="{Binding ElementName=root,Path=DataContext.IsEditMode,
@@ -445,29 +442,17 @@
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Menu Grid.Row="0" VerticalAlignment="Top">
-                        <MenuItem Header="Свернуть">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="Click">
-                                    <i:ChangePropertyAction 
-                    TargetObject="{Binding }"
-                    PropertyName="IsExpanded" Value="False"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </MenuItem>
-                        <MenuItem Header="Развернуть">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="Click">
-                                    <i:ChangePropertyAction
-                    TargetObject="{Binding }"
-                    PropertyName="IsExpanded" Value="True"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </MenuItem>
+                    <Menu Grid.Row="0">
+                        <MenuItem Header="Свернуть"
+                                  Command="{x:Static dgCMD:GroupCommands.CollapseAll}"
+                                  CommandTarget="{Binding ElementName=SensorsDG}"/>
+                        <MenuItem Header="Развернуть"
+                                  Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
+                                  CommandTarget="{Binding ElementName=SensorsDG}"/>
                     </Menu>
-                    <DataGrid ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="1"
+                    <DataGrid x:Name="SensorsDG"  ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}" Grid.Row="1"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
-                      ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
+                      ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="True"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                        IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
                               EnableRowVirtualization="True"
@@ -490,7 +475,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                    <Expander IsExpanded="{Binding ElementName=root,Path=DataContext.IsExpanded}">
+                                                    <Expander IsExpanded="True">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="10,0"/>
@@ -600,28 +585,17 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Menu Grid.Row="0">
-                        <MenuItem Header="Свернуть">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="Click">
-                                    <i:ChangePropertyAction 
-                    TargetObject="{Binding }"
-                    PropertyName="IsExpanded" Value="False"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </MenuItem>
-                        <MenuItem Header="Развернуть">
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="Click">
-                                    <i:ChangePropertyAction
-                    TargetObject="{Binding }"
-                    PropertyName="IsExpanded" Value="True"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </MenuItem>
+                        <MenuItem Header="Свернуть"
+              Command="{x:Static dgCMD:GroupCommands.CollapseAll}"
+              CommandTarget="{Binding ElementName=DevicesDG}"/>
+                        <MenuItem Header="Развернуть"
+              Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
+              CommandTarget="{Binding ElementName=DevicesDG}"/>
                     </Menu>
-                    <DataGrid ItemsSource="{Binding Devices}" Grid.Row="1"
+                    <DataGrid x:Name="DevicesDG"
+                        ItemsSource="{Binding Devices}" Grid.Row="1"
                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserSortColumns="False"
-                      ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="False"
+                      ColumnWidth="auto" Unloaded="DataGrid_Unloaded" CanUserResizeColumns="True"
                       RowStyle="{StaticResource rowStyle}" CellStyle="{StaticResource cellStyle}"
                       IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter},UpdateSourceTrigger=PropertyChanged}"
                               EnableRowVirtualization="True"
@@ -1030,7 +1004,7 @@
                                                                     Cursor="Hand"
                                                                     Background="{TemplateBinding Background}">
                                                                 
-                                                                <ContentPresenter ToolTip="{Binding Name}"/>
+                                                                <ContentPresenter/>
                                                             </Border>
                                                             <ControlTemplate.Triggers>
                                                                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsSelected}" Value="True">

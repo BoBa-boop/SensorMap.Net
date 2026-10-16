@@ -2,17 +2,9 @@
 using HandyControl.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
-using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Logging;
-using SensorMap.Model;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 
 namespace SensorMap.Services
 {

@@ -28,7 +28,7 @@ namespace SensorMap.ViewModel
         private IAuthorization _authorization;
         private bool _isAuth;
         private string? _pending;
-        private string uIMessageState;
+        private string uIMessageState = string.Empty;
 
         [Reactive] public string UIMessageState { get => uIMessageState; set => this.RaiseAndSetIfChanged(ref uIMessageState, value); }
         [Reactive]public bool IsAuth 

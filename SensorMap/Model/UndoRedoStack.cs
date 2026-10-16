@@ -10,7 +10,6 @@ namespace SensorMap.Model
     {
         private Stack<IUndoRedoCommand> _undo = new Stack<IUndoRedoCommand>();
         private Stack<IUndoRedoCommand> _redo = new Stack<IUndoRedoCommand>();
-        private readonly int _maxUndoSteps = 3;
         private bool _canUndo;
         private bool _canRedo;
 

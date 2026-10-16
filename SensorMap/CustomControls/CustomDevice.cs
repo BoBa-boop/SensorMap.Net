@@ -132,7 +132,7 @@ namespace SensorMap.CustomControls
                 typeof(CustomDevice),
                 new PropertyMetadata(null));
 
-        public CustomDevice SelectedDevice
+        public CustomDevice? SelectedDevice
         {
             get { return (CustomDevice)GetValue(SelectedDeviceProperty); }
             set { SetValue(SelectedDeviceProperty, value); }
@@ -166,17 +166,16 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty IsSelectionRectActiveProperty =
             DependencyProperty.Register("IsSelectionRectActive", typeof(bool), typeof(CustomDevice), new PropertyMetadata(false));
 
-        private static CustomDevice _memorySelectedDevice;
+
 
         #endregion
-
+        private static CustomDevice? _memorySelectedDevice;
         private readonly ITransformObject _transformService;
         private Point LastPoint;
         private bool IsTransformed = false;
-        private Canvas _canvas;
-        private TextBlock _textBlock;
+        private Canvas? _canvas;
         Rect Map;
-        private Image _image;
+        private Image? _image;
         private bool IsMoving;
         private bool IsContextOpen;
 
@@ -198,17 +197,17 @@ namespace SensorMap.CustomControls
             if (_canvas != null)
             {
                 ChangeStateActions();
-
+                this.Unloaded += CustomDevice_Unloaded;
             }
-            this.Unloaded += CustomDevice_Unloaded;
+            
         }
 
         private void CustomDevice_Unloaded(object sender, RoutedEventArgs e)
         {
             this.MouseDown -= OnMouseDown;
             this.MouseMove -= OnDeviceMouseMove;
-            _canvas.MouseMove -= OnMouseMove;
-            _canvas.MouseUp -= OnMouseUp;
+            _canvas!.MouseMove -= OnMouseMove;
+            _canvas!.MouseUp -= OnMouseUp;
         }
 
         private void ChangeStateActions()
@@ -218,16 +217,15 @@ namespace SensorMap.CustomControls
             {
                 
                 this.MouseMove += OnDeviceMouseMove;
-                _canvas.MouseMove += OnMouseMove;
+                _canvas!.MouseMove += OnMouseMove;
                 _canvas.MouseUp += OnMouseUp;
                 this.MouseLeave += OnMouseLeave;
             }
             else
             {
                 this.IsSelected = false;
-                //this.MouseDown -= OnMouseDown;
                 this.MouseMove -= OnDeviceMouseMove;
-                _canvas.MouseMove -= OnMouseMove;
+                _canvas!.MouseMove -= OnMouseMove;
                 _canvas.MouseUp -= OnMouseUp;
             }
         }
@@ -263,7 +261,7 @@ namespace SensorMap.CustomControls
             double screenY = Canvas.GetTop(this);
 
             Point worldPoint = _transformService.ScreenToWorld(new Point(screenX, screenY), MapProperties.GetViewMatrix(this));
-            var selectedDevices = _canvas.Children.OfType<CustomDevice>()
+            var selectedDevices = _canvas!.Children.OfType<CustomDevice>()
                    .Where(x => x.IsSelected).Select(x => x.DeviceData).Cast<MapObject>().ToList();
             var canvasCollection = _canvas.Children.OfType<CustomDevice>()
                 .Where(x => selectedDevices.Contains(x.DeviceData)).ToList().Cast<IMapElement>().ToList();
@@ -288,7 +286,7 @@ namespace SensorMap.CustomControls
                     double offset_x = point.X - LastPoint.X;
                     double offset_y = point.Y - LastPoint.Y;
 
-                    foreach (var item in _canvas.Children.OfType<CustomDevice>().Where(x => x.IsSelected))
+                    foreach (var item in _canvas!.Children.OfType<CustomDevice>().Where(x => x.IsSelected))
                     {
                         double new_x = Canvas.GetLeft(item);
                         double new_y = Canvas.GetTop(item);
@@ -349,7 +347,7 @@ namespace SensorMap.CustomControls
                                     break;
                             }
                         }
-                        if ((new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
+                        if (_image!=null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
                             if ((new_width > 17) && (new_height > 17))
                             {
@@ -390,7 +388,7 @@ namespace SensorMap.CustomControls
                 IsSelected = true;
                 this.Focus();
 
-                if (_image.Source != null)
+                if (_image!=null && _image.Source != null)
                     Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
             }
             if (e.RightButton == MouseButtonState.Pressed)

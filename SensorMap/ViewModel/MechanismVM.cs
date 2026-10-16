@@ -43,7 +43,6 @@ namespace SensorMap.ViewModel
         private bool isEditMode;
         private bool _isShowSensors;
         private bool _hasChanges;
-        private SensorAssignments _selectSensor;
         private readonly Dictionary<int, UndoRedoStack> _undoRedoStacks = new();
         private IDisposable? _undoSub;
         private IDisposable? _redoSub;

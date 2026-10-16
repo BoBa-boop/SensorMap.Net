@@ -80,7 +80,7 @@ namespace SensorMap.ViewModel
                         WaitTime = 2
                     });
                 }
-                catch (Exception ex)
+                catch
                 {
                     Growl.Error("Ошибка при удаление путей!");
                 }

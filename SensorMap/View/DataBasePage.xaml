@@ -49,26 +49,9 @@
                     hc:IconElement.Geometry="{StaticResource DownloadGeometry}"
                     Command="{Binding ChangeDataBase}"/>
                 </StackPanel>
-                <TextBlock Text="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
-                   TextTrimming="WordEllipsis"
-                   Cursor="Hand"
-                   ToolTip="{Binding DbPath,UpdateSourceTrigger=PropertyChanged}"
-                   Padding="7,5"
-                   MaxWidth="240"                           
-                   Background="Transparent">
-                    <TextBlock.InputBindings>
-                        <MouseBinding Gesture="LeftClick" Command="{Binding NavigateToPathDB}"/>
-                    </TextBlock.InputBindings>
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Style.Triggers>
-                                <Trigger Property="TextBlock.IsMouseOver" Value="True">
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                <Button Content="Расположение файла"
+                        Cursor="Hand"
+                        Command="{Binding NavigateToPathDB}"/>
             </StackPanel>
         </GroupBox>
         <GroupBox Style="{StaticResource GroupBoxOriginal}"

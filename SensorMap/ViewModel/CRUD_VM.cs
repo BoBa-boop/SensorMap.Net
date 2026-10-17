@@ -15,6 +15,7 @@ using SensorMap.Interfaces;
 using SensorMap.Logging;
 using SensorMap.Model;
 using SensorMap.Services;
+using SensorMap.Services.Logger;
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;

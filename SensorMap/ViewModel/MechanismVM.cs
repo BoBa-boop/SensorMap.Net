@@ -2,28 +2,26 @@ using CommunityToolkit.Mvvm.Input;
 using DynamicData;
 using HandyControl.Controls;
 using HandyControl.Data;
-using HandyControl.Expression.Shapes;
 using Microsoft.EntityFrameworkCore;
+using NLog;
 using ReactiveUI;
-using ReactiveUI.SourceGenerators;
 using SensorMap.Commands.SensorCommands;
-using SensorMap.CustomControls;
 using SensorMap.Interfaces;
+using SensorMap.Logging;
 using SensorMap.Model;
 using SensorMap.Services;
 using SensorMap.View;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Net.WebSockets;
+using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Xml;
 using DataFormats = System.Windows.DataFormats;
 using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
-using MessageBox = System.Windows.MessageBox;
 
 namespace SensorMap.ViewModel
 {
@@ -32,29 +30,30 @@ namespace SensorMap.ViewModel
     /// </summary>
     public class MechanismVM : ReactiveObject, IActivatableViewModel
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private IAppDbContextFactory _appDbContextFactory;
-        private readonly IDataBaseProvider _provider;
         private readonly IDataService _service;
         private ITempImage _imgControl;
         private readonly IFileManagment _fileManagment;
         private Sector? currentSector; 
         private Mechanism? currentMech;
-        private Sensor _curSensor;
+        private Sensor? _curSensor;
         private bool isEditMode;
         private bool _isShowSensors;
         private bool _hasChanges;
         private readonly Dictionary<int, UndoRedoStack> _undoRedoStacks = new();
         private IDisposable? _undoSub;
         private IDisposable? _redoSub;
-        private Sensor _curDevice;
-        private MapObject _selectMapObject;
+        private Sensor? _curDevice;
+        private MapObject? _selectMapObject;
         private ObservableCollection<Device>? devicesList;
         private ObservableCollection<Sensor>? sensorsList;
         private ObservableCollection<SensorType>? sensorTypes1;
-        private TreeViewCollection<DeviceType, Device> devices;
-        private TreeViewCollection<SensorType, Sensor> sensors;
+        private TreeViewCollection<DeviceType, Device>? devices;
+        private TreeViewCollection<SensorType, Sensor>? sensors;
         private ObservableCollection<Sector>? sectors = new();
-        
+
+        #region Props
         private UndoRedoStack CurrentStack
         {
             get
@@ -165,7 +164,7 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref sectors, value);
             }
         } 
-         public ObservableCollection<SensorType>? sensorTypes 
+         public ObservableCollection<SensorType>? SensorTypes 
         {
             get { return sensorTypes1; }
             set
@@ -205,13 +204,13 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref devicesList, value);
             }
         }
-        public MechanismVM(IDataBaseProvider provider, IDataService service, INavigation _nav,
+        #endregion
+        public MechanismVM( IDataService service, INavigation _nav,
             IAppDbContextFactory appDbContextFactory, ITempImage imageControl,
             IFileManagment fileManagment,
-            Mechanism curMechanism = null )
+            Mechanism? curMechanism = null )
         {
             Navigation = _nav;
-            _provider = provider;
             _service = service;
             _imgControl = imageControl;
             _appDbContextFactory = appDbContextFactory;
@@ -262,7 +261,7 @@ namespace SensorMap.ViewModel
             });
             DeleteSensorCommand = new RelayCommand<object[]>((obj) => 
             {
-                if (obj[0] is RemoveSensor command && obj[1] is List<IMapElement> objects)
+                if (obj!=null && obj[0] is RemoveSensor command && obj[1] is List<IMapElement> objects)
                 {
                     CurrentStack?.Do(command);
                 }
@@ -321,7 +320,7 @@ namespace SensorMap.ViewModel
                 if (CurrentMech!=null)
                 {
                     MechanismSensorsWindow window = new MechanismSensorsWindow();
-                    MechSensorsVM mechSensorsVM = new MechSensorsVM(imageControl,CurrentMech,SensorsList,DevicesList);
+                    MechSensorsVM mechSensorsVM = new MechSensorsVM(_imgControl,CurrentMech,SensorsList,DevicesList);
                     window.DataContext = mechSensorsVM;
                     mechSensorsVM.IsEditMode = IsEditMode;
                     mechSensorsVM.WhenAnyValue(x => x.SelectedMapObject).BindTo(this, x => x.SelectedMapObject);
@@ -332,8 +331,9 @@ namespace SensorMap.ViewModel
             });
             ShowScheme = new RelayCommand<Mechanism>((mech) =>
             {
+                if (mech == null) return;
                 FilesWindow fsWindow = new FilesWindow();
-                var dc = new FilesWindowVM(_fileManagment, imageControl, mech.Files,mech);
+                var dc = new FilesWindowVM(_fileManagment, _imgControl, mech.Files,mech);
                 fsWindow.DataContext = dc;
                 dc.IsEditMode = IsEditMode;
                 mech.IsModified = true;
@@ -390,7 +390,7 @@ namespace SensorMap.ViewModel
                     Devices = null;
                     SensorsList?.Clear();
                     DevicesList?.Clear();
-                    sensorTypes?.Clear(); 
+                    SensorTypes?.Clear(); 
                     Sectors?.Clear();
                 }).DisposeWith(disposables);
 
@@ -409,7 +409,8 @@ namespace SensorMap.ViewModel
         private async void Save()
         {
             bool hasAnySuccess = false;
-            //Механизм изменен
+            //Механизм изменен. Сейчас,в этом окне, изменяется только при добавление\удаление файла.
+            //Поэтому сделано CurrentValues.SetValues(mechanism) для файлов, а не механизации
 
             var modifiedMechanisms = (CurrentSector?.Mechanisms ?? Enumerable.Empty<Mechanism>())
                 .Where(x => x.IsModified)
@@ -421,18 +422,35 @@ namespace SensorMap.ViewModel
                 using (var dbC = _appDbContextFactory.CreateDbContext())
                 {
                     List<Mechanism> currentMechObjects = dbC.Mechanisms
-                                                               .AsNoTracking()
                                                                .Where(x => changedIds.Contains(x.Id))
                                                                .ToList();
-                    
                     foreach (var mechanism in modifiedMechanisms)
                     {
                         Mechanism? originalObj = currentMechObjects
                        .FirstOrDefault(x => x.Id == mechanism.Id);
                         if (originalObj != null)
                         {
+                            originalObj.Files = new(dbC.HelpfulFiles.Where(x => originalObj.Id == x.MechanismId).ToList());
+                            // 1. Обновляем скалярные свойства механизма
                             dbC.Entry(originalObj).CurrentValues.SetValues(mechanism);
-                            dbC.Entry(originalObj).State = EntityState.Modified;
+
+                            // 2. Синхронизируем коллекцию файлов
+                            var originalFilesDict = originalObj.Files;
+                            var incomingFilesDict = mechanism.Files;
+
+                            // Удаление: файлы, которые были в БД, но отсутствуют в новом списке
+                            var filesToDelete = originalFilesDict.Select(x=>x.Id).Except(incomingFilesDict.Select(x=>x.Id)).ToList();
+                            if(filesToDelete.Count>0)
+                                dbC.HelpfulFiles.RemoveRange(dbC.HelpfulFiles.Where(f=>filesToDelete.Contains(f.Id)));
+
+                            // Добавление
+                            foreach (var incomingFile in mechanism.Files)
+                            {
+                                if (originalFilesDict.FirstOrDefault(x=> incomingFile.NameFile==x.NameFile)==null)
+                                {
+                                    originalObj.Files.Add(incomingFile);
+                                }
+                            }
                         }
                         mechanism.IsModified = false;
                     }
@@ -443,12 +461,13 @@ namespace SensorMap.ViewModel
             //Проверка изменение координат устройств
             try
             {
-                bool coordsSaved = await SaveCoordinates();
+                bool coordsSaved = SaveCoordinates();
                 hasAnySuccess = hasAnySuccess || coordsSaved;
             }
-            catch
-            { 
-                //logger
+            catch(Exception ex)
+            {
+                var reason = SaveErrorExplainer.Explain(ex);
+                Logger.Error($"Ошибка при сохранение. Причина {reason}");
             }
             if (hasAnySuccess)
             { 
@@ -486,12 +505,12 @@ namespace SensorMap.ViewModel
                 .Select(x => new Sensor() { Id = x.Id, Image = x.Image, Name = x.Name, SensorTypeID = x.SensorTypeID, SensorType = x.SensorType }).ToListAsync();
             var queryDevTypes = await _dbContext.DeviceTypes.AsNoTracking().Select(x => new DeviceType() { Id = x.Id, Name = x.Name }).ToListAsync();
 
-            sensorTypes = new ObservableCollection<SensorType>(queryTypes);
+            SensorTypes = new ObservableCollection<SensorType>(queryTypes);
             SensorsList = new ObservableCollection<Sensor>(querySensors);
             DevicesList = new ObservableCollection<Device>(queryDevice);
 
             Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id; 
-            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, sensorsList, filter);
+            Sensors = new TreeViewCollection<SensorType, Sensor>("Name", SensorTypes, sensorsList, filter);
             Func<DeviceType, Device, bool> filter2 = (type, devce) => devce.DeviceTypeId == type.Id; 
             Devices = new TreeViewCollection<DeviceType, Device>("Name", new ObservableCollection<DeviceType>(queryDevTypes), devicesList, filter2);
             //Sensors = new TreeViewCollection<SensorType, Sensor>("Name", sensorTypes, SensorsList, filter);
@@ -545,22 +564,20 @@ namespace SensorMap.ViewModel
             }
             return true;
         }
-        private async Task<bool> SaveCoordinates()
+        private bool SaveCoordinates()
         {
-            var changedMapObjects = CurrentMech.MapObjects
-                       .Where(x => x.IsModified || x.IsNew || x.ToDelete).ToList();
             using (var dbContext = _appDbContextFactory.CreateDbContext())
             {
-                if (CurrentMech?.MapObjects == null) return false; 
-                
-                
+                if (CurrentMech?.MapObjects == null) return false;
+
+                var changedMapObjects = CurrentMech.MapObjects
+                       .Where(x => x.IsModified || x.IsNew || x.ToDelete).ToList();
                 if (!changedMapObjects.Any())
                 {
                     return false;
                 }
                 var changedIds = changedMapObjects.Select(x => x.Id).ToList();
                 List<MapObject> currentMapObjects = dbContext.MapObjects
-                                                                   .AsNoTracking()
                                                                    .Where(x => changedIds.Contains(x.Id))
                                                                    .ToList();
 
@@ -568,7 +585,7 @@ namespace SensorMap.ViewModel
 
                 foreach (var mapObj in changedMapObjects)
                 {
-                    if (!IsValidData(mapObj)) break; 
+                    if (!IsValidData(mapObj)) continue; 
                     
                     MapObject? originalObj = currentMapObjects
                         .FirstOrDefault(x => x.Id == mapObj.Id);
@@ -594,15 +611,9 @@ namespace SensorMap.ViewModel
                         if (originalObj != null)
                         {
                             dbContext.Entry(originalObj).CurrentValues.SetValues(mapObj);
-                            dbContext.Entry(originalObj).State = EntityState.Modified;
                             changesCount++;
                         }
                     }
-
-                    // Сброс локальных флагов UI-модели, чтобы следующий клик "Сохранить" не делал лишнего
-                    //mapObj.IsNew = false;
-                    //mapObj.IsModified = false;
-                    //mapObj.ToDelete = false;
                 }
 
                 if (changesCount > 0)
@@ -626,7 +637,7 @@ namespace SensorMap.ViewModel
                     }
                     catch (Exception ex)
                     {
-                        //logger
+                        Logger.Error(ex,ex.Message);
                         return false;
                     }
                 }
@@ -637,7 +648,7 @@ namespace SensorMap.ViewModel
         private bool IsValidData(MapObject sensor)
         {
             if(sensor.Width <=10 || sensor.Height <=10) return false;
-            if(sensor.X <=0 || sensor.Y <=0) return false;
+            if(sensor.X <0 || sensor.Y <0) return false;
             return true;
         }
         public ICommand ShowSensorMechanism { get; }

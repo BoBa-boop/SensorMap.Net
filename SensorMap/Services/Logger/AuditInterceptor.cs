@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using SensorMap.Model;
+using SensorMap.Services.Logger;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -30,16 +30,15 @@ namespace SensorMap.ViewModel
         private readonly ITempImage imgManag;
         private IAppDbContextFactory _appDbContextFactory;
         private readonly IFileManagment _fileManagment;
-        private Sensor _sensorsTreeNode;
-        public ObservableCollection<AdditionalData> _additionalData;
-        private ObservableCollection<Mechanism> _FilteredMechanisms;
-        private ObservableCollection<SensorCharacteristic> _sensorCharacteristics;
+        private Sensor? _sensorsTreeNode;
+        public ObservableCollection<AdditionalData>? _additionalData;
+        private ObservableCollection<Mechanism>? _FilteredMechanisms;
 
         private bool isEditMode;
-        private TreeViewCollection<SensorType, Sensor> sensorsTree;
-        private ObservableCollection<Sensor> sensors;
+        private TreeViewCollection<SensorType, Sensor>? sensorsTree;
+        private ObservableCollection<Sensor>? sensors;
 
-        [Reactive]public Sensor SelectedNode
+        [Reactive]public Sensor? SelectedNode
         {
             get => _sensorsTreeNode;
             set 
@@ -49,7 +48,7 @@ namespace SensorMap.ViewModel
             }
             
         }
-        [Reactive] public ObservableCollection<Sensor> Sensors 
+        [Reactive] public ObservableCollection<Sensor>? Sensors 
         {
             get { return sensors; }
             set
@@ -58,12 +57,12 @@ namespace SensorMap.ViewModel
             }
         }
 
-        [Reactive] public ObservableCollection<Mechanism> FilteredMechanisms 
+        [Reactive] public ObservableCollection<Mechanism>? FilteredMechanisms 
         {
             get => _FilteredMechanisms;
             set { this.RaiseAndSetIfChanged(ref _FilteredMechanisms, value); }
         }
-        [Reactive] public TreeViewCollection<SensorType, Sensor> SensorsTree 
+        [Reactive] public TreeViewCollection<SensorType, Sensor>? SensorsTree 
         {
             get { return sensorsTree; }
             set
@@ -71,14 +70,14 @@ namespace SensorMap.ViewModel
                 this.RaiseAndSetIfChanged(ref sensorsTree, value);
             }
         }
-        private List<SensorType> sensorTypes {  get; set; }
+        private List<SensorType>? _sensorTypes {  get; set; }
         private Dictionary<string, AdditionalData> _jsonMoreDataCache = new();
         [Reactive] public bool IsEditMode { get => isEditMode; set { this.RaiseAndSetIfChanged(ref isEditMode, value); } }
 
         public SensorVM(IDataService service, IJsonSerialization json,
             ITempImage imgManag,
             INavigation navigation, IAppDbContextFactory appDbContextFactory,
-            IFileManagment fileManagment, Sensor sensor = null)
+            IFileManagment fileManagment, Sensor? sensor = null)
         {
             SelectedNode = sensor;
             _navigation = navigation;
@@ -104,12 +103,13 @@ namespace SensorMap.ViewModel
             });
             AddFiles = new RelayCommand<Sensor>((s) =>
             {
+                if(s == null) return;
                 string[] paths = fileManagment.OpenFileDialog(true);
                 fileManagment.AddHelpfulFile(paths, s);
             });
             DeletePathFiles = new RelayCommand<HelpfulFile>((file) =>
             {
-
+                if (SelectedNode == null) return;
                 try
                 {
                     using (var _dbContext = _appDbContextFactory.CreateDbContext())
@@ -139,6 +139,7 @@ namespace SensorMap.ViewModel
             }, (file) => { return file != null; });
             OpenFile = new RelayCommand<HelpfulFile>((file) =>
             {
+                if(file==null)return;
                 if (!fileManagment.OpenFileInExplorer(file.NameFile))
                 {
                     MessageBoxResult res = HandyControl.Controls.MessageBox.Show(
@@ -157,13 +158,12 @@ namespace SensorMap.ViewModel
             });
             SaveFiles = new RelayCommand(() =>
             {
+                if (SelectedNode == null) return;
                 try
                 {
                     using (var _dbContext = _appDbContextFactory.CreateDbContext())
                     {
                         _dbContext.Attach(SelectedNode);
-
-                        // Говорим EF Core, что навигационное свойство Files было изменено целиком
                         _dbContext.Entry(SelectedNode).Collection(s => s.Files).IsModified = true;
                         bool success = _dbContext.SaveChanges() > 0 ? true : false;
                         if (success) UnSetIsNew(SelectedNode.Files);
@@ -186,6 +186,7 @@ namespace SensorMap.ViewModel
             });
             ShowAllFiles = new RelayCommand(() =>
             {
+                if (SelectedNode == null) return;
                 foreach (var item in SelectedNode.Files)
                 {
                     item.IsHide = false;
@@ -233,11 +234,11 @@ namespace SensorMap.ViewModel
                         })
                         .ToListAsync();
 
-                    sensorTypes = new(queryTypes);
+                    _sensorTypes = new(queryTypes);
                     Sensors = new(querySensors);
 
                     Func<SensorType, Sensor, bool> filter = (type, sensor) => sensor.SensorTypeID == type.Id;
-                    SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", new(sensorTypes), Sensors, filter);
+                    SensorsTree = new TreeViewCollection<SensorType, Sensor>("Name", new(_sensorTypes), Sensors, filter);
                     
                 }
 
@@ -246,7 +247,6 @@ namespace SensorMap.ViewModel
                     .Where(sensor => sensor != null)
                     .SelectMany(async sensor =>
                     {
-                        // Создаем временный контекст ИМЕННО на время выполнения этого запроса
                         using var dbContext = appDbContextFactory.CreateDbContext();
 
                         // Все запросы делаем через локальный dbContext
@@ -276,47 +276,48 @@ namespace SensorMap.ViewModel
                     .Where(sensor => sensor != null)
                     .SelectMany(async selectedSensor =>
                     {
-                        // 1. Сначала подготавливаем AdditionalData (синхронно в фоновом таске)
-                        if (selectedSensor.AdditionalData == null)
+                        if (selectedSensor != null)
                         {
-                            if (_jsonMoreDataCache.TryGetValue(selectedSensor.Name, out var cachedData) && cachedData.HasData())
+                            if (selectedSensor.AdditionalData == null)
                             {
-                                selectedSensor.AdditionalData = cachedData;
-                            }
-                            else
-                            {
-                                var sType = sensorTypes.FirstOrDefault(t => t.Id == selectedSensor.SensorTypeID);
-                                if (sType != null && sType.Characteristics?.Any() == true)
+                                if (_jsonMoreDataCache.TryGetValue(selectedSensor.Name, out var cachedData) && cachedData.HasData())
                                 {
-                                    selectedSensor.AdditionalData = AdditionalData.CreateRecord(selectedSensor.Name, sType.Characteristics);
-                                    selectedSensor.AdditionalData.Data = new(sType.Characteristics.Select(c => new MoreData
+                                    selectedSensor.AdditionalData = cachedData;
+                                }
+                                else
+                                {
+                                    var sType = _sensorTypes.FirstOrDefault(t => t.Id == selectedSensor.SensorTypeID);
+                                    if (sType != null && sType.Characteristics?.Any() == true)
                                     {
-                                        Parameter = c.Title,
-                                        Value = string.Empty
-                                    }));
+                                        selectedSensor.AdditionalData = AdditionalData.CreateRecord(selectedSensor.Name, sType.Characteristics);
+                                        selectedSensor.AdditionalData.Data = new(sType.Characteristics.Select(c => new MoreData
+                                        {
+                                            Parameter = c.Title,
+                                            Value = string.Empty
+                                        }));
+                                    }
                                 }
                             }
-                        }
 
-                        // 2. Проверяем, нужно ли лезть в БД за тяжелыми данными
-                        if (selectedSensor.Image != null || selectedSensor.Files?.Any() == true)
-                        {
-                            return selectedSensor; // Данные уже есть, возвращаем датчик
-                        }
+                            if (selectedSensor.Image != null || selectedSensor.Files?.Any() == true)
+                            {
+                                return selectedSensor;
+                            }
 
-                        // 3. Догружаем тяжелые данные из БД
-                        using var dbContext = _appDbContextFactory.CreateDbContext();
-                        var heavyData = await dbContext.Sensors
-                            .AsNoTracking()
-                            .Where(s => s.Id == selectedSensor.Id)
-                            .Select(s => new { s.Image, s.Files, s.SensorType })
-                            .FirstOrDefaultAsync();
 
-                        if (heavyData != null)
-                        {
-                            selectedSensor.Image = heavyData.Image;
-                            selectedSensor.Files = heavyData.Files;
-                            selectedSensor.SensorType = heavyData.SensorType;
+                            using var dbContext = _appDbContextFactory.CreateDbContext();
+                            var heavyData = await dbContext.Sensors
+                                .AsNoTracking()
+                                .Where(s => s.Id == selectedSensor.Id)
+                                .Select(s => new { s.Image, s.Files, s.SensorType })
+                                .FirstOrDefaultAsync();
+
+                            if (heavyData != null)
+                            {
+                                selectedSensor.Image = heavyData.Image;
+                                selectedSensor.Files = heavyData.Files;
+                                selectedSensor.SensorType = heavyData.SensorType;
+                            }
                         }
                         return selectedSensor;
                     })
@@ -326,12 +327,6 @@ namespace SensorMap.ViewModel
                         this.RaisePropertyChanged(nameof(SelectedNode));
                     })
                     .DisposeWith(disposables);
-                
-
-                
-                
-                
-                
             });
         }
         
@@ -351,6 +346,7 @@ namespace SensorMap.ViewModel
             string FILE_PATH = "SensorMoreData.json";
             try
             {
+                if (SelectedNode == null) return;
                 SelectedNode.AdditionalData.Name = SelectedNode.Name;
                 
                 var editableObject = _jsonMoreDataCache.TryGetValue(SelectedNode.Name, out var additionalData);

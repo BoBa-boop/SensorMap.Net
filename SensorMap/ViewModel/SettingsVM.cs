@@ -2,6 +2,7 @@
 using HandyControl.Controls;
 using HandyControl.Data;
 using Microsoft.Extensions.Configuration;
+using NLog;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.EF;
@@ -25,12 +26,13 @@ namespace SensorMap.ViewModel
 {
     public class SettingsVM:ReactiveObject
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly Updater _updater = new();
         private IAuthorization _auth;
         private IJsonSerialization _json;
-        private SettingsApp settings;
+        private SettingsApp? settings;
 
-        [Reactive]public SettingsApp MySettings { get => settings; set => settings = value; }
+        [Reactive]public SettingsApp? MySettings { get => settings; set => settings = value; }
         public string VersionText => _updater.CurrentVersion is { } v ? $"Версия {v}" : "Версия: режим отладки";
         private bool isBusy;
 
@@ -46,7 +48,7 @@ namespace SensorMap.ViewModel
             get { return progress; }
             set { progress = value; }
         }
-        private string updStatus;
+        private string updStatus = string.Empty;
 
         [Reactive]public string UpdateStatus
         {
@@ -107,7 +109,7 @@ namespace SensorMap.ViewModel
             catch (Exception ex)
             {
                 UpdateStatus = "Не удалось проверить обновления";
-
+                Logger.Error(ex,ex.Message);
             }
             finally
             {

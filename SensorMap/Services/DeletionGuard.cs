@@ -1,7 +1,7 @@
 ﻿using HandyControl.Controls;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using SensorMap.Logging;
+using SensorMap.Services.Logger;
 using System.Linq.Expressions;
 using System.Reflection;
 using EFCore = Microsoft.EntityFrameworkCore.EF;

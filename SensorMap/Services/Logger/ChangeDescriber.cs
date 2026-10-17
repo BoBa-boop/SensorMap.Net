@@ -8,13 +8,13 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
-namespace SensorMap.Logging
+namespace SensorMap.Services.Logger
 {
     /// <summary>
     /// Превращает изменения из ChangeTracker в понятные пользователю записи журнала.
     /// Вызывать ДО сохранения (пока состояния Added/Modified/Deleted ещё не сброшены).
     /// </summary>
-    internal static class ChangeDescriber
+    internal static partial class ChangeDescriber
     {
         private static readonly Dictionary<Type, string> TypeNames = new()
         {
@@ -81,21 +81,22 @@ namespace SensorMap.Logging
 
             DbActionKind kind;
             string description;
+            if (entry.Entity is MapObject mapObject && TryDescribeMapObject(ctx, entry, mapObject, now, out var assignmentLog))
+                return assignmentLog;
+            if (entry.Entity is HelpfulFile file && TryDescribeHelpfulFile(ctx, entry, file, now, out var fileLog))
+                return fileLog;
 
+            //обычные данные
             switch (entry.State)
             {
                 case EntityState.Added:
                     kind = DbActionKind.Add;
-                    description = entry.Entity is HelpfulFile addedFile && ParentOf(addedFile) is { } addedParent
-                        ? $"{TypeName(addedParent.GetType())} \"{NameOf(addedParent)}\": добавлен файл \"{name}\""
-                        : $"{typeName}{quotedName} — добавление";
+                    description = $"{typeName}{quotedName} — добавление";
                     break;
 
                 case EntityState.Deleted:
                     kind = DbActionKind.Delete;
-                    description = entry.Entity is HelpfulFile deletedFile && ParentOf(deletedFile) is { } deletedParent
-                        ? $"{TypeName(deletedParent.GetType())} \"{NameOf(deletedParent)}\": удалён файл \"{name}\""
-                        : $"{typeName}{quotedName} — удаление";
+                    description = $"{typeName}{quotedName} — удаление";
                     break;
 
                 case EntityState.Modified:
@@ -167,13 +168,7 @@ namespace SensorMap.Logging
             }
         }
 
-        private static object? ParentOf(HelpfulFile file)
-        {
-            object? parent = file.Sensor;
-            parent ??= file.Device;
-            parent ??= file.Mechanism;
-            return parent;
-        }
+        
 
         internal static string NameOf(object entity)
         {

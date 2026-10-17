@@ -86,7 +86,7 @@ namespace SensorMap.ViewModel
                 }
             }, (s) =>
             {
-                if (IsEditMode) return true;
+                if (IsEditMode&&s!=null) return true;
 
                 return false;
             });

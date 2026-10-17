@@ -18,14 +18,11 @@ namespace SensorMap.ViewModel
 {
     public class SectorsVM: ReactiveObject, IActivatableViewModel
     {
-        private readonly IDataBaseProvider _provider;
-        private readonly IDataService _data;
         private INavigation navigation;
         private IAppDbContextFactory _appDbContextFactory;
         private ObservableCollection<Sector>? _coll;
         private string _searchText = string.Empty;
-        private Sector _sect;
-        private Mechanism _mech;
+        private Sector? _sect;
         private List<Sector> _allSectors = new();
         [Reactive]
         public string SearchText
@@ -54,14 +51,12 @@ namespace SensorMap.ViewModel
         }
         private bool _isDetailOpen;
         public ICommand ClosePanelCommand { get; }
-        public SectorsVM(INavigation _nav, IDataBaseProvider provider, IAppDbContextFactory cxFactory, IDataService data)
+        public SectorsVM(INavigation _nav,  IAppDbContextFactory cxFactory)
         {            
             navigation = _nav;
-            _data = data;
             _appDbContextFactory = cxFactory;
-            GoToMech = new RelayCommand<Mechanism>((mech) => navigation.NavigateTo<MechanismVM>(mech),(mech) => { return mech != null; });
+            GoToMech = new RelayCommand<Mechanism>((mech) => { if (mech != null) navigation.NavigateTo<MechanismVM>(mech); },(mech) => { return mech != null; });
             ClosePanelCommand = new RelayCommand(() => SelectedSector = null);
-            _provider = provider;
             using (var _dbContext = _appDbContextFactory.CreateDbContext())
             {
                 _allSectors = new(_dbContext.Sectors.Include(x => x.Mechanisms).AsNoTracking().ToList());

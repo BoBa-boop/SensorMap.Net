@@ -8,7 +8,6 @@ using System.Collections.ObjectModel;
 using System.Reactive.Disposables;
 using SensorMap.Services.UpdateService;
 using System.Windows.Input;
-using SensorMap.View;
 
 namespace SensorMap.ViewModel
 {
@@ -34,13 +33,12 @@ namespace SensorMap.ViewModel
             _auth = authorization;
             _json = jsonSerialization;
             this.WhenActivated((CompositeDisposable disposables) => {
-                
-                if (Path.Exists(SettingsApp.SettingsPath)) MySettings = _json.ReadFromJsonFile<SettingsApp>(SettingsApp.SettingsPath);
+                if (Path.Exists("SettingsApp.json")) MySettings = _json.ReadFromJsonFile<SettingsApp>("SettingsApp.json");
                 else
                 {
                     MySettings = new SettingsApp();
                     MySettings.MenuImages = new(new[] { "", "", "" });
-                    _json.WriteToJsonFile<SettingsApp>(SettingsApp.SettingsPath, MySettings);
+                    _json.WriteToJsonFile<SettingsApp>("SettingsApp.json", MySettings);
                 }
                 var listImages = MySettings.MenuImages.Where(x => !string.IsNullOrEmpty(x)).ToList();
                 if (listImages.Count == 0) listImages.Add(DefaultImage);

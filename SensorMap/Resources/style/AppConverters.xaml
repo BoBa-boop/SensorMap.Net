@@ -5,4 +5,5 @@
     <local:Bool2ReVis x:Key="Bool2ReVisOrHidden"/>
     <local:EqualStrings x:Key="StringEqualString"/>
     <local:PathConverter x:Key="PathConverter"/>
+    <local:CountToVisibilityConverter x:Key="CountToVisibility"/>
 </ResourceDictionary>

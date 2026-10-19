@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Logging;
+using System.IO;
 
 namespace SensorMap.Services
 {
@@ -18,8 +19,9 @@ namespace SensorMap.Services
         {
             if (string.IsNullOrEmpty(_connectionString))
             {
-                Growl.Warning("Просмотр данных недоступен. Загрузите БД в приложение!");
-                throw new Exception("Строка подключения не может быть пустой");
+                _connectionString = Path.Combine("DataSource=" + AppPaths.DataDir, "AppDataBase.db");
+                Properties.Settings.Default.ConnectionString = _connectionString;
+                Properties.Settings.Default.Save();
             }
             DbContextOptions options = new DbContextOptionsBuilder()
                 .UseSqlite(_connectionString)

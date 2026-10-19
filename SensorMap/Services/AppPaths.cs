@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
 using SensorMap.Properties;
 using System.IO;
 
@@ -15,22 +16,18 @@ namespace SensorMap.Services
         public static string GetDbPath()
         {
             string? connection_string = Settings.Default.ConnectionString;
-            IConfigurationRoot config = AppSettingBuilder();
-            if (string.IsNullOrEmpty(connection_string)) connection_string = Path.Combine(DataDir,config.GetConnectionString("DefaultConnection")??string.Empty);
-            
-            return connection_string;
+            if (string.IsNullOrEmpty(Settings.Default.ConnectionString))
+                return string.Empty;
+            return Path.Combine(DataDir, GetDbName());
         }
-        private static IConfigurationRoot AppSettingBuilder()
+        public static string GetDbName()
         {
-            var builder = new ConfigurationBuilder();
-            // установка пути к текущему каталогу
-            builder.SetBasePath(Directory.GetCurrentDirectory());
-            // получаем конфигурацию из файла appsettings.json
-            builder.AddJsonFile("appsettings.json");
-            // создаем конфигурацию
-            var config = builder.Build();
-            return config;
+            if(string.IsNullOrEmpty(Settings.Default.ConnectionString))
+                return string.Empty;
+            var csb = new SqliteConnectionStringBuilder(Settings.Default.ConnectionString);
+            return csb.DataSource;
         }
+        
 
     }
 }

@@ -51,6 +51,8 @@
                 </StackPanel>
                 <Button Content="Расположение файла"
                         Cursor="Hand"
+                        Margin="0,5"
+                        HorizontalAlignment="Left"
                         Command="{Binding NavigateToPathDB}"/>
             </StackPanel>
         </GroupBox>

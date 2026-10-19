@@ -9,7 +9,7 @@
              d:DataContext="{d:DesignInstance vm:MainMenuVM }"
              mc:Ignorable="d" >
     <hc:TransitioningContentControl TransitionMode="Fade">
-        <Grid Background="Red">
+        <Grid>
             <hc:Carousel x:Name="carousel" AutoRun="True" HorizontalAlignment="Center" Width="1200" Height="650"
                          ItemsSource="{Binding MenuImages}">
                 <hc:Carousel.ItemTemplate>
@@ -18,6 +18,8 @@
                     </DataTemplate>
                 </hc:Carousel.ItemTemplate>
             </hc:Carousel>
+            <Image Source="/Resources/MenuImages/menuImage2.jpg" HorizontalAlignment="Center" Width="1200" Height="650" 
+                   Visibility="{Binding MenuImages.Count,Converter={StaticResource CountToVisibility}}"/>
         </Grid>
     </hc:TransitioningContentControl>
 </UserControl>

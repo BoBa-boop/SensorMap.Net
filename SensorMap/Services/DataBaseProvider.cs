@@ -2,9 +2,12 @@
 using HandyControl.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SensorMap.Interfaces;
 using SensorMap.Logging;
 using System.IO;
+using System.Windows.Shapes;
+using Path = System.IO.Path;
 
 namespace SensorMap.Services
 {
@@ -84,6 +87,17 @@ namespace SensorMap.Services
                 });
             }
         }
-        
+
+        private static IConfigurationRoot AppSettingBuilder()
+        {
+            var builder = new ConfigurationBuilder();
+            // установка пути к текущему каталогу
+            builder.SetBasePath(Directory.GetCurrentDirectory());
+            // получаем конфигурацию из файла appsettings.json
+            builder.AddJsonFile("appsettings.json");
+            // создаем конфигурацию
+            var config = builder.Build();
+            return config;
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿using ReactiveUI;
+﻿using HandyControl.Controls;
+using HandyControl.Data;
+using ReactiveUI;
 using SensorMap.Services.UpdateService;
 using SensorMap.ViewModel;
 using System;
@@ -47,8 +49,11 @@ namespace SensorMap.View
             {
                 if(!isChecked)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(3));
                     isChecked = await _updater.CheckAsync();
+                    if (isChecked)
+                    {
+                        Growl.Info("Доступно обновление!");
+                    }
                 }
             }).DisposeWith(_activationDisposables);
         }

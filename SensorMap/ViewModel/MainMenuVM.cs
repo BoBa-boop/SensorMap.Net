@@ -43,7 +43,6 @@ namespace SensorMap.ViewModel
                     _json.WriteToJsonFile<SettingsApp>(SettingsApp.SettingsPath, MySettings);
                 }
                 var listImages = MySettings.MenuImages.Where(x => !string.IsNullOrEmpty(x)).ToList();
-                if (listImages.Count == 0) listImages.Add(DefaultImage);
                 MenuImages = new(listImages);
             });
         }

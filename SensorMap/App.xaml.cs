@@ -108,7 +108,7 @@ namespace SensorMap
             services.AddTransient<AuthVM>();
 
             //Регистрация сервисы
-            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(AppPaths.GetDbPath()));
+            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(Settings.Default.ConnectionString));
             services.AddSingleton<IDataService, DataService>();
             services.AddSingleton<IDataBaseProvider, DataBaseProvider>();
             services.AddSingleton<INavigation, NavigationService>();

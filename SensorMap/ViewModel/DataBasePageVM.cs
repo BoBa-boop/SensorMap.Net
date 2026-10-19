@@ -5,6 +5,7 @@ using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Properties;
+using SensorMap.Services;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -62,8 +63,9 @@ namespace SensorMap.ViewModel
             _dbProvider = dbProvider;
             _data = data;
             _logService = logService;
-            DbName = Path.GetFileName(Settings.Default.ConnectionString);
-            DbPath = Path.GetFullPath(Settings.Default.ConnectionString.Replace("DataSource=", ""));
+            DbPath = Path.GetFullPath(AppPaths.GetDbPath());
+            DbName = Path.GetFileName(AppPaths.GetDbName());
+            
             ChangeDataBase = new RelayCommand(() =>
             {
                 OpenFileDialog fileBrowser = new OpenFileDialog();
@@ -78,7 +80,7 @@ namespace SensorMap.ViewModel
                         if(result)
                         {
                             DbPath = fileBrowser.FileName;
-                            DbName = Path.GetFileName(Settings.Default.ConnectionString);
+                            DbName = Path.GetFileName(DbPath);
                             Growl.Success("Выбрана новая База Данных");
                             _data.IsDataBaseConnect = true;
                         }

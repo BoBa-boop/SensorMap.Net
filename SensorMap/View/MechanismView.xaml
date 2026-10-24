@@ -83,7 +83,7 @@
                         <Image Source="{StaticResource ListImage}"/>
                     </Button.Content>
                     <Button.Style>
-                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                        <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
                             <Setter Property="IsEnabled" Value="True"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding ElementName=ccSensorMap,Path=ItemsSource.Count}" Value="0">
@@ -94,10 +94,10 @@
                     </Button.Style>
                 </Button>
                 <Button ToolTip="Полезные файлы"
-                        Padding="2"
+                        Padding="3"
                         Command="{Binding ShowScheme}" CommandParameter="{Binding CurrentMech}">
                     <Button.Content>
-                        <Image Source="{StaticResource FileCogImage}"/>
+                        <Image Source="{StaticResource DocumentStarImage}"/>
                     </Button.Content>
                 </Button>
             </hc:SimpleStackPanel>
@@ -254,21 +254,25 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <StackPanel Grid.Row="0"
                             Margin="10,2"
                             Visibility="{Binding IsEditMode,Converter={StaticResource Boolean2VisibilityConverter}}"
-                            Orientation="Horizontal" VerticalAlignment="Center">                    
+                            Orientation="Horizontal" VerticalAlignment="Center">
                     <hc:ButtonGroup>
                         <Button ToolTip="Копировать" Padding="2"
-                                Width="30" Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}">
+                                Width="30" 
+                                Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}"
+                                CommandParameter="{Binding ElementName=ccSensorMap,Path=SelectedMapObject}">
                             <Button.Content>
                                 <Image Source="{StaticResource CopyImage}"/>
                             </Button.Content>
                         </Button>
                         <Button ToolTip="Вставить" Width="30"
                                 Padding="2"
-                                Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}">
+                                Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}"
+                                CommandParameter="{Binding ElementName=ccSensorMap,Path=SelectedMapObject}">
                             <Image Source="{StaticResource PasteImage}"/>
                         </Button>
                         <Button ToolTip="Вырезать" Width="30"
@@ -279,20 +283,41 @@
                             </Button.Content>
                         </Button>
                     </hc:ButtonGroup>
-                    <Ellipse Fill="Green" Margin="10,0"
-                            Width="15" Height="15"
-                            Visibility="{Binding ElementName=ccSensorMap,Path=IsMultiSelection,Converter={StaticResource Bool2VisOrHidden}}"/>
+                </StackPanel>
+                <StackPanel Grid.Row="2" VerticalAlignment="Top"
+                            Orientation="Horizontal" Margin="10,0"
+                            Height="30">
+                    <StackPanel Orientation="Horizontal" Margin="0,-7,15,0">
+                        <Image Source="{StaticResource MouseRightWithArrowsImage}" Height="30" Width="30" />
+                        <TextBlock Text="Перемещение" Style="{StaticResource TextBlockDefaultBold}"
+                                   FontSize="13"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,-3,15,2">
+                        <Image Source="{StaticResource MouseScrollImage}" Height="25"/>
+                        <TextBlock Text="Масштабирование" Style="{StaticResource TextBlockDefaultBold}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,-7,15,0">
+                        <Image Source="{StaticResource MouseLeftWithArrowsImage}" Height="30" Width="30"/>
+                        <TextBlock Text="Выбрать несколько объектов" Style="{StaticResource TextBlockDefaultBold}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,-9,15,0">
+                        <Image Source="{StaticResource MouseRightClickImage}" Height="30" Width="30"/>
+                        <TextBlock Text="Контекстное меню" Style="{StaticResource TextBlockDefaultBold}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </StackPanel>
                 <Border BorderThickness="1" BorderBrush="WhiteSmoke" Margin="10,0,10,10" ClipToBounds="True"
                         Grid.Row="1">
                     <myCC:SensorDragDrop x:Name="ccSensorMap" ImageSource="{Binding CurrentMech.Image}"
                                          AddSensorsCommand ="{Binding AddSensorToMap}"
                                          RemoveSensorEvent="{Binding DeleteSensorCommand}"
-                                         SelectedMapObject="{Binding SelectedMapObject,UpdateSourceTrigger=PropertyChanged}"
+                                         SelectedMapObject="{Binding SelectedMapObject,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                          IsEditMode="{Binding IsEditMode}"
                                          TransformSensorsCommand="{Binding TransformSensorCommand}"
-                                         ItemsSource="{Binding CurrentMech.MapObjects}">
-                    </myCC:SensorDragDrop>
+                                         ItemsSource="{Binding CurrentMech.MapObjects}"/>
                     
                 </Border>
                 

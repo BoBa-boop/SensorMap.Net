@@ -57,6 +57,8 @@
                                 </Border.RenderTransform>
                                 <Border.Style>
                                     <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="2"/>
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Trigger.EnterActions>
@@ -78,6 +80,9 @@
                                                     </BeginStoryboard>
                                                 </Trigger.ExitActions>
                                             </Trigger>
+                                            <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem}}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Border.Style>
@@ -110,11 +115,6 @@
                                                 BorderThickness="{TemplateBinding BorderThickness}">
                                             <ContentPresenter/>
                                         </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="#E8E8E8"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
@@ -169,7 +169,7 @@
                                             ImageSource="{Binding SelectedItem.Image, ElementName=MechListBox}"
                                             ShowImgMap="False" ShowToolBar="False"
                                             Margin="0,15,0,10"
-                                            Height="380" Background="{StaticResource ColorPickerOpacityBrush}"/>
+                                            Height="380" Background="{StaticResource BackgroundBrush}"/>
 
                             <!-- Список механизмов -->
                             <Grid Grid.Row="2" Margin="0,0,0,10">

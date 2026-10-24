@@ -8,10 +8,12 @@ using System.Collections.Specialized;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Application = System.Windows.Application;
+using Binding = System.Windows.Data.Binding;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Cursor = System.Windows.Input.Cursor;
@@ -72,7 +74,7 @@ namespace SensorMap.CustomControls
 
 
         /// <summary>
-        /// Выбранный объект на карте (датчик или устройство)
+        /// Выбранный объект из списка (датчик или устройство). Используется для выделения объекта на карте
         /// </summary>
         public MapObject SelectedMapObject
         {
@@ -86,31 +88,24 @@ namespace SensorMap.CustomControls
         private static void SelectedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = (SensorDragDrop)d;
-            MapObject newMapObj = e.NewValue as MapObject;
-            MapObject oldMapObj = e.OldValue as MapObject;
-            if (control != null && control._canvas != null)
-            {
-                if (control.IsMultiSelection)
-                {
-                    control.ClearSelectedSensors();
-                }
-                if (newMapObj == null)
-                {
-                    control.ClearSelectedSensors();
-                }
-                var elementToUnSelect = FindMapElement(control._canvas, oldMapObj);
-                var elementToSelect = FindMapElement(control._canvas, newMapObj);
+            if (control._canvas == null) return;
 
-                if (elementToSelect is CustomSensor sensorToSelect)
-                    sensorToSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, true);
-                else if (elementToSelect is CustomDevice deviceToSelect)
-                    deviceToSelect.SetCurrentValue(CustomDevice.IsSelectedProperty, true);
+            var oldEl = FindMapElement(control._canvas, e.OldValue as MapObject);
+            var newEl = FindMapElement(control._canvas, e.NewValue as MapObject);
 
-                if (elementToUnSelect is CustomSensor sensorToUnSelect)
-                    sensorToUnSelect.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
-                else if (elementToUnSelect is CustomDevice deviceToUnSelect)
-                    deviceToUnSelect.SetCurrentValue(CustomDevice.IsSelectedProperty, false);
-            }
+            SetHighlight(oldEl,false);
+
+            if (control._selectedFromMap) return;
+
+            if (control.IsMultiSelection || e.NewValue == null)
+                control.ClearSelectedSensors();
+            if(newEl is CustomSensor s) s.SetCurrentValue(CustomSensor.IsSelectedProperty,true);
+            else if(newEl is CustomDevice dd) dd.SetCurrentValue(CustomDevice.IsSelectedProperty,true);
+
+            if (oldEl is CustomSensor old_s) old_s.SetCurrentValue(CustomSensor.IsSelectedProperty, false);
+            else if (oldEl is CustomDevice old_d) old_d.SetCurrentValue(CustomDevice.IsSelectedProperty, false);
+            
+            SetHighlight(newEl,true);
         }
         private static FrameworkElement? FindMapElement(Canvas canvas, MapObject? mapData)
         {
@@ -140,7 +135,9 @@ namespace SensorMap.CustomControls
             DependencyProperty.Register("IsCustomSensorDragging", typeof(bool), typeof(SensorDragDrop), new PropertyMetadata(false));
 
 
-
+        /// <summary>
+        /// Используется в условиях перемещения объектов по карте. Привязка в generic.xaml
+        /// </summary>
         public bool IsSelectionRectEnable
         {
             get { return (bool)GetValue(IsSelectionRectEnableProperty); }
@@ -252,7 +249,7 @@ namespace SensorMap.CustomControls
         #endregion
 
         #endregion
-
+        private bool _selectedFromMap;
         private ITransformObject _transformObject;
         private IClipboard _clipboard;
         private List<MapObject> tempSelectedMapObjects = new List<MapObject>();
@@ -272,8 +269,13 @@ namespace SensorMap.CustomControls
             _image = GetTemplateChild("PART_Image") as Image;
             _transformObject = new TransformObjectService();
             _clipboard = new ClipboardService();
-            CopySensorsCommand = new RelayCommand(CopySensors);
-            PasteSensorsCommand = new RelayCommand(PasteSensors);
+            CopySensorsCommand = new RelayCommand<MapObject>((_) => CopySensors(), (obj) => { return obj is not null; });
+            PasteSensorsCommand = new RelayCommand<MapObject>((_)=>PasteSensors(), (_) =>
+            {
+                if (_clipboard != null && _clipboard.Paste<List<IMapElement>>() != null && _clipboard.Paste<List<IMapElement>>()!.Count > 0)
+                    return true;
+                return false;
+            });
             CutSensorsCommand = new RelayCommand(CutSensors);
             RemoveSensorCommand = new RelayCommand(RemoveSensor);
             if (_canvas != null)
@@ -291,9 +293,38 @@ namespace SensorMap.CustomControls
                 
                 this.Unloaded += SensorDragDrop_Unloaded;
                 if(_image != null)
-                    _image.PreviewMouseDown += _image_PreviewMouseDown; 
+                {
+                    _image.PreviewMouseDown += _image_PreviewMouseDown;
+                    _image.SizeChanged += _image_SizeChanged;
+                }
+                this.SizeChanged += SensorDragDrop_SizeChanged;
+                AddHandler(CustomSensor.SelectedByUserEvent, new RoutedEventHandler(OnElementSelectedByUser));
+                AddHandler(CustomDevice.SelectedByUserEvent, new RoutedEventHandler(OnElementSelectedByUser));
             }
             
+        }
+
+        private void SensorDragDrop_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            CenterImage();
+        }
+
+        private void _image_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            FitAndCenterImage();
+        }
+
+        private void OnElementSelectedByUser(object sender, RoutedEventArgs e)
+        {
+            if (e.OriginalSource is not IMapElement el) return;
+            _selectedFromMap = true;
+            try { SelectedMapObject = el.MapData; }
+            finally { _selectedFromMap = false; }
+        }
+        private static void SetHighlight(FrameworkElement? el, bool highlight)
+        {
+            if(el is CustomSensor s) s.IsHighlighted = highlight;
+            else if (el is CustomDevice d) d.IsHighlighted = highlight; 
         }
 
         private void _image_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -712,6 +743,33 @@ namespace SensorMap.CustomControls
             matrix.OffsetY = offsetY;
         }
         #endregion
+        private void CenterImage()
+        {
+            if (_canvas == null || _image == null || _viewMatrixTransform == null) return;
+            if (_image.ActualWidth == 0 || RenderSize.Width == 0) return;
+            
+            var m = _viewMatrixTransform.Matrix;
+            double w = _image.ActualWidth * m.M11;
+            double h = _image.ActualHeight * m.M11;
+
+            ApplyBounds(ref m,w,h,RenderSize);
+            _viewMatrixTransform.Matrix = m;
+        }
+        private void FitAndCenterImage()
+        {
+            if (_canvas == null || _image == null || _viewMatrixTransform == null) return;
+            if (_image.ActualWidth == 0 || RenderSize.Width == 0) return;
+
+            double scale = Math.Min(RenderSize.Width / _image.ActualWidth,RenderSize.Height / _image.ActualHeight);
+            scale = Math.Clamp(scale, 0.2, 10.0);
+
+            var m = Matrix.Identity;
+            m.Scale(scale, scale);
+            double w = _image.ActualWidth * scale,h=_image.ActualHeight*scale;
+
+            ApplyBounds(ref m, w, h, RenderSize);
+            _viewMatrixTransform.Matrix = m;
+        }
         private void _canvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
             _initialMousePosition = e.GetPosition(_canvas);
@@ -743,6 +801,8 @@ namespace SensorMap.CustomControls
                 Canvas.SetTop(element, point.Y);
                 element.SensorData.X = point.X;
                 element.SensorData.Y = point.Y;
+
+                
                 return element;
             }
             else if (mapData is DeviceAssignment deviceData)
@@ -946,6 +1006,7 @@ namespace SensorMap.CustomControls
             }
             tempSelectedMapObjects.Clear();
             IsMultiSelection = false;
+            SelectedMapObject = null;
         }
 
         public void Dispose()
@@ -953,14 +1014,16 @@ namespace SensorMap.CustomControls
             if(_canvas != null && _image!=null)
             {
             if (ItemsSource != null && ItemsSource is INotifyCollectionChanged notify) 
-                    notify.CollectionChanged -= OnCollectionChanged;
-                    _canvas.PreviewMouseMove -= _canvas_MouseMove;
-                    _canvas.MouseDown -= _canvas_MouseDown;
-                    _canvas.MouseUp -= _canvas_MouseUp;
-                    _canvas.MouseWheel -= _canvas_MouseWheel;
-                    _canvas.Drop -= _canvas_Drop;
-                    _image.PreviewMouseDown -= _image_PreviewMouseDown;
-                    this.Unloaded -= SensorDragDrop_Unloaded;
+                notify.CollectionChanged -= OnCollectionChanged;
+                _canvas.PreviewMouseMove -= _canvas_MouseMove;
+                _canvas.MouseDown -= _canvas_MouseDown;
+                _canvas.MouseUp -= _canvas_MouseUp;
+                _canvas.MouseWheel -= _canvas_MouseWheel;
+                _image.SizeChanged -= _image_SizeChanged;
+                this.SizeChanged -= SensorDragDrop_SizeChanged;
+                _canvas.Drop -= _canvas_Drop;
+                _image.PreviewMouseDown -= _image_PreviewMouseDown;
+                this.Unloaded -= SensorDragDrop_Unloaded;
             }
         }
     }

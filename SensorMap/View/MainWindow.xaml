@@ -32,9 +32,21 @@
             </Button>
             <Menu Background="Transparent">
                 <MenuItem Header="Данные">
-                    <MenuItem Header="Просмотр данных" Command="{Binding NavigateToDB}" IsEnabled="{Binding IsConnectedDB}"/>
-                    <MenuItem Header="Взаимодействие с Базой Данных" Command="{Binding NavigateToDataBasePage}"/>
-                    <MenuItem Header="Резервная копия БД" Command="{Binding CreateBackupDB}" IsEnabled="{Binding IsConnectedDB}"/>
+                    <MenuItem Header="Просмотр данных" Command="{Binding NavigateToDB}" IsEnabled="{Binding IsConnectedDB}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource DataBaseSearchImage}" Stretch="Fill"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Взаимодействие с Базой Данных" Command="{Binding NavigateToDataBasePage}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource DataBaseSettingsImage}"  Stretch="Fill"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Резервная копия БД" Command="{Binding CreateBackupDB}" IsEnabled="{Binding IsConnectedDB}">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource DataBaseBackupImage}"  Stretch="Fill"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                 </MenuItem>
             </Menu>
             <Menu Background="Transparent">

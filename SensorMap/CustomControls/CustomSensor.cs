@@ -34,6 +34,20 @@ namespace SensorMap.CustomControls
         public Rect GetCustomBounds() => CustomBounds;
         #region Dependency Properties
 
+        public static RoutedEvent SelectedByUserEvent = EventManager.RegisterRoutedEvent("SelectedByUser", RoutingStrategy.Bubble,
+            typeof(RoutedEventHandler), typeof(CustomSensor));
+
+
+        public bool IsHighlighted
+        {
+            get { return (bool)GetValue(IsHighlightedProperty); }
+            set { SetValue(IsHighlightedProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsHighlightedProperty =
+            DependencyProperty.Register("IsHighlighted", typeof(bool), typeof(CustomSensor), new PropertyMetadata(false));
+
+
         public SensorAssignments SensorData
         {
             get { return (SensorAssignments)GetValue(SensorProperty); }
@@ -439,6 +453,8 @@ namespace SensorMap.CustomControls
                 _memorySelectedSensor = this;
                 IsSelected = true;
                 this.Focus();
+                if(!IsMultiSelection)
+                    RaiseEvent(new RoutedEventArgs(SelectedByUserEvent, SelectedSensor));
                 if (_image != null && _image.Source != null)
                     Map = new Rect(Canvas.GetLeft(_image), Canvas.GetTop(_image), _image.ActualWidth, _image.ActualHeight);
             }

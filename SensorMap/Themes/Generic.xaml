@@ -51,7 +51,7 @@
              Value="{Binding Path=IsMultiSelection,
              RelativeSource={RelativeSource Mode=FindAncestor, 
              AncestorType={x:Type myCC:SensorDragDrop}}}"/>
-
+        
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type myCC:CustomSensor}">
@@ -118,12 +118,12 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
-                        <Ellipse 
+                        <Rectangle x:Name="PART_Highlight"
                             Canvas.Left="-7" Canvas.Top="-7"
                             Width="{calc:Binding 'CustomBounds.Width + 15',Mode=OneWay,RelativeSource={RelativeSource TemplatedParent}}"
                             Height="{calc:Binding 'CustomBounds.Height + 15',Mode=OneWay,RelativeSource={RelativeSource TemplatedParent}}">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
+                            <Rectangle.Style>
+                                <Style TargetType="Rectangle">
                                     <Setter Property="Fill" Value="Transparent"/>
                                     <Setter Property="StrokeThickness" Value="4"/>
                                     <Setter Property="StrokeDashArray" Value="2,2"/>
@@ -131,7 +131,7 @@
                                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                                     <Setter Property="Stroke">
                                         <Setter.Value>
-                                            <SolidColorBrush Color="{StaticResource InfoColor}"/>
+                                            <SolidColorBrush Color="{StaticResource AccentColor}"/>
                                         </Setter.Value>
                                     </Setter>
                                     <Setter Property="RenderTransform">
@@ -143,10 +143,7 @@
                                         <MultiDataTrigger>
                                             <MultiDataTrigger.Conditions>
                                                 <Condition Binding="{Binding IsSelected,RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
-                                                <Condition Binding="{Binding SelectedMapObject,
-                                                    Converter={StaticResource Object2BooleanConverter},
-                                                    RelativeSource={RelativeSource AncestorType={x:Type myCC:SensorDragDrop}}}" 
-                                                           Value="True"/>
+                                                <Condition Binding="{Binding IsHighlighted,RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
                                             </MultiDataTrigger.Conditions>
                                             <MultiDataTrigger.Setters>
                                                 <Setter Property="Visibility" Value="Visible"/>
@@ -154,20 +151,21 @@
                                         </MultiDataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Ellipse.Style>
-                            <Ellipse.Triggers>
+                            </Rectangle.Style>
+                            <Rectangle.Triggers>
                                 <EventTrigger RoutedEvent="Loaded">
                                     <BeginStoryboard>
-                                        <Storyboard RepeatBehavior="Forever" >
+                                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
                                             <DoubleAnimation 
-                                                Duration="0:0:2"
-                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                                From="0" To="360"/>
+                                                Duration="0:0:0.7"
+                                                Storyboard.TargetName="PART_Highlight"
+                                                Storyboard.TargetProperty="Opacity"
+                                                From="1" To="0.3"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </EventTrigger>
-                            </Ellipse.Triggers>
-                        </Ellipse>
+                            </Rectangle.Triggers>
+                        </Rectangle>
                     </Canvas>
                 </ControlTemplate>
             </Setter.Value>

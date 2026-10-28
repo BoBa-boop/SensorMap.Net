@@ -42,7 +42,6 @@ namespace SensorMap.Behaviors
         private void OnWindowPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (AssociatedObject == null || !AssociatedObject.IsVisible || !CanUnselectItem) return;
-            Point clickPosition = e.GetPosition(AssociatedObject);
             var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, e.GetPosition(AssociatedObject));
             if (hitTestResult == null)
             {
@@ -50,11 +49,11 @@ namespace SensorMap.Behaviors
             }
             else
             {
-                CheckSelectionOnClick(hitTestResult, clickPosition);
+                CheckSelectionOnClick(hitTestResult);
             }
         }
 
-        private void CheckSelectionOnClick(HitTestResult hitTestResult, Point clickPosition)
+        private void CheckSelectionOnClick(HitTestResult hitTestResult)
         {
             DependencyObject current = hitTestResult.VisualHit;
             bool isItem = false;

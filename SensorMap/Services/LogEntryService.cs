@@ -17,7 +17,7 @@ namespace SensorMap.Services
         private const int BatchSize = 100;
 
         // ѕуть должен совпадать с fileName у target "dbLog" в nlog.config
-        private readonly string _filePath = Path.Combine(AppContext.BaseDirectory, "LogDb.txt");
+        private readonly string _filePath = Path.Combine(AppPaths.DataDir, "LogDb.txt");
 
         private int _loadedFromIndex;
 

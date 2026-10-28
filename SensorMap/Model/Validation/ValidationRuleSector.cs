@@ -21,7 +21,7 @@ namespace SensorMap.Model.Validation
                 {
                     return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
                 }
-                else sector.IsModified = true;
+                
             }
 
             return ValidationResult.ValidResult;

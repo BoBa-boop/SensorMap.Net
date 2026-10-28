@@ -48,9 +48,9 @@ namespace SensorMap.Behaviors
         protected override void OnAttached()
         {
             base.OnAttached();
-            
-            #region -UnSel
 
+            #region -UnSel
+            
             #endregion
             AssociatedObject.Loaded += OnLoaded;
             AssociatedObject.BeginningEdit += OnBeginningEdit;
@@ -73,6 +73,8 @@ namespace SensorMap.Behaviors
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            if (window != null)
+                window.PreviewMouseDown -= OnWindowPreviewMouseDown;
             window = HandyControl.Controls.Window.GetWindow(AssociatedObject);
             if (window != null)
             {
@@ -98,9 +100,10 @@ namespace SensorMap.Behaviors
                         objectAfterEdit = tb.Text;
                     }
                     else objectAfterEdit = GetPropertyValue(e.Row.Item, originalObject.Key);
-                    
-                    string? originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1)) ?? originalObject.Value).ToString();
-                    string? EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))?? objectAfterEdit).ToString();
+                    var originalValue = GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1)) ?? originalObject.Value;
+                    var editValue = GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1)) ?? objectAfterEdit;
+                    string? originalProp = originalValue != null ? originalValue.ToString() : string.Empty;
+                    string? EditProp = editValue != null ? editValue.ToString() : string.Empty;
                     int columnIndex = e.Column.DisplayIndex;
 
                     if (string.IsNullOrEmpty(originalProp) && string.IsNullOrEmpty(EditProp)) return;
@@ -146,42 +149,58 @@ namespace SensorMap.Behaviors
         {
             if (AssociatedObject == null || !AssociatedObject.IsVisible) return;
             Point clickPosition = e.GetPosition(AssociatedObject);
-            var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, e.GetPosition(AssociatedObject));
+            var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, clickPosition);
             if (hitTestResult == null)
             {
+                if (Keyboard.FocusedElement is ComboBox { IsDropDownOpen: true }) return;
+                if (Keyboard.FocusedElement is DependencyObject fe && GetParent(fe) != null) return;
+                //Клик вне DG
+                EndEdit();
                 AssociatedObject.UnselectAllCells();
                 AssociatedObject.SelectedItem = null;
-                AssociatedObject.CancelEdit();
             }
             else
             {
-                // Клик был внутри DataGrid - проверяем, был ли выбран какой-либо элемент
-                CheckSelectionOnClick(hitTestResult, clickPosition);
+                CheckSelectionOnClick(hitTestResult);
             }
         }
-        private void CheckSelectionOnClick(HitTestResult hitTestResult, Point clickPosition)
+        private void CheckSelectionOnClick(HitTestResult hitTestResult)
         {
-            // Ищем DataGridRow или DataGridCell в визуальном дереве
-            DependencyObject current = hitTestResult.VisualHit;
+            DependencyObject? current = hitTestResult.VisualHit;
+            DataGridCell? clickedCell = null;
             bool foundDataGridElement = false;
 
             while (current != null && current != AssociatedObject)
             {
-                if (current is DataGridRow || current is DataGridCell)
+                if (current is DataGridCell cell)
+                {
+                    clickedCell = cell;
+                    foundDataGridElement = true;
+                    break;
+                }
+                if (current is DataGridRow)
                 {
                     foundDataGridElement = true;
                     break;
                 }
-                current = VisualTreeHelper.GetParent(current);
+                current = GetParent(current);
             }
+            if (clickedCell != null && clickedCell.IsEditing) return;
+
+            
 
             // Если клик был в области DataGrid, но не на строке или ячейке
             if (!foundDataGridElement)
             {
                 AssociatedObject.UnselectAllCells();
                 AssociatedObject.SelectedItem = null;
-                
+                EndEdit();
             }
+        }
+        private void EndEdit()
+        {
+            AssociatedObject.CommitEdit(DataGridEditingUnit.Cell, true);
+            //AssociatedObject.CommitEdit(DataGridEditingUnit.Row, true);
         }
         #endregion
         private void OnBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
@@ -218,9 +237,9 @@ namespace SensorMap.Behaviors
 
             foreach (var part in parts)
             {
-                if (current == null) return string.Empty;
+                if (current == null) return null!;
                 var prop = current.GetType().GetProperty(part);
-                if (prop == null) return string.Empty;
+                if (prop == null) return null!;
                 current = prop.GetValue(current);
             }
 
@@ -238,6 +257,12 @@ namespace SensorMap.Behaviors
                     yield return nested;
                 }
             }
+        }
+        private static DependencyObject? GetParent(DependencyObject child)
+        {
+            if(child is Visual)
+                return VisualTreeHelper.GetParent(child);
+            return LogicalTreeHelper.GetParent(child);
         }
         #endregion
     }

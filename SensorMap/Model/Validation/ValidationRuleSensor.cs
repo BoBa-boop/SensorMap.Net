@@ -28,15 +28,6 @@ namespace SensorMap.Model.Validation
                 {
                     return new ValidationResult(false, "Тип обязателен для выбора");
                 }
-
-                if (type.GetType().IsEnum)
-                {
-                    var defaultValue = Activator.CreateInstance(type.GetType());
-                    if (type.Equals(defaultValue))
-                    {
-                        return new ValidationResult(false, "Выберите тип датчика");
-                    }
-                }
             }
 
             return ValidationResult.ValidResult;

@@ -583,7 +583,7 @@ namespace SensorMap.ViewModel
                 .Include(x => x.Device)
                 .AsSplitQuery()
                 .ToListAsync();
-            
+           
             var collection = new ObservableCollection<Mechanism>(mechanisms);
             var view = CollectionViewSource.GetDefaultView(collection);
             ConfigureMechanismsView(view);

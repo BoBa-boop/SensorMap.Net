@@ -19,7 +19,7 @@
              d:DataContext="{d:DesignInstance MV:CRUD_VM}"
         mc:Ignorable="d"
         x:Name="root"
-             Unloaded="root_Unloaded">
+            DataContextChanged="root_DataContextChanged">
     <UserControl.Resources>
         <cnv:MultiParams x:Key="CreateMultiParams"/>
         <SolidColorBrush x:Key="NewSensorType" Color="#fae6e6"/>
@@ -217,7 +217,7 @@
                     </Grid.RowDefinitions>
                     <DataGrid ItemsSource="{Binding Sectors,UpdateSourceTrigger=PropertyChanged}" 
                               Grid.Row="0"
-                              Unloaded="DataGrid_Unloaded"
+                              Loaded="DataGrid_Loaded"
                               Style="{StaticResource dgStyle}">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
@@ -322,7 +322,7 @@
                     <DataGrid Name="Mech" 
                               ItemsSource="{Binding Mechanisms, UpdateSourceTrigger=PropertyChanged}"
                               Grid.Row="1"
-                              Unloaded="DataGrid_Unloaded"
+                              Loaded="DataGrid_Loaded"
                               Style="{StaticResource dgStyle}"
                               VirtualizingPanel.ScrollUnit="Pixel" 
                               VirtualizingPanel.CacheLength="1,1" VirtualizingPanel.CacheLengthUnit="Page"
@@ -339,7 +339,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate>
-                                                    <Expander IsExpanded="True"
+                                                    <Expander beh:GroupExpansion.Track="True"
                                                         x:Name="dgExpander">
                                                         <Expander.Header>
                                                             <DockPanel>
@@ -464,11 +464,12 @@
                     </Menu>
                     <DataGrid x:Name="SensorsDG"  ItemsSource="{Binding Sensors}"
                               Grid.Row="1"
-                              Unloaded="DataGrid_Unloaded"
+                              Loaded="DataGrid_Loaded"
                               Style="{StaticResource dgStyle}"
-                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                              VirtualizingPanel.VirtualizationMode="Standard"
-                              VirtualizingPanel.ScrollUnit="Pixel">
+                              VirtualizingPanel.ScrollUnit="Pixel" 
+                              VirtualizingPanel.CacheLength="1,1" VirtualizingPanel.CacheLengthUnit="Page"
+                              ScrollViewer.PanningRatio="2"
+                              VirtualizingPanel.IsVirtualizingWhenGrouping="True">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
@@ -486,7 +487,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="{x:Type GroupItem}">
-                                                    <Expander IsExpanded="True">
+                                                    <Expander beh:GroupExpansion.Track="True">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="10,0"/>
@@ -614,11 +615,11 @@
                     <DataGrid x:Name="DevicesDG"
                         ItemsSource="{Binding Devices}"
                               Grid.Row="1"
-                              Unloaded="DataGrid_Unloaded" 
+                              Loaded="DataGrid_Loaded"
                               Style="{StaticResource dgStyle}"
-                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
-                              VirtualizingPanel.VirtualizationMode="Standard"
-                              VirtualizingPanel.ScrollUnit="Pixel">
+                              VirtualizingPanel.ScrollUnit="Pixel" 
+                              VirtualizingPanel.CacheLength="1,1" VirtualizingPanel.CacheLengthUnit="Page"
+                              ScrollViewer.PanningRatio="2">
                         <i:Interaction.Behaviors>
                             <beh:DataGridBahavior Command="{Binding RecordEditCommand}"/>
                         </i:Interaction.Behaviors>
@@ -635,7 +636,7 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate>
-                                                    <Expander IsExpanded="True">
+                                                    <Expander beh:GroupExpansion.Track="True">
                                                         <Expander.Header>
                                                             <DockPanel>
                                                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>

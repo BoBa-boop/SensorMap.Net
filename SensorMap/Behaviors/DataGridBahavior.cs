@@ -62,9 +62,10 @@ namespace SensorMap.Behaviors
         private void SetAll(bool expand)
         {
             var grid = AssociatedObject;
+            GroupExpansion.GetState(grid).Reset(expand);
             grid.Dispatcher.BeginInvoke(new Action(() =>
             {
-                foreach (var exp in FindChildren<Expander>(grid))
+                foreach (var exp in FindChildren<Expander>(grid).Where(GroupExpansion.GetTrack).ToList())
                 {
                     exp.IsExpanded = expand;
                 }

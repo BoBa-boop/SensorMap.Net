@@ -14,6 +14,7 @@ namespace SensorMap.View
     /// </summary>
     public partial class CRUD_View : UserControl, IViewFor<CRUD_VM>
     {
+        private readonly List<DataGrid> dataGrids = new();
         private CompositeDisposable? _activationDisposables = new CompositeDisposable();
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register
            (
@@ -38,23 +39,25 @@ namespace SensorMap.View
             }).DisposeWith(_activationDisposables);
         }
 
-        private void DataGrid_Unloaded(object sender, RoutedEventArgs e)
+        private void root_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            var grid = (DataGrid)sender;
-            grid.CancelEdit(DataGridEditingUnit.Cell);
-            grid.CancelEdit(DataGridEditingUnit.Row);
-
-            var view = CollectionViewSource.GetDefaultView(grid.ItemsSource);
-            if(view is IEditableCollectionView ecv)
+            foreach (DataGrid dataGrid in dataGrids)
             {
-                if (ecv.IsAddingNew) ecv.CancelNew();
-                if (ecv.IsEditingItem) ecv.CancelEdit();
+                var view = CollectionViewSource.GetDefaultView(dataGrid.ItemsSource);
+                if (view is IEditableCollectionView ecv)
+                {
+                    if (ecv.IsAddingNew) ecv.CancelNew();
+                    if (ecv.IsEditingItem) ecv.CancelEdit();
+                }
+                dataGrid.CancelEdit(DataGridEditingUnit.Cell);
+                dataGrid.CancelEdit(DataGridEditingUnit.Row);
             }
         }
 
-        private void root_Unloaded(object sender, RoutedEventArgs e)
+        private void DataGrid_Loaded(object sender, RoutedEventArgs e)
         {
-
+            var dg = (DataGrid)sender;
+            if(!dataGrids.Contains(dg))dataGrids.Add(dg);
         }
     }
 }

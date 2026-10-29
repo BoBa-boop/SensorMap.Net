@@ -18,7 +18,8 @@
              xmlns:MV="clr-namespace:SensorMap.ViewModel"
              d:DataContext="{d:DesignInstance MV:CRUD_VM}"
         mc:Ignorable="d"
-        x:Name="root">
+        x:Name="root"
+             Unloaded="root_Unloaded">
     <UserControl.Resources>
         <cnv:MultiParams x:Key="CreateMultiParams"/>
         <SolidColorBrush x:Key="NewSensorType" Color="#fae6e6"/>
@@ -156,7 +157,7 @@
                             <Condition Property="DataGridCell.IsSelected" Value="true" />
                             <Condition Property="Selector.IsSelectionActive" Value="false"/>
                         </MultiTrigger.Conditions>
-                        <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                        <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="Foreground" Value="Black"/>
                     </MultiTrigger>
 
@@ -461,7 +462,7 @@
                                   Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
                                   CommandTarget="{Binding ElementName=SensorsDG}"/>
                     </Menu>
-                    <DataGrid x:Name="SensorsDG"  ItemsSource="{Binding Sensors,UpdateSourceTrigger=PropertyChanged}"
+                    <DataGrid x:Name="SensorsDG"  ItemsSource="{Binding Sensors}"
                               Grid.Row="1"
                               Unloaded="DataGrid_Unloaded"
                               Style="{StaticResource dgStyle}"
@@ -475,8 +476,8 @@
                             <CollectionViewSource x:Key="SensorTypesSource" Source="{Binding SensorTypes}"/>
                         </DataGrid.Resources>
                         <DataGrid.RowValidationRules>
-                    <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
-                </DataGrid.RowValidationRules>
+                            <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>
@@ -615,6 +616,7 @@
                               Grid.Row="1"
                               Unloaded="DataGrid_Unloaded" 
                               Style="{StaticResource dgStyle}"
+                              VirtualizingPanel.IsVirtualizingWhenGrouping="True"
                               VirtualizingPanel.VirtualizationMode="Standard"
                               VirtualizingPanel.ScrollUnit="Pixel">
                         <i:Interaction.Behaviors>
@@ -624,8 +626,8 @@
                             <CollectionViewSource x:Key="DeviceTypesView" Source="{Binding DeviceTypes}"/>
                         </DataGrid.Resources>
                         <DataGrid.RowValidationRules>
-        <valid:ValidationRuleSensor ValidationStep="UpdatedValue"/>
-    </DataGrid.RowValidationRules>
+                            <valid:ValidationRuleDevice ValidationStep="UpdatedValue"/>
+                        </DataGrid.RowValidationRules>
                         <DataGrid.GroupStyle>
                             <GroupStyle>
                                 <GroupStyle.ContainerStyle>
@@ -696,7 +698,9 @@
                                             <Button x:Name="Show" Style="{StaticResource ShowCardButtonStyle}"
                                             Command="{Binding ElementName=root,Path=DataContext.ShowCommand}"
                                             CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor,
-                                            AncestorType={x:Type DataGridRow}}, Path=Item}"/>
+                                            AncestorType={x:Type DataGridRow}}, Path=Item}"
+                                                    Visibility="{calc:Binding 'Id != 0',
+                                                Converter={StaticResource BooleanArr2VisibilityConverter}}"/>
 
                                             <Button Name="AddImage" Style="{StaticResource LoadImageButtonStyle}"
                                             Command="{Binding ElementName=root,Path=DataContext.AddImage}"
@@ -759,7 +763,7 @@
                                      Name="lbSensors"
                                      Margin="0,0,0,20"
                                      SelectionMode="Single"
-                                     ItemsSource="{Binding SensorTypes,UpdateSourceTrigger=PropertyChanged}"
+                                     ItemsSource="{Binding SensorAddictionalData,UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="200"  VerticalAlignment="Top" >
                                 <i:Interaction.Behaviors>
                                     <beh:ListBoxBehavior CanUnselectItem="True"/>
@@ -1022,7 +1026,7 @@
                                 <RowDefinition Height="150"/>
                             </Grid.RowDefinitions>
                             <ListBox Effect="{StaticResource EffectShadow2}" Name="lbDevices" Margin="0,0,0,20"
-                                     ItemsSource="{Binding DeviceTypes,UpdateSourceTrigger=PropertyChanged}"
+                                     ItemsSource="{Binding DeviceAddictionalData,UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
                                 <i:Interaction.Behaviors>
                                     <beh:ListBoxBehavior CanUnselectItem="True"/>

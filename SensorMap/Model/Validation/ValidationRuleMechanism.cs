@@ -18,14 +18,12 @@ namespace SensorMap.Model.Validation
                 {
                     return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
                 }
-                else mech.IsModified = true;
 
                 object sector = mech!.Sector;
                 if (sector == null)
                 {
                     return new ValidationResult(false, "Необходимо закрепить механизацию за участком!");
                 }
-                else mech.IsModified = true;
             }
 
             return ValidationResult.ValidResult;

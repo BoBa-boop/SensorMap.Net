@@ -31,6 +31,7 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Application = System.Windows.Application;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace SensorMap.ViewModel
@@ -67,6 +68,9 @@ namespace SensorMap.ViewModel
         private IDisposable? _undoSub;
         private IDisposable? _redoSub;
         private bool _isLoaded;
+        private bool _fourthPageLoaded;
+        private ObservableCollection<SensorType> sensorAddData;
+        private ObservableCollection<DeviceType> deviceAddData;
 
         private UndoRedoStack CurrentStack
         {
@@ -85,15 +89,22 @@ namespace SensorMap.ViewModel
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get => mechanisms; set => this.RaiseAndSetIfChanged(ref mechanisms, value); }
         [Reactive] public ObservableCollection<Sensor> Sensors { get => sensors; set => this.RaiseAndSetIfChanged(ref sensors, value); }
         [Reactive] public ObservableCollection<Device> Devices { get => devices; set => this.RaiseAndSetIfChanged(ref devices, value); }
-        [Reactive] public ICollectionView SensorsView { get => sensorsView; set => this.RaiseAndSetIfChanged(ref sensorsView, value); }
-        [Reactive] public ICollectionView DevicesView { get => devicesView; set => this.RaiseAndSetIfChanged(ref devicesView, value); }
         [Reactive] public ObservableCollection<SensorType> SensorTypes 
         { 
             get => sensorTypes; 
             set => this.RaiseAndSetIfChanged(ref sensorTypes,value); 
         }
+        [Reactive] public ObservableCollection<SensorType> SensorAddictionalData
+        {
+            get => sensorAddData;
+            set => this.RaiseAndSetIfChanged(ref sensorAddData, value);
+        }
         [Reactive] public ObservableCollection<DeviceType> DeviceTypes { get => deviceTypes; set => this.RaiseAndSetIfChanged(ref deviceTypes,value); }
-        [Reactive] public ICollectionView MechanismsView { get => mechView; set => this.RaiseAndSetIfChanged(ref mechView, value); }
+        [Reactive] public ObservableCollection<DeviceType> DeviceAddictionalData
+        {
+            get => deviceAddData;
+            set => this.RaiseAndSetIfChanged(ref deviceAddData, value);
+        }
         [Reactive] public int SelectedTabIndex { get => selectedTabIndex; set => this.RaiseAndSetIfChanged(ref selectedTabIndex, value); }
         [Reactive] public bool IsExpanded { get => isExpanded; set => this.RaiseAndSetIfChanged(ref isExpanded, value); }
         public bool IsLoading { get => _isLoaded; set => this.RaiseAndSetIfChanged(ref _isLoaded, value); }
@@ -511,7 +522,7 @@ namespace SensorMap.ViewModel
                         await LoadSecondAsync();
                         await LoadDevices();
                         SubscribeToCurrentStack();
-                        IsExpanded = true;
+                        IsExpanded = true;  
                         break;
                     case 2:
                         await LoadThirdAsync();
@@ -524,9 +535,8 @@ namespace SensorMap.ViewModel
                         IsExpanded = true;
                         break;
                     case 4:
-                        
-                        await LoadThirdAsync();
-                        await LoadDevices();
+
+                        await LoadAddictionalData();
                         SubscribeToCurrentStack();
                         IsExpanded = true;
                         break;
@@ -539,7 +549,19 @@ namespace SensorMap.ViewModel
             }
         }
 
-        
+        private async Task LoadAddictionalData()
+        {
+            if (_fourthPageLoaded) return;
+            using var dbContext = _appDbContextFactory.CreateDbContext();
+            var sensorTypes = await dbContext.SensorTypes.AsNoTracking()
+                .Include(x => x.Characteristics).ToListAsync();
+            var deviceTypes = await dbContext.DeviceTypes.AsNoTracking()
+                .Include(x => x.Characteristics).ToListAsync();
+
+            DeviceAddictionalData = new(deviceTypes);
+            SensorAddictionalData = new(sensorTypes);
+            _fourthPageLoaded = true;
+        }
 
         private async Task LoadFirstPageAsync()
         {
@@ -566,7 +588,6 @@ namespace SensorMap.ViewModel
             var view = CollectionViewSource.GetDefaultView(collection);
             ConfigureMechanismsView(view);
             Mechanisms = collection;
-            MechanismsView = view;
             _secondPageLoaded = true;
             
         }
@@ -578,12 +599,14 @@ namespace SensorMap.ViewModel
                 .Include(x=>x.SensorType).ToListAsync();
             var sensorTypes = await dbContext.SensorTypes.AsNoTracking()
                 .Include(x => x.Characteristics).ToListAsync();
-            var collection = new ObservableCollection<Sensor>(sensors);
-            var view = CollectionViewSource.GetDefaultView(collection);
-            ConfigureSensorsView(view);
-            Sensors = collection;
-            SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
-            SensorsView = view;
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var collection = new ObservableCollection<Sensor>(sensors);
+                var view = CollectionViewSource.GetDefaultView(collection);
+                ConfigureSensorsView(view);
+                Sensors = collection;
+                SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
+            });
             _thirdPageLoaded = true;
         }
         private async Task LoadDevices()
@@ -594,12 +617,15 @@ namespace SensorMap.ViewModel
                 .Include(x => x.DeviceType).ToListAsync();
             var deviceTypes = await dbContext.DeviceTypes.AsNoTracking()
                 .Include(x => x.Characteristics).ToListAsync();
-            var collection = new ObservableCollection<Device>(devices);
-            var view = CollectionViewSource.GetDefaultView(collection);
-            ConfigureDevicesView(view);
-            Devices = collection;
-            DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
-            DevicesView = view;
+
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                var collection = new ObservableCollection<Device>(devices);
+                var view = CollectionViewSource.GetDefaultView(collection);
+                ConfigureDevicesView(view);
+                Devices = collection;
+                DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
+            });
             _devicesLoaded = true;
         }
         #endregion

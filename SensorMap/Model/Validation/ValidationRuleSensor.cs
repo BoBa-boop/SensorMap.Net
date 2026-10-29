@@ -22,14 +22,12 @@ namespace SensorMap.Model.Validation
                 {
                     return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
                 }
-                else sensor.IsModified = true;
 
                 object type = sensor!.SensorType;
                 if (type == null)
                 {
                     return new ValidationResult(false, "Тип обязателен для выбора");
                 }
-                else sensor.IsModified = true;
 
                 if (type.GetType().IsEnum)
                 {
@@ -39,10 +37,9 @@ namespace SensorMap.Model.Validation
                         return new ValidationResult(false, "Выберите тип датчика");
                     }
                 }
-                else sensor.IsModified = true;
             }
 
-            return null;
+            return ValidationResult.ValidResult;
         }
     }
 }

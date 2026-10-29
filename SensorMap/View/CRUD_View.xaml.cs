@@ -1,8 +1,10 @@
 ﻿using ReactiveUI;
 using SensorMap.ViewModel;
+using System.ComponentModel;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using UserControl = System.Windows.Controls.UserControl;
 
 namespace SensorMap.View
@@ -39,7 +41,20 @@ namespace SensorMap.View
         private void DataGrid_Unloaded(object sender, RoutedEventArgs e)
         {
             var grid = (DataGrid)sender;
+            grid.CancelEdit(DataGridEditingUnit.Cell);
             grid.CancelEdit(DataGridEditingUnit.Row);
+
+            var view = CollectionViewSource.GetDefaultView(grid.ItemsSource);
+            if(view is IEditableCollectionView ecv)
+            {
+                if (ecv.IsAddingNew) ecv.CancelNew();
+                if (ecv.IsEditingItem) ecv.CancelEdit();
+            }
+        }
+
+        private void root_Unloaded(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

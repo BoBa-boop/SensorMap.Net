@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using HandyControl.Controls;
+using ReactiveUI;
 using SensorMap.ViewModel;
 using System.ComponentModel;
 using System.Reactive.Disposables;
@@ -41,16 +42,23 @@ namespace SensorMap.View
 
         private void root_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            foreach (DataGrid dataGrid in dataGrids)
+            try
             {
-                var view = CollectionViewSource.GetDefaultView(dataGrid.ItemsSource);
-                if (view is IEditableCollectionView ecv)
+                foreach (DataGrid dataGrid in dataGrids)
                 {
-                    if (ecv.IsAddingNew) ecv.CancelNew();
-                    if (ecv.IsEditingItem) ecv.CancelEdit();
+                    var view = CollectionViewSource.GetDefaultView(dataGrid.ItemsSource);
+                    if (view is IEditableCollectionView ecv)
+                    {
+                        if (ecv.IsAddingNew) ecv.CancelNew();
+                        if (ecv.IsEditingItem) ecv.CancelEdit();
+                    }
+                    dataGrid.CancelEdit(DataGridEditingUnit.Cell);
+                    dataGrid.CancelEdit(DataGridEditingUnit.Row);
                 }
-                dataGrid.CancelEdit(DataGridEditingUnit.Cell);
-                dataGrid.CancelEdit(DataGridEditingUnit.Row);
+            }
+            catch
+            {
+                Growl.Error("Возникла ошибка при отмене редактирования таблицы. Перезагрузите вкладку");
             }
         }
 

@@ -231,6 +231,8 @@
                                 <DataGridTextColumn.EditingElementStyle>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource DataGridEditingTextColumnStyle}">
                                         <Setter Property="MaxLength" Value="70"/>
+                                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                                        <Setter Property="MinWidth" Value="150"/>
                                     </Style>
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
@@ -376,6 +378,8 @@
                                 <DataGridTextColumn.EditingElementStyle>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource DataGridEditingTextColumnStyle}">
                                         <Setter Property="MaxLength" Value="70"/>
+                                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                                        <Setter Property="MinWidth" Value="150"/>
                                     </Style>
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
@@ -527,6 +531,8 @@
                                 <DataGridTextColumn.EditingElementStyle>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource DataGridEditingTextColumnStyle}">
                                         <Setter Property="MaxLength" Value="70"/>
+                                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                                        <Setter Property="MinWidth" Value="150"/>
                                     </Style>
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
@@ -669,6 +675,8 @@
                                 <DataGridTextColumn.EditingElementStyle>
                                     <Style TargetType="TextBox" BasedOn="{StaticResource DataGridEditingTextColumnStyle}">
                                         <Setter Property="MaxLength" Value="70"/>
+                                        <Setter Property="HorizontalAlignment" Value="Left"/>
+                                        <Setter Property="MinWidth" Value="150"/>
                                     </Style>
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>                           
@@ -746,8 +754,11 @@
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <!--Датчики-->
-                    <GroupBox Header="Типы датчиков" Grid.Column="0" Style="{StaticResource BaseStyle}" 
-                              Margin="8">
+                    <GroupBox Grid.Column="0" Style="{StaticResource BaseStyle}" 
+                              Margin="8">                        
+                        <GroupBox.Header>
+                            <TextBlock Text="Типы датчиков" Style="{StaticResource TextBlockTitle}"/>
+                        </GroupBox.Header>
                         <Grid Margin="5,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -764,8 +775,11 @@
                                      Name="lbSensors"
                                      Margin="0,0,0,20"
                                      SelectionMode="Single"
-                                     ItemsSource="{Binding SensorAddictionalData,UpdateSourceTrigger=PropertyChanged}"
+                                     ItemsSource="{Binding SensorTypes,UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="200"  VerticalAlignment="Top" >
+                                <ListBox.InputBindings>
+                                    <KeyBinding Key="Delete" Command="{Binding DeleteNodeTitleType}" CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}"/>
+                                </ListBox.InputBindings>
                                 <i:Interaction.Behaviors>
                                     <beh:ListBoxBehavior CanUnselectItem="True"/>
                                 </i:Interaction.Behaviors>
@@ -872,19 +886,21 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
-                                <StackPanel Margin="10,0" 
+                                <StackPanel 
                                             Grid.Row="0"
                                             Grid.Column="1"
                                             HorizontalAlignment="Left">
                                     <hc:TextBox Name="tbSensorType"
                                                 hc:InfoElement.Placeholder="Тип датчика"
                                                 Height="30"
-                                                Text="{Binding ElementName=lbSensors,Path=SelectedItem.Name,
-                                        Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                                HorizontalAlignment="Left"
+                                                Width="240"
+                                                MaxLength="30"
+                                                Text="{Binding ElementName=lbSensors,Path=SelectedItem.Name,Mode=OneWay}"/>
                                     <WrapPanel Name="sButtons" 
                                                Orientation="Horizontal" Grid.Row="1"
-                                               Margin="0,15" HorizontalAlignment="Center"
-                                               ItemWidth="55">
+                                               Margin="-5,15,0,10"
+                                               ItemWidth="50">
                                         <Button ToolTip="Выбрать цвет"
                                                 Cursor="Hand" Width="40"
                                                 Padding="1"
@@ -897,19 +913,17 @@
                                         </Button>
                                         <Button Name="sAdd" Style="{StaticResource ButtonSuccess}"
                                                 hc:IconElement.Geometry="{StaticResource AddGeometry}"
-                                                Command="{Binding AddSensorType}">
-                                            <Button.CommandParameter>
-                                                <MultiBinding Converter="{StaticResource CreateMultiParams}">
-                                                    <Binding Path="Text" ElementName="tbSensorType"/>
-                                                </MultiBinding>
-                                            </Button.CommandParameter>
-                                        </Button>
+                                                Command="{Binding AddSensorType}"
+                                                Cursor="Hand"
+                                                CommandParameter="{Binding ElementName=tbSensorType,Path=Text}"/>
                                         <Button Name="sDelete" Style="{StaticResource ButtonDanger}"
                                                 hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
                                                 Command="{Binding DeleteNodeTitleType}"
+                                                Cursor="Hand"
                                                 CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}"/>
                                         <Button Name="sSave" hc:IconElement.Geometry="{StaticResource SaveGeometry}"
                                                 Command="{Binding SaveCommand}"
+                                                Cursor="Hand"
                                                 CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}">
                                             <i:Interaction.Triggers>
                                                 <i:EventTrigger EventName="Click">
@@ -930,6 +944,18 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
+                                        <Button Name="sRename" Style="{StaticResource ButtonPrimary}"
+                                                hc:IconElement.Geometry="{StaticResource ChangeData}"
+                                                Command="{Binding RenameSensorType}"
+                                                Cursor="Hand"
+                                                ToolTip="Переименовать">
+                                            <Button.CommandParameter>
+                                                <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                                    <Binding Path="SelectedItem" ElementName="lbSensors"/>
+                                                    <Binding Path="Text" ElementName="tbSensorType"/>
+                                                </MultiBinding>
+                                            </Button.CommandParameter>
+                                        </Button>
                                     </WrapPanel>
                                 </StackPanel>
                                 <Grid Grid.Column="2" Grid.Row="0"
@@ -944,7 +970,7 @@
                                     <Menu Grid.Row="0" Width="70" HorizontalAlignment="Left">
                                         <MenuItem Style="{StaticResource IconOnlyMenuItem}" 
                                                   ToolTip="Добавить строку"
-                                                  Command="{Binding AddCharacteristic}"
+                                                  Command="{Binding AddSensorCharacteristic}"
                                                   CommandParameter="{Binding ElementName=lbSensors,Path=SelectedItem}">
                                             <MenuItem.Icon>
                                                 <Image Source="{StaticResource ChangeDataImage}" Width="20" Height="20"/>
@@ -952,7 +978,7 @@
                                         </MenuItem>
                                         <MenuItem Style="{StaticResource IconOnlyMenuItem}" 
                                                   ToolTip="Удалить строку"
-                                                  Command="{Binding DeleteCharacteristic}">
+                                                  Command="{Binding DeleteSensorCharacteristic}">
                                             <MenuItem.CommandParameter>
                                                 <MultiBinding Converter="{StaticResource CreateMultiParams}">
                                                     <Binding ElementName="lbSensors" Path="SelectedItem"/>
@@ -966,41 +992,52 @@
                                     </Menu>
                                     <ListBox Name="sCharacteristics" Grid.Row="1" Margin="5"
                                              ItemsSource="{Binding ElementName=lbSensors,Path=SelectedItem.Characteristics}"
-                                             Style="{StaticResource WrapPanelHorizontalListBox}">
+                                             Style="{StaticResource WrapPanelHorizontalListBox}"
+                                             Height="auto" MinHeight="50">
+                                        <ListBox.InputBindings>
+                                            <KeyBinding Key="Delete" Command="{Binding DeleteSensorCharacteristic}">
+                                                <KeyBinding.CommandParameter>
+                                                    <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                                        <Binding ElementName="lbSensors" Path="SelectedItem"/>
+                                                        <Binding ElementName="sCharacteristics" Path="SelectedItem"/>
+                                                    </MultiBinding>
+                                                </KeyBinding.CommandParameter>
+                                            </KeyBinding>
+                                        </ListBox.InputBindings>
                                         <i:Interaction.Behaviors>
                                             <beh:CollectionChangeBehavior TargetButton="{Binding ElementName=sSave}"/>
                                         </i:Interaction.Behaviors>
 
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBox Name="ActualText" 
-                                                         Background="{StaticResource BackgroundBrush}"
-                                                         Text="{Binding Title}"
-                                                         BorderThickness="0"/>
+                                                <Grid Margin="2">
+                                                    <TextBox Text="{Binding Title}"
+                                                             Background="{StaticResource BackgroundBrush}"
+                                                             BorderThickness="0" 
+                                                             HorizontalAlignment="Left" 
+                                                             MinWidth="150" 
+                                                             MaxLength="50" 
+                                                             IsHitTestVisible="{Binding IsSelected,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                             IsReadOnly="{Binding IsSelected,RelativeSource={RelativeSource AncestorType=ListBoxItem},
+                                                        Converter={StaticResource Boolean2BooleanReConverter}}">
+                                                    </TextBox>
+                                                </Grid>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                         <ListBox.ItemContainerStyle>
                                             <Style TargetType="{x:Type ListBoxItem}">
-                                                <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
                                                 <Setter Property="Template">
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="ListBoxItem">
-                                                            <Border x:Name="brd"
-                                                                    Margin="3"
-                                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                                    BorderThickness="1"
-                                                                    CornerRadius="5"
-                                                                    Cursor="Hand"
-                                                                    Background="{TemplateBinding Background}">
-                                                                
+                                                            <Border x:Name="brd" Margin="3" CornerRadius="5" Background="Transparent" Cursor="Hand">
                                                                 <ContentPresenter/>
                                                             </Border>
                                                             <ControlTemplate.Triggers>
-                                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsSelected}" Value="True">
-                                                                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                                                                </DataTrigger>
                                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                                    <Setter Property="Background" Value="#e3e3e3"/>
+                                                                    <Setter TargetName="brd" Property="Background" Value="#e3e3e3"/>
+                                                                </Trigger>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter TargetName="brd" Property="Background" Value="{StaticResource DarkAccentBrush}"/>
                                                                 </Trigger>
                                                             </ControlTemplate.Triggers>
                                                         </ControlTemplate>
@@ -1015,8 +1052,11 @@
                         </Grid>
                     </GroupBox>
                     <!--Устройства-->
-                    <GroupBox Header="Типы Устройств" Grid.Column="1" Style="{StaticResource BaseStyle}" 
+                    <GroupBox Grid.Column="1" Style="{StaticResource BaseStyle}" 
                               Margin="8">
+                        <GroupBox.Header>
+                            <TextBlock Text="Типы устройств" Style="{StaticResource TextBlockTitle}"/>
+                        </GroupBox.Header>
                         <Grid Margin="5,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
@@ -1027,11 +1067,14 @@
                                 <RowDefinition Height="150"/>
                             </Grid.RowDefinitions>
                             <ListBox Effect="{StaticResource EffectShadow2}" Name="lbDevices" Margin="0,0,0,20"
-                                     ItemsSource="{Binding DeviceAddictionalData,UpdateSourceTrigger=PropertyChanged}"
+                                     ItemsSource="{Binding DeviceTypes,UpdateSourceTrigger=PropertyChanged}"
                                      MinHeight="200" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Top" >
                                 <i:Interaction.Behaviors>
                                     <beh:ListBoxBehavior CanUnselectItem="True"/>
                                 </i:Interaction.Behaviors>
+                                <ListBox.InputBindings>
+                                    <KeyBinding Key="Delete" Command="{Binding DeleteNodeTitleType}" CommandParameter="{Binding ElementName=lbDevices,Path=SelectedItem}"/>
+                                </ListBox.InputBindings>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Name}"
@@ -1127,27 +1170,31 @@
                                     <RowDefinition/>
                                 </Grid.RowDefinitions>
                                 
-                                <StackPanel Margin="10,0" Grid.Column="1" HorizontalAlignment="Left">
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Left">
                                     <hc:TextBox Name="tbDeviceType"
                                                 hc:InfoElement.Placeholder="Тип устройства"
-                                                Width="150" Height="30"
-                                                Text="{Binding ElementName=lbDevices,
-                                        Path=SelectedItem.Name,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                                                Height="30"
+                                                HorizontalAlignment="Left"
+                                                Width="215"
+                                                MaxLength="30"
+                                                Text="{Binding ElementName=lbDevices,Path=SelectedItem.Name,Mode=OneWay}"/>
 
                                     <WrapPanel Name="dButtons" Orientation="Horizontal"
                                                Grid.Row="1" Margin="0,15"
                                                HorizontalAlignment="Center"
                                                ItemWidth="55">
                                         <Button Name="dAdd" Style="{StaticResource ButtonSuccess}"
+                                                Cursor="Hand"
                                                 hc:IconElement.Geometry="{StaticResource AddGeometry}"
-                                                Command="{Binding AddDeviceType}" CommandParameter="{Binding ElementName=tbDeviceType,Path=Text }">
+                                                Command="{Binding AddDeviceType}" 
+                                                CommandParameter="{Binding ElementName=tbDeviceType,Path=Text }">
                                         </Button>
                                         <Button Name="dDelete" Style="{StaticResource ButtonDanger}"
                                                 hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"
-                                                Command="{Binding DeleteNodeTitleType}"
+                                                Command="{Binding DeleteNodeTitleType}" Cursor="Hand"
                                                 CommandParameter="{Binding ElementName=lbDevices,Path=SelectedItem}"/>
                                         <Button Name="dSave" hc:IconElement.Geometry="{StaticResource SaveGeometry}"
-                                                Command="{Binding SaveCommand}"
+                                                Command="{Binding SaveCommand}" Cursor="Hand"
                                                 CommandParameter="{Binding ElementName=lbDevices,Path=SelectedItem}">
                                             <i:Interaction.Triggers>
                                                 <i:EventTrigger EventName="Click">
@@ -1168,6 +1215,18 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
+                                        <Button Name="dRename" Style="{StaticResource ButtonPrimary}"
+                                                hc:IconElement.Geometry="{StaticResource ChangeData}"
+                                                Command="{Binding RenameDeviceType}"
+                                                Cursor="Hand"
+                                                ToolTip="Переименовать">
+                                            <Button.CommandParameter>
+                                                <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                                    <Binding Path="SelectedItem" ElementName="lbDevices"/>
+                                                    <Binding Path="Text" ElementName="tbDeviceType"/>
+                                                </MultiBinding>
+                                            </Button.CommandParameter>
+                                        </Button>
                                     </WrapPanel>
                                 </StackPanel>
                                 <Grid Grid.Column="2" MinWidth="200" MinHeight="60"
@@ -1184,14 +1243,14 @@
                                           HorizontalAlignment="Left">
                                         <MenuItem Style="{StaticResource IconOnlyMenuItem}"
                                                   ToolTip="Добавить строку"
-                                                  Command="{Binding AddCharacteristic}"
+                                                  Command="{Binding AddDeviceCharacteristic}"
                                                   CommandParameter="{Binding ElementName=lbDevices,Path=SelectedItem}">
                                             <MenuItem.Icon>
                                                 <Image Source="{StaticResource ChangeDataImage}" Width="20" Height="20"/>
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <MenuItem Style="{StaticResource IconOnlyMenuItem}" ToolTip="Удалить строку"
-                                                  Command="{Binding DeleteCharacteristic}">
+                                                  Command="{Binding DeleteDeviceCharacteristic}">
                                             <MenuItem.CommandParameter>
                                                 <MultiBinding Converter="{StaticResource CreateMultiParams}">
                                                     <Binding ElementName="lbDevices" Path="SelectedItem"/>
@@ -1204,16 +1263,59 @@
                                         </MenuItem>
                                     </Menu>
                                     <ListBox Name="dCharacteristics" Grid.Row="1" Margin="5"
-                                             ItemsSource="{Binding ElementName=lbDevices,Path=SelectedItem.Characteristics}">
+                                             Style="{StaticResource WrapPanelHorizontalListBox}"
+                                             ItemsSource="{Binding ElementName=lbDevices,Path=SelectedItem.Characteristics}"
+                                             Height="auto" MinHeight="50">
                                         <i:Interaction.Behaviors>
                                             <beh:CollectionChangeBehavior TargetButton="{Binding ElementName=dSave}"/>
                                         </i:Interaction.Behaviors>
-
+                                        <ListBox.InputBindings>
+                                            <KeyBinding Key="Delete" Command="{Binding DeleteDeviceCharacteristic}">
+                                                <KeyBinding.CommandParameter>
+                                                    <MultiBinding Converter="{StaticResource CreateMultiParams}">
+                                                        <Binding ElementName="lbDevices" Path="SelectedItem"/>
+                                                        <Binding ElementName="dCharacteristics" Path="SelectedItem"/>
+                                                    </MultiBinding>
+                                                </KeyBinding.CommandParameter>
+                                            </KeyBinding>
+                                        </ListBox.InputBindings>
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBox Name="ActualText" Text="{Binding Title}"/>
+                                                <Grid Margin="2">
+                                                    <TextBox Text="{Binding Title}"
+                                                             Background="{StaticResource BackgroundBrush}"
+                                                             BorderThickness="0" 
+                                                             HorizontalAlignment="Left" 
+                                                             MinWidth="150" 
+                                                             MaxLength="50" 
+                                                             IsHitTestVisible="{Binding IsSelected,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                             IsReadOnly="{Binding IsSelected,RelativeSource={RelativeSource AncestorType=ListBoxItem},
+                                                        Converter={StaticResource Boolean2BooleanReConverter}}">
+                                                    </TextBox>
+                                                </Grid>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="{x:Type ListBoxItem}">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Border x:Name="brd" Margin="3" CornerRadius="5" Background="Transparent" Cursor="Hand">
+                                                                <ContentPresenter/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="brd" Property="Background" Value="#e3e3e3"/>
+                                                                </Trigger>
+                                                                <Trigger Property="IsSelected" Value="True">
+                                                                    <Setter TargetName="brd" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
                                     </ListBox>
                                 </Grid>
                             </Grid>

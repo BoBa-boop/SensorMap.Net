@@ -23,7 +23,6 @@ namespace SensorMap.Model
                 if (!string.IsNullOrWhiteSpace(value))
                 {
                     this.RaiseAndSetIfChanged(ref _name, value);
-                    IsNew = true;
                 }
             }
         }

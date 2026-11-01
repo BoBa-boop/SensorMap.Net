@@ -19,6 +19,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Brushes = System.Windows.Media.Brushes;
 using ComboBox = System.Windows.Controls.ComboBox;
 using Point = System.Windows.Point;
 using TextBox = System.Windows.Controls.TextBox;
@@ -85,40 +86,64 @@ namespace SensorMap.Behaviors
 
         private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
         {
-            var dataGrid = sender as DataGrid;
-            if (e.Row.Item != null && dataGrid!=null)
+            if (e.Row.Item is not { } rowItem) return;
+            if (sender is not DataGrid dataGrid) return;
+            if (originalFieldValues == null) return;
+
+            try
             {
-                if (originalFieldValues != null)
-                {
-                    object objectAfterEdit;
-                    var originalObject = originalFieldValues.First();
-                    if (e.EditingElement is ComboBox cb)
-                    {
-                        objectAfterEdit = cb.SelectedItem;
-                    }
-                    else if(e.EditingElement is TextBox tb)
-                    {
-                        objectAfterEdit = tb.Text;
-                    }
-                    else objectAfterEdit = GetPropertyValue(e.Row.Item, originalObject.Key);
-                    var originalValue = GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1)) ?? originalObject.Value;
-                    var editValue = GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1)) ?? objectAfterEdit;
-                    string? originalProp = originalValue != null ? originalValue.ToString() : string.Empty;
-                    string? EditProp = editValue != null ? editValue.ToString() : string.Empty;
-                    int columnIndex = e.Column.DisplayIndex;
+                // 1. Достаём реальный контрол редактирования из ContentPresenter (для TemplateColumn)
+                var editingRoot = e.EditingElement;
+                var comboBox = FindChild<ComboBox>(editingRoot);
+                var textBox = FindChild<TextBox>(editingRoot);
 
-                    if (string.IsNullOrEmpty(originalProp) && string.IsNullOrEmpty(EditProp)) return;
+                // 2. Определяем новое значение
+                object? objectAfterEdit;
+                if (comboBox != null)
+                    objectAfterEdit = comboBox.SelectedItem;      // объект DeviceType
+                else if (textBox != null)
+                    objectAfterEdit = textBox.Text;               // строка (Name)
+                else
+                    objectAfterEdit = GetPropertyValue(rowItem, GetOriginalKey()); // fallback
 
-                    hasChangesBeenMade = originalProp!=EditProp;
-                    if (hasChangesBeenMade)
-                    {
-                        bool actualModify = (bool)originalFieldValues["Modify"];
-                        command = new EditCell<object>
-                            (e.Row.Item, originalObject.Key, originalObject.Value, objectAfterEdit, dataGrid, columnIndex, actualModify);
-                        Command.Execute(command);
-                    }
-                    ResetStates();
-                }
+                // 3. Явно берём исходное значение по ключу, а не First()
+                string originalKey = GetOriginalKey();               // "DeviceType" / "Name" / ...
+                object? originalObjValue = originalFieldValues.TryGetValue(originalKey, out var ov) ? ov : null;
+
+                // 4. Ключ вложенного свойства ("Name")
+                string subProp = originalFieldValues.TryGetValue("EditProp", out var ep) && ep is string s
+                    ? s
+                    : originalKey;
+
+                // 5. Сравниваем "плоские" значения (для вложенных путей — по под-свойству)
+                string originalProp = ExtractComparable(originalObjValue, subProp);
+                string editProp = ExtractComparable(objectAfterEdit, subProp);
+
+                if (string.IsNullOrEmpty(originalProp) && string.IsNullOrEmpty(editProp))
+                    return;
+
+                bool hasChanges = !string.Equals(originalProp, editProp, StringComparison.Ordinal);
+                if (!hasChanges) return;
+
+                // 6. Безопасно читаем Modify
+                bool actualModify = originalFieldValues.TryGetValue("Modify", out var m) && m is bool b && b;
+
+                int columnIndex = e.Column.DisplayIndex;
+
+                command = new EditCell<object>(
+                    rowItem,
+                    originalKey,
+                    originalObjValue!,       // исходное значение (объект DeviceType или строка Name)
+                    objectAfterEdit!,        // новое (объект DeviceType из ComboBox или строка из TextBox)
+                    dataGrid,
+                    columnIndex,
+                    actualModify);
+
+                Command.Execute(command);
+            }
+            finally
+            {
+                ResetStates();
             }
         }
 
@@ -214,6 +239,32 @@ namespace SensorMap.Behaviors
         }
 
         #region Helpers
+       
+        private string GetOriginalKey()
+        {
+            // служебные ключи, которые не являются именем свойства
+            var serviceKeys = new HashSet<string> { "EditProp", "Modify" };
+            return originalFieldValues!.Keys.First(k => !serviceKeys.Contains(k));
+        }
+
+        // Достаём сравнимую строку: если значение — объект, берём его под-свойство (subProp);
+        // если subProp == имени ключа (плоское свойство) — ToString() самого значения.
+        private static string ExtractComparable(object? value, string subProp)
+        {
+            if (value == null) return string.Empty;
+
+            // Если subProp совпадает с именем ключа (например, "Name") — это плоское свойство
+            var type = value.GetType();
+            var prop = type.GetProperty(subProp);
+            if (prop != null && prop.DeclaringType == type)
+            {
+                var inner = prop.GetValue(value);
+                return inner?.ToString() ?? string.Empty;
+            }
+
+            // Иначе — это сам объект (DeviceType), и subProp — его под-свойство ("Name")
+            return value.ToString() ?? string.Empty;
+        }
         private void GetEditColumnValue(DataGridBeginningEditEventArgs e)
         {
             var binding = e.Column.ClipboardContentBinding as System.Windows.Data.Binding;
@@ -258,6 +309,19 @@ namespace SensorMap.Behaviors
                     yield return nested;
                 }
             }
+        }
+        private static T? FindChild<T>(DependencyObject? parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+            int count = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T t) return t;
+                var nested = FindChild<T>(child);
+                if (nested != null) return nested;
+            }
+            return null;
         }
         private static DependencyObject? GetParent(DependencyObject child)
         {

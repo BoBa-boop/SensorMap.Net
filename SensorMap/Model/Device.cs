@@ -20,7 +20,6 @@ namespace SensorMap.Model
         private bool _isModified;
         private byte[]? _image;
         private string _name = string.Empty;
-        private string _manufacturer = string.Empty;
         private DeviceType? _type;
 
         [Key]public int Id { get; set; }

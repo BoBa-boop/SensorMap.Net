@@ -23,6 +23,7 @@
     <UserControl.Resources>
         <cnv:MultiParams x:Key="CreateMultiParams"/>
         <SolidColorBrush x:Key="NewSensorType" Color="#fae6e6"/>
+        <cmnd:BindingProxy x:Key="Proxy"/>
         <CollectionViewSource x:Key="DeviceTypesView" Source="{Binding DeviceTypes}"/>
         <CollectionViewSource x:Key="SensorTypesSource" Source="{Binding SensorTypes}"/>
     </UserControl.Resources>
@@ -90,11 +91,15 @@
             <Style TargetType="DataGridRow" x:Key="rowStyle"  BasedOn="{StaticResource DataGridRowStyle}">
                 <Setter Property="Foreground" Value="Black"/>
                 <Style.Triggers>
-                    
+                    <DataTrigger Binding="{Binding IsEditing, RelativeSource={RelativeSource Self}}" Value="True">
+                        <Setter Property="ToolTip" Value="Редактируется"/>
+                        <Setter Property="Background" Value="LightSeaGreen"/>
+                        <Setter Property="Foreground" Value="Black"/>
+                    </DataTrigger>
                     <!-- Измененные строки -->
                     <DataTrigger Binding="{Binding IsModified}" Value="True">
                         <Setter Property="ToolTip" Value="Ожидает сохранения"/>
-                        <Setter Property="Background" Value="#fdff80"/>
+                        <Setter Property="Background" Value="Yellow"/>
                         <Setter Property="Foreground" Value="Black"/>
                     </DataTrigger>
 
@@ -104,10 +109,19 @@
                             <Condition Binding="{Binding IsModified}" Value="True"/>
                             <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
                         </MultiDataTrigger.Conditions>
-                        <Setter Property="Background" Value="#c7c926"/>
+                        <Setter Property="Background" Value="LightSteelBlue"/>
+                        <Setter Property="Foreground" Value="White"/>
+                    </MultiDataTrigger>
+                    <!-- Выбранная строка -->
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsModified}" Value="False"/>
+                            <Condition Binding="{Binding IsEditing, RelativeSource={RelativeSource Self}}" Value="False"/>
+                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Background" Value="LightBlue"/>
                         <Setter Property="Foreground" Value="Black"/>
                     </MultiDataTrigger>
-
                     <!-- Выбранная, измененная строка без фокуса -->
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
@@ -115,7 +129,7 @@
                             <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
                             <Condition Binding="{Binding IsModified}" Value="True"/>
                         </MultiDataTrigger.Conditions>
-                        <Setter Property="Background" Value="#a2a31d"/>
+                        <Setter Property="Background" Value="Yellow"/>
                         <Setter Property="Foreground" Value="Black"/>
                     </MultiDataTrigger>
                     
@@ -157,7 +171,7 @@
                     <MultiTrigger>
                         <MultiTrigger.Conditions>
                             <Condition Property="DataGridCell.IsSelected" Value="true" />
-                            <Condition Property="Selector.IsSelectionActive" Value="false"/>
+                            <!--<Condition Property="Selector.IsSelectionActive" Value="false"/>-->
                         </MultiTrigger.Conditions>
                         <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="Foreground" Value="Black"/>
@@ -167,7 +181,7 @@
                     <!-- 4. Дополнительный триггер: только для чтения -->
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding ElementName=root, Path=DataContext.IsEditMode}" Value="False"/>
+                            <Condition Binding="{Binding Data.IsEditMode, Source={StaticResource Proxy}}" Value="False"/>
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Background" Value="Transparent"/>
                         <Setter Property="Foreground" Value="Gray"/>
@@ -386,7 +400,7 @@
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
 
-                            <DataGridComboBoxColumn Header="Участок" Width="180"
+                            <!--<DataGridComboBoxColumn Header="Участок" Width="180"
                                                     DisplayMemberPath="Name"
                                                     ItemsSource="{Binding Source={StaticResource SectorsSource}}"
                                                     SelectedValuePath="Name"
@@ -397,9 +411,24 @@
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
 
-                            </DataGridComboBoxColumn>
-
-                            <DataGridComboBoxColumn Header="Контроллер"
+                            </DataGridComboBoxColumn>-->
+                            <DataGridTemplateColumn Header="Участок" Width="180"
+                                                    ClipboardContentBinding="{Binding Sector.Name}">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Sector.Name}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource SectorsSource}}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id"
+                                                  SelectedValue="{Binding SectorID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <!--<DataGridComboBoxColumn Header="Контроллер"
                                                     Width="180"
                                                     DisplayMemberPath="Name"
                                                     ItemsSource="{Binding Source={StaticResource DevicesSource}}"
@@ -410,10 +439,25 @@
                                         <Setter Property="Cursor" Value="Hand"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
-                            </DataGridComboBoxColumn>
-
+                            </DataGridComboBoxColumn>-->
+                            <DataGridTemplateColumn Header="Контроллер" Width="180"
+                                                    ClipboardContentBinding="{Binding Device.Name}">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Device.Name}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource DevicesSource}}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id"
+                                                  SelectedValue="{Binding DeviceID, Mode=TwoWay}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
-
+                            
                             <DataGridTemplateColumn Header="Действие" IsReadOnly="True"
                                             Width="*" MinWidth="150">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -539,7 +583,7 @@
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
 
-                            <DataGridComboBoxColumn Header="Тип" 
+                            <!--<DataGridComboBoxColumn Header="Тип" 
                                                     Width="auto"
                                                     DisplayMemberPath="Name"
                                                     ItemsSource="{Binding Source={StaticResource SensorTypesSource}}"
@@ -550,8 +594,23 @@
                                         <Setter Property="Cursor" Value="Hand"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
-                            </DataGridComboBoxColumn>
-                            
+                            </DataGridComboBoxColumn>-->
+                            <DataGridTemplateColumn Header="Тип" Width="180"
+  ClipboardContentBinding="{Binding SensorType.Name}">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding SensorType.Name}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource SensorTypesSource}}"
+DisplayMemberPath="Name"
+SelectedValuePath="Id"
+SelectedValue="{Binding SensorTypeID, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
 
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True"  CellTemplate="{StaticResource imgView_Button}"/>
 
@@ -683,7 +742,7 @@
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>                           
                             
-                            <DataGridComboBoxColumn Header="Тип" 
+                            <!--<DataGridComboBoxColumn Header="Тип" 
                                                     Width="auto"
                                                     ItemsSource="{Binding Source={StaticResource DeviceTypesView}}"
                                                     DisplayMemberPath="Name"
@@ -694,7 +753,23 @@
                                         <Setter Property="Cursor" Value="Hand"/>
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
-                            </DataGridComboBoxColumn>
+                            </DataGridComboBoxColumn>-->
+                            <DataGridTemplateColumn Header="Тип" Width="180"
+                        ClipboardContentBinding="{Binding DeviceType.Name}">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DeviceType.Name}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource DeviceTypesView}}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id"
+                                                  SelectedValue="{Binding DeviceTypeId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
                             
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
 
@@ -1048,7 +1123,6 @@
                                             </Style>
                                         </ListBox.ItemContainerStyle>
                                     </ListBox>
-
                                 </Grid>
                             </Grid>
                         </Grid>
@@ -1066,7 +1140,7 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="auto"/>
-                                <RowDefinition Height="150"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <ListBox Effect="{StaticResource EffectShadow2}" Name="lbDevices" Margin="0,0,0,20"
                                      ItemsSource="{Binding DeviceTypes,UpdateSourceTrigger=PropertyChanged}"
@@ -1169,7 +1243,7 @@
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition/>
+                                    <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 
                                 <StackPanel Grid.Column="1" HorizontalAlignment="Left">

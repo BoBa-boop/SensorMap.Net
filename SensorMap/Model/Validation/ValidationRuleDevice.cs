@@ -14,7 +14,9 @@ namespace SensorMap.Model.Validation
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
             if (value == null) return new ValidationResult(false, "Отсутствует значение");
-            var device = (value as BindingGroup).Items[0] as Device;
+            if (((BindingGroup)value).Items.Count == 0)
+                return ValidationResult.ValidResult;
+            var device = ((BindingGroup)value).Items[0] as Device;
             if (device!= null)
             {
                 if (string.IsNullOrWhiteSpace(device!.Name))
@@ -22,8 +24,7 @@ namespace SensorMap.Model.Validation
                     return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
                 }
 
-                object type = device!.DeviceType;
-                if (type == null)
+                if (device.DeviceType == null)
                 {
                     return new ValidationResult(false, "Тип обязателен для выбора");
                 }

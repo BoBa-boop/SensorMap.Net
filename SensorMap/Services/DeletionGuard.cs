@@ -29,7 +29,7 @@ namespace SensorMap.Services
                     .Invoke(null, new object?[] { dbContext,fk,principalValues,ct })!;
                 if (count > 0)
                 {
-                    blockers.Add($"{ChangeDescriber.TypeName(nav.TargetEntityType.ClrType)}({count})");
+                    blockers.Add($"{ChangeDescriber.TypeName(nav.TargetEntityType.ClrType)}({count} ед.)");
                 } 
             }
             if (blockers.Count == 0)
@@ -38,7 +38,7 @@ namespace SensorMap.Services
             var name = ChangeDescriber.NameOf(entity);
             var title = name.Length > 0 ? $"{type} \"{name}\"" : type;
             Growl.Warning("Нельзя удалить запись. См. логи");
-            return $"Нельзя удалить: {title}. С ним связаны записи: {string.Join(",", blockers)}. Сначала удалите или перенесите их.";
+            return $"Нельзя удалить: {title}. С ним связаны записи: {string.Join(",", blockers)}. Сначала удалите записи или измените {type} у них.";
         }
         private static Task<int> CountDependentsAsync<TDependent>(DbContext dbContext,IForeignKey fk, object[]? principalValues,CancellationToken ct) where TDependent : class
         {

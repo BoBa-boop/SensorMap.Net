@@ -26,8 +26,7 @@ namespace SensorMap.View
     /// </summary>
     public partial class MainMenu : System.Windows.Controls.UserControl,IViewFor<MainMenuVM>
     {
-        private readonly Updater _updater = new();
-        private bool isChecked = false;
+        
         private CompositeDisposable? _activationDisposables = new CompositeDisposable();
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register
            (
@@ -47,14 +46,7 @@ namespace SensorMap.View
             DataContextChanged += (_, _) => ViewModel = DataContext as MainMenuVM;
             this.WhenActivated(async disposables =>
             {
-                if(!isChecked)
-                {
-                    isChecked = await _updater.CheckAsync();
-                    if (isChecked)
-                    {
-                        Growl.Info("Доступно обновление!");
-                    }
-                }
+                
             }).DisposeWith(_activationDisposables);
         }
 

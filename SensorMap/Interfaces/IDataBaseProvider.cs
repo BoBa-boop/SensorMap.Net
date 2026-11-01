@@ -12,6 +12,6 @@ namespace SensorMap.Interfaces
     public interface IDataBaseProvider
     {
         bool ChangeDataBase(string path);
-        void CreateBackupDB(string backupDir);
+        Task CreateBackupDB(string backupDir);
     }
 }

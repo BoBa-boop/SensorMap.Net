@@ -52,52 +52,60 @@ namespace SensorMap.Services
             return true;
         }
 
-        public void CreateBackupDB(string backupDirectory)
+        public async Task CreateBackupDB(string backupDirectory)
         {
             string connection_string = Properties.Settings.Default.ConnectionString;
-
-            // Генерируем имя файла для бэкапа
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             string backupPath = Path.Combine(backupDirectory,$"DataBase_backup_{timestamp}.db");
 
-            // Создаем соединение с исходной базой
-            using(SqliteConnection sourceConnection = new SqliteConnection(connection_string))
+            try
             {
-                sourceConnection.Open();
-
-                // Создаем соединение для бэкапа
-                using (var backupConnection = new SqliteConnection($"Data Source={backupPath}"))
+                await Task.Run(() =>
                 {
-                    backupConnection.Open();
+                    // Создаем соединение с исходной базой
+                    using (SqliteConnection sourceConnection = new SqliteConnection(connection_string))
+                    {
+                        sourceConnection.Open();
 
-                    // Выполняем бэкап
-                    sourceConnection.BackupDatabase(backupConnection);
-                    backupConnection.Close();
-                }
-                sourceConnection.Close();
-            }
-            if (File.Exists(backupPath))
-            {
-                Growl.Success(new GrowlInfo
-                {
-                    Message = "Резервная копия БД создана.",
-                    CancelStr = "Ignore",
-                    ShowDateTime = false,
-                    WaitTime = 2
+                        // Создаем соединение для бэкапа
+                        using (var backupConnection = new SqliteConnection($"Data Source={backupPath}"))
+                        {
+                            backupConnection.Open();
+
+                            // Выполняем бэкап
+                            sourceConnection.BackupDatabase(backupConnection);
+                            backupConnection.Close();
+                        }
+                        sourceConnection.Close();
+                    }
                 });
-            }
-        }
+                // Проверка, что файл реально создан и не пуст
+                var info = new FileInfo(backupPath);
+                    if (!info.Exists || info.Length == 0)
+                        throw new InvalidOperationException("Файл бэкапа не создан или пуст.");
 
-        private static IConfigurationRoot AppSettingBuilder()
-        {
-            var builder = new ConfigurationBuilder();
-            // установка пути к текущему каталогу
-            builder.SetBasePath(Directory.GetCurrentDirectory());
-            // получаем конфигурацию из файла appsettings.json
-            builder.AddJsonFile("appsettings.json");
-            // создаем конфигурацию
-            var config = builder.Build();
-            return config;
+                    // UI-уведомление — явно в UI-потоке
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        Growl.Success(new GrowlInfo
+                        {
+                            Message = "Резервная копия БД создана.",
+                            CancelStr = "Ignore",
+                            ShowDateTime = false,
+                            WaitTime = 2
+                        }));
+                
+            }
+            catch (Exception ex)
+            {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                Growl.Error(new GrowlInfo
+                {
+                    Message = $"Ошибка бэкапа: {ex.Message}",
+                    ShowDateTime = false,
+                    WaitTime = 5
+                }));
+                Logger.Error(ex);
+            }
         }
     }
 }

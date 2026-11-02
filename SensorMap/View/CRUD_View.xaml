@@ -202,6 +202,18 @@
                 <Setter Property="GridLinesVisibility" Value="Vertical"/>
                 <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
                 <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+                <Setter Property="ColumnHeaderStyle">
+                    <Setter.Value>
+                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DataGridColumnHeaderStyle}">
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Foreground" Value="Black"/>
+                            <Setter Property="Padding" Value="8,4"/>
+                            <Setter Property="Height" Value="40"/>
+                            <Setter Property="HorizontalAlignment" Value="Center"/>
+                        </Style>
+                    </Setter.Value>
+                </Setter>
             </Style>
         </Grid.Resources>
         <DockPanel Grid.Row="0" HorizontalAlignment="Left">
@@ -329,15 +341,25 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Menu Grid.Row="0">
-                        <MenuItem Header="Свернуть"
-                                  Command="{x:Static dgCMD:GroupCommands.CollapseAll}"
-                                  CommandTarget="{Binding ElementName=Mech}"/>
-                        <MenuItem Header="Развернуть"
-                                  Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
-                                  CommandTarget="{Binding ElementName=Mech}"/>
-                    </Menu>
-                    <DataGrid Name="Mech" 
+                        <Menu Grid.Row="0">
+                            <MenuItem Style="{StaticResource IconOnlyMenuItem}"
+                                          Command="{x:Static dgCMD:GroupCommands.CollapseAll}"
+                                          CommandTarget="{Binding ElementName=Mech}"
+                                          ToolTip="Свернуть всё">
+                                <MenuItem.Icon>
+                                    <Image Source="{StaticResource CollapseImage}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Style="{StaticResource IconOnlyMenuItem}"
+                                          Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
+                                          CommandTarget="{Binding ElementName=Mech}"
+                                          ToolTip="Развернуть всё">
+                                <MenuItem.Icon>
+                                    <Image Source="{StaticResource ExpandImage}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </Menu>
+                        <DataGrid Name="Mech" 
                               ItemsSource="{Binding Mechanisms, UpdateSourceTrigger=PropertyChanged}"
                               Grid.Row="1"
                               Loaded="DataGrid_Loaded"
@@ -400,18 +422,6 @@
                                 </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
 
-                            <!--<DataGridComboBoxColumn Header="Участок" Width="180"
-                                                    DisplayMemberPath="Name"
-                                                    ItemsSource="{Binding Source={StaticResource SectorsSource}}"
-                                                    SelectedValuePath="Name"
-                                                    SelectedValueBinding="{Binding Sector.Name,Mode=TwoWay}">
-                                <DataGridComboBoxColumn.EditingElementStyle>
-                                    <Style TargetType="ComboBox">
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                    </Style>
-                                </DataGridComboBoxColumn.EditingElementStyle>
-
-                            </DataGridComboBoxColumn>-->
                             <DataGridTemplateColumn Header="Участок" Width="180"
                                                     ClipboardContentBinding="{Binding Sector.Name}">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -428,18 +438,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellEditingTemplate>
                             </DataGridTemplateColumn>
-                            <!--<DataGridComboBoxColumn Header="Контроллер"
-                                                    Width="180"
-                                                    DisplayMemberPath="Name"
-                                                    ItemsSource="{Binding Source={StaticResource DevicesSource}}"
-                                                    SelectedValueBinding="{Binding Device.Name,Mode=TwoWay}"
-                                                    SelectedValuePath="Name">
-                                <DataGridComboBoxColumn.EditingElementStyle>
-                                    <Style TargetType="ComboBox">
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                    </Style>
-                                </DataGridComboBoxColumn.EditingElementStyle>
-                            </DataGridComboBoxColumn>-->
+                           
                             <DataGridTemplateColumn Header="Контроллер" Width="180"
                                                     ClipboardContentBinding="{Binding Device.Name}">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -505,12 +504,22 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Menu Grid.Row="0">
-                        <MenuItem Header="Свернуть"
+                        <MenuItem Style="{StaticResource IconOnlyMenuItem}"
                                   Command="{x:Static dgCMD:GroupCommands.CollapseAll}"
-                                  CommandTarget="{Binding ElementName=SensorsDG}"/>
-                        <MenuItem Header="Развернуть"
+                                  CommandTarget="{Binding ElementName=SensorsDG}" 
+                                  ToolTip="Свернуть всё">
+                            <MenuItem.Icon>
+                                <Image Source="{StaticResource CollapseImage}"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Style="{StaticResource IconOnlyMenuItem}"
                                   Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
-                                  CommandTarget="{Binding ElementName=SensorsDG}"/>
+                                  CommandTarget="{Binding ElementName=SensorsDG}"
+                                  ToolTip="Развернуть всё">
+                            <MenuItem.Icon>
+                                <Image Source="{StaticResource ExpandImage}"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </Menu>
                     <DataGrid x:Name="SensorsDG"  ItemsSource="{Binding Sensors}"
                               Grid.Row="1"
@@ -540,7 +549,7 @@
                                                     <Expander beh:GroupExpansion.Track="True">
                                                         <Expander.Header>
                                                             <DockPanel>
-                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" Margin="10,0"/>
+                                                                <TextBlock FontWeight="Bold" Text="{Binding Path=Name}" FontSize="14" Margin="10,0"/>
                                                                 <TextBlock FontWeight="Bold" Text="{Binding Path=ItemCount}" Foreground="LightGray"/>
                                                             </DockPanel>
                                                         </Expander.Header>
@@ -672,12 +681,22 @@ SelectedValue="{Binding SensorTypeID, Mode=TwoWay, UpdateSourceTrigger=PropertyC
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Menu Grid.Row="0">
-                        <MenuItem Header="Свернуть"
+                        <MenuItem Style="{StaticResource IconOnlyMenuItem}"
                                   Command="{x:Static dgCMD:GroupCommands.CollapseAll}"
-                                  CommandTarget="{Binding ElementName=DevicesDG}"/>
-                        <MenuItem Header="Развернуть"
+                                  CommandTarget="{Binding ElementName=DevicesDG}"  
+                                  ToolTip="Свернуть всё">
+                            <MenuItem.Icon>
+                                <Image Source="{StaticResource CollapseImage}"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Style="{StaticResource IconOnlyMenuItem}"
                                   Command="{x:Static dgCMD:GroupCommands.ExpandAll}"
-                                  CommandTarget="{Binding ElementName=DevicesDG}"/>
+                                  CommandTarget="{Binding ElementName=DevicesDG}" 
+                                  ToolTip="Развернуть всё">
+                            <MenuItem.Icon>
+                                <Image Source="{StaticResource ExpandImage}"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </Menu>
                     <DataGrid x:Name="DevicesDG"
                         ItemsSource="{Binding Devices}"

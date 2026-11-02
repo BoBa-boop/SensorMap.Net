@@ -50,9 +50,6 @@ namespace SensorMap.Behaviors
         {
             base.OnAttached();
 
-            #region -UnSel
-            
-            #endregion
             AssociatedObject.Loaded += OnLoaded;
             AssociatedObject.BeginningEdit += OnBeginningEdit;
             AssociatedObject.CellEditEnding += OnCellEditEnding;
@@ -176,10 +173,11 @@ namespace SensorMap.Behaviors
             if (AssociatedObject == null || !AssociatedObject.IsVisible) return;
             Point clickPosition = e.GetPosition(AssociatedObject);
             var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, clickPosition);
+             if (Keyboard.FocusedElement is ComboBox { IsDropDownOpen: true }) return;
+            if (IsInsideComboBoxPopup(e.OriginalSource as DependencyObject)) return;
             if (hitTestResult == null)
             {
-                if (Keyboard.FocusedElement is ComboBox { IsDropDownOpen: true }) return;
-                if (Keyboard.FocusedElement is DependencyObject fe && GetParent(fe) != null) return;
+               if (Keyboard.FocusedElement is DependencyObject fe && GetParent(fe) != null) return;
                 //Клик вне DG
                 EndEdit();
                 AssociatedObject.UnselectAllCells();
@@ -189,6 +187,15 @@ namespace SensorMap.Behaviors
             {
                 CheckSelectionOnClick(hitTestResult);
             }
+        }
+        private bool IsInsideComboBoxPopup(DependencyObject? source)
+        {
+            while(source != null)
+            {
+                if (source is ComboBoxItem) return true;
+                source = GetParent(source);
+            }
+            return false;
         }
         private void CheckSelectionOnClick(HitTestResult hitTestResult)
         {

@@ -118,7 +118,7 @@
      hc:IconElement.Geometry="{StaticResource FullScreenGeometry}" ToolTip="Просмотр"
      Command="{Binding ElementName=root,Path=DataContext.ShowPreviewImage}"
      CommandParameter="{Binding Image}"/>
-            <Image x:Name="imgPreview"  Source="{DynamicResource ImageDefault}" Stretch="Uniform"/>
+            <Image x:Name="imgPreview"  Source="{DynamicResource LookAtImage}" Stretch="Uniform"/>
             <TextBlock Name="mark" Text="{Binding}" Visibility="Collapsed"/>
             <Grid.Triggers>
                 <EventTrigger RoutedEvent="MouseEnter">

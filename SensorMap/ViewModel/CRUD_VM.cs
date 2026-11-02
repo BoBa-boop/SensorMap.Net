@@ -3,6 +3,7 @@ using DynamicData;
 using DynamicData.Binding;
 using HandyControl.Controls;
 using HandyControl.Data;
+using HandyControl.Expression.Shapes;
 using HandyControl.Properties.Langs;
 using HandyControl.Tools;
 using Microsoft.EntityFrameworkCore;
@@ -117,6 +118,7 @@ namespace SensorMap.ViewModel
                 if (obj is Device)
                     Navigation.NavigateTo<Devices_VM>(obj);
             });
+            
             SaveCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
@@ -747,15 +749,14 @@ namespace SensorMap.ViewModel
                 liveColl.LiveGroupingProperties.Clear();
                 //отслеживаемые свойства
                 liveColl.LiveSortingProperties.Add(nameof(Mechanism.Sector));
-                liveColl.LiveSortingProperties.Add(nameof(Mechanism.Device));
                 //
                 liveColl.LiveGroupingProperties.Add(nameof(Mechanism.Sector));
-                liveColl.LiveGroupingProperties.Add(nameof(Mechanism.Device));
                 
             }
             using (view.DeferRefresh())
             {
                 view.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
+                view.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
                 view.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
             }
         }

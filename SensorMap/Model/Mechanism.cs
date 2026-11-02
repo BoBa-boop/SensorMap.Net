@@ -61,9 +61,9 @@ namespace SensorMap.Model
             get => _device;
             set
             {
+                this.RaiseAndSetIfChanged(ref _device, value);
                 if(value!=null)
                 {
-                    this.RaiseAndSetIfChanged(ref _device, value);
                     DeviceID = _device!.Id;
                 }
             }

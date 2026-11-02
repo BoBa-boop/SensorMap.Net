@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SensorMap.Interfaces
 {
-    public enum StepState { Pending, Running, Success, Failed }
+    public enum StepState { Ожидание, Запущен, Успешно, Ошибка }
 
     public record CheckResult(bool Ok, string? Message = null);
 

@@ -1,4 +1,5 @@
-﻿using HandyControl.Tools;
+﻿using HandyControl.Controls;
+using HandyControl.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,9 +15,11 @@ using SensorMap.ViewModel;
 using System.IO;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Shapes;
 using Velopack;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
+using Path = System.IO.Path;
 
 namespace SensorMap
 {
@@ -64,7 +67,7 @@ namespace SensorMap
             }
         }
 
-        private  void AnalyzeDataBase()
+        private void AnalyzeDataBase()
         {
             IAppDbContextFactory dbContextFactory = _serviceProvider.GetRequiredService<IAppDbContextFactory>();
             var data = _serviceProvider.GetRequiredService<IDataService>();
@@ -75,6 +78,7 @@ namespace SensorMap
                     dBContext.Database.MigrateAsync();
                     data.IsDataBaseConnect = true;
                 }
+                
             }
             catch (Exception ex)
             {

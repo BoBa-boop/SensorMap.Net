@@ -54,6 +54,53 @@
                         Margin="0,5"
                         HorizontalAlignment="Left"
                         Command="{Binding NavigateToPathDB}"/>
+
+                <GroupBox Style="{StaticResource GroupBoxOriginalBaseStyle}"
+                          HorizontalAlignment="Center"
+                          BorderThickness="2" BorderBrush="{StaticResource BorderBrush}">
+                <StackPanel Orientation="Vertical" 
+                            Visibility="{Binding ElementName=stepBar,Path=Visibility}">
+                <TextBlock Text="Проверка выбранного файла" Style="{StaticResource TextBlockSubTitle}" FontWeight="Medium"/>
+                <hc:StepBar ItemsSource="{Binding Steps}"
+                            Visibility="{Binding Steps.Count,Converter={StaticResource CountToReVisibility}}"
+                            x:Name="stepBar"
+                            StepIndex="{Binding StepIndex}"
+                            Dock="Left" 
+                            Foreground="{DynamicResource DangerBrush}"
+                            Margin="10">
+                    <hc:StepBar.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontSize="14" HorizontalAlignment="Left"
+                                           Text="{Binding Title}" FontWeight="Medium">
+                                    <TextBlock.Style>
+                                        <Style TargetType="{x:Type TextBlock}">
+                                            <Setter Property="Foreground" Value="{StaticResource InfoBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding State}" Value="Ошибка">
+                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="Ожидание">
+                                                        <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="Успешно">
+                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </hc:StepBar.ItemTemplate>
+                </hc:StepBar>
+                
+                <TextBlock Text="{Binding CheckError}"
+                           Foreground="{StaticResource DangerBrush}"
+                           TextWrapping="Wrap" FontSize="16" FontWeight="Bold"
+                           Margin="0,10,0,0"/>
+                </StackPanel>
+                </GroupBox>
             </StackPanel>
         </GroupBox>
         <GroupBox Style="{StaticResource GroupBoxOriginal}"

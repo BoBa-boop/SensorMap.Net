@@ -21,6 +21,9 @@ namespace SensorMap.Services
             _dbContextFactory = dBContextFactory;
             
         }
+
+        
+
         public bool ChangeDataBase(string path)
         {
             string newDB_connectionString = "DataSource=" + path;
@@ -106,6 +109,15 @@ namespace SensorMap.Services
                 }));
                 Logger.Error(ex);
             }
+        }
+
+        public IReadOnlyList<IDbCheck> CreateChecks()
+        {
+            throw new NotImplementedException();
+        }
+        public bool ApplyDataBase(string path)
+        {
+            throw new NotImplementedException();
         }
     }
 }

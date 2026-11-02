@@ -25,7 +25,22 @@ namespace SensorMap.ViewModel
         private bool _onlyErrors;
         private DbActionLogs? _selectedLog;
 
-        public ObservableCollection<DbActionLogs> Logs => _logService.Logs;
+        public ObservableCollection<DbActionLogs> Logs => _logService.Logs; 
+        public ObservableCollection<CheckStepVM> Steps { get; } = new();
+
+        private int _stepIndex;
+        public int StepIndex
+        {
+            get => _stepIndex;
+            set => this.RaiseAndSetIfChanged(ref _stepIndex, value);
+        }
+
+        private string? _checkError;
+        public string? CheckError
+        {
+            get => _checkError;
+            set => this.RaiseAndSetIfChanged(ref _checkError, value);
+        }
         public bool CanLoadMore => _logService.CanLoadMore;
 
         public string DbName
@@ -130,6 +145,38 @@ namespace SensorMap.ViewModel
                     text += Environment.NewLine + SelectedLog.Technical;
                 HandyControl.Controls.MessageBox.Show(text, "Текст лога", System.Windows.MessageBoxButton.OK);
             });
+        }
+       
+
+        private async Task<bool> RunChecksAsync(string path)
+        {
+            Steps.Clear();
+            CheckError = null;
+            StepIndex = 0;
+
+            foreach (var c in _dbProvider.CreateChecks())
+                Steps.Add(new CheckStepVM(c));
+
+            foreach (var step in Steps)
+            {
+                step.State = StepState.Running;
+
+                CheckResult result;
+                try { result = await step.Check.RunAsync(path); }
+                catch (Exception ex) { result = new CheckResult(false, ex.Message); }
+
+                if (!result.Ok)
+                {
+                    step.State = StepState.Failed;
+                    step.Message = result.Message;
+                    CheckError = $"{step.Title}: {result.Message}";
+                    return false;
+                }
+
+                step.State = StepState.Success;
+                StepIndex++;
+            }
+            return true;
         }
         public ICommand ChangeDataBase { get; private set; }
         public ICommand NavigateToPathDB { get; }

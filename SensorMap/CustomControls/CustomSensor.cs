@@ -214,6 +214,8 @@ namespace SensorMap.CustomControls
         public CustomSensor()
         {
             _transformService = new TransformObjectService();
+            Loaded += (_, _) => Subscribe();
+            Unloaded += (s, e) => Unsubscribe();
         }
 
         public override void OnApplyTemplate()
@@ -223,28 +225,6 @@ namespace SensorMap.CustomControls
             _image = _canvas.Children.OfType<Image>().First();
             _textBlock = (TextBlock)GetTemplateChild("PART_Address");
             
-            if (_canvas != null)
-            {
-                this.Unloaded += CustomSensor_Unloaded;
-                ChangeStateActions();
-                _sensorSubscription = SensorData.WhenAnyValue(x => x.Sensor)                    
-                    .Subscribe(_ =>
-                    {
-                        if (SensorData == null || SensorData.Sensor == null || SensorData.Sensor.SensorType == null) return;
-                        
-                        if (SensorData.Sensor.SensorType.Color != null && SensorData.Description != "Копия")
-                        {
-                            Brush? currentColor = new BrushConverter().ConvertFrom(SensorData.Sensor.SensorType.Color) as Brush;
-                            if (currentColor is SolidColorBrush solidBrush)
-                                CustomBackground = solidBrush;
-                            else
-                                CustomBackground = new SolidColorBrush(Colors.LightGray);
-                        }
-                    }).DisposeWith(disposables);
-                System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
-                    System.Windows.Threading.DispatcherPriority.Loaded,
-                    new Action(() => UpdateAddressPosition()));
-            }
         }
 
         private void CustomSensor_Unloaded(object sender, RoutedEventArgs e)
@@ -255,30 +235,69 @@ namespace SensorMap.CustomControls
             _canvas.MouseMove -= OnMouseMove;
             _canvas.MouseUp -= OnMouseUp;
             this.Unloaded -= CustomSensor_Unloaded;
+            _memorySelectedSensor = null;
             disposables.Dispose();
         }
 
         private void ChangeStateActions()
         {
-            if (_canvas == null) return;
-            this.MouseDown += OnMouseDown;
-            if (IsEditMode)
-            {
-                
-                this.MouseMove += OnSensorMouseMove;
-                _canvas.MouseMove += OnMouseMove;
-                _canvas.MouseUp += OnMouseUp;
-                this.MouseLeave += OnMouseLeave;
-            }
-            else
-            {
-                this.IsSelected = false;
-                this.MouseMove -= OnSensorMouseMove;
-                _canvas!.MouseMove -= OnMouseMove;
-                _canvas.MouseUp -= OnMouseUp;
-            }
+            if (_canvas == null||!IsLoaded) return;
+            
+            if (IsEditMode) AttachEditHandlers();
+            else {DetachEditHandlers(); this.IsSelected = false; }
         }
 
+        private void DetachEditHandlers()
+        {
+            this.MouseMove -= OnSensorMouseMove;
+            MouseLeave -= OnMouseLeave;
+            if (_canvas == null) return;
+            _canvas!.MouseMove -= OnMouseMove;
+            _canvas.MouseUp -= OnMouseUp;
+        }
+
+        private void AttachEditHandlers()
+        {
+            DetachEditHandlers();
+            this.MouseMove += OnSensorMouseMove;
+            if(_canvas==null) return;
+            _canvas.MouseMove += OnMouseMove;
+            _canvas.MouseUp += OnMouseUp;
+            this.MouseLeave += OnMouseLeave;
+        }
+
+        private void Subscribe()
+        {
+            Unsubscribe();
+            if (_canvas == null) return;
+            this.MouseDown += OnMouseDown;
+            if (IsEditMode) AttachEditHandlers();
+
+            _sensorSubscription = SensorData.WhenAnyValue(x => x.Sensor)
+                    .Subscribe(_ =>
+                    {
+                        if (SensorData == null || SensorData.Sensor == null || SensorData.Sensor.SensorType == null) return;
+
+                        if (SensorData.Sensor.SensorType.Color != null && SensorData.Description != "Копия")
+                        {
+                            Brush? currentColor = new BrushConverter().ConvertFrom(SensorData.Sensor.SensorType.Color) as Brush;
+                            if (currentColor is SolidColorBrush solidBrush)
+                                CustomBackground = solidBrush;
+                            else
+                                CustomBackground = new SolidColorBrush(Colors.LightGray);
+                        }
+                    }).DisposeWith(disposables);
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+                System.Windows.Threading.DispatcherPriority.Loaded,
+                new Action(() => UpdateAddressPosition()));
+        }
+        private void Unsubscribe()
+        {
+            MouseDown -= OnMouseDown;
+            DetachEditHandlers();
+            disposables?.Dispose();
+
+        }
         private void OnMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (!IsDragging)
@@ -470,13 +489,9 @@ namespace SensorMap.CustomControls
                 };
                 Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
 
-                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
-                {
-                    window.Close();
-                    IsContextOpen = false;
-                    Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
-                }
+                void OnMainWindowClick(object sender, MouseButtonEventArgs e)=> window.Close();                
                 window.Show(this, false);
+                window.Closed += (s, e) => { Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick; IsContextOpen = false; };
             }
             
         }

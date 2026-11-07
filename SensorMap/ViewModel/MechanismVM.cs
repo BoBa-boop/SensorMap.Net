@@ -392,6 +392,8 @@ namespace SensorMap.ViewModel
                     DevicesList?.Clear();
                     SensorTypes?.Clear(); 
                     Sectors?.Clear();
+                    _undoRedoStacks?.Clear();
+                    
                 }).DisposeWith(disposables);
 
                 var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;

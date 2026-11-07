@@ -155,10 +155,6 @@ namespace SensorMap.Behaviors
             base.OnDetaching();
             #region -UnSel
             var window = Window.GetWindow(AssociatedObject);
-            if (window != null)
-            {
-                window.PreviewMouseDown -= OnWindowPreviewMouseDown;
-            }
             #endregion
             AssociatedObject.BeginningEdit -= OnBeginningEdit;
             AssociatedObject.CellEditEnding -= OnCellEditEnding;

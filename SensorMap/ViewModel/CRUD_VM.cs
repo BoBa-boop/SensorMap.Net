@@ -597,6 +597,7 @@ namespace SensorMap.ViewModel
             _loadInProgress = true;
             try
             {
+                await Dispatcher.Yield(DispatcherPriority.Background);
                 while (_pendingTabIndex >= 0)
                 {
                     
@@ -627,7 +628,6 @@ namespace SensorMap.ViewModel
                     case 1:
                         
                         await LoadSecondAsync();
-                        await LoadDevices();
                         SubscribeToCurrentStack();
                         IsExpanded = true;  
                         break;
@@ -659,12 +659,18 @@ namespace SensorMap.ViewModel
         private async Task LoadAddictionalData()
         {
             if (_fourthPageLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var sensorTypes = await dbContext.SensorTypes.AsNoTracking()
+            var sensorTypes = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.SensorTypes.AsNoTracking()
+                   .Include(x => x.Characteristics).ToListAsync();
+            });
+            var deviceTypes = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.DeviceTypes.AsNoTracking()
                 .Include(x => x.Characteristics).ToListAsync();
-            var deviceTypes = await dbContext.DeviceTypes.AsNoTracking()
-                .Include(x => x.Characteristics).ToListAsync();
-
+            });
             DeviceTypes = new(deviceTypes);
 
             SensorTypes = new(sensorTypes);
@@ -675,24 +681,29 @@ namespace SensorMap.ViewModel
         private async Task LoadFirstPageAsync()
         {
             if (_firstPageLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var sectors = await dbContext.Sectors.AsNoTracking()
-                .Include(x => x.Mechanisms).ToListAsync();
-            
+            var sectors = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Sectors.AsNoTracking()
+                   .Include(x => x.Mechanisms).ToListAsync();
+            });
             Sectors = new ObservableCollection<Sector>(sectors);
             _firstPageLoaded = true;
         }
         private async Task LoadSecondAsync()
         {
             if (_secondPageLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var mechanisms = await dbContext.Mechanisms.AsNoTracking()
-                .Include(x => x.Files)
-                .Include(x => x.Sector)
-                .Include(x => x.Device)
-                .AsSplitQuery()
-                .ToListAsync();
-           
+
+            var mechanisms = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Mechanisms.AsNoTracking()
+                    .Include(x => x.Files)
+                    .Include(x => x.Sector)
+                    .Include(x => x.Device).ThenInclude(d => d.DeviceType)
+                    .AsSplitQuery()
+                    .ToListAsync();
+            });
             var collection = new ObservableCollection<Mechanism>(mechanisms);
             var view = CollectionViewSource.GetDefaultView(collection);
             ConfigureMechanismsView(view);
@@ -703,38 +714,47 @@ namespace SensorMap.ViewModel
         private async Task LoadThirdAsync()
         {
             if (_thirdPageLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var sensors = await dbContext.Sensors.AsNoTracking()
-                .Include(x=>x.SensorType).ToListAsync();
-            var sensorTypes = await dbContext.SensorTypes.AsNoTracking()
-                .Include(x => x.Characteristics).ToListAsync();
-            await Application.Current.Dispatcher.InvokeAsync(() =>
+            var sensors = await Task.Run(async () =>
             {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Sensors.AsNoTracking()
+                   .Include(x => x.SensorType).ToListAsync();
+                 
+            });
+            var sensorTypes = await Task.Run(async () => 
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.SensorTypes.AsNoTracking()
+                    .Include(x => x.Characteristics).ToListAsync();
+            });
                 var collection = new ObservableCollection<Sensor>(sensors);
                 var view = CollectionViewSource.GetDefaultView(collection);
                 ConfigureSensorsView(view);
                 Sensors = collection;
                 SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
-            });
             _thirdPageLoaded = true;
         }
         private async Task LoadDevices()
         {
             if (_devicesLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var devices = await dbContext.Devices
-                .Include(x => x.DeviceType).ToListAsync();
-            var deviceTypes = await dbContext.DeviceTypes.AsNoTracking()
-                .Include(x => x.Characteristics).ToListAsync();
-
-            await Application.Current.Dispatcher.InvokeAsync(() =>
+            var devices = await Task.Run(async () =>
             {
-                var collection = new ObservableCollection<Device>(devices);
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Devices
+                   .Include(x => x.DeviceType).ToListAsync();
+
+            });
+            var deviceTypes = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.DeviceTypes.AsNoTracking()
+                    .Include(x => x.Characteristics).ToListAsync();
+            });
+            var collection = new ObservableCollection<Device>(devices);
                 var view = CollectionViewSource.GetDefaultView(collection);
                 ConfigureDevicesView(view);
                 Devices = collection;
                 DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
-            });
             _devicesLoaded = true;
         }
         #endregion

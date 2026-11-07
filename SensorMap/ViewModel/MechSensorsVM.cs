@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DynamicData;
+using DynamicData.Binding;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using ReactiveUI;
@@ -112,7 +113,18 @@ namespace SensorMap.ViewModel
             {
                 if (obj == null) return Observable.Empty<string>();
 
-                if (obj == null) return Observable.Empty<string>();
+                //var common = Observable.Merge(
+                //    obj.WhenAnyValue(m => m.Description).Skip(1).Select(_ => "Description"),
+                //    obj.WhenAnyValue(m=>m.Image).Skip(1).Select(_=>"Image"));
+                //return obj switch
+                //{
+                //    SensorAssignments s => common.Merge(
+                //        s.WhenAnyValue(x => x.Address).Skip(1).Select(_ => "Address"),
+                //        s.WhenAnyValue(x => x.Sensor.Name).Skip(1).Select(_ => "Sensor.Name")),
+                //    DeviceAssignment d => common.Merge(
+                //        d.WhenAnyValue(x => x.Device.Name).Skip(1).Select(_ => "Device.Name")),
+                //    _ => common
+                //};
 
                 // Свойства самого объекта (пропускаем первое значение сразу)
                 var descriptionChanged = obj.WhenAnyValue(m => m.Description).Skip(1).Select(_ => "Description");

@@ -85,7 +85,7 @@ namespace SensorMap.Behaviors
         {
             if (e.Row.Item is not { } rowItem) return;
             if (sender is not DataGrid dataGrid) return;
-            if (originalFieldValues == null) return;
+            if (originalFieldValues == null || originalFieldValues.Count==0) return;
 
             try
             {

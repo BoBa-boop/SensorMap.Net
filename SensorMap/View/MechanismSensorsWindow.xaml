@@ -47,9 +47,20 @@
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
-                            <DataGridTextColumn Binding="{Binding Address}" MinWidth="100" Header="Адрес"/>
+                            <DataGridTextColumn 
+                                                MinWidth="100"
+                                                Header="Адрес">
+                                <DataGridTextColumn.Binding>
+                                    <Binding Path="Address" UpdateSourceTrigger="LostFocus">
+                                        <Binding.ValidationRules>
+                                            <valid:InputDigitOnly IsIncludeSpecSymbols="True"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </DataGridTextColumn.Binding>
+                                
+                            </DataGridTextColumn>
                             <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
-                            <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
+                            <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -97,7 +108,7 @@ IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConve
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
                             <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
-                            <DataGridTemplateColumn Header="Схема" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
+                            <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>

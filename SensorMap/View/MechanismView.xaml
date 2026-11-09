@@ -263,16 +263,14 @@
                     <hc:ButtonGroup>
                         <Button ToolTip="Копировать" Padding="2"
                                 Width="30" 
-                                Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}"
-                                CommandParameter="{Binding ElementName=ccSensorMap,Path=SelectedMapObject}">
+                                Command="{Binding ElementName=ccSensorMap,Path=CopySensorsCommand}">
                             <Button.Content>
                                 <Image Source="{StaticResource CopyImage}"/>
                             </Button.Content>
                         </Button>
                         <Button ToolTip="Вставить" Width="30"
                                 Padding="2"
-                                Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}"
-                                CommandParameter="{Binding ElementName=ccSensorMap,Path=SelectedMapObject}">
+                                Command="{Binding ElementName=ccSensorMap,Path=PasteSensorsCommand}">
                             <Image Source="{StaticResource PasteImage}"/>
                         </Button>
                         <Button ToolTip="Вырезать" Width="30"

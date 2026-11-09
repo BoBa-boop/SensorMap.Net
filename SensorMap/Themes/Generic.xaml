@@ -83,7 +83,7 @@
                                 <Rectangle.Style>
                                     <Style TargetType="Rectangle">
                                         <Setter Property="Fill" Value="Transparent"/>
-                                        <Setter Property="StrokeThickness" Value="1"/>
+                                        <Setter Property="StrokeThickness" Value="2"/>
                                         <Setter Property="StrokeDashArray" Value="2,2"/>
                                         <Setter Property="Stroke">
                                             <Setter.Value>
@@ -119,13 +119,13 @@
                             </TextBlock.Style>
                         </TextBlock>
                         <Rectangle x:Name="PART_Highlight"
-                            Canvas.Left="-7" Canvas.Top="-7"
-                            Width="{calc:Binding 'CustomBounds.Width + 15',Mode=OneWay,RelativeSource={RelativeSource TemplatedParent}}"
-                            Height="{calc:Binding 'CustomBounds.Height + 15',Mode=OneWay,RelativeSource={RelativeSource TemplatedParent}}">
+                            Canvas.Left="-13" Canvas.Top="-13"
+                            Width="{calc:Binding 'CustomBounds.Width + 25',Mode=OneWay,RelativeSource={RelativeSource TemplatedParent}}"
+                            Height="{calc:Binding 'CustomBounds.Height + 25',Mode=OneWay,RelativeSource={RelativeSource TemplatedParent}}">
                             <Rectangle.Style>
                                 <Style TargetType="Rectangle">
                                     <Setter Property="Fill" Value="Transparent"/>
-                                    <Setter Property="StrokeThickness" Value="4"/>
+                                    <Setter Property="StrokeThickness" Value="5"/>
                                     <Setter Property="StrokeDashArray" Value="2,2"/>
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>

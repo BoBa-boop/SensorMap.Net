@@ -21,8 +21,6 @@ namespace SensorMap.ViewModel
         private IAuthorization _auth;
         private IJsonSerialization _json;
         private SettingsApp settings;
-        
-        private string DefaultImage = "\\Resources\\MenuImages\\menuImage2.jpg";
         [Reactive] public SettingsApp MySettings { get => settings; set => settings = value; }
 
         private ObservableCollection<string> _images;

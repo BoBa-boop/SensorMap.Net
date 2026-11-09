@@ -44,7 +44,7 @@ namespace SensorMap.View
         {
             InitializeComponent();
             DataContextChanged += (_, _) => ViewModel = DataContext as MainMenuVM;
-            this.WhenActivated(async disposables =>
+            this.WhenActivated(disposables =>
             {
                 
             }).DisposeWith(_activationDisposables);

@@ -16,7 +16,28 @@
            Name="root">
 
     <Grid>
-       
+        <Grid.Resources>
+            <Style x:Key="ValidatedCellStyle" TargetType="TextBox" BasedOn="{StaticResource DataGridEditingTextColumnStyle}">
+                <Setter Property="MaxLength" Value="10"/>
+                <Setter Property="MaxWidth" Value="140"/>
+                <Setter Property="Padding" Value="2"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+
+                <!-- Триггер на ошибку валидации -->
+                <Style.Triggers>
+                    <Trigger Property="Validation.HasError" Value="True">
+                        <Setter Property="BorderBrush" Value="Red"/>
+                        <Setter Property="BorderThickness" Value="2"/>
+                        <Setter Property="Background" Value="#FFF0F0"/>
+                        <Setter Property="ToolTip"
+                        Value="{Binding RelativeSource={RelativeSource Self},
+                                        Path=(Validation.Errors)[0].ErrorContent}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
         <hc:TabControl Style="{StaticResource TabControlInLine}">
             <hc:TabItem Header="Датчики">
                 <Grid>
@@ -28,6 +49,8 @@
                     <TextBlock Text="{Binding StringFormat=Количество: {0},Path=Sensors.Count}"
                                Margin="5,0"
                                Grid.Row="0"/>
+                    <Button Content="Валидные адреса"
+                            Command="{Binding DoCurrentAddress}" Visibility="{Binding IsEditMode,Converter={StaticResource Bool2VisOrHidden}}"/>
                     <DataGrid ItemsSource="{Binding Sensors}" AutoGenerateColumns="False" CanUserAddRows="False"
           SelectedItem="{Binding SelectedMapObject}" Grid.Row="1"
           IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConverter}}">
@@ -47,19 +70,30 @@
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
-                            <DataGridTextColumn 
+                            <DataGridTextColumn MaxWidth="140"
                                                 MinWidth="100"
                                                 Header="Адрес">
                                 <DataGridTextColumn.Binding>
                                     <Binding Path="Address" UpdateSourceTrigger="LostFocus">
                                         <Binding.ValidationRules>
-                                            <valid:InputDigitOnly IsIncludeSpecSymbols="True"/>
+                                            <valid:InputDigitOnly/>
                                         </Binding.ValidationRules>
                                     </Binding>
                                 </DataGridTextColumn.Binding>
-                                
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource ValidatedCellStyle}"/>
+                                </DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
+                            <DataGridTextColumn Binding="{Binding Description}"  Header="Описание">
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource DataGridEditingTextColumnStyle}">
+                                        <Setter Property="Width" Value="auto"/>
+                                        <Setter Property="MinWidth" Value="50"/>
+                                        <Setter Property="MaxLength" Value="40"/>
+                                        <Setter Property="MaxWidth" Value="170"/>
+                                    </Style>
+                                </DataGridTextColumn.EditingElementStyle>
+                            </DataGridTextColumn>
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -96,9 +130,9 @@ IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConve
                         </i:Interaction.Behaviors>
                         <DataGrid.Columns>
                             <DataGridComboBoxColumn DisplayMemberPath="Name"
-                      MinWidth="100"
-                      Header="Название"
-                      TextBinding="{Binding Device.Name}">
+                                                    MinWidth="100"
+                                                    Header="Название"
+                                                    TextBinding="{Binding Device.Name}">
                                 <DataGridComboBoxColumn.EditingElementStyle>
                                     <Style TargetType="ComboBox">
                                         <Setter Property="Cursor" Value="Hand"/>
@@ -107,7 +141,16 @@ IsReadOnly="{Binding IsEditMode,Converter={StaticResource Boolean2BooleanReConve
                                     </Style>
                                 </DataGridComboBoxColumn.EditingElementStyle>
                             </DataGridComboBoxColumn>
-                            <DataGridTextColumn Binding="{Binding Description}"  Header="Описание"/>
+                            <DataGridTextColumn Binding="{Binding Description}"  Header="Описание">
+                                <DataGridTextColumn.EditingElementStyle>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource DataGridEditingTextColumnStyle}">
+                                        <Setter Property="Width" Value="auto"/>
+                                        <Setter Property="MinWidth" Value="50"/>
+                                        <Setter Property="MaxLength" Value="40"/>
+                                        <Setter Property="MaxWidth" Value="170"/>
+                                    </Style>
+                                </DataGridTextColumn.EditingElementStyle>
+                            </DataGridTextColumn>
                             <DataGridTemplateColumn Header="Изображение" IsReadOnly="True" CellTemplate="{StaticResource imgView_Button}"/>
                             <DataGridTemplateColumn Header="Действие">
                                 <DataGridTemplateColumn.CellTemplate>

@@ -83,6 +83,7 @@ namespace SensorMap.Behaviors
 
         private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
         {
+            if (Command == null) return;
             if (e.Row.Item is not { } rowItem) return;
             if (sender is not DataGrid dataGrid) return;
             if (originalFieldValues == null || originalFieldValues.Count==0) return;

@@ -380,7 +380,8 @@ namespace SensorMap.CustomControls
                         }
                         if (_image!=null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
-                            if ((new_width > 17) && (new_height > 17))
+                            int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length*15??70;
+                            if ((new_width > minWidth) && (new_height > 20))
                             {
                                 Canvas.SetLeft(item, new_x);
                                 Canvas.SetTop(item, new_y);

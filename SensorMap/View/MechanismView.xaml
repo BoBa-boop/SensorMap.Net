@@ -78,7 +78,7 @@
                     </CheckBox.Style>
                 </CheckBox>
                 <Button ToolTip="Показать список датчиков" Padding="2"
-                        Command="{Binding ShowSensorMechanism}">
+                        Command="{Binding ShowSensorMechanism}" CommandParameter="{Binding CurrentMech}">
                     <Button.Content>
                         <Image Source="{StaticResource ListImage}"/>
                     </Button.Content>
@@ -296,14 +296,15 @@
                         <TextBlock Text="Масштабирование" Style="{StaticResource TextBlockDefaultBold}"
                                    FontSize="13" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,-7,15,0">
-                        <Image Source="{StaticResource MouseLeftWithArrowsImage}" Height="30" Width="30"/>
-                        <TextBlock Text="Выбрать несколько объектов" Style="{StaticResource TextBlockDefaultBold}"
-                                   FontSize="13" VerticalAlignment="Center"/>
-                    </StackPanel>
+                    
                     <StackPanel Orientation="Horizontal" Margin="0,-9,15,0">
                         <Image Source="{StaticResource MouseRightClickImage}" Height="30" Width="30"/>
                         <TextBlock Text="Контекстное меню" Style="{StaticResource TextBlockDefaultBold}"
+                                   FontSize="13" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,-7,15,0" Visibility="{Binding IsEditMode,Converter={StaticResource Bool2VisOrHidden}}">
+                        <Image Source="{StaticResource MouseLeftWithArrowsImage}" Height="30" Width="30"/>
+                        <TextBlock Text="Выбрать несколько объектов" Style="{StaticResource TextBlockDefaultBold}"
                                    FontSize="13" VerticalAlignment="Center"/>
                     </StackPanel>
                 </StackPanel>

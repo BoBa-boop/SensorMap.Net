@@ -50,14 +50,10 @@ namespace SensorMap.Behaviors
             var behavior = (CollectionChangeBehavior)d;
 
             if (e.OldValue is INotifyCollectionChanged oldCollection)
-            {
-                oldCollection.CollectionChanged -= behavior.OnCollectionChanged;
-            }
+                CollectionChangedEventManager.RemoveHandler(oldCollection, behavior.OnCollectionChanged);
 
             if (e.NewValue is INotifyCollectionChanged newCollection)
-            {
-                newCollection.CollectionChanged += behavior.OnCollectionChanged;
-            }
+                CollectionChangedEventManager.AddHandler(newCollection, behavior.OnCollectionChanged);
         }
 
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -74,6 +70,7 @@ namespace SensorMap.Behaviors
             {
                 collection.CollectionChanged -= OnCollectionChanged;
             }
+            BindingOperations.ClearBinding(this, ItemsSourceProperty);
             base.OnDetaching();
         }
     }

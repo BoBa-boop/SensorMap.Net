@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DynamicData;
+using DynamicData.Binding;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using ReactiveUI;
@@ -12,13 +13,16 @@ using SensorMap.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Input;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SensorMap.ViewModel
 {
@@ -107,12 +111,63 @@ namespace SensorMap.ViewModel
                     browser.ShowDialog();
                 }
             });
+            DoCurrentAddress = new RelayCommand(() =>
+            {
+                if (Sensors.Count <= 0) return;
+                CultureInfo cultureInfo = CultureInfo.CurrentCulture;
+                char separator = cultureInfo.NumberFormat.NumberDecimalSeparator[0];
+                var pattern = $@"^\d+\{separator}\d+$";
+                foreach (var sensor in Sensors)
+                {
+                    if (!Regex.IsMatch(sensor.Address, pattern))
+                    {
+                        // 1. Оставляем только цифры и разделители (точка/запятая)
+                        string cleaned = Regex.Replace(sensor.Address, @"[^\d.,]", "");
+
+                        // 2. Нормализуем разделитель: запятую меняем на точку
+                        cleaned = cleaned.Replace(',', '.');
+
+                        
+                        // 4. Если получилось что-то валидное — приводим к формату y.x
+                        if (Regex.IsMatch(cleaned, @"^\d+\.\d+$"))
+                        {
+                            sensor.Address = cleaned;
+                        }
+                        else if (Regex.IsMatch(cleaned, @"^\d+$"))
+                        {
+                            // только целая часть — добавляем ".0" (или оставляем как есть, по вашему требованию)
+                            sensor.Address = cleaned + ".0";
+                        }
+                        else if (Regex.IsMatch(cleaned, @"^\.\d+$"))
+                        {
+                            // только дробная часть — добавляем "0" в начало
+                            sensor.Address = "0" + cleaned;
+                        }
+                        if (Regex.IsMatch(sensor.Address, pattern))
+                        {
+                            sensor.IsModified = true;
+                        }
+                    }
+                }
+                if (Sensors.Where(x => x.IsModified).Any()) HasChanges=true;
+            }, ()=> { return Sensors.Count > 0; });
             this.WhenAnyValue(x => x.SelectedMapObject)
             .Select(obj =>
             {
                 if (obj == null) return Observable.Empty<string>();
 
-                if (obj == null) return Observable.Empty<string>();
+                //var common = Observable.Merge(
+                //    obj.WhenAnyValue(m => m.Description).Skip(1).Select(_ => "Description"),
+                //    obj.WhenAnyValue(m=>m.Image).Skip(1).Select(_=>"Image"));
+                //return obj switch
+                //{
+                //    SensorAssignments s => common.Merge(
+                //        s.WhenAnyValue(x => x.Address).Skip(1).Select(_ => "Address"),
+                //        s.WhenAnyValue(x => x.Sensor.Name).Skip(1).Select(_ => "Sensor.Name")),
+                //    DeviceAssignment d => common.Merge(
+                //        d.WhenAnyValue(x => x.Device.Name).Skip(1).Select(_ => "Device.Name")),
+                //    _ => common
+                //};
 
                 // Свойства самого объекта (пропускаем первое значение сразу)
                 var descriptionChanged = obj.WhenAnyValue(m => m.Description).Skip(1).Select(_ => "Description");
@@ -165,5 +220,6 @@ namespace SensorMap.ViewModel
         }
         public ICommand AddImage { get; set; }
         public ICommand ShowPreviewImage { get; set; }
+        public ICommand DoCurrentAddress { get; set; }
     }
 }

@@ -71,7 +71,6 @@ namespace SensorMap.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
@@ -90,7 +89,6 @@ namespace SensorMap.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("ImageFile")
-                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<int?>("MechanismId")
@@ -294,7 +292,8 @@ namespace SensorMap.Migrations
                 {
                     b.HasOne("SensorMap.Model.DeviceType", "DeviceType")
                         .WithMany("Devices")
-                        .HasForeignKey("DeviceTypeId");
+                        .HasForeignKey("DeviceTypeId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("SensorMap.Model.Device", "MasterDevice")
                         .WithMany("ChildrenDevices")
@@ -346,7 +345,7 @@ namespace SensorMap.Migrations
                     b.HasOne("SensorMap.Model.Mechanism", "Mechanism")
                         .WithMany("MapObjects")
                         .HasForeignKey("MechanismId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Mechanism");
@@ -357,7 +356,7 @@ namespace SensorMap.Migrations
                     b.HasOne("SensorMap.Model.Device", "Device")
                         .WithMany("Mechanisms")
                         .HasForeignKey("DeviceID")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("SensorMap.Model.Sector", "Sector")
                         .WithMany("Mechanisms")
@@ -375,7 +374,7 @@ namespace SensorMap.Migrations
                     b.HasOne("SensorMap.Model.SensorType", "SensorType")
                         .WithMany("Sensors")
                         .HasForeignKey("SensorTypeID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("SensorType");

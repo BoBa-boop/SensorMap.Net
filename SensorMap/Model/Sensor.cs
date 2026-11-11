@@ -53,7 +53,7 @@ namespace SensorMap.Model
             get => _sensorType;
             set
             {
-                if (value != null)
+                if (value != _sensorType)
                 {
                     this.RaiseAndSetIfChanged(ref _sensorType, value);
                 }

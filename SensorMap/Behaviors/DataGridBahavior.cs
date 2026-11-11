@@ -19,6 +19,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Brushes = System.Windows.Media.Brushes;
 using ComboBox = System.Windows.Controls.ComboBox;
 using Point = System.Windows.Point;
 using TextBox = System.Windows.Controls.TextBox;
@@ -48,10 +49,7 @@ namespace SensorMap.Behaviors
         protected override void OnAttached()
         {
             base.OnAttached();
-            
-            #region -UnSel
 
-            #endregion
             AssociatedObject.Loaded += OnLoaded;
             AssociatedObject.BeginningEdit += OnBeginningEdit;
             AssociatedObject.CellEditEnding += OnCellEditEnding;
@@ -62,9 +60,10 @@ namespace SensorMap.Behaviors
         private void SetAll(bool expand)
         {
             var grid = AssociatedObject;
+            GroupExpansion.GetState(grid).Reset(expand);
             grid.Dispatcher.BeginInvoke(new Action(() =>
             {
-                foreach (var exp in FindChildren<Expander>(grid))
+                foreach (var exp in FindChildren<Expander>(grid).Where(GroupExpansion.GetTrack).ToList())
                 {
                     exp.IsExpanded = expand;
                 }
@@ -73,6 +72,8 @@ namespace SensorMap.Behaviors
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            if (window != null)
+                window.PreviewMouseDown -= OnWindowPreviewMouseDown;
             window = HandyControl.Controls.Window.GetWindow(AssociatedObject);
             if (window != null)
             {
@@ -82,39 +83,65 @@ namespace SensorMap.Behaviors
 
         private void OnCellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
         {
-            var dataGrid = sender as DataGrid;
-            if (e.Row.Item != null && dataGrid!=null)
+            if (Command == null) return;
+            if (e.Row.Item is not { } rowItem) return;
+            if (sender is not DataGrid dataGrid) return;
+            if (originalFieldValues == null || originalFieldValues.Count==0) return;
+
+            try
             {
-                if (originalFieldValues != null)
-                {
-                    object objectAfterEdit;
-                    var originalObject = originalFieldValues.First();
-                    if (e.EditingElement is ComboBox cb)
-                    {
-                        objectAfterEdit = cb.SelectedItem;
-                    }
-                    else if(e.EditingElement is TextBox tb)
-                    {
-                        objectAfterEdit = tb.Text;
-                    }
-                    else objectAfterEdit = GetPropertyValue(e.Row.Item, originalObject.Key);
-                    
-                    string? originalProp = (GetPropertyValue(originalObject.Value, (string)originalFieldValues.Values.ElementAt(1)) ?? originalObject.Value).ToString();
-                    string? EditProp = (GetPropertyValue(objectAfterEdit, (string)originalFieldValues.Values.ElementAt(1))?? objectAfterEdit).ToString();
-                    int columnIndex = e.Column.DisplayIndex;
+                // 1. Достаём реальный контрол редактирования из ContentPresenter (для TemplateColumn)
+                var editingRoot = e.EditingElement;
+                var comboBox = FindChild<ComboBox>(editingRoot);
+                var textBox = FindChild<TextBox>(editingRoot);
 
-                    if (string.IsNullOrEmpty(originalProp) && string.IsNullOrEmpty(EditProp)) return;
+                // 2. Определяем новое значение
+                object? objectAfterEdit;
+                if (comboBox != null)
+                    objectAfterEdit = comboBox.SelectedItem;      // объект DeviceType
+                else if (textBox != null)
+                    objectAfterEdit = textBox.Text;               // строка (Name)
+                else
+                    objectAfterEdit = GetPropertyValue(rowItem, GetOriginalKey()); // fallback
 
-                    hasChangesBeenMade = originalProp!=EditProp;
-                    if (hasChangesBeenMade)
-                    {
-                        bool actualModify = (bool)originalFieldValues["Modify"];
-                        command = new EditCell<object>
-                            (e.Row.Item, originalObject.Key, originalObject.Value, objectAfterEdit, dataGrid, columnIndex, actualModify);
-                        Command.Execute(command);
-                    }
-                    ResetStates();
-                }
+                // 3. Явно берём исходное значение по ключу, а не First()
+                string originalKey = GetOriginalKey();               // "DeviceType" / "Name" / ...
+                object? originalObjValue = originalFieldValues.TryGetValue(originalKey, out var ov) ? ov : null;
+
+                // 4. Ключ вложенного свойства ("Name")
+                string subProp = originalFieldValues.TryGetValue("EditProp", out var ep) && ep is string s
+                    ? s
+                    : originalKey;
+
+                // 5. Сравниваем "плоские" значения (для вложенных путей — по под-свойству)
+                string originalProp = ExtractComparable(originalObjValue, subProp);
+                string editProp = ExtractComparable(objectAfterEdit, subProp);
+
+                if (string.IsNullOrEmpty(originalProp) && string.IsNullOrEmpty(editProp))
+                    return;
+
+                bool hasChanges = !string.Equals(originalProp, editProp, StringComparison.Ordinal);
+                if (!hasChanges) return;
+
+                // 6. Безопасно читаем Modify
+                bool actualModify = originalFieldValues.TryGetValue("Modify", out var m) && m is bool b && b;
+
+                int columnIndex = e.Column.DisplayIndex;
+
+                command = new EditCell<object>(
+                    rowItem,
+                    originalKey,
+                    originalObjValue!,       // исходное значение (объект DeviceType или строка Name)
+                    objectAfterEdit!,        // новое (объект DeviceType из ComboBox или строка из TextBox)
+                    dataGrid,
+                    columnIndex,
+                    actualModify);
+
+                Command.Execute(command);
+            }
+            finally
+            {
+                ResetStates();
             }
         }
 
@@ -129,10 +156,6 @@ namespace SensorMap.Behaviors
             base.OnDetaching();
             #region -UnSel
             var window = Window.GetWindow(AssociatedObject);
-            if (window != null)
-            {
-                window.PreviewMouseDown -= OnWindowPreviewMouseDown;
-            }
             #endregion
             AssociatedObject.BeginningEdit -= OnBeginningEdit;
             AssociatedObject.CellEditEnding -= OnCellEditEnding;
@@ -146,42 +169,68 @@ namespace SensorMap.Behaviors
         {
             if (AssociatedObject == null || !AssociatedObject.IsVisible) return;
             Point clickPosition = e.GetPosition(AssociatedObject);
-            var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, e.GetPosition(AssociatedObject));
+            var hitTestResult = VisualTreeHelper.HitTest(AssociatedObject, clickPosition);
+             if (Keyboard.FocusedElement is ComboBox { IsDropDownOpen: true }) return;
+            if (IsInsideComboBoxPopup(e.OriginalSource as DependencyObject)) return;
             if (hitTestResult == null)
             {
+               if (Keyboard.FocusedElement is DependencyObject fe && GetParent(fe) != null) return;
+                //Клик вне DG
+                EndEdit();
                 AssociatedObject.UnselectAllCells();
                 AssociatedObject.SelectedItem = null;
-                AssociatedObject.CancelEdit();
             }
             else
             {
-                // Клик был внутри DataGrid - проверяем, был ли выбран какой-либо элемент
-                CheckSelectionOnClick(hitTestResult, clickPosition);
+                CheckSelectionOnClick(hitTestResult);
             }
         }
-        private void CheckSelectionOnClick(HitTestResult hitTestResult, Point clickPosition)
+        private bool IsInsideComboBoxPopup(DependencyObject? source)
         {
-            // Ищем DataGridRow или DataGridCell в визуальном дереве
-            DependencyObject current = hitTestResult.VisualHit;
+            while(source != null)
+            {
+                if (source is ComboBoxItem) return true;
+                source = GetParent(source);
+            }
+            return false;
+        }
+        private void CheckSelectionOnClick(HitTestResult hitTestResult)
+        {
+            DependencyObject? current = hitTestResult.VisualHit;
+            DataGridCell? clickedCell = null;
             bool foundDataGridElement = false;
 
             while (current != null && current != AssociatedObject)
             {
-                if (current is DataGridRow || current is DataGridCell)
+                if (current is DataGridCell cell)
+                {
+                    clickedCell = cell;
+                    foundDataGridElement = true;
+                    break;
+                }
+                if (current is DataGridRow)
                 {
                     foundDataGridElement = true;
                     break;
                 }
-                current = VisualTreeHelper.GetParent(current);
+                current = GetParent(current);
             }
+            if (clickedCell != null && clickedCell.IsEditing) return;
+
+            
 
             // Если клик был в области DataGrid, но не на строке или ячейке
             if (!foundDataGridElement)
             {
                 AssociatedObject.UnselectAllCells();
                 AssociatedObject.SelectedItem = null;
-                
+                EndEdit();
             }
+        }
+        private void EndEdit()
+        {
+            AssociatedObject.CommitEdit(DataGridEditingUnit.Cell, true);
+            //AssociatedObject.CommitEdit(DataGridEditingUnit.Row, true);
         }
         #endregion
         private void OnBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
@@ -194,6 +243,32 @@ namespace SensorMap.Behaviors
         }
 
         #region Helpers
+       
+        private string GetOriginalKey()
+        {
+            // служебные ключи, которые не являются именем свойства
+            var serviceKeys = new HashSet<string> { "EditProp", "Modify" };
+            return originalFieldValues!.Keys.First(k => !serviceKeys.Contains(k));
+        }
+
+        // Достаём сравнимую строку: если значение — объект, берём его под-свойство (subProp);
+        // если subProp == имени ключа (плоское свойство) — ToString() самого значения.
+        private static string ExtractComparable(object? value, string subProp)
+        {
+            if (value == null) return string.Empty;
+
+            // Если subProp совпадает с именем ключа (например, "Name") — это плоское свойство
+            var type = value.GetType();
+            var prop = type.GetProperty(subProp);
+            if (prop != null && prop.DeclaringType == type)
+            {
+                var inner = prop.GetValue(value);
+                return inner?.ToString() ?? string.Empty;
+            }
+
+            // Иначе — это сам объект (DeviceType), и subProp — его под-свойство ("Name")
+            return value.ToString() ?? string.Empty;
+        }
         private void GetEditColumnValue(DataGridBeginningEditEventArgs e)
         {
             var binding = e.Column.ClipboardContentBinding as System.Windows.Data.Binding;
@@ -218,9 +293,9 @@ namespace SensorMap.Behaviors
 
             foreach (var part in parts)
             {
-                if (current == null) return string.Empty;
+                if (current == null) return null!;
                 var prop = current.GetType().GetProperty(part);
-                if (prop == null) return string.Empty;
+                if (prop == null) return null!;
                 current = prop.GetValue(current);
             }
 
@@ -238,6 +313,25 @@ namespace SensorMap.Behaviors
                     yield return nested;
                 }
             }
+        }
+        private static T? FindChild<T>(DependencyObject? parent) where T : DependencyObject
+        {
+            if (parent == null) return null;
+            int count = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T t) return t;
+                var nested = FindChild<T>(child);
+                if (nested != null) return nested;
+            }
+            return null;
+        }
+        private static DependencyObject? GetParent(DependencyObject child)
+        {
+            if(child is Visual)
+                return VisualTreeHelper.GetParent(child);
+            return LogicalTreeHelper.GetParent(child);
         }
         #endregion
     }

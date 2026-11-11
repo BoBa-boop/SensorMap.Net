@@ -11,7 +11,8 @@ namespace SensorMap.Interfaces
 {
     public interface IDataBaseProvider
     {
+        IReadOnlyList<IDbCheck> CreateChecks();
         bool ChangeDataBase(string path);
-        void CreateBackupDB(string backupDir);
+        Task CreateBackupDB(string backupDir);
     }
 }

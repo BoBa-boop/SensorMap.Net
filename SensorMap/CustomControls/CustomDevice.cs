@@ -199,6 +199,41 @@ namespace SensorMap.CustomControls
         public CustomDevice()
         {
             _transformService = new TransformObjectService();
+            Loaded += (_, _) => Subscribe();
+            Unloaded += (_, _) => Unsubscribe();
+        }
+
+        private void Unsubscribe()
+        {
+            MouseDown -= OnMouseDown;
+            DetachEditHandlers();
+        }
+
+        private void Subscribe()
+        {
+            Unsubscribe();
+            if (_canvas == null) return;
+            this.MouseDown += OnMouseDown;
+            if (IsEditMode) AttachEditHandlers();
+        }
+
+        private void AttachEditHandlers()
+        {
+            DetachEditHandlers();
+            this.MouseMove += OnDeviceMouseMove;
+            if (_canvas == null) return;
+            _canvas.MouseMove += OnMouseMove;
+            _canvas.MouseUp += OnMouseUp;
+            this.MouseLeave += OnMouseLeave;
+        }
+
+        private void DetachEditHandlers()
+        {
+            this.MouseMove -= OnDeviceMouseMove;
+            MouseLeave -= OnMouseLeave;
+            if (_canvas == null) return;
+            _canvas!.MouseMove -= OnMouseMove;
+            _canvas.MouseUp -= OnMouseUp;
         }
 
         public override void OnApplyTemplate()
@@ -206,12 +241,6 @@ namespace SensorMap.CustomControls
             base.OnApplyTemplate();
             _canvas = _transformService.GetParentCanvas(this);
             _image = _canvas.Children.OfType<Image>().First();
-            if (_canvas != null)
-            {
-                ChangeStateActions();
-                this.Unloaded += CustomDevice_Unloaded;
-            }
-            
         }
 
         private void CustomDevice_Unloaded(object sender, RoutedEventArgs e)
@@ -219,27 +248,17 @@ namespace SensorMap.CustomControls
             this.MouseDown -= OnMouseDown;
             this.MouseMove -= OnDeviceMouseMove;
             _canvas!.MouseMove -= OnMouseMove;
-            _canvas!.MouseUp -= OnMouseUp;
+            _canvas!.MouseUp -= OnMouseUp; 
+            this.Unloaded -= CustomDevice_Unloaded;
+            _memorySelectedDevice = null;
         }
 
         private void ChangeStateActions()
         {
-            this.MouseDown += OnMouseDown;
-            if (IsEditMode)
-            {
-                
-                this.MouseMove += OnDeviceMouseMove;
-                _canvas!.MouseMove += OnMouseMove;
-                _canvas.MouseUp += OnMouseUp;
-                this.MouseLeave += OnMouseLeave;
-            }
-            else
-            {
-                this.IsSelected = false;
-                this.MouseMove -= OnDeviceMouseMove;
-                _canvas!.MouseMove -= OnMouseMove;
-                _canvas.MouseUp -= OnMouseUp;
-            }
+            if (_canvas == null || !IsLoaded) return;
+
+            if (IsEditMode) AttachEditHandlers();
+            else { DetachEditHandlers(); this.IsSelected = false; }
         }
 
         private void OnMouseLeave(object sender, MouseEventArgs e)
@@ -361,7 +380,8 @@ namespace SensorMap.CustomControls
                         }
                         if (_image!=null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
-                            if ((new_width > 17) && (new_height > 17))
+                            int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length*15??70;
+                            if ((new_width > minWidth) && (new_height > 20))
                             {
                                 Canvas.SetLeft(item, new_x);
                                 Canvas.SetTop(item, new_y);
@@ -415,13 +435,9 @@ namespace SensorMap.CustomControls
                 };
                 Application.Current.MainWindow.PreviewMouseDown += OnMainWindowClick;
 
-                void OnMainWindowClick(object sender, MouseButtonEventArgs e)
-                {
-                    window.Close();
-                    IsContextOpen = false;
-                    Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick;
-                }
+                void OnMainWindowClick(object sender, MouseButtonEventArgs e)=>window.Close();
                 window.Show(this, false);
+                window.Closed += (_, _) => { Application.Current.MainWindow.PreviewMouseDown -= OnMainWindowClick; IsContextOpen = false; };
                 e.Handled = true;
             }
            

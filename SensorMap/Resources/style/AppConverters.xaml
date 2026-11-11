@@ -6,4 +6,7 @@
     <local:EqualStrings x:Key="StringEqualString"/>
     <local:PathConverter x:Key="PathConverter"/>
     <local:CountToVisibilityConverter x:Key="CountToVisibility"/>
+    <local:CountToVisibilityReConverter x:Key="CountToReVisibility"/>
+    <local:StringIsStringVisible x:Key="StringIsStringVis"/>
+    <local:RatioTextConverter x:Key="RatioText"/>
 </ResourceDictionary>

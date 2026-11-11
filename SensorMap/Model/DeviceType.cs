@@ -8,14 +8,14 @@ namespace SensorMap.Model
 {
     public class DeviceType:ReactiveObject
     {
-        private string _name;
+        private string? _name;
         private bool _isNew;
 
         [Key]
         [Reactive] public int Id { get; set; }
         [MaxLength(30)]
         [Reactive]
-        public string Name
+        public string? Name
         {
             get => _name;
             set
@@ -23,7 +23,6 @@ namespace SensorMap.Model
                 if (!string.IsNullOrWhiteSpace(value))
                 {
                     this.RaiseAndSetIfChanged(ref _name, value);
-                    IsNew = true;
                 }
             }
         }

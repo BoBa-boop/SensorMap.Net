@@ -15,34 +15,21 @@ namespace SensorMap.Model.Validation
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
             if (value == null) return new ValidationResult(false,"Отсутствует значение");
-            var sensor = (value as BindingGroup).Items[0] as Sensor;
-            if (sensor != null)
+            if (((BindingGroup)value).Items.Count == 0)
+                return ValidationResult.ValidResult;
+            if (((BindingGroup)value).Items[0] is Sensor sensor)
             {
                 if (string.IsNullOrWhiteSpace(sensor!.Name))
                 {
                     return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
                 }
-                else sensor.IsModified = true;
-
-                object type = sensor!.SensorType;
-                if (type == null)
+                if (sensor.SensorType == null)
                 {
                     return new ValidationResult(false, "Тип обязателен для выбора");
                 }
-                else sensor.IsModified = true;
-
-                if (type.GetType().IsEnum)
-                {
-                    var defaultValue = Activator.CreateInstance(type.GetType());
-                    if (type.Equals(defaultValue))
-                    {
-                        return new ValidationResult(false, "Выберите тип датчика");
-                    }
-                }
-                else sensor.IsModified = true;
             }
 
-            return null;
+            return ValidationResult.ValidResult;
         }
     }
 }

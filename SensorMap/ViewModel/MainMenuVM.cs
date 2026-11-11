@@ -1,24 +1,26 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using ReactiveUI;
+using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Model;
-using ReactiveUI.SourceGenerators;
-using System.IO;
-using System.Collections.ObjectModel;
-using System.Reactive.Disposables;
 using SensorMap.Services.UpdateService;
-using System.Windows.Input;
 using SensorMap.View;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Reactive.Disposables;
+using System.Windows.Input;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace SensorMap.ViewModel
 {
     public class MainMenuVM:ReactiveObject, IActivatableViewModel
     {
+        private readonly Updater _updater = new();
+        private bool isChecked = false;
         private IAuthorization _auth;
         private IJsonSerialization _json;
         private SettingsApp settings;
-        
-        private string DefaultImage = "\\Resources\\MenuImages\\menuImage2.jpg";
         [Reactive] public SettingsApp MySettings { get => settings; set => settings = value; }
 
         private ObservableCollection<string> _images;
@@ -33,6 +35,17 @@ namespace SensorMap.ViewModel
         {
             _auth = authorization;
             _json = jsonSerialization;
+            Task.Run(async () => {
+                if (!isChecked)
+                {
+                    isChecked = await _updater.CheckAsync();
+                    if (isChecked)
+                    {
+                        Growl.Info("Доступно обновление!");
+                    }
+                }
+            });
+            
             this.WhenActivated((CompositeDisposable disposables) => {
                 
                 if (Path.Exists(SettingsApp.SettingsPath)) MySettings = _json.ReadFromJsonFile<SettingsApp>(SettingsApp.SettingsPath);

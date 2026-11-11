@@ -315,7 +315,7 @@ namespace SensorMap.ViewModel
                 return false;
             });
             SaveCommand = new RelayCommand(Save);
-            ShowSensorMechanism = new RelayCommand(()=>
+            ShowSensorMechanism = new RelayCommand<Mechanism>((curMech)=>
             {
                 if (CurrentMech!=null)
                 {
@@ -328,7 +328,7 @@ namespace SensorMap.ViewModel
                     if(mechSensorsVM.HasChanges) HasChanges=true;
 
                 }
-            });
+            }, (curMech) => { return curMech != null && curMech.MapObjects!=null && curMech.MapObjects.Count>0; });
             ShowScheme = new RelayCommand<Mechanism>((mech) =>
             {
                 if (mech == null) return;
@@ -392,6 +392,8 @@ namespace SensorMap.ViewModel
                     DevicesList?.Clear();
                     SensorTypes?.Clear(); 
                     Sectors?.Clear();
+                    _undoRedoStacks?.Clear();
+                    
                 }).DisposeWith(disposables);
 
                 var transferDataSector = curMechanism?.SectorID ?? _service.CurrentSector_Global?.Id;

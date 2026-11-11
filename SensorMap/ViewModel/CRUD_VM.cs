@@ -3,12 +3,14 @@ using DynamicData;
 using DynamicData.Binding;
 using HandyControl.Controls;
 using HandyControl.Data;
+using HandyControl.Expression.Shapes;
 using HandyControl.Properties.Langs;
 using HandyControl.Tools;
 using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Behaviors;
+using SensorMap.Commands.AdditionalCommands;
 using SensorMap.Converters;
 using SensorMap.EF;
 using SensorMap.Interfaces;
@@ -31,6 +33,9 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Threading;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using Application = System.Windows.Application;
+using MessageBox = HandyControl.Controls.MessageBox;
 using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 
 namespace SensorMap.ViewModel
@@ -38,16 +43,11 @@ namespace SensorMap.ViewModel
     public class CRUD_VM : ReactiveObject, IActivatableViewModel
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        private readonly IDataBaseProvider _provider;
-        private readonly IFileManagment fileManagment;
         private readonly IJsonSerialization _json;
         private readonly IDataService _service; 
         private readonly ITempImage _tempImage;
         private IAppDbContextFactory _appDbContextFactory;
         private bool isEditMode;
-        private ICollectionView mechView;
-        private ICollectionView devicesView;
-        private ICollectionView sensorsView;
         private bool _loadInProgress;
         private int _pendingTabIndex = -1;
         private bool _firstPageLoaded;
@@ -67,6 +67,8 @@ namespace SensorMap.ViewModel
         private IDisposable? _undoSub;
         private IDisposable? _redoSub;
         private bool _isLoaded;
+        private bool _fourthPageLoaded;
+        private DeviceType _selDevType;
 
         private UndoRedoStack CurrentStack
         {
@@ -81,33 +83,31 @@ namespace SensorMap.ViewModel
         public bool CanUndo => CurrentStack?.CanUndo ?? false;
         public bool CanRedo=> CurrentStack?.CanRedo ?? false;
         [Reactive] public INavigation Navigation { get; set; }
+        #region Sources
         [Reactive] public ObservableCollection<Sector> Sectors { get => sectors; set => this.RaiseAndSetIfChanged(ref sectors, value); }
         [Reactive] public ObservableCollection<Mechanism> Mechanisms { get => mechanisms; set => this.RaiseAndSetIfChanged(ref mechanisms, value); }
         [Reactive] public ObservableCollection<Sensor> Sensors { get => sensors; set => this.RaiseAndSetIfChanged(ref sensors, value); }
         [Reactive] public ObservableCollection<Device> Devices { get => devices; set => this.RaiseAndSetIfChanged(ref devices, value); }
-        [Reactive] public ICollectionView SensorsView { get => sensorsView; set => this.RaiseAndSetIfChanged(ref sensorsView, value); }
-        [Reactive] public ICollectionView DevicesView { get => devicesView; set => this.RaiseAndSetIfChanged(ref devicesView, value); }
         [Reactive] public ObservableCollection<SensorType> SensorTypes 
         { 
             get => sensorTypes; 
             set => this.RaiseAndSetIfChanged(ref sensorTypes,value); 
         }
         [Reactive] public ObservableCollection<DeviceType> DeviceTypes { get => deviceTypes; set => this.RaiseAndSetIfChanged(ref deviceTypes,value); }
-        [Reactive] public ICollectionView MechanismsView { get => mechView; set => this.RaiseAndSetIfChanged(ref mechView, value); }
+        #endregion
         [Reactive] public int SelectedTabIndex { get => selectedTabIndex; set => this.RaiseAndSetIfChanged(ref selectedTabIndex, value); }
         [Reactive] public bool IsExpanded { get => isExpanded; set => this.RaiseAndSetIfChanged(ref isExpanded, value); }
         public bool IsLoading { get => _isLoaded; set => this.RaiseAndSetIfChanged(ref _isLoaded, value); }
+        public DeviceType SelectedDeviceType { get => _selDevType; set { this.RaiseAndSetIfChanged(ref _selDevType, value); } }
 
         public ViewModelActivator Activator { get; } = new ViewModelActivator();
 
-        public CRUD_VM(IDataBaseProvider provider, IDataService service, IAppDbContextFactory cxFactory,
-            IJsonSerialization json, INavigation nav, ITempImage tempImage, IFileManagment _fileManagment)
+        public CRUD_VM(IDataService service, IAppDbContextFactory cxFactory,
+            IJsonSerialization json, INavigation nav, ITempImage tempImage)
         {
             Navigation = nav;
             _tempImage = tempImage;
             _json = json;
-            _provider = provider;
-            fileManagment = _fileManagment;
             _appDbContextFactory = cxFactory;
             _service = service;
             #region Commands
@@ -118,6 +118,7 @@ namespace SensorMap.ViewModel
                 if (obj is Device)
                     Navigation.NavigateTo<Devices_VM>(obj);
             });
+            
             SaveCommand = new RelayCommand<object>((arg) =>
             {
                 if (arg is null) return;
@@ -161,7 +162,7 @@ namespace SensorMap.ViewModel
             DeleteCommand = new RelayCommand<object>(async (arg) =>
             {
                 if (arg is null) return;
-                
+
                 object[] values = (object[])arg;
                 var type = ChangeDescriber.TypeName(values[0].GetType());
                 var collection = values[1];
@@ -213,7 +214,7 @@ namespace SensorMap.ViewModel
                         }
 
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         DeletionGuard.RevertPendingChanges(dBContext);
                         var reason = SaveErrorExplainer.Explain(ex);
@@ -224,7 +225,7 @@ namespace SensorMap.ViewModel
                             ShowDateTime = false,
                             WaitTime = 2
                         });
-                        Logger.Error(ex,$"Не удалось удалить {type} \"{name}\". Причина: {reason}");
+                        Logger.Error(ex, $"Не удалось удалить {type} \"{name}\". Причина: {reason}");
                     }
                 }
 
@@ -257,149 +258,264 @@ namespace SensorMap.ViewModel
                     browser.ShowDialog();
                 }
             });
-            AddSensorType = new RelayCommand<object>((param) =>
+            AddSensorType = new RelayCommand<string>((param) =>
             {
                 if (param is null) return;
 
-                var values = (object[])param;
-                var name = (string)values[0];
+                var name = param;
                 SensorType sType = new SensorType();
                 sType.Name = name;
-
-                if (!SensorTypes.Where(x => x.Name == sType.Name).Any())
-                {
-                    sType.IsNew = true;
-                    SensorTypes.Add(sType);
-                }
+                sType.IsNew = true;
+                IUndoRedoCommand command = new AddType<SensorType>(sType, SensorTypes);
+                CurrentStack.Do(command);
             }, (param) =>
             {
                 if (param == null) return false;
-                var values = (object[])param;
-                return !string.IsNullOrWhiteSpace(values[0].ToString());
+                if (SensorTypes != null && SensorTypes.Where(x => x.Name == param).Any()) return false;
+                return !string.IsNullOrWhiteSpace(param);
             });
-            AddDeviceType = new RelayCommand<object>((param) =>
+            AddDeviceType = new RelayCommand<string>((param) =>
             {
                 if (param is null) return;
 
-                var name = (string)param;
-                DeviceType sType = new DeviceType();
-                sType.Name = name;
-                if (!DeviceTypes.Where(x => x.Name == sType.Name).Any())
+                var name = param;
+                DeviceType dType = new DeviceType();
+                dType.Name = name;
+                dType.IsNew = true;
+                IUndoRedoCommand command = new AddType<DeviceType>(dType, DeviceTypes);
+                CurrentStack.Do(command);
+            }, (param) =>
+            {
+                if (param == null) return false;
+                if (DeviceTypes != null && DeviceTypes.Where(x => x.Name == param).Any()) return false;
+                return !string.IsNullOrWhiteSpace(param.ToString());
+            });
+            RenameSensorType = new RelayCommand<object[]>((_params) =>
+            {
+                if (_params is null) return;
+                if (_params[0] is null || _params[1] is null) return;
+                if (_params[0] is SensorType sensorType)
                 {
-                    sType.IsNew = true;
-                    DeviceTypes.Add(sType);
+                    string newName = (string)_params[1];
+                    string oldName = sensorType.Name;
+
+                    IUndoRedoCommand command = new ChangeNameType<SensorType>(sensorType, oldName, newName, sensorType.IsNew);
+                    CurrentStack.Do(command);
                 }
             }, (param) =>
             {
                 if (param == null) return false;
-                var value = (string)param;
-                return !string.IsNullOrWhiteSpace(value.ToString());
+                if (string.IsNullOrEmpty((string)param[1])) return false;
+                if (SensorTypes != null && SensorTypes.Where(x => x.Name == (string)param[1]).Any()) return false;
+                if (param[0] is SensorType sType)
+                {
+                    return sType.Name != (string)param[1];
+                }
+                return param[0] is not null;
             });
-            DeleteNodeTitleType = new RelayCommand<object>((type) =>
+            RenameDeviceType = new RelayCommand<object[]>((_params) =>
             {
-                if (type is SensorType sensorType && sensorType != null)
+                if (_params is null) return;
+                if (_params[0] is null || _params[1] is null) return;
+                if (_params[0] is DeviceType dType)
                 {
-                    var res = System.Windows.MessageBox.Show("Удаление типа, также включает УДАЛЕНИЕ датчиков и параметров этого типа! Подтвердите действие.",
-                        "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
-                    if (res == MessageBoxResult.OK)
-                    {
-                        SensorTypes.Remove(sensorType);
-                        using (var dBContext = _appDbContextFactory.CreateDbContext())
-                        {
-                            if (dBContext.SensorTypes.Contains(sensorType))
-                            {
-                                dBContext.SensorTypes.Remove(sensorType);
-                                dBContext.SaveChanges();
-                            }
-                        }
-                    }
-                }
-                if (type is DeviceType deviceType && deviceType != null)
-                {
-                    var res = System.Windows.MessageBox.Show("Удаление типа, также включает УДАЛЕНИЕ устройств и параметров этого типа! Подтвердите действие.",
-                        "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
-                    if (res == MessageBoxResult.OK)
-                    {
-                        DeviceTypes.Remove(deviceType);
-                        using (var dBContext = _appDbContextFactory.CreateDbContext())
-                        {
-                            if (dBContext.DeviceTypes.Contains(deviceType))
-                            {
-                                dBContext.DeviceTypes.Remove(deviceType);
-                                dBContext.SaveChanges();
-                            }
-                        }
-                    }
-                }
-            },
-            (type) => { return type != null; });
+                    string newName = (string)_params[1];
+                    string oldName = dType.Name;
 
-            AddCharacteristic = new RelayCommand<object>((type) =>
-            {
-                if (type is SensorType sensorType)
-                {
-                    sensorType.Characteristics.Add(new SensorCharacteristic() { Title = "Новая характеристика", SensorTypeId = sensorType.Id });
-                    sensorType.IsNew = true;
+                    IUndoRedoCommand command = new ChangeNameType<DeviceType>(dType, oldName, newName, dType.IsNew);
+                    CurrentStack.Do(command);
                 }
-                if (type is DeviceType deviceType)
-                    deviceType.Characteristics.Add(new DeviceCharacteristic() { Title = "Новая характеристика", DeviceTypeId = deviceType.Id });
-            }, (type) => { return type != null; });
-            DeleteCharacteristic = new RelayCommand<object[]>((obj) =>
+            }, (param) =>
             {
-                if (obj[0] is SensorType sensorType && sensorType != null)
+                if (param == null) return false;
+                if (string.IsNullOrEmpty((string)param[1])) return false;
+                if (DeviceTypes != null && DeviceTypes.Where(x => x.Name == (string)param[1]).Any()) return false;
+                if (param[0] is DeviceType sType)
                 {
-                    SensorCharacteristic characteristic = obj[1] as SensorCharacteristic ?? new SensorCharacteristic();
-                    using (var dBContext = _appDbContextFactory.CreateDbContext())
+                    return sType.Name != (string)param[1];
+                }
+                return param[0] is not null;
+            });
+            DeleteDeviceType = new RelayCommand<DeviceType>(async (type) =>
+            {
+                try
+                {
+                    if (type is DeviceType deviceType && deviceType != null)
                     {
-                        if (characteristic.Id != 0)
+                        if (deviceType.Id != 0)
                         {
-                            var res = System.Windows.MessageBox.Show("Операция включает в себя удаление записанных данных в выбранный параметр.\r" +
-                            $"Датчики имеющий тип {sensorType.Name} также утратят параметр и данные! Подтвердите действие.",
-                            "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                            var res = System.Windows.MessageBox.Show($"Операция включает УДАЛЕНИЕ характеристик {deviceType.Name}! Подтвердите действие.",
+                                "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
                             if (res == MessageBoxResult.OK)
                             {
 
-                                dBContext.SensorCharacteristic.Remove(characteristic);
-                                dBContext.SaveChanges();
-
-                                DeleteFromFile(characteristic);
+                                using (var dBContext = _appDbContextFactory.CreateDbContext())
+                                {
+                                    var typeName = ChangeDescriber.TypeName(deviceType.GetType());
+                                    var name = ChangeDescriber.NameOf(deviceType);
+                                    string? blocked = await DeletionGuard.CheckAsync(dBContext, deviceType);
+                                    if (blocked != null)
+                                    {
+                                        DbLog.Write(new DbActionLogs
+                                        {
+                                            Timestamp = DateTime.Now,
+                                            Kind = DbActionKind.Error,
+                                            EntityType = typeName,
+                                            Description = blocked
+                                        });
+                                        return;
+                                    }
+                                    if (dBContext.DeviceTypes.Contains(deviceType))
+                                    {
+                                        dBContext.DeviceTypes.Remove(deviceType);
+                                        dBContext.SaveChanges();
+                                        DeviceTypes.Remove(deviceType);
+                                    }
+                                }
                             }
                         }
                         else
                         {
-                            sensorType.Characteristics?.Remove(characteristic);
+                            DeviceTypes.Remove(deviceType);
                         }
                     }
-
                 }
-                if (obj[0] is DeviceType deviceType && deviceType != null)
+                catch (Exception ex)
                 {
-                    DeviceCharacteristic characteristic = obj[1] as DeviceCharacteristic ?? new DeviceCharacteristic();
-                    using (var dBContext = _appDbContextFactory.CreateDbContext())
+                    Growl.Error("Ошибка при удаления типа!");
+                    Logger.Error(ex.Message, ex.InnerException);
+                }
+            },(type)=> { return type != null; });
+            DeleteSensorType = new RelayCommand<SensorType>(async (type) => 
+            {
+                if (type is SensorType sensorType && sensorType != null)
+                {
+                    try
+                    {
+                        if (sensorType.Id != 0)
+                        {
+                            var res = System.Windows.MessageBox.Show($"Операция включает УДАЛЕНИЕ характеристик {sensorType.Name}! Подтвердите действие.",
+                                "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                            if (res == MessageBoxResult.OK)
+                            {
+
+                                using (var dBContext = _appDbContextFactory.CreateDbContext())
+                                {
+                                    var typeName = ChangeDescriber.TypeName(sensorType.GetType());
+                                    var name = ChangeDescriber.NameOf(sensorType);
+                                    string? blocked = await DeletionGuard.CheckAsync(dBContext, sensorType);
+                                    if (blocked != null)
+                                    {
+                                        DbLog.Write(new DbActionLogs
+                                        {
+                                            Timestamp = DateTime.Now,
+                                            Kind = DbActionKind.Error,
+                                            EntityType = typeName,
+                                            Description = blocked
+                                        });
+                                        return;
+                                    }
+                                    if (dBContext.SensorTypes.Contains(sensorType))
+                                    {
+                                        dBContext.SensorTypes.Remove(sensorType);
+                                        dBContext.SaveChanges();
+                                        SensorTypes.Remove(sensorType);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            SensorTypes.Remove(sensorType);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Growl.Error("Ошибка при удаления типа!");
+                        Logger.Error(ex.Message, ex.InnerException);
+                    }
+                }
+            }, (type) => { return type != null; });
+
+            AddSensorCharacteristic = new RelayCommand<SensorType>((type) =>
+            {
+                if (type == null) return;
+                if (type.Characteristics == null) return;
+                var characteristic = new SensorCharacteristic() { Title = "Новая характеристика", SensorTypeId = type.Id };
+                IUndoRedoCommand command = new AddCharacteristic<SensorType,SensorCharacteristic>(characteristic, type.Characteristics,type,type.IsNew);
+                CurrentStack.Do(command);
+                
+            }, (type) => { return type != null && type.Characteristics != null; });
+            AddDeviceCharacteristic = new RelayCommand<DeviceType>((type) =>
+            {
+                if (type == null) return;
+                if (type.Characteristics == null) return;
+                var characteristic = new DeviceCharacteristic() { Title = "Новая характеристика", DeviceTypeId = type.Id };
+                IUndoRedoCommand command = new AddCharacteristic<DeviceType,DeviceCharacteristic>(characteristic, type.Characteristics, type, type.IsNew);
+                CurrentStack.Do(command);
+                
+            }, (type) => { return type != null && type.Characteristics!=null; });
+            DeleteSensorCharacteristic = new RelayCommand<object[]>((_params) =>
+            {
+                if (_params == null) return;
+                if (_params[0] is SensorType sensorType && sensorType != null)
+                {
+                    SensorCharacteristic characteristic = _params[1] as SensorCharacteristic ?? new SensorCharacteristic();
+                    if (characteristic.Id != 0)
                     {
                         var res = System.Windows.MessageBox.Show("Операция включает в себя удаление записанных данных в выбранный параметр.\r" +
-                        $"Датчики имеющий тип {deviceType.Name} также утратят параметр и данные! Подтвердите действие.",
+                        $"Датчики имеющий тип {sensorType.Name} также утратят параметр и данные! Подтвердите действие.",
                         "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
                         if (res == MessageBoxResult.OK)
                         {
-
-                            if (deviceType.Id != 0)
+                            using (var dBContext = _appDbContextFactory.CreateDbContext())
                             {
-                                dBContext.DeviceCharacteristic.Remove(characteristic);
+                                dBContext.SensorCharacteristic.Remove(characteristic);
                                 dBContext.SaveChanges();
                             }
                             DeleteFromFile(characteristic);
                         }
-                        else
-                        {
-                            deviceType.Characteristics?.Remove(characteristic);
-                        }
-
                     }
-
+                    else
+                    {
+                        IUndoRedoCommand command = new DeleteCharacteristic<SensorType, SensorCharacteristic>(characteristic, sensorType.Characteristics, sensorType, sensorType.IsNew);
+                        CurrentStack.Do(command);
+                    }
                 }
-            }, (type) => { return type != null; });
 
+            }, (type) => { return type is null || type[0] != null; });
+            DeleteDeviceCharacteristic = new RelayCommand<object[]>((_params) =>
+            {
+                if (_params == null) return;
+                if (_params[0] is DeviceType deviceType && deviceType != null)
+                {
+                    DeviceCharacteristic characteristic = _params[1] as DeviceCharacteristic ?? new DeviceCharacteristic();
+
+                    if (characteristic.Id != 0)
+                    {
+                        var res = System.Windows.MessageBox.Show("Операция включает в себя удаление записанных данных в выбранный параметр.\r" +
+                    $"Устройства имеющий тип {deviceType.Name} также утратят параметр и данные! Подтвердите действие.",
+                    "Подтверждение действий", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                        if (res == MessageBoxResult.OK)
+                        {
+                            using (var dBContext = _appDbContextFactory.CreateDbContext())
+                            {
+                                dBContext.DeviceCharacteristic.Remove(characteristic);
+                                dBContext.SaveChanges();
+                                DeleteFromFile(characteristic);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        IUndoRedoCommand command = new DeleteCharacteristic<DeviceType, DeviceCharacteristic>(characteristic, deviceType.Characteristics, deviceType, deviceType.IsNew);
+                        CurrentStack.Do(command);
+                    }
+                }
+
+            }, (type) => { return type is null || type[0] != null; });
+            
+            
             ShowColorPicker = new RelayCommand<object>((s) =>
             {
                 if (s is SensorType sensorType)
@@ -436,19 +552,21 @@ namespace SensorMap.ViewModel
 
             this.WhenActivated(disposables =>
             {
-            _service.WhenAnyValue(x => x.IsEditMode)
-                .BindTo(this, x => x.IsEditMode)
-                .DisposeWith(disposables);
+                _service.WhenAnyValue(x => x.IsEditMode)
+                    .BindTo(this, x => x.IsEditMode)
+                    .DisposeWith(disposables);
 
-            
 
-            this.WhenAnyValue(x => x.SelectedTabIndex)
-                .Subscribe(RequestLoad)
-                .DisposeWith(disposables);
 
-           
+                this.WhenAnyValue(x => x.SelectedTabIndex)
+                    .Subscribe(RequestLoad)
+                    .DisposeWith(disposables);
+
             });
         }
+
+        
+
         private void SubscribeToCurrentStack()
         {
             _undoSub?.Dispose();
@@ -479,6 +597,7 @@ namespace SensorMap.ViewModel
             _loadInProgress = true;
             try
             {
+                await Dispatcher.Yield(DispatcherPriority.Background);
                 while (_pendingTabIndex >= 0)
                 {
                     
@@ -509,9 +628,8 @@ namespace SensorMap.ViewModel
                     case 1:
                         
                         await LoadSecondAsync();
-                        await LoadDevices();
                         SubscribeToCurrentStack();
-                        IsExpanded = true;
+                        IsExpanded = true;  
                         break;
                     case 2:
                         await LoadThirdAsync();
@@ -524,9 +642,8 @@ namespace SensorMap.ViewModel
                         IsExpanded = true;
                         break;
                     case 4:
-                        
-                        await LoadThirdAsync();
-                        await LoadDevices();
+
+                        await LoadAddictionalData();
                         SubscribeToCurrentStack();
                         IsExpanded = true;
                         break;
@@ -539,67 +656,105 @@ namespace SensorMap.ViewModel
             }
         }
 
-        
+        private async Task LoadAddictionalData()
+        {
+            if (_fourthPageLoaded) return;
+            var sensorTypes = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.SensorTypes.AsNoTracking()
+                   .Include(x => x.Characteristics).ToListAsync();
+            });
+            var deviceTypes = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.DeviceTypes.AsNoTracking()
+                .Include(x => x.Characteristics).ToListAsync();
+            });
+            DeviceTypes = new(deviceTypes);
+
+            SensorTypes = new(sensorTypes);
+
+            _fourthPageLoaded = true;
+        }
 
         private async Task LoadFirstPageAsync()
         {
             if (_firstPageLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var sectors = await dbContext.Sectors.AsNoTracking()
-                .Include(x => x.Mechanisms).ToListAsync();
-            
+            var sectors = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Sectors.AsNoTracking()
+                   .Include(x => x.Mechanisms).ToListAsync();
+            });
             Sectors = new ObservableCollection<Sector>(sectors);
             _firstPageLoaded = true;
         }
         private async Task LoadSecondAsync()
         {
             if (_secondPageLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var mechanisms = await dbContext.Mechanisms.AsNoTracking()
-                .Include(x => x.Files)
-                .Include(x => x.Sector)
-                .Include(x => x.Device)
-                .AsSplitQuery()
-                .ToListAsync();
-            
+
+            var mechanisms = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Mechanisms.AsNoTracking()
+                    .Include(x => x.Files)
+                    .Include(x => x.Sector)
+                    .Include(x => x.Device).ThenInclude(d => d.DeviceType)
+                    .AsSplitQuery()
+                    .ToListAsync();
+            });
             var collection = new ObservableCollection<Mechanism>(mechanisms);
             var view = CollectionViewSource.GetDefaultView(collection);
             ConfigureMechanismsView(view);
             Mechanisms = collection;
-            MechanismsView = view;
             _secondPageLoaded = true;
             
         }
         private async Task LoadThirdAsync()
         {
             if (_thirdPageLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var sensors = await dbContext.Sensors.AsNoTracking()
-                .Include(x=>x.SensorType).ToListAsync();
-            var sensorTypes = await dbContext.SensorTypes.AsNoTracking()
-                .Include(x => x.Characteristics).ToListAsync();
-            var collection = new ObservableCollection<Sensor>(sensors);
-            var view = CollectionViewSource.GetDefaultView(collection);
-            ConfigureSensorsView(view);
-            Sensors = collection;
-            SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
-            SensorsView = view;
+            var sensors = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Sensors.AsNoTracking()
+                   .Include(x => x.SensorType).ToListAsync();
+                 
+            });
+            var sensorTypes = await Task.Run(async () => 
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.SensorTypes.AsNoTracking()
+                    .Include(x => x.Characteristics).ToListAsync();
+            });
+                var collection = new ObservableCollection<Sensor>(sensors);
+                var view = CollectionViewSource.GetDefaultView(collection);
+                ConfigureSensorsView(view);
+                Sensors = collection;
+                SensorTypes = new ObservableCollection<SensorType>(sensorTypes);
             _thirdPageLoaded = true;
         }
         private async Task LoadDevices()
         {
             if (_devicesLoaded) return;
-            using var dbContext = _appDbContextFactory.CreateDbContext();
-            var devices = await dbContext.Devices
-                .Include(x => x.DeviceType).ToListAsync();
-            var deviceTypes = await dbContext.DeviceTypes.AsNoTracking()
-                .Include(x => x.Characteristics).ToListAsync();
+            var devices = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.Devices
+                   .Include(x => x.DeviceType).ToListAsync();
+
+            });
+            var deviceTypes = await Task.Run(async () =>
+            {
+                using var dbContext = _appDbContextFactory.CreateDbContext();
+                return await dbContext.DeviceTypes.AsNoTracking()
+                    .Include(x => x.Characteristics).ToListAsync();
+            });
             var collection = new ObservableCollection<Device>(devices);
-            var view = CollectionViewSource.GetDefaultView(collection);
-            ConfigureDevicesView(view);
-            Devices = collection;
-            DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
-            DevicesView = view;
+                var view = CollectionViewSource.GetDefaultView(collection);
+                ConfigureDevicesView(view);
+                Devices = collection;
+                DeviceTypes = new ObservableCollection<DeviceType>(deviceTypes);
             _devicesLoaded = true;
         }
         #endregion
@@ -614,15 +769,14 @@ namespace SensorMap.ViewModel
                 liveColl.LiveGroupingProperties.Clear();
                 //отслеживаемые свойства
                 liveColl.LiveSortingProperties.Add(nameof(Mechanism.Sector));
-                liveColl.LiveSortingProperties.Add(nameof(Mechanism.Device));
                 //
                 liveColl.LiveGroupingProperties.Add(nameof(Mechanism.Sector));
-                liveColl.LiveGroupingProperties.Add(nameof(Mechanism.Device));
                 
             }
             using (view.DeferRefresh())
             {
                 view.SortDescriptions.Add(new SortDescription("Sector.Name", ListSortDirection.Ascending));
+                view.SortDescriptions.Add(new SortDescription("Name", ListSortDirection.Ascending));
                 view.GroupDescriptions.Add(new PropertyGroupDescription("Sector.Name"));
             }
         }
@@ -696,7 +850,6 @@ namespace SensorMap.ViewModel
                 }
             }
         }
-
         public ICommand DeleteCommand { get; set; }
         public ICommand SaveCommand { get; set; }
         public ICommand ShowCommand { get; set; }
@@ -708,9 +861,16 @@ namespace SensorMap.ViewModel
         public ICommand DeleteNodeTitleType { get; }
         public ICommand UndoCommand { get; }
         public ICommand RedoCommand { get; }
-        public ICommand AddCharacteristic { get; set; }
-        public ICommand DeleteCharacteristic { get; set; }
         public ICommand RecordEditCommand { get; }
-        public ICommand AddRowCommand { get; }
+        public ICommand AddSensorCharacteristic { get; }
+        public ICommand AddDeviceCharacteristic { get; }
+        public ICommand RenameSensorType { get; }
+        public ICommand RenameDeviceType { get; }
+        public ICommand RenameSensorCharacteristic { get; }
+        public ICommand RenameDeviceCharacteristic { get; }
+        public ICommand DeleteSensorCharacteristic { get; }
+        public ICommand DeleteDeviceCharacteristic { get; }
+        public ICommand DeleteDeviceType { get; }
+        public ICommand DeleteSensorType { get; }
     }
 }

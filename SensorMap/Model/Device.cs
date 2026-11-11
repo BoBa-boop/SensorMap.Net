@@ -20,7 +20,6 @@ namespace SensorMap.Model
         private bool _isModified;
         private byte[]? _image;
         private string _name = string.Empty;
-        private string _manufacturer = string.Empty;
         private DeviceType? _type;
 
         [Key]public int Id { get; set; }
@@ -51,7 +50,7 @@ namespace SensorMap.Model
         public Device? MasterDevice { get; set; }
         public int? MasterDeviceID { get; set; }
         public virtual ObservableCollection<Mechanism>? Mechanisms { get; set; }
-        public virtual ObservableCollection<HelpfulFile> Files { get; set; }
+        public virtual ObservableCollection<HelpfulFile>? Files { get; set; }
         public int? DeviceTypeId {  get; set; }
         public DeviceType? DeviceType
         { 

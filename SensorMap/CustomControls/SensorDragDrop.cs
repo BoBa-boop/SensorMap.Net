@@ -34,8 +34,8 @@ namespace SensorMap.CustomControls
     [TemplatePart(Name = "PART_Image", Type = typeof(Image))]
     public class SensorDragDrop : Control,IDisposable
     {
-        Cursor Grab = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grab.cur")).Stream);
-        Cursor Grabbing = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grabbing.cur")).Stream);
+        static readonly Cursor Grab = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grab.cur")).Stream);
+        static readonly Cursor Grabbing = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/Grabbing.cur")).Stream);
         static SensorDragDrop()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(SensorDragDrop),
@@ -241,6 +241,8 @@ namespace SensorMap.CustomControls
         public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register("ImageSource",
             typeof(BitmapFrame), typeof(SensorDragDrop),
             new PropertyMetadata(default(BitmapFrame)));
+
+       
         public BitmapFrame ImageSource
         {
             get { return (BitmapFrame)GetValue(ImageSourceProperty); }
@@ -269,15 +271,10 @@ namespace SensorMap.CustomControls
             _image = GetTemplateChild("PART_Image") as Image;
             _transformObject = new TransformObjectService();
             _clipboard = new ClipboardService();
-            CopySensorsCommand = new RelayCommand<MapObject>((_) => CopySensors(), (obj) => { return obj is not null; });
-            PasteSensorsCommand = new RelayCommand<MapObject>((_)=>PasteSensors(), (_) =>
-            {
-                if (_clipboard != null && _clipboard.Paste<List<IMapElement>>() != null && _clipboard.Paste<List<IMapElement>>()!.Count > 0)
-                    return true;
-                return false;
-            });
-            CutSensorsCommand = new RelayCommand(CutSensors);
-            RemoveSensorCommand = new RelayCommand(RemoveSensor);
+            CopySensorsCommand = new RelayCommand(CopySensors, CanCopy);
+            PasteSensorsCommand = new RelayCommand(PasteSensors,CanPaste);
+            CutSensorsCommand = new RelayCommand(CutSensors,CanCut);
+            RemoveSensorCommand = new RelayCommand(RemoveSensor,CanRemove);
             if (_canvas != null)
             {
                 Cursor = Grab;
@@ -319,7 +316,7 @@ namespace SensorMap.CustomControls
             if (e.OriginalSource is not IMapElement el) return;
             _selectedFromMap = true;
             try { SelectedMapObject = el.MapData; }
-            finally { _selectedFromMap = false; }
+            finally { _selectedFromMap = false; RefreshClipboardCommands(); }
         }
         private static void SetHighlight(FrameworkElement? el, bool highlight)
         {
@@ -346,25 +343,14 @@ namespace SensorMap.CustomControls
             Mouse.OverrideCursor = null;
             Cursor = Grab;
             _canvas.Children.Remove(SelectionRect);
-            TransformCommand(e);
             SelectionRect = new System.Windows.Shapes.Rectangle();
             IsSelectionRectEnable = false;
             _isDragging = false;
             Mouse.Capture(null);
+            RefreshClipboardCommands();
         }
 
-        private void TransformCommand(MouseButtonEventArgs e)
-        {
-            if(_isDragging)
-            {
-                Point worldPoint = _transformObject.ScreenToWorld(e.GetPosition(_canvas), MapProperties.GetViewMatrix(this));
-                var canvasCollection = GetAllMapElements()
-                    .Where(x => tempSelectedMapObjects.Contains(x.MapData)).ToList().Cast<IMapElement>().ToList();
-                var MultiTransform = new TransformationSensors(tempSelectedMapObjects, canvasCollection,
-                    (x) => _transformObject.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
-                TransformSensorsCommand.Execute(MultiTransform);
-            }
-        }
+        
         /// <summary>
          /// Получить все UI-элементы карты (датчики и устройства)
          /// </summary>
@@ -449,6 +435,13 @@ namespace SensorMap.CustomControls
         #endregion
 
         #region SensorActionsLogic
+        private object? _clipboardSource;
+        private bool HasSelection() => _canvas != null && _canvas.Children.OfType<IMapElement>().Any(IsElementSelected);
+        private bool CanCopy() => IsEditMode && HasSelection();
+        private bool CanRemove() => IsEditMode && HasSelection() && RemoveSensorEvent != null;
+        private bool CanCut() => CanRemove();
+        private bool CanPaste() => IsEditMode && ItemsSource != null && AddSensorsCommand != null
+                                 && ImageSource != null && ReferenceEquals(_clipboardSource, ItemsSource);
         public void RemoveSensor()
         {
             if (_canvas != null)
@@ -502,8 +495,11 @@ namespace SensorMap.CustomControls
         
         private void CopySensors()
         {
-            var selectedElements = GetAllMapElements().Where(x => IsElementSelected(x)).ToList();
+            var selectedElements = GetAllMapElements().Where(IsElementSelected).ToList();
+            if(selectedElements.Count == 0) return;
             _clipboard.Copy<List<IMapElement>>(selectedElements);
+            _clipboardSource = ItemsSource;
+            RefreshClipboardCommands();
         }
         private bool IsPasting;
         private void PasteSensors()
@@ -546,15 +542,21 @@ namespace SensorMap.CustomControls
                     tempSelectedMapObjects.Add(newObj);
                 }
             }
-            
+            RefreshClipboardCommands();
         }
         private void CutSensors()
         {
             var selectedElements = GetAllMapElements().Where(x => IsElementSelected(x)).ToList();
             _clipboard.Copy(selectedElements);
             RemoveSensor();
+            RefreshClipboardCommands();
         }
-
+        private void RefreshClipboardCommands()
+        {
+            (CopySensorsCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+            (PasteSensorsCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+            (CutSensorsCommand as IRelayCommand)?.NotifyCanExecuteChanged();
+        }
 
         #endregion
         #region CanvasEvents

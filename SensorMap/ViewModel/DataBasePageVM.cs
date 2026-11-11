@@ -1,17 +1,21 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
+using Microsoft.Data.Sqlite;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Properties;
 using SensorMap.Services;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Shapes;
+using Path = System.IO.Path;
 namespace SensorMap.ViewModel
 {
     public class DataBasePageVM : ReactiveObject, IActivatableViewModel
@@ -25,7 +29,22 @@ namespace SensorMap.ViewModel
         private bool _onlyErrors;
         private DbActionLogs? _selectedLog;
 
-        public ObservableCollection<DbActionLogs> Logs => _logService.Logs;
+        public ObservableCollection<DbActionLogs> Logs => _logService.Logs; 
+        public ObservableCollection<CheckStepVM> Steps { get; } = new();
+
+        private int _stepIndex;
+        public int StepIndex
+        {
+            get => _stepIndex;
+            set => this.RaiseAndSetIfChanged(ref _stepIndex, value);
+        }
+
+        private string? _checkError;
+        public string? CheckError
+        {
+            get => _checkError;
+            set => this.RaiseAndSetIfChanged(ref _checkError, value);
+        }
         public bool CanLoadMore => _logService.CanLoadMore;
 
         public string DbName
@@ -66,7 +85,7 @@ namespace SensorMap.ViewModel
             DbPath = Path.GetFullPath(AppPaths.GetDbPath());
             DbName = Path.GetFileName(AppPaths.GetDbName());
             
-            ChangeDataBase = new RelayCommand(() =>
+            ChangeDataBase = new RelayCommand(async() =>
             {
                 OpenFileDialog fileBrowser = new OpenFileDialog();
                 fileBrowser.Multiselect = false;
@@ -74,15 +93,34 @@ namespace SensorMap.ViewModel
                 fileBrowser.ShowDialog();
                 if (!string.IsNullOrEmpty(fileBrowser.FileName))
                 {
+                    if(fileBrowser.FileName == DbPath)
+                    {
+                        Growl.Info("Выбранная БД уже загружена.");
+                        return;
+                    }
                     try
                     {
-                        bool result = _dbProvider.ChangeDataBase(fileBrowser.FileName);
+                        bool IsGoodDb = await RunChecksAsync(fileBrowser.FileName);
+                        if(IsGoodDb == false)
+                        {
+                            Growl.Error(CheckError);
+                            return;
+                        }
+
+                        string newDB_connectionString = "DataSource=" + fileBrowser.FileName;
+                        bool result = _dbProvider.ChangeDataBase(newDB_connectionString);
                         if(result)
                         {
                             DbPath = fileBrowser.FileName;
                             DbName = Path.GetFileName(DbPath);
                             Growl.Success("Выбрана новая База Данных");
                             _data.IsDataBaseConnect = true;
+                            Properties.Settings.Default.ConnectionString = newDB_connectionString;
+                            Properties.Settings.Default.Save();
+                        }
+                        else
+                        {
+                            _dbProvider.ChangeDataBase(Properties.Settings.Default.ConnectionString);
                         }
                         
                     }
@@ -130,6 +168,45 @@ namespace SensorMap.ViewModel
                     text += Environment.NewLine + SelectedLog.Technical;
                 HandyControl.Controls.MessageBox.Show(text, "Текст лога", System.Windows.MessageBoxButton.OK);
             });
+        }
+       
+
+        private async Task<bool> RunChecksAsync(string path)
+        {
+            try
+            {
+                Steps.Clear();
+                CheckError = null;
+                StepIndex = 0;
+
+                foreach (var c in _dbProvider.CreateChecks())
+                    Steps.Add(new CheckStepVM(c));
+
+                foreach (var step in Steps)
+                {
+                    step.State = StepState.Запущен;
+
+                    CheckResult result;
+                    try { result = await step.Check.RunAsync(path); }
+                    catch (Exception ex) { result = new CheckResult(false, ex.Message); }
+
+                    if (!result.Ok)
+                    {
+                        step.State = StepState.Ошибка;
+                        step.Message = result.Message;
+                        CheckError = $"Ошибка: {result.Message}";
+                        return false;
+                    }
+
+                    step.State = StepState.Успешно;
+                    StepIndex++;
+                }
+                return true;
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+            }
         }
         public ICommand ChangeDataBase { get; private set; }
         public ICommand NavigateToPathDB { get; }

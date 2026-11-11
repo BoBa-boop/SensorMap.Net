@@ -18,7 +18,7 @@ namespace SensorMap.Model
         private byte[]? _image;
         private Device? _device;
         private Sector? sector;
-        private ObservableCollection<HelpfulFile> files = new ObservableCollection<HelpfulFile>();
+        private ObservableCollection<HelpfulFile>? files = new ObservableCollection<HelpfulFile>();
 
         [Key] public int Id { get; set; }
         [MaxLength(250)]
@@ -61,16 +61,16 @@ namespace SensorMap.Model
             get => _device;
             set
             {
+                this.RaiseAndSetIfChanged(ref _device, value);
                 if(value!=null)
                 {
-                    this.RaiseAndSetIfChanged(ref _device, value);
                     DeviceID = _device!.Id;
                 }
             }
         }
 
         public virtual ObservableCollection<MapObject>? MapObjects { get; set; } = new();
-        public virtual ObservableCollection<HelpfulFile> Files { get => files; set => files = value; }
+        public virtual ObservableCollection<HelpfulFile>? Files { get => files; set => files = value; }
         public virtual int SectorID { get; set; }
         public virtual int? DeviceID { get; set; }
 

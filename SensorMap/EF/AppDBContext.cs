@@ -56,9 +56,12 @@ namespace SensorMap.EF
             public void Configure(EntityTypeBuilder<HelpfulFile> builder)
             {
                 builder.HasKey(x => x.Id);
-                builder.HasOne(x => x.Device).WithMany(d => d.Files).OnDelete(DeleteBehavior.Cascade);
-                builder.HasOne(x => x.Sensor).WithMany(d => d.Files).OnDelete(DeleteBehavior.Cascade);
-                builder.HasOne(x => x.Mechanism).WithMany(m => m.Files).OnDelete(DeleteBehavior.Cascade);
+                builder.HasOne(x => x.Device).WithMany(d => d.Files)
+                    .HasForeignKey(x => x.DeviceId).OnDelete(DeleteBehavior.Cascade);
+                builder.HasOne(x => x.Sensor).WithMany(d => d.Files)
+                    .HasForeignKey(x => x.SensorId).OnDelete(DeleteBehavior.Cascade);
+                builder.HasOne(x => x.Mechanism).WithMany(m => m.Files)
+                    .HasForeignKey(x => x.MechanismId).OnDelete(DeleteBehavior.Cascade);
             }
         }
 
@@ -67,7 +70,14 @@ namespace SensorMap.EF
             public void Configure(EntityTypeBuilder<DeviceType> builder)
             {
                 builder.HasKey(x => x.Id);
-                builder.HasMany(x => x.Characteristics).WithOne(c => c.DeviceType).HasForeignKey(k => k.DeviceTypeId).OnDelete(DeleteBehavior.Cascade);
+                builder.HasMany(x => x.Characteristics)
+                    .WithOne(c => c.DeviceType)
+                    .HasForeignKey(k => k.DeviceTypeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                builder.HasMany(x => x.Devices)
+                    .WithOne(d => d.DeviceType)
+                    .HasForeignKey(d => d.DeviceTypeId)
+                    .OnDelete(DeleteBehavior.Restrict); // запрещаем удаление типа, пока есть устройства
             }
         }
         public class SectorConfiguration : IEntityTypeConfiguration<Sector>
@@ -93,7 +103,7 @@ namespace SensorMap.EF
                     .HasMany(x => x.MapObjects)
                     .WithOne(obj => obj.Mechanism)
                     .HasForeignKey(obj => obj.MechanismId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
             }
         }
         public class SensorConfiguration : IEntityTypeConfiguration<Sensor>
@@ -103,7 +113,7 @@ namespace SensorMap.EF
                 builder.HasKey(x => x.Id);
                 builder.HasOne(t => t.SensorType).WithMany(s => s.Sensors)
                     .HasForeignKey(s => s.SensorTypeID)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict);
             }
         }
         public class SensorTypeConfiguration : IEntityTypeConfiguration<SensorType>
@@ -111,7 +121,10 @@ namespace SensorMap.EF
             public void Configure(EntityTypeBuilder<SensorType> builder)
             {
                 builder.HasKey(x => x.Id);
-                builder.HasMany(x => x.Characteristics).WithOne(c => c.SensorType).HasForeignKey(k => k.SensorTypeId).OnDelete(DeleteBehavior.Cascade);
+                builder.HasMany(x => x.Characteristics)
+                    .WithOne(c => c.SensorType)
+                    .HasForeignKey(k => k.SensorTypeId)
+                    .OnDelete(DeleteBehavior.Cascade);
             }
         }
         public class SensorAssignmentConfiguration : IEntityTypeConfiguration<SensorAssignments>
@@ -149,7 +162,7 @@ namespace SensorMap.EF
                     .HasMany(device => device.Mechanisms)
                     .WithOne(mech => mech.Device)
                     .HasForeignKey(p => p.DeviceID)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.SetNull);
 
             }
         }

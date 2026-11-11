@@ -1,4 +1,5 @@
 ﻿using HandyControl.Controls;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SensorMap.EF;
 using SensorMap.Interfaces;
@@ -25,6 +26,21 @@ namespace SensorMap.Services
             }
             DbContextOptions options = new DbContextOptionsBuilder()
                 .UseSqlite(_connectionString)
+                .AddInterceptors(new AuditInterceptor())
+                .Options;
+            return new AppDBContext(options);
+        }
+        public AppDBContext CreateDbContext(string path)
+        {
+            var cs = new SqliteConnectionStringBuilder
+            {
+                DataSource = path,
+                Mode = SqliteOpenMode.ReadOnly,
+                Pooling = false
+            }.ToString();
+            
+            DbContextOptions options = new DbContextOptionsBuilder()
+                .UseSqlite(cs)
                 .AddInterceptors(new AuditInterceptor())
                 .Options;
             return new AppDBContext(options);

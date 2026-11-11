@@ -10,22 +10,21 @@ namespace SensorMap.Model.Validation
         //public int MyProperty { get; set; }
         public override ValidationResult Validate(object value, CultureInfo cultureInfo)
         {
-            if (value == null) return new ValidationResult(false, "Отсутствует значение");
-            var mech = (value as BindingGroup).Items[0] as Mechanism;
+            if (value == null) return new ValidationResult(false, "Отсутствует значение"); 
+            if (((BindingGroup)value).Items.Count == 0)
+                return ValidationResult.ValidResult;
+            var mech = ((BindingGroup)value).Items[0] as Mechanism;
             if (mech != null)
             {
                 if (string.IsNullOrWhiteSpace(mech!.Name))
                 {
                     return new ValidationResult(false, "Поле 'Название' не может быть пустым!");
                 }
-                else mech.IsModified = true;
 
-                object sector = mech!.Sector;
-                if (sector == null)
+                if (mech.Sector == null)
                 {
                     return new ValidationResult(false, "Необходимо закрепить механизацию за участком!");
                 }
-                else mech.IsModified = true;
             }
 
             return ValidationResult.ValidResult;

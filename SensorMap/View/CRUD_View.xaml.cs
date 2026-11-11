@@ -1,8 +1,11 @@
-﻿using ReactiveUI;
+﻿using HandyControl.Controls;
+using ReactiveUI;
 using SensorMap.ViewModel;
+using System.ComponentModel;
 using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using UserControl = System.Windows.Controls.UserControl;
 
 namespace SensorMap.View
@@ -12,6 +15,7 @@ namespace SensorMap.View
     /// </summary>
     public partial class CRUD_View : UserControl, IViewFor<CRUD_VM>
     {
+        private readonly List<DataGrid> dataGrids = new();
         private CompositeDisposable? _activationDisposables = new CompositeDisposable();
         public static readonly DependencyProperty ViewModelProperty = DependencyProperty.Register
            (
@@ -36,10 +40,32 @@ namespace SensorMap.View
             }).DisposeWith(_activationDisposables);
         }
 
-        private void DataGrid_Unloaded(object sender, RoutedEventArgs e)
+        private void root_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            var grid = (DataGrid)sender;
-            grid.CancelEdit(DataGridEditingUnit.Row);
+            try
+            {
+                foreach (DataGrid dataGrid in dataGrids)
+                {
+                    var view = CollectionViewSource.GetDefaultView(dataGrid.ItemsSource);
+                    if (view is IEditableCollectionView ecv)
+                    {
+                        if (ecv.IsAddingNew) ecv.CancelNew();
+                        if (ecv.IsEditingItem) ecv.CancelEdit();
+                    }
+                    dataGrid.CancelEdit(DataGridEditingUnit.Cell);
+                    dataGrid.CancelEdit(DataGridEditingUnit.Row);
+                }
+            }
+            catch
+            {
+                Growl.Error("Возникла ошибка при отмене редактирования таблицы. Перезагрузите вкладку");
+            }
+        }
+
+        private void DataGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            var dg = (DataGrid)sender;
+            if(!dataGrids.Contains(dg))dataGrids.Add(dg);
         }
     }
 }

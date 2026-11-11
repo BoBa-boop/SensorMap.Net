@@ -71,7 +71,6 @@ namespace SensorMap.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 

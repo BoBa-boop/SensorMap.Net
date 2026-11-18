@@ -651,7 +651,7 @@ namespace SensorMap.ViewModel
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Ошибка загрузки данных вкладки {0}", index);
+                Logger.Error(ex, $"Ошибка загрузки данных вкладки {0}", index);
                 Growl.Error("Ошибка при загрузке данных из БД");
             }
         }

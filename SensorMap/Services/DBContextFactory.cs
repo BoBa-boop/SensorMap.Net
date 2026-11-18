@@ -10,45 +10,40 @@ namespace SensorMap.Services
 {
     public class DBContextFactory : IAppDbContextFactory
     {
-        private string _connectionString;
-        public DBContextFactory(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
+        private string _dbPath;
 
-        public AppDBContext CreateDbContext()
+        public DBContextFactory(string dbPath) => _dbPath = dbPath;
+
+        public string DbPath => _dbPath;
+
+        public void SetDbPath(string path)
         {
-            if (string.IsNullOrEmpty(_connectionString))
-            {
-                _connectionString = Path.Combine("DataSource=" + AppPaths.DataDir, "AppDataBase.db");
-                Properties.Settings.Default.ConnectionString = _connectionString;
-                Properties.Settings.Default.Save();
-            }
-            DbContextOptions options = new DbContextOptionsBuilder()
-                .UseSqlite(_connectionString)
+            _dbPath = path;
+            SqliteConnection.ClearAllPools(); // освободить файл старой БД
+        }
+        private static AppDBContext Create(string connectionString)
+        {
+            var options = new DbContextOptionsBuilder()
+                .UseSqlite(connectionString)
                 .AddInterceptors(new AuditInterceptor())
                 .Options;
             return new AppDBContext(options);
         }
-        public AppDBContext CreateDbContext(string path)
+        private static string BuildConnectionString(string path, SqliteOpenMode mode) =>
+        new SqliteConnectionStringBuilder
         {
-            var cs = new SqliteConnectionStringBuilder
-            {
-                DataSource = path,
-                Mode = SqliteOpenMode.ReadOnly,
-                Pooling = false
-            }.ToString();
-            
-            DbContextOptions options = new DbContextOptionsBuilder()
-                .UseSqlite(cs)
-                .AddInterceptors(new AuditInterceptor())
-                .Options;
-            return new AppDBContext(options);
-        }
+            DataSource = path,
+            Mode = mode,
+            Pooling = false
+        }.ToString();
+        public AppDBContext CreateDbContext() =>
+        Create(BuildConnectionString(_dbPath, SqliteOpenMode.ReadWrite));
 
-        public void UpdateConnectionString(string path)
-        {
-            _connectionString = path;
-        }
+        public AppDBContext CreateReadableContext(string dbPath) =>
+         Create(BuildConnectionString(dbPath, SqliteOpenMode.ReadOnly));
+        public AppDBContext CreateWritableDbContext(string dbPath) =>
+         Create(BuildConnectionString(dbPath, SqliteOpenMode.ReadWrite));
+        public AppDBContext CreateCreatableDbContext() =>
+        Create(BuildConnectionString(_dbPath, SqliteOpenMode.ReadWriteCreate));
     }
 }

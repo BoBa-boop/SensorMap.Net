@@ -11,8 +11,10 @@ namespace SensorMap.Interfaces
 {
     public interface IDataBaseProvider
     {
+        Task<CheckResult> RunChecksAsync(string DbPath, IReadOnlyList<IDbCheck> checks, IProgress<CheckStepVM>? progress = null);
         IReadOnlyList<IDbCheck> CreateChecks();
         bool ChangeDataBase(string path);
         Task CreateBackupDB(string backupDir);
+        Task<(CheckResult,string)> BackupAndMigrateAsync(string backupDir);
     }
 }

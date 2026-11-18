@@ -74,7 +74,13 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-
+    <DrawingImage x:Key="SearchImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M14,2L6,2A2,2,0,0,0,4,4L4,20A2,2,0,0,0,6,22L13,22C12.59,21.75 12.2,21.44 11.86,21.1 11.53,20.77 11.25,20.4 11,20L6,20 6,4 13,4 13,9 18,9 18,10.18C18.71,10.34,19.39,10.61,20,11L20,8 14,2 M20.31,18.9C21.64,16.79 21,14 18.91,12.68 16.8,11.35 14,12 12.69,14.08 11.35,16.19 12,18.97 14.09,20.3 15.55,21.23 17.41,21.23 18.88,20.32L22,23.39 23.39,22 20.31,18.9 M16.5,19A2.5,2.5,0,0,1,14,16.5A2.5,2.5,0,0,1,16.5,14A2.5,2.5,0,0,1,19,16.5A2.5,2.5,0,0,1,16.5,19z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
     <DrawingImage x:Key="ChangeDataImage">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
@@ -601,6 +607,20 @@
                         <Pen Brush="#FF000000" Thickness="1.5" StartLineCap="Round" EndLineCap="Round" LineJoin="Round" MiterLimit="1" />
                     </GeometryDrawing.Pen>
                 </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <DrawingImage x:Key="DataBaseLoadImage">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M20,13.09L20,7C20,4.79 16.42,3 12,3 7.58,3 4,4.79 4,7L4,17C4,19.21 7.59,21 12,21 12.46,21 12.9,21 13.33,20.94 13.12,20.33 13,19.68 13,19L13,18.95C12.68,19 12.35,19 12,19 8.13,19 6,17.5 6,17L6,14.77C7.61,15.55 9.72,16 12,16 12.65,16 13.27,15.96 13.88,15.89 14.93,14.16 16.83,13 19,13 19.34,13 19.67,13.04 20,13.09 M18,12.45C16.7,13.4 14.42,14 12,14 9.58,14 7.3,13.4 6,12.45L6,9.64C7.47,10.47 9.61,11 12,11 14.39,11 16.53,10.47 18,9.64L18,12.45 M12,9C8.13,9 6,7.5 6,7 6,6.5 8.13,5 12,5 15.87,5 18,6.5 18,7 18,7.5 15.87,9 12,9 M22,20L19,23 16,20 18,20 18,16 20,16 20,20 22,20z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+    <DrawingImage x:Key="DataBaseSearch2Image">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M24,24z M0,0z M11,18.95C7.77,18.72,6,17.45,6,17L6,14.77C7.13,15.32 8.5,15.69 10,15.87 10,15.21 10.04,14.54 10.21,13.89 8.5,13.67 6.97,13.16 6,12.45L6,9.64C7.43,10.45 9.5,10.97 11.82,11 11.85,10.97 11.87,10.93 11.9,10.9 14.1,8.71 17.5,8.41 20,10.03L20,7C20,4.79 16.42,3 12,3 7.58,3 4,4.79 4,7L4,17C4,19.21 7.59,21 12,21 12.34,21 12.68,21 13,20.97 12.62,20.72 12.24,20.44 11.9,20.1 11.55,19.74 11.25,19.36 11,18.95 M12,5C15.87,5 18,6.5 18,7 18,7.5 15.87,9 12,9 8.13,9 6,7.5 6,7 6,6.5 8.13,5 12,5 M20.31,17.9C20.75,17.21 21,16.38 21,15.5 21,13 19,11 16.5,11 14,11 12,13 12,15.5 12,18 14,20 16.5,20 17.37,20 18.19,19.75 18.88,19.32L22,22.39 23.39,21 20.31,17.9 M16.5,18C15.12,18 14,16.88 14,15.5 14,14.12 15.12,13 16.5,13 17.88,13 19,14.12 19,15.5 19,16.88 17.88,18 16.5,18z" />
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>

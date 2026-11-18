@@ -8,9 +8,8 @@ using System.Threading.Tasks;
 namespace SensorMap.Interfaces
 {
     public enum StepState { Ожидание, Запущен, Успешно, Ошибка }
-
-    public record CheckResult(bool Ok, string? Message = null);
-
+    public enum FailureKind { None, NeedsMigration, NeedsAppUpdate }
+    public record CheckResult(bool Ok, string? Message = null,FailureKind Kind = FailureKind.None);
     public interface IDbCheck
     {
         string Title { get; }

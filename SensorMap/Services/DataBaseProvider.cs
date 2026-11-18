@@ -8,8 +8,10 @@ using Microsoft.Extensions.Configuration;
 using NLog.Config;
 using SensorMap.Interfaces;
 using SensorMap.Logging;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
+using System.Windows;
 using System.Windows.Shapes;
 using Path = System.IO.Path;
 
@@ -19,6 +21,7 @@ namespace SensorMap.Services
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IAppDbContextFactory _dbContextFactory;
+        private List<CheckStepVM> Steps = new();
 
         public DataBaseProvider(IAppDbContextFactory dBContextFactory) 
         {
@@ -30,15 +33,14 @@ namespace SensorMap.Services
 
         public bool ChangeDataBase(string path)
         {
-            CreateChecks();
-            _dbContextFactory.UpdateConnectionString(path);
+            _dbContextFactory.SetDbPath(path);
             return true;
         }
 
         public async Task CreateBackupDB(string backupDirectory)
         {
-            string connection_string = Properties.Settings.Default.ConnectionString;
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string current_connection_string = Properties.Settings.Default.ConnectionString;
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
             string backupPath = Path.Combine(backupDirectory,$"DataBase_backup_{timestamp}.db");
 
             try
@@ -46,7 +48,7 @@ namespace SensorMap.Services
                 await Task.Run(() =>
                 {
                     // Создаем соединение с исходной базой
-                    using (SqliteConnection sourceConnection = new SqliteConnection(connection_string))
+                    using (SqliteConnection sourceConnection = new SqliteConnection(current_connection_string))
                     {
                         sourceConnection.Open();
 
@@ -54,8 +56,6 @@ namespace SensorMap.Services
                         using (var backupConnection = new SqliteConnection($"Data Source={backupPath}"))
                         {
                             backupConnection.Open();
-
-                            // Выполняем бэкап
                             sourceConnection.BackupDatabase(backupConnection);
                             backupConnection.Close();
                         }
@@ -97,14 +97,80 @@ namespace SensorMap.Services
             new SqliteHeaderCheck(),                        //формат SQLite
             new IntegrityCheck(),                           //целостность
             new ForeignKeyCheck(),                          //внешние ключи
+            new WriteAccessCheck(),                          //права на запись
             new EfConnectionCheck(_dbContextFactory),       //подключение EF
             new MigrationsTableCheck(),                     //таблица миграций
             new MigrationVersionCheck(_dbContextFactory),   //версия схемы
             new ModelTablesCheck(_dbContextFactory),        //таблица модели
-            new WriteAccessCheck()                          //права на запись
+            
         };
-    }
+        public async Task<CheckResult> RunChecksAsync(string path,IReadOnlyList<IDbCheck> checks, IProgress<CheckStepVM>? progress)
+        {
+            try
+            {
+                foreach (var check in checks)
+                {
+                    CheckResult result;
+                    try { result = await check.RunAsync(path);  }
+                    catch (Exception ex) { result = new CheckResult(false, ex.Message); }
 
+                    if (!result.Ok)
+                    {
+                        progress?.Report(new CheckStepVM(check));
+                        return result;
+                    }
+                    progress?.Report(new CheckStepVM(check));
+                }
+                return new CheckResult(true);
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+            }
+        }
+
+        public async Task<(CheckResult,string)> BackupAndMigrateAsync(string path)
+        {
+            var folderPath = Path.GetDirectoryName(path);
+            try
+            {
+                if(string.IsNullOrEmpty(folderPath))
+                    return (new CheckResult(false, "Не удалось определить папку БД."), string.Empty);
+                string backupPath = string.Empty;
+                // 1. Создать копию
+                await Task.Run(() =>
+                {
+                    string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
+                    backupPath = Path.Combine(folderPath, $"{Path.GetFileNameWithoutExtension(path)}_backup_{timestamp}.db");
+                    using var src = new SqliteConnection(DbCheckHelper.ReadWriteConnectionString(path));
+                    using var dst = new SqliteConnection($"Data Source={backupPath};Pooling=False");
+                    src.Open();
+                    dst.Open();
+                    src.BackupDatabase(dst);
+                });
+                
+
+                // 2. Миграция
+                using (var db = _dbContextFactory.CreateWritableDbContext(path))
+                    await db.Database.MigrateAsync();
+
+                
+                
+                return (new CheckResult(true), backupPath);
+            }
+            catch (Exception ex)
+            {
+                SqliteConnection.ClearAllPools();
+                return (new CheckResult(false, $"Не удалось создать резервную копию: {ex.Message}"), string.Empty);
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+            }
+        }
+        
+    }
+    #region Checkers
     internal class WriteAccessCheck : IDbCheck
     {
         public string Title => "Права на запись";
@@ -134,7 +200,7 @@ namespace SensorMap.Services
         {
             try
             {
-                using var db = dbContextFactory.CreateDbContext(DbCheckHelper.ReadOnlyConnectionString(path));
+                using var db = dbContextFactory.CreateReadableContext(DbCheckHelper.ReadOnlyConnectionString(path));
 
                 // 1. Что ожидает модель: таблица -> набор столбцов
                 var expected = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
@@ -215,15 +281,16 @@ namespace SensorMap.Services
         }
         public Task<CheckResult> RunAsync(string path) => Task.Run(() =>
         {
-            using (var dbContext = dbContextFactory.CreateDbContext(path))
+            using (var dbContext = dbContextFactory.CreateReadableContext(path))
             {
                 var applied = (dbContext.Database.GetAppliedMigrations()).ToList();
                 var known = dbContext.Database.GetMigrations().ToList();
-
+                if (applied.Count == 0)
+                    return new CheckResult(false, "БД создана без миграций или не принадлежит этому приложению.");
                 if (applied.Except(known).Any())
-                    return new CheckResult(false, "БД содержит новую миграцию, которой нет в текущей. Обновите приложение.");
+                    return new CheckResult(false, "БД содержит новую миграцию, которой нет в текущей. Обновите приложение.",FailureKind.NeedsAppUpdate);
                 if (known.Except(applied).Any())
-                    return new CheckResult(false, "БД необходимо обновить до текущей версии приложения.");
+                    return new CheckResult(false, "БД необходимо обновить до текущей версии приложения.",FailureKind.NeedsMigration);
                 return new CheckResult(true);
             }
         });
@@ -231,7 +298,7 @@ namespace SensorMap.Services
 
     internal class MigrationsTableCheck : IDbCheck
     {
-        public string Title => "Таблица миграция";
+        public string Title => "Таблица миграций";
 
         public Task<CheckResult> RunAsync(string path)=> Task.Run(() =>
         {
@@ -251,7 +318,7 @@ namespace SensorMap.Services
         {
             try
             {
-                using (var dbContext = dbContextFactory.CreateDbContext(path))
+                using (var dbContext = dbContextFactory.CreateReadableContext(path))
                 {
                     if (!await dbContext.Database.CanConnectAsync())
                         return new CheckResult(false, "Не удалось подключиться к БД");
@@ -352,5 +419,13 @@ namespace SensorMap.Services
                 Mode = SqliteOpenMode.ReadOnly,
                 Pooling = false
             }.ToString();
+        public static string ReadWriteConnectionString(string path) =>
+            new SqliteConnectionStringBuilder
+            {
+                DataSource = path,
+                Mode = SqliteOpenMode.ReadWriteCreate,
+                Pooling = false
+            }.ToString();
     }
+    #endregion
 }

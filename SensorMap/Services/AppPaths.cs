@@ -12,22 +12,22 @@ namespace SensorMap.Services
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SensorMap");
         
         public static readonly string SettingsFile = Path.Combine(DataDir, "SettingsApp.json");
-            
-        public static string GetDbPath()
-        {
-            string? connection_string = Settings.Default.ConnectionString;
-            if (string.IsNullOrEmpty(Settings.Default.ConnectionString))
-                return string.Empty;
-            return Path.Combine(DataDir, GetDbName());
-        }
+
+        public static readonly string DefaultDbPath = Path.Combine(DataDir, "AppDataBase.db");
+
+        /// <summary>Путь к БД из настроек. Пустая строка, если пользователь ещё ничего не выбирал.</summary>
+        public static string GetDbPath() => Settings.Default.CurrentDbPath ?? string.Empty;
+
         public static string GetDbName()
         {
-            if(string.IsNullOrEmpty(Settings.Default.ConnectionString))
-                return string.Empty;
-            var csb = new SqliteConnectionStringBuilder(Settings.Default.ConnectionString);
-            return csb.DataSource;
+            var path = GetDbPath();
+            return string.IsNullOrEmpty(path) ? string.Empty : Path.GetFileName(path);
         }
-        
+        public static void SaveDbPath(string path)
+        {
+            Settings.Default.CurrentDbPath = path;
+            Settings.Default.Save();
+        }
 
     }
 }

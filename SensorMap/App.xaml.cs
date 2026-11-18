@@ -7,6 +7,7 @@ using NLog;
 using ReactiveUI;
 using SensorMap.EF;
 using SensorMap.Interfaces;
+using SensorMap.Logging;
 using SensorMap.Model;
 using SensorMap.Properties;
 using SensorMap.Services;
@@ -49,7 +50,6 @@ namespace SensorMap
             IServiceCollection services = new ServiceCollection();
             ConfigurationServiceces(services);
             _serviceProvider = services.BuildServiceProvider();
-
             AnalyzeDataBase();
             if (IsStartOneApp(e))
             {
@@ -67,24 +67,48 @@ namespace SensorMap
             }
         }
 
-        private void AnalyzeDataBase()
+        private async void AnalyzeDataBase()
         {
-            IAppDbContextFactory dbContextFactory = _serviceProvider.GetRequiredService<IAppDbContextFactory>();
-            var data = _serviceProvider.GetRequiredService<IDataService>();
-            try
+            
+            var factory = _serviceProvider.GetRequiredService<IAppDbContextFactory>();
+
+            if (string.IsNullOrEmpty(factory.DbPath))
             {
-                using (AppDBContext dBContext = dbContextFactory.CreateDbContext())
+                var res = MessageBox.Show("Путь к Базе Данных пуст. Создать новую Базу Данных?","Информация",MessageBoxButton.YesNo);
+                if(res != MessageBoxResult.Yes) return;
+                // первый запуск: создаём БД по умолчанию
+                var path = AppPaths.DefaultDbPath;
+                if (!File.Exists(path))
                 {
-                    dBContext.Database.MigrateAsync();
-                    data.IsDataBaseConnect = true;
+                    var opts = new DbContextOptionsBuilder()
+                        .UseSqlite($"DataSource={path}")      // ReadWriteCreate
+                        .AddInterceptors(new AuditInterceptor())
+                        .Options;
+                    using var db = new AppDBContext(opts);
+                    await db.Database.MigrateAsync();
+                    Growl.Info("Создана новая БД.");
                 }
-                
+                factory.SetDbPath(path);
+                AppPaths.SaveDbPath(path);
             }
-            catch (Exception ex)
+
+            var data = _serviceProvider.GetRequiredService<IDataService>();
+            var provider = _serviceProvider.GetRequiredService<IDataBaseProvider>();
+            var currentPath = Settings.Default.CurrentDbPath;
+
+            var result = await provider.RunChecksAsync(currentPath,provider.CreateChecks());
+            
+            if (result.Ok)
             {
-                MessageBox.Show(ex.ToString());
-                data.IsDataBaseConnect = false;
+                data.IsDataBaseConnect = true;
+                Growl.Success("Проверка БД завершена успешно.");
             }
+            else
+            {
+                Growl.Error($"Проверка БД:\r{result.Message}.");
+                data.IsDataBaseConnect = false; 
+            }
+
         }
 
         private static void ConfigurationServiceces(IServiceCollection services)
@@ -112,7 +136,7 @@ namespace SensorMap
             services.AddTransient<AuthVM>();
 
             //Регистрация сервисы
-            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(Settings.Default.ConnectionString));
+            services.AddSingleton<IAppDbContextFactory>(new DBContextFactory(AppPaths.GetDbPath()));
             services.AddSingleton<IDataService, DataService>();
             services.AddSingleton<IDataBaseProvider, DataBaseProvider>();
             services.AddSingleton<INavigation, NavigationService>();

@@ -3,6 +3,7 @@ using HandyControl.Controls;
 using Microsoft.Data.Sqlite;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
+using SensorMap.EF;
 using SensorMap.Interfaces;
 using SensorMap.Model;
 using SensorMap.Properties;
@@ -12,6 +13,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Shapes;
@@ -27,6 +29,7 @@ namespace SensorMap.ViewModel
         private ILogEntryService _logService;
         private string _logSearch = "";
         private bool _onlyErrors;
+        private string _userDbPath = string.Empty;
         private DbActionLogs? _selectedLog;
 
         public ObservableCollection<DbActionLogs> Logs => _logService.Logs; 
@@ -40,6 +43,8 @@ namespace SensorMap.ViewModel
         }
 
         private string? _checkError;
+        private bool _showUpdBtn;
+
         public string? CheckError
         {
             get => _checkError;
@@ -70,7 +75,11 @@ namespace SensorMap.ViewModel
             get => _onlyErrors;
             set { this.RaiseAndSetIfChanged(ref _onlyErrors, value); LogsView.Refresh(); }
         }
-
+        public bool ShowUpdateDbButton
+        {
+            get => _showUpdBtn;
+            set { this.RaiseAndSetIfChanged(ref _showUpdBtn, value); }
+        }
         public DbActionLogs? SelectedLog
         {
             get => _selectedLog;
@@ -82,8 +91,8 @@ namespace SensorMap.ViewModel
             _dbProvider = dbProvider;
             _data = data;
             _logService = logService;
-            DbPath = Path.GetFullPath(AppPaths.GetDbPath());
-            DbName = Path.GetFileName(AppPaths.GetDbName());
+            DbPath = AppPaths.GetDbPath();
+            DbName = AppPaths.GetDbName();
             
             ChangeDataBase = new RelayCommand(async() =>
             {
@@ -93,44 +102,47 @@ namespace SensorMap.ViewModel
                 fileBrowser.ShowDialog();
                 if (!string.IsNullOrEmpty(fileBrowser.FileName))
                 {
-                    if(fileBrowser.FileName == DbPath)
+                    _userDbPath = fileBrowser.FileName;
+                    if(_userDbPath == DbPath)
                     {
                         Growl.Info("Выбранная БД уже загружена.");
                         return;
                     }
-                    try
-                    {
-                        bool IsGoodDb = await RunChecksAsync(fileBrowser.FileName);
-                        if(IsGoodDb == false)
-                        {
-                            Growl.Error(CheckError);
-                            return;
-                        }
-
-                        string newDB_connectionString = "DataSource=" + fileBrowser.FileName;
-                        bool result = _dbProvider.ChangeDataBase(newDB_connectionString);
-                        if(result)
-                        {
-                            DbPath = fileBrowser.FileName;
-                            DbName = Path.GetFileName(DbPath);
-                            Growl.Success("Выбрана новая База Данных");
-                            _data.IsDataBaseConnect = true;
-                            Properties.Settings.Default.ConnectionString = newDB_connectionString;
-                            Properties.Settings.Default.Save();
-                        }
-                        else
-                        {
-                            _dbProvider.ChangeDataBase(Properties.Settings.Default.ConnectionString);
-                        }
-                        
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.MessageBox.Show(ex.Message, "Ошибка при изменение БД", System.Windows.MessageBoxButton.OK);
-                        _data.IsDataBaseConnect = false;
-                    }
+                    await TryConnectAsync(_userDbPath);
                 }
 
+            });
+            UpdateDataBaseMigration = new RelayCommand(async () =>
+            {
+                if (string.IsNullOrEmpty(_userDbPath)) return;
+
+                var answer = HandyControl.Controls.MessageBox.Show(
+                    "Перед обновлением будет создана резервная копия рядом с файлом БД.\nПродолжить?",
+                    "Обновление БД", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (answer != MessageBoxResult.Yes) return;
+
+                try
+                {
+                    var result = await _dbProvider.BackupAndMigrateAsync(_userDbPath);
+                    if (!result.Item1.Ok)
+                    {
+                        Growl.Error(result.Item1.Message);
+                        return;
+                    }
+                    await TryConnectAsync(_userDbPath);
+                    ShowUpdateDbButton = false;
+                    if (!File.Exists(result.Item2)) return;
+                    var answer2 = HandyControl.Controls.MessageBox.Show(
+                       "Удалить ранее созданую копию БД?",
+                       "Обновление БД", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (answer2 != MessageBoxResult.Yes) return;
+                    File.Delete(result.Item2);
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(ex.Message, "Ошибка при обновлении БД");
+                    _data.IsDataBaseConnect = false;
+                }
             });
             NavigateToPathDB = new RelayCommand(() =>
             {
@@ -169,7 +181,35 @@ namespace SensorMap.ViewModel
                 HandyControl.Controls.MessageBox.Show(text, "Текст лога", System.Windows.MessageBoxButton.OK);
             });
         }
-       
+
+        private async Task<bool> TryConnectAsync(string userDbPath)
+        {
+            try
+            {
+                bool IsGoodDb = await RunChecksAsync(_userDbPath);
+                if (IsGoodDb == false)
+                {
+                    Growl.Error(CheckError);
+                    return false;
+                }
+
+                string newDbPath = _userDbPath;
+                _dbProvider.ChangeDataBase(newDbPath);
+
+                DbPath = _userDbPath;
+                DbName = Path.GetFileName(DbPath);
+                Growl.Success("Выбрана новая База Данных");
+                _data.IsDataBaseConnect = true;
+                AppPaths.SaveDbPath(newDbPath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "Ошибка при изменение БД", System.Windows.MessageBoxButton.OK);
+                _data.IsDataBaseConnect = false;
+                return false;
+            }
+        }
 
         private async Task<bool> RunChecksAsync(string path)
         {
@@ -179,7 +219,8 @@ namespace SensorMap.ViewModel
                 CheckError = null;
                 StepIndex = 0;
 
-                foreach (var c in _dbProvider.CreateChecks())
+                var checks = _dbProvider.CreateChecks();
+                foreach (var c in checks)
                     Steps.Add(new CheckStepVM(c));
 
                 foreach (var step in Steps)
@@ -195,6 +236,7 @@ namespace SensorMap.ViewModel
                         step.State = StepState.Ошибка;
                         step.Message = result.Message;
                         CheckError = $"Ошибка: {result.Message}";
+                        if (result.Kind == FailureKind.NeedsMigration) ShowUpdateDbButton = true;
                         return false;
                     }
 
@@ -203,15 +245,18 @@ namespace SensorMap.ViewModel
                 }
                 return true;
             }
+
             finally
             {
                 SqliteConnection.ClearAllPools();
             }
         }
+        
         public ICommand ChangeDataBase { get; private set; }
         public ICommand NavigateToPathDB { get; }
         public ICommand LoadMoreLogs { get; }
         public ICommand CopyLog { get; }
         public ICommand ShowFullLog { get; }
+        public ICommand UpdateDataBaseMigration { get; }
     }
 }

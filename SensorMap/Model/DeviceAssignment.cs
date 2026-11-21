@@ -39,6 +39,7 @@ namespace SensorMap.Model
                 Description = Description,
                 X = X,
                 Y = Y,
+                AngleRotate = AngleRotate,
                 Width = Width,
                 Height = Height,
                 Image = Image,

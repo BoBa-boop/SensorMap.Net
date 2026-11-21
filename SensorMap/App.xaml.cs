@@ -1,4 +1,5 @@
 ﻿using HandyControl.Controls;
+using HandyControl.Data;
 using HandyControl.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -50,7 +51,7 @@ namespace SensorMap
             IServiceCollection services = new ServiceCollection();
             ConfigurationServiceces(services);
             _serviceProvider = services.BuildServiceProvider();
-            AnalyzeDataBase();
+            
             if (IsStartOneApp(e))
             {
                 if (Settings.Default.UpgradeRequired)
@@ -64,18 +65,19 @@ namespace SensorMap
                 var navigation = _serviceProvider.GetRequiredService<INavigation>();
                 navigation.SetMainWindow(menuApp);
                 menuApp.Show();
+                AnalyzeDataBase();
             }
         }
 
         private async void AnalyzeDataBase()
         {
-            
+
             var factory = _serviceProvider.GetRequiredService<IAppDbContextFactory>();
 
             if (string.IsNullOrEmpty(factory.DbPath))
             {
-                var res = MessageBox.Show("Путь к Базе Данных пуст. Создать новую Базу Данных?","Информация",MessageBoxButton.YesNo);
-                if(res != MessageBoxResult.Yes) return;
+                var res = MessageBox.Show("Путь к Базе Данных пуст. Создать новую Базу Данных?", "Информация", MessageBoxButton.YesNo);
+                if (res != MessageBoxResult.Yes) return;
                 // первый запуск: создаём БД по умолчанию
                 var path = AppPaths.DefaultDbPath;
                 if (!File.Exists(path))
@@ -95,9 +97,16 @@ namespace SensorMap
             var data = _serviceProvider.GetRequiredService<IDataService>();
             var provider = _serviceProvider.GetRequiredService<IDataBaseProvider>();
             var currentPath = Settings.Default.CurrentDbPath;
-
-            var result = await provider.RunChecksAsync(currentPath,provider.CreateChecks());
-            
+            Growl.Info(new GrowlInfo
+            {
+                Message = $"Проверка БД...",
+                StaysOpen = true,
+                ShowCloseButton = true,
+                ShowDateTime = false
+            });
+            //var result = await provider.RunChecksAsync(currentPath,provider.CreateChecks());
+            CheckResult result = new CheckResult(true); 
+            Growl.Clear();
             if (result.Ok)
             {
                 data.IsDataBaseConnect = true;

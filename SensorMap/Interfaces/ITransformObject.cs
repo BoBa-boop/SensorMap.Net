@@ -29,14 +29,14 @@ namespace SensorMap.Interfaces
         /// <param name="customBounds">Границы прямоугольника (X, Y, Width, Height)</param>
         /// <param name="gap">Допустимое расстояние до границы (в единицах координат)</param>
         /// <returns>Тип области</returns>
-        HitType GetHitType(Rect customBounds, Point mousePosition, double gap = 3);
+        HitType GetHitType(Rect customBounds, Point mousePosition, double gap = 3,double angle = 0);
 
         /// <summary>
         /// Получает курсор для типа области
         /// </summary>
         /// <param name="hitType">Тип области</param>
         /// <returns>Соответствующий курсор</returns>
-        Cursor GetCursorForHitType(HitType hitType);
+        Cursor GetCursorForHitType(HitType hitType,double angle = 0);
 
         /// <summary>
         /// Выполняет трансформацию прямоугольника
@@ -46,7 +46,7 @@ namespace SensorMap.Interfaces
         /// <param name="offsetX">Смещение по X</param>
         /// <param name="offsetY">Смещение по Y</param>
         /// <returns>Новые границы прямоугольника или null, если трансформация недопустима</returns>
-        Rect? TransformRectangle(Rect originalBounds, HitType hitType, double offsetX, double offsetY);
+        Rect TransformRectangle(Rect originalBounds, HitType hitType, double offsetX, double offsetY, double angle = 0);
         /// <summary>
         /// Изменить позицию адреса в случае пересечения с другим объектом
         /// </summary>

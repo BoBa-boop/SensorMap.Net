@@ -13,6 +13,7 @@
   <ItemGroup>
     <None Remove="Resources\cursors\Grab.cur" />
     <None Remove="Resources\cursors\Grabbing.cur" />
+    <None Remove="Resources\cursors\rotate.cur" />
     <None Remove="Resources\MenuImages\menuImage1jpg.jpg" />
     <None Remove="Resources\MenuImages\menuImage2.jpg" />
     <None Remove="Resources\MenuImages\menuImage3.jpg" />
@@ -57,6 +58,7 @@
   <ItemGroup>
     <Resource Include="Resources\cursors\Grab.cur" />
     <Resource Include="Resources\cursors\Grabbing.cur" />
+    <Resource Include="Resources\cursors\rotate.cur" />
     <Resource Include="Resources\MenuImages\menuImage1jpg.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>

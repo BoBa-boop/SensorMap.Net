@@ -17,6 +17,7 @@ namespace SensorMap.Model
         private bool _isModified;
         private bool _isNew;
         private bool _toDelete;
+        private double _angleRotate = 0;
 
         [Key]
         public int Id { get; set; }
@@ -43,6 +44,18 @@ namespace SensorMap.Model
                 if (value != _y)
                 {
                     this.RaiseAndSetIfChanged(ref _y, value);
+                }
+            }
+        }
+        [Reactive]
+        public double AngleRotate
+        {
+            get => _angleRotate;
+            set
+            {
+                if (value != _angleRotate)
+                {
+                    this.RaiseAndSetIfChanged(ref _angleRotate, value);
                 }
             }
         }

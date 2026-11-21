@@ -7,7 +7,7 @@
              xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:cc="clr-namespace:SensorMap.CustomControls"
              mc:Ignorable="d" 
-             Height="350" Width="200">
+             Height="auto" Width="200">
     <hc:TransitioningContentControl TransitionMode="Left2Right">
     <Grid>
         <Grid.Background>
@@ -25,7 +25,7 @@
                            HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
                            FontSize="18" FontWeight="Heavy"/>
             </StackPanel>
-            <StackPanel Grid.Row="1" Margin="5,0" Width="auto">
+            <StackPanel Grid.Row="1" Margin="5" Width="auto">
                 <TextBlock Text="{Binding Sensor.SensorType.Name, FallbackValue=---}"
                                FontSize="14"/>
                 <TextBlock Text="{Binding Address,FallbackValue=---,StringFormat=Адрес: {0}}"

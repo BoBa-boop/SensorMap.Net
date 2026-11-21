@@ -12,6 +12,7 @@ using System.Windows.Media;
 using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
+using Cursor = System.Windows.Input.Cursor;
 using Image = System.Windows.Controls.Image;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
@@ -20,8 +21,10 @@ namespace SensorMap.CustomControls
 {
     [TemplatePart(Name = "PART_Canvas", Type = typeof(Canvas))]
     [TemplatePart(Name = "PART_Device", Type = typeof(Border))]
+    [TemplatePart(Name = "PART_RotateHandle", Type = typeof(Border))]
     public class CustomDevice : Control, ICloneable, IMapElement
     {
+        static readonly Cursor RotateCur = new Cursor(Application.GetResourceStream(new Uri("pack://application:,,,/Resources/cursors/rotate.cur")).Stream);
         #region Dependency Properties
 
         public static RoutedEvent SelectedByUserEvent = EventManager.RegisterRoutedEvent("SelectedByUser", RoutingStrategy.Bubble,
@@ -186,6 +189,8 @@ namespace SensorMap.CustomControls
         private Point LastPoint;
         private bool IsTransformed = false;
         private Canvas? _canvas;
+        private bool _isRotating;
+        private FrameworkElement? _rotateHandle;
         Rect Map;
         private Image? _image;
         private bool IsMoving;
@@ -199,6 +204,7 @@ namespace SensorMap.CustomControls
         public CustomDevice()
         {
             _transformService = new TransformObjectService();
+           
             Loaded += (_, _) => Subscribe();
             Unloaded += (_, _) => Unsubscribe();
         }
@@ -225,6 +231,14 @@ namespace SensorMap.CustomControls
             _canvas.MouseMove += OnMouseMove;
             _canvas.MouseUp += OnMouseUp;
             this.MouseLeave += OnMouseLeave;
+            if (_rotateHandle != null)
+            {
+                _rotateHandle.MouseEnter += (s, e) => Cursor = RotateCur;
+                _rotateHandle.PreviewMouseDown += _rotateHandle_PreviewMouseDown;
+                _rotateHandle.PreviewMouseUp += _rotateHandle_PreviewMouseUp;
+                _rotateHandle.MouseMove += _rotateHandle_MouseMove;
+            }
+            
         }
 
         private void DetachEditHandlers()
@@ -240,9 +254,38 @@ namespace SensorMap.CustomControls
         {
             base.OnApplyTemplate();
             _canvas = _transformService.GetParentCanvas(this);
+            _rotateHandle = GetTemplateChild("PART_RotateHandle") as FrameworkElement;
             _image = _canvas.Children.OfType<Image>().First();
         }
+        #region rotateObj
+        private void _rotateHandle_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_isRotating) return;
+            _isRotating = false;
+            _rotateHandle!.ReleaseMouseCapture();
+            e.Handled = false;
+        }
 
+        private void _rotateHandle_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            _isRotating = true;
+            _rotateHandle!.CaptureMouse();
+            e.Handled = true;
+        }
+
+        private void _rotateHandle_MouseMove(object sender, MouseEventArgs e)
+        {
+            if(!_isRotating || _canvas == null) return;
+            var center = new Point(Canvas.GetLeft(this) + CustomBounds.Width / 2, Canvas.GetTop(this) + CustomBounds.Height / 2);
+            var p = e.GetPosition(_canvas);
+
+            double angle = Math.Atan2(p.Y - center.Y, p.X - center.X) * 180 / Math.PI + 90;
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+                angle = Math.Round(angle / 15) * 15;
+            DeviceData.AngleRotate = (angle % 360 + 360) % 360;
+            e.Handled = true;
+        }
+        #endregion
         private void CustomDevice_Unloaded(object sender, RoutedEventArgs e)
         {
             this.MouseDown -= OnMouseDown;
@@ -278,7 +321,7 @@ namespace SensorMap.CustomControls
                 else
                 {
                     Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
-                    MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
+                    MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas),angle:DeviceData.AngleRotate);
                 }
                 this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
             }
@@ -319,6 +362,7 @@ namespace SensorMap.CustomControls
 
                     foreach (var item in _canvas!.Children.OfType<CustomDevice>().Where(x => x.IsSelected))
                     {
+                        Rect? new_Rect = CustomBounds;
                         double new_x = Canvas.GetLeft(item);
                         double new_y = Canvas.GetTop(item);
                         double new_width = item.CustomBounds.Width;
@@ -332,64 +376,77 @@ namespace SensorMap.CustomControls
                         }
                         else if (!IsMultiSelection)
                         {
-                            switch (MouseHitType)
-                            {
-                                case HitType.UpLeft:
-                                    new_x += offset_x;
-                                    new_y += offset_y;
-                                    new_width -= offset_x;
-                                    new_height -= offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.UpRight:
-                                    new_y += offset_y;
-                                    new_width += offset_x;
-                                    new_height -= offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.BottomRight:
-                                    new_width += offset_x;
-                                    new_height += offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.BottomLeft:
-                                    new_x += offset_x;
-                                    new_width -= offset_x;
-                                    new_height += offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Left:
-                                    new_x += offset_x;
-                                    new_width -= offset_x;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Right:
-                                    new_width += offset_x;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Bottom:
-                                    new_height += offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Top:
-                                    new_y += offset_y;
-                                    new_height -= offset_y;
-                                    IsTransformed = true;
-                                    break;
-                            }
+                            item.CustomBounds = _transformService.TransformRectangle(item.CustomBounds,MouseHitType,offset_x,offset_y,DeviceData?.AngleRotate??0.0);
+                            //switch (MouseHitType)
+                            //{
+                            //    case HitType.UpLeft:
+                            //        new_x += offset_x;
+                            //        new_y += offset_y;
+                            //        new_width -= offset_x;
+                            //        new_height -= offset_y;
+                            //        IsTransformed = true;
+                            //        break;
+                            //    case HitType.UpRight:
+                            //        new_y += offset_y;
+                            //        new_width += offset_x;
+                            //        new_height -= offset_y;
+                            //        IsTransformed = true;
+                            //        break;
+                            //    case HitType.BottomRight:
+                            //        new_width += offset_x;
+                            //        new_height += offset_y;
+                            //        IsTransformed = true;
+                            //        break;
+                            //    case HitType.BottomLeft:
+                            //        new_x += offset_x;
+                            //        new_width -= offset_x;
+                            //        new_height += offset_y;
+                            //        IsTransformed = true;
+                            //        break;
+                            //    case HitType.Left:
+                            //        new_x += offset_x;
+                            //        new_width -= offset_x;
+                            //        IsTransformed = true;
+                            //        break;
+                            //    case HitType.Right:
+                            //        new_width += offset_x;
+                            //        IsTransformed = true;
+                            //        break;
+                            //    case HitType.Bottom:
+                            //        new_height += offset_y;
+                            //        IsTransformed = true;
+                            //        break;
+                            //    case HitType.Top:
+                            //        new_y += offset_y;
+                            //        new_height -= offset_y;
+                            //        IsTransformed = true;
+                            //        break;
+                            //}
                         }
-                        if (_image!=null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
+                        if (_image!=null && (item.CustomBounds.X > 1 && item.CustomBounds.X < _image.ActualWidth - item.CustomBounds.Width)
+                            && (item.CustomBounds.Y > 1 && item.CustomBounds.Y < _image.ActualHeight - item.CustomBounds.Height))
                         {
                             int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length*15??70;
-                            if ((new_width > minWidth) && (new_height > 20))
+                            if ((item.CustomBounds.Width > minWidth) && (item.CustomBounds.Height > 20))
                             {
-                                Canvas.SetLeft(item, new_x);
-                                Canvas.SetTop(item, new_y);
-
-                                item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                                Canvas.SetLeft(item, item.CustomBounds.X);
+                                Canvas.SetTop(item, item.CustomBounds.Y);
+                                
                                 LastPoint = point;
                             }
                         }
+                        //if (_image != null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
+                        //{
+                        //    int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length * 15 ?? 70;
+                        //    if ((new_width > minWidth) && (new_height > 20))
+                        //    {
+                        //        Canvas.SetLeft(item, new_x);
+                        //        Canvas.SetTop(item, new_y);
+
+                        //        item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
+                        //        LastPoint = point;
+                        //    }
+                        //}
                     }
                 }
             }

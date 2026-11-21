@@ -4,9 +4,9 @@ using SensorMap.Model;
 using System.CodeDom;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using static SensorMap.Services.TransformObjectService;
-using Cursor = System.Windows.Input;
 using Cursors = System.Windows.Input;
 using MessageBox = System.Windows.MessageBox;
 using Point = System.Windows.Point;
@@ -14,29 +14,33 @@ namespace SensorMap.Services
 {
     public class TransformObjectService : ITransformObject
     {
-        public System.Windows.Input.Cursor GetCursorForHitType(HitType hitType)
+        public System.Windows.Input.Cursor GetCursorForHitType(HitType hitType,double angle = 0)
         {
             System.Windows.Input.Cursor desired_cursor = System.Windows.Input.Cursors.Arrow;
+            double dir;
             switch (hitType)
             {
-                case HitType.None:
-                    return desired_cursor = System.Windows.Input.Cursors.Arrow;
-                case HitType.Body:
-                    return desired_cursor = System.Windows.Input.Cursors.ScrollAll;
-                case HitType.UpLeft:
-                case HitType.BottomRight:
-                    return desired_cursor = System.Windows.Input.Cursors.SizeNWSE;
-                case HitType.BottomLeft:
-                case HitType.UpRight:
-                    return desired_cursor = System.Windows.Input.Cursors.SizeNESW;
-                case HitType.Top:
-                case HitType.Bottom:
-                    return desired_cursor = System.Windows.Input.Cursors.SizeNS;
-                case HitType.Left:
-                case HitType.Right:
-                    return desired_cursor = System.Windows.Input.Cursors.SizeWE;
+                case HitType.None: return desired_cursor = System.Windows.Input.Cursors.Arrow;
+                case HitType.Body: return desired_cursor = System.Windows.Input.Cursors.ScrollAll;
+                case HitType.UpLeft:        dir = 315; break;
+                case HitType.BottomRight:   dir = 135; break;
+                case HitType.BottomLeft:    dir = 225; break;
+                case HitType.UpRight:       dir = 45; break;
+                case HitType.Top:           dir = 0; break;
+                case HitType.Bottom:        dir = 180; break;
+                case HitType.Left:          dir = 270; break;
+                case HitType.Right:         dir = 90; break;
+                default: return desired_cursor = System.Windows.Input.Cursors.Arrow;
             }
-            return desired_cursor;
+            int step = (int)Math.Round((dir + angle) / 45.0) % 8;
+            if (step < 0) step += 0;
+            return (step % 4) switch
+            {
+                0 => System.Windows.Input.Cursors.SizeNS,
+                1 => System.Windows.Input.Cursors.SizeNESW,
+                2 => System.Windows.Input.Cursors.SizeWE,
+                _=> System.Windows.Input.Cursors.SizeNWSE
+            };
         }
         public enum CollisionSide { None, Left, Right, Top, Bottom }
         public enum AddressPosition { Center,Left,Right,Top, Bottom,None }
@@ -45,13 +49,24 @@ namespace SensorMap.Services
             public AddressPosition CurrentPosition { get; set; }
             public List<AddressPosition> RemainingPositions { get; set; }
         }
-        public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 0)
+        public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 0, double angle = 0)
         {
+            if(angle != 0)
+            {
+                var center = new Point(customBounds.Left + customBounds.Width / 2, customBounds.Left + customBounds.Height / 2);
+                var m = Matrix.Identity;
+
+                m.RotateAt(-angle, center.X, center.Y);
+                mousePosition = m.Transform(mousePosition);
+            }
+            //double leftBorder = customBounds.Left;
+            //double topBorder = customBounds.Top;
+            //double rightBorder = leftBorder + customBounds.Width;
+            //double bottomBorder = topBorder + customBounds.Height;
             double leftBorder = customBounds.Left;
             double topBorder = customBounds.Top;
-            double rightBorder = leftBorder + customBounds.Width;
-            double bottomBorder = topBorder + customBounds.Height;
-
+            double rightBorder = customBounds.Right;
+            double bottomBorder = customBounds.Bottom;
             if (mousePosition.X < leftBorder) return HitType.None;
             if (mousePosition.X > rightBorder) return HitType.None;
             if (mousePosition.Y < topBorder) return HitType.None;
@@ -90,8 +105,12 @@ namespace SensorMap.Services
 
             return parent as Canvas;
         }
-        public Rect? TransformRectangle(Rect originalBounds, HitType hitType, double offset_x, double offset_y)
+        public Rect TransformRectangle(Rect originalBounds, HitType hitType, double offset_x, double offset_y,double angle = 0)
         {
+            var inv = Matrix.Identity;
+            inv.Rotate(-angle);
+            Vector d = inv.Transform(new Vector(offset_x, offset_y));
+
             double new_x = originalBounds.Left;
             double new_y = originalBounds.Top;
             double new_width = originalBounds.Width;
@@ -100,48 +119,54 @@ namespace SensorMap.Services
             switch (hitType)
             {
                 case HitType.UpLeft:
-                    new_x += offset_x;
-                    new_y += offset_y;
-                    new_width -= offset_x;
-                    new_height -= offset_y;
+                    new_x += d.X;
+                    new_y += d.Y;
+                    new_width -= d.X;
+                    new_height -= d.Y;
                     break;
                 case HitType.UpRight:
-                    new_y += offset_y;
-                    new_width += offset_x;
-                    new_height -= offset_y;
+                    new_y += d.Y;
+                    new_width += d.X;
+                    new_height -= d.Y;
                     break;
                 case HitType.BottomRight:
-                    new_width += offset_x;
-                    new_height += offset_y;
+                    new_width += d.X;
+                    new_height += d.Y;
                     break;
                 case HitType.BottomLeft:
-                    new_x += offset_x;
-                    new_width -= offset_x;
-                    new_height += offset_y;
+                    new_x += d.X;
+                    new_width -= d.X;
+                    new_height += d.Y;
                     break;
                 case HitType.Left:
-                    new_x += offset_x;
-                    new_width -= offset_x;
+                    new_x += d.X;
+                    new_width -= d.X;
                     break;
                 case HitType.Right:
-                    new_width += offset_x;
+                    new_width += d.X;
                     break;
                 case HitType.Bottom:
-                    new_height += offset_y;
+                    new_height += d.Y;
                     break;
                 case HitType.Top:
-                    new_y += offset_y;
-                    new_height -= offset_y;
+                    new_y += d.Y;
+                    new_height -= d.Y;
                     break;
             }
-
-            // Проверяем на корректные размеры
-            if (new_width > 0 && new_height > 0)
+            if (new_width <= 0 || new_height <= 0) return originalBounds;
+            if (angle == 0)
             {
                 return new Rect(new_x,new_y,new_width, new_height);
             }
+            var oldCenter = new Point(originalBounds.Left + originalBounds.Width / 2, originalBounds.Top + originalBounds.Height / 2);
+            var localShift = new Vector((new_x + new_width / 2) - oldCenter.X,(new_y + new_height / 2) - oldCenter.Y);
 
-            return null;
+            var rot = Matrix.Identity;
+            rot.Rotate(angle);
+            Vector shift = rot.Transform(localShift);
+
+            var newCenter = oldCenter + shift;
+            return new Rect(newCenter.X - new_width / 2, newCenter.Y - new_height/2, new_width, new_height);
         }
         public AddressPosition ChangeRectPosition(Rect moveObject, Rect staticObject, AddressPosition pos)
         {

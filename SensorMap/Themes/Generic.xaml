@@ -272,26 +272,19 @@
                                     </Border>
                                             
                                 </Canvas>
-                                <Rectangle x:Name="PART_Transform"
-                                           Visibility="{TemplateBinding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
-                                   Canvas.Left="-2" Canvas.Top="-2"
-                                           IsHitTestVisible="True"
-                                           Width="{calc:Binding 'CustomBounds.Width + 4',Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                           Height="{calc:Binding 'CustomBounds.Height + 4',Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <Rectangle.Style>
-                                        <Style TargetType="Rectangle">
-                                            <Setter Property="Fill" Value="Transparent"/>
-                                            <Setter Property="StrokeThickness" Value="3"/>
-                                            <Setter Property="StrokeDashArray" Value="2,2"/>
-                                            <Setter Property="Stroke">
-                                                <Setter.Value>
-                                                    <SolidColorBrush Color="Black"/>
-                                                </Setter.Value>
-                                            </Setter>
-
-                                        </Style>
-                                    </Rectangle.Style>
-                                </Rectangle>
+                                <myCC:TransformControl x:Name="PART_Transform"
+                                                       Visibility="{TemplateBinding IsSelected,
+                                    Converter={StaticResource Boolean2VisibilityConverter}}"
+                                                       Canvas.Left="-2" Canvas.Top="-2"
+                                                       IsHitTestVisible="True"
+                                                       Width="{calc:Binding 'CustomBounds.Width + 4',Mode=OneWay,
+                                    RelativeSource={RelativeSource TemplatedParent}}"
+                                                       Height="{calc:Binding 'CustomBounds.Height + 4',Mode=OneWay,
+                                    RelativeSource={RelativeSource TemplatedParent}}"
+                                                       Target="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                                                       Angle="{Binding Angle,RelativeSource={RelativeSource TemplatedParent}}"
+                                                       TransformCommand="{Binding TransformCommand,
+                                    RelativeSource={RelativeSource TemplatedParent}}"/>
                             </Canvas>
                         </Grid>
                         
@@ -347,5 +340,68 @@
                 <Setter Property="IsEditMode" Value="False"/>
             </DataTrigger>
         </Style.Triggers>
+    </Style>
+
+    <Style x:Name="TransformBorderControl" TargetType="{x:Type myCC:TransformControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <ControlTemplate.Resources>
+                        <Style x:Name="MarkerStyle" TargetType="{x:Type Border}">
+                            <Setter Property="Width" Value="12"/>
+                            <Setter Property="Margin" Value="-5"/>
+                            <Setter Property="Height" Value="12"/>
+                            <Setter Property="Background" Value="AliceBlue"/>
+                            <Setter Property="BorderBrush" Value="Black"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                        </Style>
+                    </ControlTemplate.Resources>
+                    <Grid>
+                        <Rectangle x:Name="PART_Body"
+                                   Width="{TemplateBinding Width}" Height="{TemplateBinding Height}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center">
+                            <Rectangle.Style>
+                                <Style TargetType="Rectangle">
+                                    <Setter Property="Fill" Value="Transparent"/>
+                                    <Setter Property="StrokeThickness" Value="3"/>
+                                    <Setter Property="StrokeDashArray" Value="2,2"/>
+                                    <Setter Property="Stroke">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="Black"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Rectangle.Style>
+                        </Rectangle>
+
+                        <Border x:Name="PART_LeftTopMarker" 
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Border x:Name="PART_TopMarker"  
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                        <Border x:Name="PART_RightTopMarker" 
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                        <Border x:Name="PART_RightCenterMarker" 
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        <Border x:Name="PART_RightBottomMarker" 
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                        <Border x:Name="PART_BottomMarker" 
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+                        <Border x:Name="PART_LeftBottomMarker" 
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
+                        <Border x:Name="PART_LeftCenterMarker" 
+                                Style="{x:Reference MarkerStyle}"
+                                HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 </ResourceDictionary>

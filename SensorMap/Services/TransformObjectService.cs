@@ -44,11 +44,7 @@ namespace SensorMap.Services
         }
         public enum CollisionSide { None, Left, Right, Top, Bottom }
         public enum AddressPosition { Center,Left,Right,Top, Bottom,None }
-        public class PositionCheckState 
-        {
-            public AddressPosition CurrentPosition { get; set; }
-            public List<AddressPosition> RemainingPositions { get; set; }
-        }
+        
         public HitType GetHitType( Rect customBounds, System.Windows.Point mousePosition, double gap = 0, double angle = 0)
         {
             if(angle != 0)
@@ -247,124 +243,7 @@ namespace SensorMap.Services
                 return (moveObject.Top < staticObject.Top) ? CollisionSide.Bottom : CollisionSide.Top;
             }
         }
-        //public void ChangeAddressPosition()
-        //{
-
-
-        //    ControlOutOfRangeImage(leftSet, rightSet, topSet, bottomSet);
-
-        //    addressRect = new Rect(Canvas.GetLeft(_textBlock) + CustomBounds.X, Canvas.GetTop(_textBlock) + CustomBounds.Y, _textBlock.ActualWidth, _textBlock.ActualHeight);
-        //    ControlAddressCollision(leftSet, rightSet, topSet, bottomSet);
-
-        //}
-        ///// <summary>
-        ///// Контролирование накладывание адрессов друг на друга. Перемещение адреса выбранного датчика в свободную позицию
-        ///// </summary>
-        ///// <param name="leftSet"></param>
-        ///// <param name="rightSet"></param>
-        ///// <param name="topSet"></param>
-        ///// <param name="bottomSet"></param>
-        //private void ControlAddressCollision(int leftSet, int rightSet, int topSet, int bottomSet)
-        //{
-        //    Rect searchArea = Rect.Union(addressRect, CustomBounds);//зона поиска адресов
-        //    searchArea.Inflate(20, 20);
-        //    var collectionsIntersects = _canvas.Children.OfType<CustomSensor>()
-        //        .Where(s => s != this && s._textBlock.Visibility != Visibility.Collapsed && s.addressRect.IntersectsWith(searchArea)).ToList();
-        //    if (!collectionsIntersects.Any()) return;
-        //    bool isPositionFixed = false;
-
-        //    // --- ЭТАП 1: Попытки смещения ПО ГОРИЗОНТАЛИ ---
-        //    for (int attempt = 0; attempt < numTry && !isPositionFixed; attempt++)
-        //    {
-        //        // Пересчитываем пересечения на КАЖДОЙ попытке, так как позиция изменилась
-        //        var inter = collectionsIntersects.Where(s =>
-        //            this.addressRect.IntersectsWith(s.CustomBounds) ||
-        //            this.addressRect.IntersectsWith(s.addressRect)).ToList();
-
-        //        if (!inter.Any())
-        //        {
-        //            // Горизонтальное смещение помогло
-        //            isPositionFixed = true;
-        //            break;
-        //        }
-
-        //        // Выполняем смену позиции по X
-        //        if (AddressRight || (!AddressLeft && !AddressRight))
-        //        {
-        //            // Пробуем переместить влево
-        //            Canvas.SetLeft(_textBlock, leftSet);
-        //            AddressRight = false;
-        //            AddressLeft = true;
-        //        }
-        //        else if (AddressLeft)
-        //        {
-        //            // Пробуем переместить вправо
-        //            Canvas.SetLeft(_textBlock, rightSet);
-        //            AddressLeft = false;
-        //            AddressRight = true;
-        //        }
-
-        //        // Обновляем адресный прямоугольник после изменения позиции
-        //        UpdateAddressRect();
-        //    }
-
-        //    // --- ЭТАП 2: Попытки смещения ПО ВЕРТИКАЛИ ---
-        //    // Начинаем только если горизонтальные попытки не помогли
-        //    if (!isPositionFixed)
-        //    {
-        //        for (int attempt = 0; attempt < numTry && !isPositionFixed; attempt++)
-        //        {
-        //            // Снова пересчитываем пересечения
-        //            var inter = collectionsIntersects.Where(s =>
-        //                this.addressRect.IntersectsWith(s.CustomBounds) ||
-        //                this.addressRect.IntersectsWith(s.addressRect)).ToList();
-
-        //            if (!inter.Any())
-        //            {
-        //                // Вертикальное смещение помогло
-        //                isPositionFixed = true;
-        //                break;
-        //            }
-
-        //            // Выполняем смену позиции по Y
-        //            if (AddressBottom || (!AddressTop && !AddressBottom))
-        //            {
-        //                // Пробуем переместить вверх
-        //                Canvas.SetTop(_textBlock, topSet);
-        //                AddressBottom = false;
-        //                AddressTop = true;
-        //            }
-        //            else if (AddressTop)
-        //            {
-        //                // Пробуем переместить вниз
-        //                Canvas.SetTop(_textBlock, bottomSet);
-        //                AddressTop = false;
-        //                AddressBottom = true;
-        //            }
-
-        //            // Обновляем адресный прямоугольник
-        //            UpdateAddressRect();
-        //        }
-        //    }
-
-        //    // --- ПЛАН Б: Перемещение в центр, если ничего не помогло ---
-        //    if (!isPositionFixed)
-        //    {
-        //        Canvas.SetLeft(_textBlock, (CustomBounds.Width - _textBlock.ActualWidth) / 2); // Более корректная центровка
-        //        Canvas.SetTop(_textBlock, (CustomBounds.Height - _textBlock.ActualHeight) / 2);
-        //        _textBlock.Opacity = 0.7; // Прозрачность, как индикатор неудачи
-        //                                  // Сбрасываем флаги положения
-        //        AddressLeft = false;
-        //        AddressRight = false;
-        //        AddressTop = false;
-        //        AddressBottom = false;
-        //        UpdateAddressRect();
-        //    }
-        //    else
-        //    {
-        //        _textBlock.Opacity = 1; // Возвращаем полную непрозрачность
-        //    }
-        //}
+        
         ///// <summary>
         ///// Контролирование выхода адреса за границу схемы.
         ///// </summary>

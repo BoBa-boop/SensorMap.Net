@@ -32,6 +32,7 @@ namespace SensorMap.Commands.SensorCommands
                         uv.Y = bounds.Y;
                         uv.Width = bounds.Width;
                         uv.Height = bounds.Height;
+                        uv.AngleRotate = mapElement.MapData.AngleRotate;
                     }
                 }
             }
@@ -49,6 +50,7 @@ namespace SensorMap.Commands.SensorCommands
                     mapElement.MapData.Y = uv.Y;
                     mapElement.MapData.Width = uv.Width;
                     mapElement.MapData.Height = uv.Height;
+                    mapElement.MapData.AngleRotate = uv.AngleRotate;
                     mapElement.SetCustomBounds(new Rect(uv.X, uv.Y, uv.Width, uv.Height));
                     mapElement.MapData.IsModified = true;
                 }
@@ -70,6 +72,7 @@ namespace SensorMap.Commands.SensorCommands
                     mapElement.MapData.Y = sv.Y;
                     mapElement.MapData.Width = sv.Width;
                     mapElement.MapData.Height = sv.Height;
+                    mapElement.MapData.AngleRotate = sv.AngleRotate;
                     mapElement.SetCustomBounds(new Rect(sv.X, sv.Y, sv.Width, sv.Height));
                 }
                 Canvas.SetLeft(item, sv.X);

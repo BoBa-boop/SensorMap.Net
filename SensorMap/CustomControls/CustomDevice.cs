@@ -13,6 +13,7 @@ using Application = System.Windows.Application;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
 using Cursor = System.Windows.Input.Cursor;
+using Cursors = System.Windows.Input.Cursors;
 using Image = System.Windows.Controls.Image;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
@@ -292,6 +293,7 @@ namespace SensorMap.CustomControls
             this.MouseMove -= OnDeviceMouseMove;
             _canvas!.MouseMove -= OnMouseMove;
             _canvas!.MouseUp -= OnMouseUp; 
+            MouseLeave -= OnMouseLeave;
             this.Unloaded -= CustomDevice_Unloaded;
             _memorySelectedDevice = null;
         }
@@ -317,15 +319,10 @@ namespace SensorMap.CustomControls
         {
             if (this.IsSelected && !IsDragging && !IsSelectionRectActive && !IsContextOpen)
             {
-                if (IsMultiSelection) MouseHitType = HitType.Body;
-                else
-                {
-                    Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
-                    MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas),angle:DeviceData.AngleRotate);
-                }
-                this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
+                MouseHitType = HitType.Body;
+                Cursor = Cursors.ScrollAll;
             }
-            else this.Cursor = _transformService.GetCursorForHitType(HitType.None);
+            else this.Cursor = Cursors.Arrow;
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -339,7 +336,7 @@ namespace SensorMap.CustomControls
                    .Where(x => x.IsSelected).Select(x => x.DeviceData).Cast<MapObject>().ToList();
             var canvasCollection = _canvas.Children.OfType<CustomDevice>()
                 .Where(x => selectedDevices.Contains(x.DeviceData)).ToList().Cast<IMapElement>().ToList();
-            if (IsTransformed || IsMoving)
+            if (IsMoving)
             {
                 var command = new TransformationSensors(selectedDevices, canvasCollection, (x) => _transformService.WorldToScreen(worldPoint, MapProperties.GetViewMatrix(this)));
                 TransformCommand.Execute(command);
@@ -376,7 +373,7 @@ namespace SensorMap.CustomControls
                         }
                         else if (!IsMultiSelection)
                         {
-                            item.CustomBounds = _transformService.TransformRectangle(item.CustomBounds,MouseHitType,offset_x,offset_y,DeviceData?.AngleRotate??0.0);
+                            item.CustomBounds = _transformService.TransformRectangle(item.CustomBounds, MouseHitType, offset_x, offset_y, DeviceData?.AngleRotate ?? 0.0);
                             //switch (MouseHitType)
                             //{
                             //    case HitType.UpLeft:
@@ -423,36 +420,25 @@ namespace SensorMap.CustomControls
                             //        break;
                             //}
                         }
-                        if (_image!=null && (item.CustomBounds.X > 1 && item.CustomBounds.X < _image.ActualWidth - item.CustomBounds.Width)
-                            && (item.CustomBounds.Y > 1 && item.CustomBounds.Y < _image.ActualHeight - item.CustomBounds.Height))
+
+                        if (_image != null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
-                            int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length*15??70;
-                            if ((item.CustomBounds.Width > minWidth) && (item.CustomBounds.Height > 20))
+                            int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length * 15 ?? 70;
+                            if ((new_width > minWidth) && (new_height > 20))
                             {
-                                Canvas.SetLeft(item, item.CustomBounds.X);
-                                Canvas.SetTop(item, item.CustomBounds.Y);
-                                
+                                Canvas.SetLeft(item, new_x);
+                                Canvas.SetTop(item, new_y);
+
+                                item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
                                 LastPoint = point;
                             }
                         }
-                        //if (_image != null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
-                        //{
-                        //    int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length * 15 ?? 70;
-                        //    if ((new_width > minWidth) && (new_height > 20))
-                        //    {
-                        //        Canvas.SetLeft(item, new_x);
-                        //        Canvas.SetTop(item, new_y);
-
-                        //        item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
-                        //        LastPoint = point;
-                        //    }
-                        //}
                     }
                 }
             }
         }
 
-        
+       
         private void OnMouseDown(object sender, MouseButtonEventArgs e)
         {
             if(IsEditMode && e.LeftButton == MouseButtonState.Pressed)

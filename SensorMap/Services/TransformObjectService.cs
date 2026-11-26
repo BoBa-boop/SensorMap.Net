@@ -33,7 +33,7 @@ namespace SensorMap.Services
                 default: return desired_cursor = System.Windows.Input.Cursors.Arrow;
             }
             int step = (int)Math.Round((dir + angle) / 45.0) % 8;
-            if (step < 0) step += 0;
+            if (step < 0) step += 8;
             return (step % 4) switch
             {
                 0 => System.Windows.Input.Cursors.SizeNS,
@@ -49,7 +49,7 @@ namespace SensorMap.Services
         {
             if(angle != 0)
             {
-                var center = new Point(customBounds.Left + customBounds.Width / 2, customBounds.Left + customBounds.Height / 2);
+                var center = new Point(customBounds.Left + customBounds.Width / 2, customBounds.Top + customBounds.Height / 2);
                 var m = Matrix.Identity;
 
                 m.RotateAt(-angle, center.X, center.Y);

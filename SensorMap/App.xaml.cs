@@ -104,8 +104,8 @@ namespace SensorMap
                 ShowCloseButton = true,
                 ShowDateTime = false
             });
-            //var result = await provider.RunChecksAsync(currentPath,provider.CreateChecks());
-            CheckResult result = new CheckResult(true); 
+            var result = await provider.RunChecksAsync(currentPath,provider.CreateChecks());
+            //CheckResult result = new CheckResult(true); 
             Growl.Clear();
             if (result.Ok)
             {
@@ -114,12 +114,49 @@ namespace SensorMap
             }
             else
             {
-                Growl.Error($"Проверка БД:\r{result.Message}.");
-                data.IsDataBaseConnect = false; 
+                
+                if (result.Kind == FailureKind.NeedsMigration)
+                {
+                    Growl.Ask("Проверка БД:\rНеобходимо обновить миграции БД. Выполнить обновление?",isConfirmed =>
+                    {
+                        if(isConfirmed)
+                        {
+                            _ = MigrateAsync(provider,currentPath,data);
+                        }
+                        return true;
+                    });
+                }
+                else
+                {
+                    Growl.Error($"Проверка БД:\r{result.Message}.");
+                    data.IsDataBaseConnect = false; 
+                }
             }
 
         }
-
+        private async Task MigrateAsync(IDataBaseProvider provider, string path,IDataService data)
+        {
+            try
+            {
+                var res = await provider.BackupAndMigrateAsync(path);
+                var result = await provider.RunChecksAsync(path, provider.CreateChecks());
+                Growl.Clear();
+                if (result.Ok)
+                {
+                    data.IsDataBaseConnect = true;
+                    Growl.Success("Проверка БД завершена успешно.");
+                }
+                else
+                {
+                    Growl.Error($"Проверка БД:\r{result.Message}.");
+                    data.IsDataBaseConnect = false;
+                }
+            }
+            catch
+            {
+                
+            }
+        }
         private static void ConfigurationServiceces(IServiceCollection services)
         {
             services.AddSingleton<MainWindow>(provider =>

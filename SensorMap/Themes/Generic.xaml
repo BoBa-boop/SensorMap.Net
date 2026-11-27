@@ -75,7 +75,7 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                             </Viewbox>
-                            <Rectangle x:Name="PART_Transform"
+                            <!--<Rectangle x:Name="PART_Transform"
                                    IsHitTestVisible="True"
                                    Visibility="{TemplateBinding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
                                    Width="{Binding CustomBounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
@@ -92,7 +92,22 @@
                                         </Setter>
                                     </Style>
                                 </Rectangle.Style>
-                            </Rectangle>
+                            </Rectangle>-->
+                            <Canvas>
+                                <myCC:TransformControl x:Name="PART_Transform"
+                           Visibility="{TemplateBinding IsSelected,
+        Converter={StaticResource Boolean2VisibilityConverter}}"
+                           Canvas.Left="-7" Canvas.Top="-7"
+                           IsHitTestVisible="True"
+                           Width="{calc:Binding 'CustomBounds.Width + 14',Mode=OneWay,
+        RelativeSource={RelativeSource TemplatedParent}}"
+                           Height="{calc:Binding 'CustomBounds.Height + 14',Mode=OneWay,
+        RelativeSource={RelativeSource TemplatedParent}}"
+                           Target="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                           Angle="{Binding Angle,RelativeSource={RelativeSource TemplatedParent}}"
+                           TransformCommand="{Binding TransformCommand,
+        RelativeSource={RelativeSource TemplatedParent}}"/>
+                            </Canvas>
                         </Grid>
                         <TextBlock x:Name="PART_Address"
                                    TextAlignment="Left"
@@ -165,7 +180,8 @@
                                     </BeginStoryboard>
                                 </EventTrigger>
                             </Rectangle.Triggers>
-                        </Rectangle>                        
+                        </Rectangle>
+                        
                     </Canvas>
                     <ControlTemplate.Triggers>
                         <MultiTrigger>

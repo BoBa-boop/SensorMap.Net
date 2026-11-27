@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
+using HandyControl.Data;
 using Microsoft.Data.Sqlite;
 using ReactiveUI;
 using ReactiveUI.SourceGenerators;
@@ -116,14 +117,18 @@ namespace SensorMap.ViewModel
             {
                 if (string.IsNullOrEmpty(_userDbPath)) return;
 
-                var answer = HandyControl.Controls.MessageBox.Show(
-                    "Перед обновлением будет создана резервная копия рядом с файлом БД.\nПродолжить?",
-                    "Обновление БД", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (answer != MessageBoxResult.Yes) return;
-
+                
                 try
                 {
                     var result = await _dbProvider.BackupAndMigrateAsync(_userDbPath);
+                    Growl.Info(new GrowlInfo
+                    {
+                        Message = $"Создание резервной копии БД...",
+                        StaysOpen = true,
+                        ShowCloseButton = true,
+                        ShowDateTime = false,
+                        WaitTime = 5
+                    });
                     if (!result.Item1.Ok)
                     {
                         Growl.Error(result.Item1.Message);

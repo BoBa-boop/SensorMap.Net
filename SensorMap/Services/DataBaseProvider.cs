@@ -137,6 +137,7 @@ namespace SensorMap.Services
                 if(string.IsNullOrEmpty(folderPath))
                     return (new CheckResult(false, "Не удалось определить папку БД."), string.Empty);
                 string backupPath = string.Empty;
+
                 // 1. Создать копию
                 await Task.Run(() =>
                 {

@@ -175,6 +175,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Control = System.Windows.Controls.Control;
+using Image = System.Windows.Controls.Image;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
 
@@ -231,10 +232,12 @@ namespace SensorMap.CustomControls
         private readonly Dictionary<FrameworkElement, HitType> _handles = new();
         private Canvas? _canvas;
         private HitType _activeHit;
+        private Image? _image;
         private FrameworkElement? _activeHandle;
         private Point _startPoint;
         private Rect _startBounds;
         private bool _changed;
+        private bool isCaptured;
 
         public override void OnApplyTemplate()
         {
@@ -270,28 +273,29 @@ namespace SensorMap.CustomControls
             if (Target == null) return;
             _canvas = Target.Element.Parent as Canvas;
             if (_canvas == null) return;
-
+            _image = _canvas.Children.OfType<Image>().FirstOrDefault();
             _activeHandle = (FrameworkElement)sender;
             _activeHit = _handles[_activeHandle];
             _startPoint = e.GetPosition(_canvas);
             _startBounds = Target.GetCustomBounds();
             _changed = false;
 
-            _activeHandle.CaptureMouse();
+            isCaptured = _activeHandle.CaptureMouse();
             e.Handled = true;
         }
 
         private void Handle_Move(object sender, MouseEventArgs e)
         {
             if (_activeHandle == null || !ReferenceEquals(sender, _activeHandle)
-                || Target == null || _canvas == null) return;
+                || Target == null || _canvas == null || isCaptured==false) return;
 
             Point p = e.GetPosition(_canvas);
             Rect r = _service.TransformRectangle(_startBounds, _activeHit,
                                                  p.X - _startPoint.X, p.Y - _startPoint.Y, Angle);
 
             if (r.IsEmpty || r.Width <= 40 || r.Height <= 20) return;
-
+            if(_image==null) return;
+            if (!(r.X > 1 && r.X < _image.ActualWidth - r.Width) && (r.Y > 1 && r.Y < _image.ActualHeight - r.Height)) return;
             Canvas.SetLeft(Target.Element, r.X);
             Canvas.SetTop(Target.Element, r.Y);
             Target.SetCustomBounds(r);
@@ -305,6 +309,7 @@ namespace SensorMap.CustomControls
             if (_activeHandle == null) return;
 
             _activeHandle.ReleaseMouseCapture();
+            isCaptured = false;
             _activeHandle = null;
             e.Handled = true;
 

@@ -17,6 +17,7 @@ using Application = System.Windows.Application;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using Control = System.Windows.Controls.Control;
+using Cursors = System.Windows.Input.Cursors;
 using Image = System.Windows.Controls.Image;
 using MessageBox = System.Windows.MessageBox;
 using Point = System.Windows.Point;
@@ -309,18 +310,13 @@ namespace SensorMap.CustomControls
 
         private void OnSensorMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (this.IsSelected && !IsDragging && !IsSelectionRectActive && !IsContextOpen)
+            if (this.IsSelected && !IsDragging && !IsSelectionRectActive && !IsContextOpen)                
             {
-                if (IsMultiSelection) MouseHitType = HitType.Body;
-                else
-                {
-                    Rect rect = new Rect(Canvas.GetLeft(this), Canvas.GetTop(this), this.CustomBounds.Width, this.CustomBounds.Height);
-                    MouseHitType = _transformService.GetHitType(rect, Mouse.GetPosition(_canvas));
-                }
-                this.Cursor = _transformService.GetCursorForHitType(MouseHitType);
+                MouseHitType = HitType.Body;
+                Cursor = Cursors.ScrollAll;
             }
-            else this.Cursor = _transformService.GetCursorForHitType(HitType.None);
-
+            else this.Cursor = Cursors.Arrow;
+            
         }
 
         private void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -356,7 +352,7 @@ namespace SensorMap.CustomControls
                     Point point = Mouse.GetPosition(_canvas);
                     double offset_x = point.X - LastPoint.X;
                     double offset_y = point.Y - LastPoint.Y;
-                    Vector offsetVector = point - LastPoint;
+                    
                     foreach (var item in _canvas.Children.OfType<CustomSensor>().Where(x => x.IsSelected))
                     {
                         double new_x = Canvas.GetLeft(item);
@@ -370,56 +366,7 @@ namespace SensorMap.CustomControls
                             new_y += offset_y;
                             IsMoving = true;
                         }
-                        else if (!IsMultiSelection)
-                        {
-                            switch (MouseHitType)
-                            {
-                                case HitType.UpLeft:
-                                    new_x += offset_x;
-                                    new_y += offset_y;
-                                    new_width -= offset_x;
-                                    new_height -= offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.UpRight:
-                                    new_y += offset_y;
-                                    new_width += offset_x;
-                                    new_height -= offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.BottomRight:
-                                    new_width += offset_x;
-                                    new_height += offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.BottomLeft:
-                                    new_x += offset_x;
-                                    new_width -= offset_x;
-                                    new_height += offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Left:
-                                    new_x += offset_x;
-                                    new_width -= offset_x;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Right:
-                                    new_width += offset_x;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Bottom:
-                                    new_height += offset_y;
-                                    IsTransformed = true;
-                                    break;
-                                case HitType.Top:
-                                    new_y += offset_y;
-                                    new_height -= offset_y;
-                                    IsTransformed = true;
-                                    break;
-                            }
-                        }
-                        if (_image == null) return;
-                        if ((new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
+                        if (_image != null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
                             if ((new_width > 17) && (new_height > 17))
                             {

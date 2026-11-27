@@ -378,7 +378,6 @@ namespace SensorMap.CustomControls
 
                     foreach (var item in _canvas!.Children.OfType<CustomDevice>().Where(x => x.IsSelected))
                     {
-                        Rect? new_Rect = CustomBounds;
                         double new_x = Canvas.GetLeft(item);
                         double new_y = Canvas.GetTop(item);
                         double new_width = item.CustomBounds.Width;
@@ -393,15 +392,12 @@ namespace SensorMap.CustomControls
                         
                         if (_image != null && (new_x > 1 && new_x < _image.ActualWidth - new_width) && (new_y > 1 && new_y < _image.ActualHeight - new_height))
                         {
-                            int? minWidth = DeviceData?.Device?.DeviceType?.Name?.Length * 15 ?? 70;
-                            if ((new_width > minWidth) && (new_height > 20))
-                            {
+                            
                                 Canvas.SetLeft(item, new_x);
                                 Canvas.SetTop(item, new_y);
 
                                 item.CustomBounds = new Rect(new_x, new_y, new_width, new_height);
                                 LastPoint = point;
-                            }
                         }
                     }
                 }
